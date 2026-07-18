@@ -1,0 +1,59 @@
+<app-page-header title="Configurações" subtitle="Empresa, PIX e mensagens de cobrança."></app-page-header>
+
+<app-loading *ngIf="loading"></app-loading>
+
+<div *ngIf="!loading" class="crm-card space-y-8 max-w-4xl">
+  <div>
+    <h2 class="text-white font-semibold text-lg mb-4">Empresa</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Nome da Empresa</label>
+        <input class="crm-input" [(ngModel)]="form.nomeEmpresa" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">WhatsApp</label>
+        <input class="crm-input" [(ngModel)]="form.whatsapp" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">E-mail</label>
+        <input class="crm-input" [(ngModel)]="form.email" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Site</label>
+        <input class="crm-input" [(ngModel)]="form.site" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Instagram</label>
+        <input class="crm-input" [(ngModel)]="form.instagram" />
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h2 class="text-white font-semibold text-lg mb-4">PIX</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Chave PIX</label>
+        <input class="crm-input" [(ngModel)]="form.chavePix" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Tipo PIX</label>
+        <input class="crm-input" [(ngModel)]="form.tipoPix" placeholder="CPF, CNPJ, E-mail..." />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-slate-300 mb-2 text-sm">Favorecido</label>
+        <input class="crm-input" [(ngModel)]="form.favorecidoPix" />
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h2 class="text-white font-semibold text-lg mb-2">Mensagem de Cobrança (WhatsApp)</h2>
+    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveis.join(', ') }}</p>
+    <textarea class="crm-input min-h-[140px]" [(ngModel)]="form.mensagemCobranca"></textarea>
+  </div>
+
+  <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+    {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
+  </button>
+</div>

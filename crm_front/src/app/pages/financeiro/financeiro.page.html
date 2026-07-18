@@ -1,0 +1,73 @@
+<app-page-header title="Financeiro" subtitle="Cobranças pendentes e inadimplência."></app-page-header>
+
+<app-loading *ngIf="loading"></app-loading>
+
+<div *ngIf="!loading" class="space-y-6">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div class="crm-card">
+      <p class="text-slate-400 text-sm">Vencendo (3 dias)</p>
+      <p class="text-amber-400 text-xl font-bold">{{ resumo('PENDENTE').valor }}</p>
+      <p class="text-slate-500 text-xs">{{ resumo('PENDENTE').qtd }} cobranças</p>
+    </div>
+    <div class="crm-card">
+      <p class="text-slate-400 text-sm">Regular</p>
+      <p class="text-green-400 text-xl font-bold">{{ resumo('REGULAR').valor }}</p>
+      <p class="text-slate-500 text-xs">{{ resumo('REGULAR').qtd }} cobranças</p>
+    </div>
+    <div class="crm-card">
+      <p class="text-slate-400 text-sm">Atrasado</p>
+      <p class="text-red-400 text-xl font-bold">{{ resumo('ATRASADO').valor }}</p>
+      <p class="text-slate-500 text-xs">{{ resumo('ATRASADO').qtd }} cobranças</p>
+    </div>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-3">
+    <input class="crm-input flex-1" placeholder="Buscar cliente..." [(ngModel)]="busca" (ngModelChange)="pagina = 1" />
+    <select class="crm-input sm:w-48" [(ngModel)]="filtro" (ngModelChange)="pagina = 1">
+      <option value="TODOS">Todos</option>
+      <option value="PENDENTE">Vencendo</option>
+      <option value="REGULAR">Regular</option>
+      <option value="ATRASADO">Atrasado</option>
+    </select>
+  </div>
+
+  <div class="crm-card overflow-x-auto">
+    <table class="w-full text-sm min-w-[700px]">
+      <thead>
+        <tr class="text-slate-400 border-b border-slate-800">
+          <th class="text-left py-3 px-2">Cliente</th>
+          <th class="text-left py-3 px-2">Referência</th>
+          <th class="text-left py-3 px-2">Valor</th>
+          <th class="text-left py-3 px-2">Vencimento</th>
+          <th class="text-left py-3 px-2">Status</th>
+          <th class="text-right py-3 px-2">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of paginadas" class="border-b border-slate-800/50">
+          <td class="py-3 px-2 text-white">{{ m.cliente?.nome }}</td>
+          <td class="py-3 px-2 text-slate-300">{{ m.referencia }}</td>
+          <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
+          <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
+          <td class="py-3 px-2">
+            <span class="text-xs px-2 py-1 rounded"
+              [class.bg-red-600]="status(m) === 'ATRASADO'"
+              [class.bg-amber-600]="status(m) === 'PENDENTE'"
+              [class.bg-slate-700]="status(m) === 'REGULAR'">{{ status(m) }}</span>
+          </td>
+          <td class="py-3 px-2 text-right space-x-1">
+            <app-whatsapp-cobranca-btn [telefone]="telefone(m)" [mensagem]="mensagem(m)"></app-whatsapp-cobranca-btn>
+            <button class="crm-btn-success" (click)="pagar(m)">Pagar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <app-empty-state *ngIf="filtradas.length === 0"></app-empty-state>
+  </div>
+
+  <div *ngIf="totalPaginas > 1" class="flex justify-center gap-2">
+    <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="pagina = pagina - 1">Anterior</button>
+    <span class="text-slate-400 self-center">{{ pagina }} / {{ totalPaginas }}</span>
+    <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="pagina = pagina + 1">Próxima</button>
+  </div>
+</div>

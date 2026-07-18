@@ -1,0 +1,97 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="bg-slate-900">
+    <ion-title class="text-white">{{ cliente ? 'Editar Cliente' : 'Novo Cliente' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-slate-950">
+  <div class="p-4 md:p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
+        <input class="crm-input" [(ngModel)]="form.nome" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Telefone *</label>
+        <input class="crm-input" [(ngModel)]="form.telefone" placeholder="(62) 99999-9999" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Aplicativo</label>
+        <select class="crm-input" [(ngModel)]="form.aplicativoId">
+          <option [ngValue]="null">Selecione...</option>
+          <option *ngFor="let app of aplicativos" [ngValue]="app.id">{{ app.nome }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Valor Mensal *</label>
+        <input class="crm-input" type="number" step="0.01" [(ngModel)]="form.valorMensal" />
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-white font-semibold mb-3">Credenciais IPTV</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Servidor</label>
+          <input class="crm-input" [(ngModel)]="form.servidor" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Usuário</label>
+          <input class="crm-input" [(ngModel)]="form.usuario" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Senha</label>
+          <input class="crm-input" [(ngModel)]="form.senha" />
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-white font-semibold mb-3">Dispositivo</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Aparelho</label>
+          <input class="crm-input" [(ngModel)]="form.aparelho" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Modelo</label>
+          <input class="crm-input" [(ngModel)]="form.modelo" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">MAC Address</label>
+          <input class="crm-input" [(ngModel)]="form.macAddress" />
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-white font-semibold mb-3">Datas</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Ativado em</label>
+          <input class="crm-input" type="date" [(ngModel)]="form.ativadoEm" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Expira em</label>
+          <input class="crm-input" type="date" [(ngModel)]="form.expiraEm" (change)="onExpiraEmChange()" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Dia do vencimento</label>
+          <input class="crm-input" type="number" min="1" max="31" [(ngModel)]="form.vencimento" />
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Observação</label>
+      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.observacao"></textarea>
+    </div>
+
+    <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
+      {{ salvando ? 'Salvando...' : 'Salvar Cliente' }}
+    </button>
+  </div>
+</ion-content>

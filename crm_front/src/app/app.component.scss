@@ -1,0 +1,32 @@
+ion-menu.crm-menu {
+  --width: 18rem;
+  --background: #0f172a;
+}
+
+ion-item.menu-active {
+  --background: #9333ea;
+  --color: #ffffff;
+  border-radius: 0.75rem;
+}
+
+ion-item {
+  --background: transparent;
+  --color: #e2e8f0;
+  --background-hover: rgba(147, 51, 234, 0.4);
+  --background-focused: rgba(147, 51, 234, 0.4);
+}
+
+ion-content {
+  --background: #020617;
+}
+
+ion-toolbar {
+  --background: #0f172a;
+  --color: #ffffff;
+}
+
+.crm-modal {
+  --width: min(720px, 95vw);
+  --height: auto;
+  --border-radius: 12px;
+}

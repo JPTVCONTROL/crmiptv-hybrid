@@ -1,0 +1,42 @@
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+  <app-page-header title="Clientes" subtitle="Gerencie todos os clientes IPTV."></app-page-header>
+  <button class="crm-btn-primary shrink-0" (click)="novoCliente()">+ Novo Cliente</button>
+</div>
+
+<div class="mb-4">
+  <input class="crm-input max-w-md" placeholder="Buscar por nome ou telefone..." [(ngModel)]="busca" />
+</div>
+
+<app-loading *ngIf="loading"></app-loading>
+
+<div *ngIf="!loading" class="crm-card overflow-x-auto">
+  <table class="w-full text-sm min-w-[640px]">
+    <thead>
+      <tr class="text-slate-400 border-b border-slate-800">
+        <th class="text-left py-3 px-2">Nome</th>
+        <th class="text-left py-3 px-2">Telefone</th>
+        <th class="text-left py-3 px-2 hidden md:table-cell">Aplicativo</th>
+        <th class="text-left py-3 px-2">Status</th>
+        <th class="text-right py-3 px-2">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of clientesFiltrados" class="border-b border-slate-800/50 hover:bg-slate-800/30">
+        <td class="py-3 px-2 text-white">{{ c.nome }}</td>
+        <td class="py-3 px-2 text-slate-300">{{ c.telefone }}</td>
+        <td class="py-3 px-2 text-slate-300 hidden md:table-cell">{{ c.aplicativo?.nome ?? '—' }}</td>
+        <td class="py-3 px-2">
+          <span class="px-2 py-1 rounded text-xs" [class.bg-green-600]="c.status === 'ATIVO'" [class.bg-slate-700]="c.status !== 'ATIVO'">
+            {{ c.status }}
+          </span>
+        </td>
+        <td class="py-3 px-2 text-right space-x-1">
+          <button class="crm-btn-ghost" (click)="verDetalhes(c.id)">Ver</button>
+          <button class="crm-btn-ghost" (click)="editar(c)">Editar</button>
+          <button class="crm-btn-danger" (click)="excluir(c)">Excluir</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <app-empty-state *ngIf="clientesFiltrados.length === 0"></app-empty-state>
+</div>

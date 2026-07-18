@@ -1,0 +1,78 @@
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  total?: number;
+}
+
+export interface Aplicativo {
+  id: number;
+  nome: string;
+  descricao?: string | null;
+  logo?: string | null;
+  android?: string | null;
+  androidTv?: string | null;
+  ios?: string | null;
+  windows?: string | null;
+  mac?: string | null;
+  tutorial?: string | null;
+  mensagem?: string | null;
+  ativo: boolean;
+  _count?: { clientes: number };
+}
+
+export interface Mensalidade {
+  id: number;
+  clienteId: number;
+  referencia: string;
+  valor: number;
+  vencimento: string;
+  status: string;
+  pagoEm?: string | null;
+  cliente?: Cliente;
+}
+
+export interface Cliente {
+  id: number;
+  nome: string;
+  telefone: string;
+  planoId?: number | null;
+  servidor?: string | null;
+  usuario?: string | null;
+  senha?: string | null;
+  aplicativoId?: number | null;
+  aplicativo?: Aplicativo | null;
+  aparelho?: string | null;
+  modelo?: string | null;
+  macAddress?: string | null;
+  ativadoEm?: string | null;
+  expiraEm?: string | null;
+  vencimento: number;
+  valorMensal: number;
+  status: string;
+  observacao?: string | null;
+  mensalidades?: Mensalidade[];
+}
+
+export interface Configuracao {
+  id?: number;
+  nomeEmpresa: string;
+  whatsapp?: string | null;
+  email?: string | null;
+  site?: string | null;
+  instagram?: string | null;
+  chavePix?: string | null;
+  tipoPix?: string | null;
+  favorecidoPix?: string | null;
+  corPrincipal?: string;
+  mensagemBoasVindas?: string | null;
+  mensagemCobranca?: string | null;
+  mensagemRenovacao?: string | null;
+  mensagemBloqueio?: string | null;
+  mensagemRecibo?: string | null;
+}
+
+export type CreateClienteDto = Omit<Cliente, 'id' | 'aplicativo' | 'mensalidades' | 'status'>;
+export type CreateAplicativoDto = Omit<Aplicativo, 'id' | '_count'>;
+
+export type StatusFinanceiro = 'TODOS' | 'PENDENTE' | 'REGULAR' | 'ATRASADO';

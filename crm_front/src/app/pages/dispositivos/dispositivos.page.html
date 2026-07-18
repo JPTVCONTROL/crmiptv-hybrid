@@ -1,0 +1,19 @@
+<app-page-header title="Dispositivos" subtitle="Aparelhos cadastrados nos clientes."></app-page-header>
+
+<div class="mb-4">
+  <input class="crm-input max-w-md" placeholder="Buscar dispositivo..." [(ngModel)]="busca" />
+</div>
+
+<app-loading *ngIf="loading"></app-loading>
+
+<div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div *ngFor="let c of filtrados" class="crm-card">
+    <h3 class="text-white font-medium">{{ c.nome }}</h3>
+    <p class="text-slate-400 text-sm mt-2"><span class="text-slate-500">Aparelho:</span> {{ c.aparelho || '—' }}</p>
+    <p class="text-slate-400 text-sm"><span class="text-slate-500">Modelo:</span> {{ c.modelo || '—' }}</p>
+    <p class="text-slate-400 text-sm"><span class="text-slate-500">MAC:</span> {{ c.macAddress || '—' }}</p>
+    <a [routerLink]="['/clientes', c.id]" class="text-violet-400 text-sm mt-3 inline-block hover:underline">Ver cliente</a>
+  </div>
+</div>
+
+<app-empty-state *ngIf="!loading && filtrados.length === 0" message="Nenhum dispositivo cadastrado."></app-empty-state>

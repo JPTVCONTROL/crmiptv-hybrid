@@ -1,0 +1,46 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="bg-slate-900">
+    <ion-title class="text-white">Novo Aplicativo</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-slate-950">
+  <div class="p-4 md:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
+      <input class="crm-input" [(ngModel)]="form.nome" />
+    </div>
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Descrição</label>
+      <textarea class="crm-input" [(ngModel)]="form.descricao"></textarea>
+    </div>
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">URL do Logo</label>
+      <input class="crm-input" [(ngModel)]="form.logo" />
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Android</label>
+        <input class="crm-input" [(ngModel)]="form.android" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Android TV</label>
+        <input class="crm-input" [(ngModel)]="form.androidTv" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">iOS</label>
+        <input class="crm-input" [(ngModel)]="form.ios" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Windows</label>
+        <input class="crm-input" [(ngModel)]="form.windows" />
+      </div>
+    </div>
+    <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
+      {{ salvando ? 'Salvando...' : 'Salvar Aplicativo' }}
+    </button>
+  </div>
+</ion-content>

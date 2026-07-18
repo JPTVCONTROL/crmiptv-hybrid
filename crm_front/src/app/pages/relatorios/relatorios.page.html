@@ -1,0 +1,29 @@
+<app-page-header title="Relatórios" subtitle="Resumo financeiro e operacional."></app-page-header>
+
+<app-loading *ngIf="loading"></app-loading>
+
+<div *ngIf="!loading" class="space-y-6">
+  <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
+    <app-stat-card title="Clientes Ativos" [value]="clientesAtivos.toString()" color="#A855F7"></app-stat-card>
+    <app-stat-card title="Total Recebido" [value]="totalRecebido" color="#22C55E"></app-stat-card>
+    <app-stat-card title="Total Pendente" [value]="totalPendente" color="#F59E0B"></app-stat-card>
+    <app-stat-card title="Total Atrasado" [value]="totalAtrasado" color="#EF4444"></app-stat-card>
+    <app-stat-card title="Cobranças Pendentes" [value]="qtdPendentes.toString()" color="#6366F1"></app-stat-card>
+    <app-stat-card title="Pagamentos no Mês" [value]="pagamentosMes.toString()" color="#14B8A6"></app-stat-card>
+  </div>
+
+  <div class="crm-card grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div>
+      <p class="text-slate-400 text-sm">Taxa de inadimplência</p>
+      <p class="text-white text-2xl font-bold">{{ taxaInadimplencia }}</p>
+    </div>
+    <div>
+      <p class="text-slate-400 text-sm">Ticket médio pendente</p>
+      <p class="text-white text-2xl font-bold">{{ ticketMedio }}</p>
+    </div>
+    <div>
+      <p class="text-slate-400 text-sm">Total de clientes</p>
+      <p class="text-white text-2xl font-bold">{{ clientes.length }}</p>
+    </div>
+  </div>
+</div>
