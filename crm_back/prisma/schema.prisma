@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  telefone     String
+  planoId      Int?
+  plano        Plano?   @relation(fields: [planoId], references: [id])
+  servidor     String?
+  usuario      String?
+  senha        String?
+  aplicativoId Int?
+  aplicativo   Aplicativo? @relation(fields: [aplicativoId], references: [id])
+  aparelho     String?
+  modelo       String?
+  macAddress   String?
+  ativadoEm    DateTime?
+  expiraEm     DateTime?
+  vencimento   Int
+  valorMensal  Float    @default(0)
+  status       String   @default("ATIVO")
+  observacao   String?
+  createdAt    DateTime @default(now())
+  mensalidades Mensalidade[]
+}
+
+model Mensalidade {
+  id         Int      @id @default(autoincrement())
+  clienteId  Int
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  referencia String
+  valor      Float
+  vencimento DateTime
+  status     String   @default("PENDENTE")
+  pagoEm     DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Aplicativo {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String?
+  logo      String?
+  android   String?
+  androidTv String?
+  ios       String?
+  windows   String?
+  mac       String?
+  tutorial  String?
+  mensagem  String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  clientes  Cliente[]
+}
+
+model Plano {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  valor        Float
+  diasValidade Int
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  clientes     Cliente[]
+}
+
+model Configuracao {
+  id                 Int      @id @default(autoincrement())
+  nomeEmpresa        String   @default("JPTV")
+  whatsapp           String?
+  email              String?
+  site               String?
+  instagram          String?
+  chavePix           String?
+  tipoPix            String?
+  favorecidoPix      String?
+  corPrincipal       String   @default("#7C3AED")
+  mensagemBoasVindas String?
+  mensagemCobranca   String?
+  mensagemRenovacao  String?
+  mensagemBloqueio   String?
+  mensagemRecibo     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

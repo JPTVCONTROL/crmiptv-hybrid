@@ -1,0 +1,143 @@
+# ==============================
+# CRM JPTV — monorepo (.gitignore)
+# crm_back  → Node + Express + Prisma
+# crm_front → Ionic + Angular + Capacitor
+# ==============================
+
+# --- Dependências ---
+node_modules/
+
+# --- Variáveis de ambiente e segredos ---
+.env
+.env.*
+!.env.example
+
+# --- Logs ---
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+erro.txt
+log.txt
+testem.log
+libpeerconnection.log
+
+# --- Backend (crm_back) ---
+crm_back/dist/
+crm_back/.env
+crm_back/.env.*
+
+# Prisma / SQLite (banco local de desenvolvimento)
+crm_back/prisma/*.db
+crm_back/prisma/*.db-journal
+crm_back/prisma/*.db-wal
+crm_back/prisma/*.db-shm
+
+# --- Frontend (crm_front) ---
+crm_front/www/
+crm_front/.angular/
+crm_front/.ionic/
+crm_front/dist/
+crm_front/out-tsc/
+crm_front/.sourcemaps/
+crm_front/.versions/
+crm_front/coverage/
+crm_front/tmp/
+
+# Capacitor / builds nativos
+crm_front/platforms/
+crm_front/plugins/
+crm_front/ios/App/Pods/
+crm_front/ios/DerivedData/
+crm_front/android/.gradle/
+crm_front/android/app/build/
+crm_front/android/build/
+crm_front/android/.idea/
+crm_front/android/local.properties
+crm_front/android/captures/
+
+# --- Build / cache (geral) ---
+dist/
+build/
+tmp/
+temp/
+.cache/
+.turbo/
+.parcel-cache/
+.vite/
+*.tsbuildinfo
+
+# --- Testes ---
+coverage/
+.nyc_output/
+karma-results/
+
+# --- IDEs e editores ---
+.idea/
+*.iml
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-project
+*.sublime-workspace
+.history/
+
+# VS Code (mantém configs úteis compartilhadas)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Cursor
+.cursor/
+
+# --- Sistema operacional ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Arquivos temporários / swap ---
+*~
+*.swp
+*.swo
+*.sw[mnpcod]
+*.tmp
+*.tmp.*
+.tmp/
+
+# --- Angular / Ionic (legado na raiz, se existir) ---
+/.ionic
+/www
+/platforms
+/plugins
+/.angular
+/.angular/cache
+/.nx
+/.nx/cache
+/out-tsc
+/bazel-out
+/.sourcemaps
+/.versions
+/connect.lock
+/typings
+/.sass-cache
+UserInterfaceState.xcuserstate
+
+# --- Outros ---
+*.local
+*.pem
+*.key
+*.p12
+*.pfx
