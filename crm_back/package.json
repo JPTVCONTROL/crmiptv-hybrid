@@ -15,6 +15,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:backup": "powershell -ExecutionPolicy Bypass -File scripts/backup-db.ps1",
+    "db:backup:install": "powershell -ExecutionPolicy Bypass -File scripts/schedule-backup-task.ps1",
+    "db:backup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-backup-task.ps1",
     "firewall:api": "powershell -ExecutionPolicy Bypass -File scripts/firewall-api.ps1",
     "test": "node --import tsx --test src/**/*.test.ts"
   },

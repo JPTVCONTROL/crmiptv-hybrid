@@ -96,7 +96,46 @@
     <a routerLink="/financeiro" class="crm-btn-ghost no-underline">Ir para Financeiro</a>
   </div>
 
-  <div class="crm-card overflow-x-auto">
+  <div class="md:hidden crm-mobile-list">
+    <article *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="crm-mobile-card">
+      <div class="crm-mobile-card-header">
+        <div class="min-w-0">
+          <a [routerLink]="['/clientes', m.clienteId]" class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate">
+            {{ m.cliente?.nome }}
+          </a>
+          <p class="crm-mobile-card-subtitle">{{ m.referencia }}</p>
+        </div>
+        <span [ngClass]="classesStatusVencimento(m)">{{ statusLabel(m) }}</span>
+      </div>
+
+      <div class="space-y-2">
+        <div class="crm-mobile-card-row">
+          <span class="crm-mobile-card-label">Valor</span>
+          <span class="crm-mobile-card-value font-medium">{{ fmtValor(m.valor) }}</span>
+        </div>
+        <div class="crm-mobile-card-row">
+          <span class="crm-mobile-card-label">Vencimento</span>
+          <span class="crm-mobile-card-value">{{ fmtData(m.vencimento) }}</span>
+        </div>
+      </div>
+
+      <div class="crm-mobile-card-actions">
+        <a
+          [routerLink]="['/clientes', m.clienteId]"
+          class="crm-btn-ghost flex-1 !py-1.5 !text-xs no-underline text-center"
+        >
+          Ver cliente
+        </a>
+        <a routerLink="/financeiro" class="crm-btn-primary flex-1 !py-1.5 !text-xs no-underline text-center">
+          Quitar
+        </a>
+      </div>
+    </article>
+
+    <app-empty-state *ngIf="mensalidadesFiltradas.length === 0"></app-empty-state>
+  </div>
+
+  <div class="crm-card overflow-x-auto hidden md:block">
     <table class="crm-table min-w-[640px]">
       <thead>
         <tr class="text-slate-400 border-b border-slate-800">

@@ -455,6 +455,9 @@ No Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**. Inst
 | `npm run cap:home` | `crm_front` | IP + build mobile + sync Android |
 | `npm run cap:sync` | `crm_front` | Build mobile + sync (sem alterar IP) |
 | `npm run firewall:api` | `crm_back` | Regra de firewall TCP 3001 (rede privada) |
+| `npm run db:backup` | `crm_back` | Cópia manual do SQLite |
+| `npm run db:backup:install` | `crm_back` | Agenda backup diário (admin) |
+| `npm run db:backup:remove` | `crm_back` | Remove agendamento |
 
 ### IP manual
 
@@ -531,13 +534,14 @@ Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layou
 | 6 | CSV | Importar modelo + exportar | Contagem bate; duplicados rejeitados |
 | 7 | Cobrança diária | Registrar contato | Seleção mantida após reload |
 | 8 | Aplicativo | Editar links de loja | Campos salvos; variáveis na mensagem WhatsApp |
-| 9 | Mobile | Clientes e Financeiro no celular | Cards legíveis; ações funcionam |
+| 9 | Mobile | Clientes, Financeiro, Vencimentos, Cobrança Diária e Detalhes do cliente | Cards legíveis; ações funcionam |
 | 10 | Sync | Editar plano/app em outra aba | Modal recarrega catálogo ao abrir |
 
 ### Backup recomendado (produção)
 
 - Baixe o SQLite periodicamente em **Configurações → Backup** (`GET /api/sistema/backup`).
-- **Desenvolvimento (Windows):** cópia local automática com `npm run db:backup` em `crm_back` (salva em `crm_back/backups/`).
+- **Desenvolvimento (Windows):** cópia local com `npm run db:backup` em `crm_back` (salva em `crm_back/backups/`).
+- **Backup automático diário:** PowerShell **como Administrador** → `npm run db:backup:install` (02:00, retém 30 dias). Remover: `npm run db:backup:remove`.
 - Antes de `db:push` ou alterações no schema, faça cópia de `crm_back/prisma/dev.db`.
 - Após mudança no schema: pare o backend, rode `npm run db:refresh` e reinicie.
 

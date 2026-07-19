@@ -152,7 +152,53 @@
 
   <div class="crm-card">
     <h2 class="text-white font-semibold mb-4">Mensalidades</h2>
-    <div class="overflow-x-auto">
+
+    <div class="md:hidden crm-mobile-list">
+      <article *ngFor="let m of cliente.mensalidades" class="crm-mobile-card">
+        <div class="crm-mobile-card-header">
+          <div class="min-w-0">
+            <h3 class="crm-mobile-card-title">{{ m.referencia }}</h3>
+            <p class="crm-mobile-card-subtitle">{{ fmtValor(m.valor) }}</p>
+          </div>
+          <span
+            class="text-xs font-semibold shrink-0"
+            [class.text-green-400]="m.status === 'PAGO'"
+            [class.text-amber-400]="m.status === 'PENDENTE'"
+          >
+            {{ m.status }}
+          </span>
+        </div>
+
+        <div class="crm-mobile-card-row">
+          <span class="crm-mobile-card-label">Vencimento</span>
+          <span class="crm-mobile-card-value">{{ fmtData(m.vencimento) }}</span>
+        </div>
+
+        <div class="crm-mobile-card-actions flex-wrap">
+          <app-whatsapp-cobranca-btn
+            *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas"
+            [telefone]="cliente.telefone"
+            [mensagem]="mensagemWhatsApp(m)"
+            [mensalidadeId]="m.id"
+          ></app-whatsapp-cobranca-btn>
+          <app-whatsapp-cobranca-btn
+            *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas && mensalidadeAtrasada(m)"
+            label="Bloqueio"
+            [telefone]="cliente.telefone"
+            [mensagem]="mensagemBloqueio(m)"
+            [mensalidadeId]="m.id"
+          ></app-whatsapp-cobranca-btn>
+          <app-whatsapp-cobranca-btn
+            *ngIf="m.status === 'PAGO'"
+            label="Recibo"
+            [telefone]="cliente.telefone"
+            [mensagem]="mensagemRecibo(m)"
+          ></app-whatsapp-cobranca-btn>
+        </div>
+      </article>
+    </div>
+
+    <div class="overflow-x-auto hidden md:block">
       <table class="crm-table min-w-[500px]">
         <thead>
           <tr class="text-slate-400 border-b border-slate-800">
