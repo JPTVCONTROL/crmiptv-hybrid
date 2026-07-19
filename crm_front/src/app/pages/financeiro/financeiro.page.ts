@@ -181,6 +181,15 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     return statusFinanceiro(m.vencimento, this.diasAntecedencia);
   }
 
+  classesStatusFinanceiro(m: Mensalidade): Record<string, boolean> {
+    const s = this.status(m);
+    return {
+      'crm-badge-atrasado': s === 'ATRASADO',
+      'crm-badge-pendente': s === 'PENDENTE',
+      'crm-badge-neutral': s === 'REGULAR',
+    };
+  }
+
   telefone(m: Mensalidade): string {
     return resolverTelefoneCliente(m, this.telefones);
   }

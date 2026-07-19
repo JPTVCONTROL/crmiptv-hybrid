@@ -116,7 +116,9 @@
           <td class="py-3 px-2 text-slate-300">{{ m.referencia }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
-          <td class="py-3 px-2 text-amber-400 text-xs">{{ statusLabel(m) }}</td>
+          <td class="py-3 px-2">
+            <span [ngClass]="classesStatusVencimento(m)">{{ statusLabel(m) }}</span>
+          </td>
           <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
             <a
               [routerLink]="['/clientes', m.clienteId]"

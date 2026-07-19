@@ -1,35 +1,51 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
+import { Subject } from 'rxjs';
 import { PlanoService } from '../../../core/services/plano.service';
 import { ClienteService } from '../../../core/services/cliente.service';
+import { DadosSyncService } from '../../../core/services/dados-sync.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Cliente, ClienteAplicativoResumo, Plano } from '../../../core/models';
 import { NovoClienteModalComponent } from '../../cliente/novo-cliente-modal/novo-cliente-modal.component';
+import { vincularSyncModal } from '../../../shared/utils/modal-sync.util';
 
 @Component({
   selector: 'app-plano-clientes-modal',
   templateUrl: './plano-clientes-modal.component.html',
 })
-export class PlanoClientesModalComponent implements OnInit {
+export class PlanoClientesModalComponent implements OnInit, OnDestroy {
   @Input() plano!: Plano;
 
   clientes: ClienteAplicativoResumo[] = [];
   loading = true;
   erro = '';
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private modalCtrl: ModalController,
     private planoService: PlanoService,
     private clienteService: ClienteService,
+    private sync: DadosSyncService,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
     this.carregarClientes();
+    vincularSyncModal(this.sync, this.destroy$, ['clientes'], () =>
+      this.carregarClientes(true)
+    );
   }
 
-  carregarClientes(): void {
-    this.loading = true;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  carregarClientes(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     this.erro = '';
     this.planoService.listarClientes(this.plano.id).subscribe({
       next: (data) => {

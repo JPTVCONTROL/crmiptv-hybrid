@@ -161,6 +161,20 @@ export class VencimentosPage implements OnInit, OnDestroy {
     return rotuloDiasCobrancaDiaria(calcularDias(m.vencimento)).toUpperCase();
   }
 
+  classesStatusVencimento(m: Mensalidade): Record<string, boolean> {
+    const dias = calcularDias(m.vencimento);
+    if (dias < 0) {
+      return { 'crm-badge-atrasado': true };
+    }
+    if (dias === 0) {
+      return { 'crm-badge-pendente': true };
+    }
+    if (dias <= this.diasAntecedencia) {
+      return { 'crm-badge-pendente': true };
+    }
+    return { 'crm-badge-neutral': true };
+  }
+
   definirFiltro(valor: FiltroVencimento): void {
     this.filtro = valor;
     this.pagina = 1;

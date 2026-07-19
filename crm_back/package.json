@@ -13,7 +13,8 @@
     "db:push": "prisma db push",
     "db:refresh": "npm run db:push && npm run db:generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

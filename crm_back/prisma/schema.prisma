@@ -37,6 +37,7 @@ model Cliente {
   vencimento   Int
   valorMensal  Float    @default(0)
   incluirCobrancas Boolean @default(true)
+  /// Status derivado de expiraEm na API — não atualizar manualmente no banco
   status       String   @default("ATIVO")
   observacao   String?
   createdAt    DateTime @default(now())

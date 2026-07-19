@@ -150,6 +150,7 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | `npm run db:migrate` | Cria migration versionada (recomendado em produção) |
 | `npm run db:seed` | Cria/atualiza admin e planos padrão JPTV |
 | `npm run db:studio` | Abre Prisma Studio (GUI do banco) |
+| `npm test` | Testes unitários dos helpers (datas, cobrança, importação) |
 
 ### Frontend (`crm_front`)
 
@@ -208,7 +209,21 @@ O token JWT expira conforme `JWT_EXPIRES_IN` no `.env` (padrão: `7d`).
 1. `valorMensal` é obrigatório e deve ser maior que zero (exceto importação CSV).
 2. Telefone não pode duplicar outro cliente (mesmos dígitos, com ou sem DDD).
 3. Se `expiraEm` for informado, cria automaticamente a primeira mensalidade `PENDENTE` com referência `MM/YYYY`.
-4. Campo `incluirCobrancas` (padrão `true`): quando `false`, o cliente fica fora da Cobrança Diária e de “Precisam de atenção”.
+4. Campo `incluirCobrancas` (padrão `true`): quando `false`, o cliente fica fora da Cobrança Diária, de “Precisam de atenção” e dos alertas de vencimento/cobrança no dashboard.
+
+### Sincronização entre telas (frontend)
+
+O `DadosSyncService` notifica páginas abertas após mutações:
+
+| Método | Domínios emitidos |
+|--------|-------------------|
+| `notificarClientes()` | clientes, mensalidades, dashboard, catalogos |
+| `notificarMensalidades()` | mensalidades, clientes, dashboard |
+| `notificarContatos()` | mensalidades, dashboard (registro de contato WhatsApp) |
+| `notificarConfiguracao()` | dashboard (após salvar configurações) |
+| `notificarCatalogos()` | catalogos |
+
+Modais de plano/aplicativo/dispositivo também escutam `clientes` enquanto abertos.
 
 ### Mensalidades (`/mensalidades`)
 
@@ -415,8 +430,17 @@ Exemplo em rede local: `apiUrl: 'http://192.168.1.100:3001/api'`
 4. Testar fluxos críticos manualmente após mudanças:
    - Cadastro de cliente com mensalidade automática
    - Pagamento em dia vs. atrasado
+   - Importação/exportação CSV de clientes
+   - Exclusão de cobrança (`incluirCobrancas: false`) e alertas do sino
+   - Cobrança diária (seleção mantida após registrar contato)
    - Envio de WhatsApp com template configurado
-5. Executar `npm run build` em ambos os projetos antes de publicar.
+5. Executar `npm run build` em ambos os projetos e `npm test` no backend antes de publicar.
+
+### Backup recomendado (produção)
+
+- Baixe o SQLite periodicamente em **Configurações → Backup** (`GET /api/sistema/backup`).
+- Antes de `db:push` ou alterações no schema, faça cópia de `crm_back/prisma/dev.db`.
+- Após mudança no schema: pare o backend, rode `npm run db:refresh` e reinicie.
 
 ---
 
@@ -472,7 +496,9 @@ Atualize `apiUrl` no frontend se a porta do backend mudar.
 
 Itens ainda não implementados ou parciais:
 
-- Migrations Prisma versionadas para deploy em produção
+- **PostgreSQL** em produção com migrations Prisma versionadas (`db:migrate`)
+- **Multi-usuário** com perfis/permissões (hoje apenas um admin JWT)
+- Campos de loja do `Aplicativo` (android/ios/windows/mac) ainda não expostos na UI
 - WhatsApp automático via API oficial da Meta (hoje só envio manual `wa.me`)
 - Cards mobile alternativos às tabelas em telas longas
 

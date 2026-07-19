@@ -106,6 +106,8 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
         return 'apps-outline';
       case 'CADASTRO_SEM_MAC':
         return 'hardware-chip-outline';
+      case 'CADASTRO_INCOMPLETO':
+        return 'document-text-outline';
       case 'ROTINA_PENDENTE':
         return 'send-outline';
       case 'VENCE_HOJE':
@@ -133,6 +135,7 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
       case 'CADASTRO_SEM_VALOR':
       case 'CADASTRO_SEM_EXPIRACAO':
       case 'CADASTRO_SEM_APLICATIVO':
+      case 'CADASTRO_INCOMPLETO':
         return 'alerta-amber';
       case 'ROTINA_PENDENTE':
         return 'alerta-violeta';

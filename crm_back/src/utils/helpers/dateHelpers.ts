@@ -34,20 +34,11 @@ export function parseExpiraEm(valor: string | Date): Date {
   return parseDataSomenteDia(valor);
 }
 
+/** @deprecated Preferir parseDataSomenteDia + addMonthsUtc para novos fluxos */
 export function normalizeToEndOfDay(date: Date): Date {
   const normalized = new Date(date);
   normalized.setHours(23, 59, 0, 0);
   return normalized;
-}
-
-export function stripTime(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-export function addOneMonth(date: Date): Date {
-  const result = new Date(date);
-  result.setMonth(result.getMonth() + 1);
-  return result;
 }
 
 export interface PlanoValidade {
@@ -69,14 +60,22 @@ export function mesesValidadePorPlano(plano: PlanoValidade): number {
   return Math.max(1, Math.round(plano.diasValidade / 30));
 }
 
-export function addMonths(date: Date, meses: number): Date {
-  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  result.setMonth(result.getMonth() + meses);
-  return result;
+export function addMonthsUtc(date: Date, meses: number): Date {
+  const base = parseDataSomenteDia(date);
+  return new Date(
+    Date.UTC(
+      base.getUTCFullYear(),
+      base.getUTCMonth() + meses,
+      base.getUTCDate(),
+      12,
+      0,
+      0
+    )
+  );
 }
 
 export function calcularExpiracao(base: Date, plano: PlanoValidade): Date {
-  return normalizeToEndOfDay(addMonths(stripTime(base), mesesValidadePorPlano(plano)));
+  return addMonthsUtc(base, mesesValidadePorPlano(plano));
 }
 
 export function calcularNovoVencimento(
@@ -84,23 +83,13 @@ export function calcularNovoVencimento(
   dataPagamento: Date,
   plano?: PlanoValidade | null
 ): Date {
-  if (plano) {
-    const pagamento = stripTime(dataPagamento);
-    const vencimento = stripTime(vencimentoAtual);
-    const base = pagamento <= vencimento ? vencimentoAtual : dataPagamento;
-    return calcularExpiracao(base, plano);
-  }
+  const pagamento = parseDataSomenteDia(dataPagamento);
+  const vencimento = parseDataSomenteDia(vencimentoAtual);
+  const meses = plano ? mesesValidadePorPlano(plano) : 1;
+  const base =
+    pagamento.getTime() <= vencimento.getTime()
+      ? vencimentoAtual
+      : dataPagamento;
 
-  const pagamento = stripTime(dataPagamento);
-  const vencimento = stripTime(vencimentoAtual);
-
-  let novoVencimento: Date;
-
-  if (pagamento <= vencimento) {
-    novoVencimento = addOneMonth(vencimentoAtual);
-  } else {
-    novoVencimento = addOneMonth(dataPagamento);
-  }
-
-  return normalizeToEndOfDay(novoVencimento);
+  return addMonthsUtc(base, meses);
 }

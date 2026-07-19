@@ -42,9 +42,19 @@ export function calcularExpiracaoPorPlano(
   base: Date,
   plano: Pick<Plano, 'nome' | 'diasValidade'>
 ): Date {
-  const result = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 12, 0, 0, 0);
-  result.setMonth(result.getMonth() + mesesValidadePlano(plano));
-  return result;
+  const dia = new Date(
+    Date.UTC(base.getFullYear(), base.getMonth(), base.getDate(), 12, 0, 0)
+  );
+  return new Date(
+    Date.UTC(
+      dia.getUTCFullYear(),
+      dia.getUTCMonth() + mesesValidadePlano(plano),
+      dia.getUTCDate(),
+      12,
+      0,
+      0
+    )
+  );
 }
 
 export function rotuloValidadePlano(plano: Plano): string {

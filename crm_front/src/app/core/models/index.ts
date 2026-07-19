@@ -128,6 +128,7 @@ export interface AlertaOperacional {
     | 'CADASTRO_SEM_CREDENCIAIS'
     | 'CADASTRO_SEM_APLICATIVO'
     | 'CADASTRO_SEM_MAC'
+    | 'CADASTRO_INCOMPLETO'
     | 'ROTINA_PENDENTE'
     | 'VENCE_HOJE'
     | 'SEM_TELEFONE'

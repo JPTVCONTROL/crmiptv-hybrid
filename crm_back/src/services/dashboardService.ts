@@ -28,6 +28,7 @@ export interface AlertaOperacional {
     | 'CADASTRO_SEM_CREDENCIAIS'
     | 'CADASTRO_SEM_APLICATIVO'
     | 'CADASTRO_SEM_MAC'
+    | 'CADASTRO_INCOMPLETO'
     | 'ROTINA_PENDENTE'
     | 'VENCE_HOJE'
     | 'SEM_TELEFONE'
@@ -403,6 +404,17 @@ export class DashboardService {
           'Apps que exigem MAC estão vinculados, mas o endereço não foi preenchido.',
         quantidade: pendenciasCadastro.semMac,
         rota: rotaPendenciaCadastro('SEM_MAC'),
+      });
+    }
+
+    if (clientesResumo.cadastrosIncompletos > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_INCOMPLETO',
+        titulo: 'Cadastros incompletos',
+        descricao:
+          'Clientes sem plano, valor, vencimento ou credenciais completas.',
+        quantidade: clientesResumo.cadastrosIncompletos,
+        rota: '/clientes?incompleto=1',
       });
     }
 

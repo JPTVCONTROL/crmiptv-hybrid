@@ -2,7 +2,7 @@ import { mensalidadeRepository } from '../repositories/mensalidadeRepository.js'
 import {
   calcularNovoVencimento,
   formatReferencia,
-  stripTime,
+  parseDataSomenteDia,
 } from '../utils/helpers/dateHelpers.js';
 
 type MensalidadeComCliente = NonNullable<
@@ -164,7 +164,9 @@ function parseDataPagamento(valor?: string): Date {
 }
 
 function validarDataPagamento(data: Date): void {
-  if (stripTime(data).getTime() > stripTime(new Date()).getTime()) {
+  const pago = parseDataSomenteDia(data).getTime();
+  const hoje = parseDataSomenteDia(new Date()).getTime();
+  if (pago > hoje) {
     throw new ValidationError('A data do pagamento não pode ser futura.');
   }
 }

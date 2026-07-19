@@ -146,10 +146,7 @@
           <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
           <td class="py-3 px-2">
-            <span class="text-xs px-2 py-1 rounded"
-              [class.bg-red-600]="status(m) === 'ATRASADO'"
-              [class.bg-amber-600]="status(m) === 'PENDENTE'"
-              [class.bg-slate-700]="status(m) === 'REGULAR'">{{ status(m) }}</span>
+            <span [ngClass]="classesStatusFinanceiro(m)">{{ status(m) }}</span>
           </td>
           <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
             <button class="crm-btn-ghost !py-1.5 !text-xs" (click)="editarCliente(m)">Editar</button>
