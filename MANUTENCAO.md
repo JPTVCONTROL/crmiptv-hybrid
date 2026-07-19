@@ -146,6 +146,7 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | `npm start` | Executa build de produção (`node dist/index.js`) |
 | `npm run db:generate` | Regenera Prisma Client após alterar schema |
 | `npm run db:push` | Sincroniza schema com SQLite (dev) |
+| `npm run db:refresh` | `db:push` + `db:generate` (após alterar schema) |
 | `npm run db:migrate` | Cria migration versionada (recomendado em produção) |
 | `npm run db:seed` | Cria/atualiza admin e planos padrão JPTV |
 | `npm run db:studio` | Abre Prisma Studio (GUI do banco) |
@@ -197,13 +198,17 @@ O token JWT expira conforme `JWT_EXPIRES_IN` no `.env` (padrão: `7d`).
 | GET | `/clientes` | Lista clientes com aplicativo e mensalidades |
 | GET | `/clientes/:id` | Detalhe do cliente |
 | POST | `/clientes` | Cria cliente |
+| POST | `/clientes/importar` | Importa CSV (`{ "csv": "..." }`) — nome + telefone |
 | PUT | `/clientes/:id` | Atualiza cliente |
+| PUT | `/clientes/:id/incluir-cobrancas` | `{ "incluirCobrancas": true \| false }` |
 | DELETE | `/clientes/:id` | Remove cliente (cascade nas mensalidades) |
 
 **Regras ao criar cliente:**
 
-1. `valorMensal` é obrigatório e deve ser maior que zero.
-2. Se `expiraEm` for informado, cria automaticamente a primeira mensalidade `PENDENTE` com referência `MM/YYYY`.
+1. `valorMensal` é obrigatório e deve ser maior que zero (exceto importação CSV).
+2. Telefone não pode duplicar outro cliente (mesmos dígitos, com ou sem DDD).
+3. Se `expiraEm` for informado, cria automaticamente a primeira mensalidade `PENDENTE` com referência `MM/YYYY`.
+4. Campo `incluirCobrancas` (padrão `true`): quando `false`, o cliente fica fora da Cobrança Diária e de “Precisam de atenção”.
 
 ### Mensalidades (`/mensalidades`)
 

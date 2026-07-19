@@ -17,13 +17,10 @@ export class NovoAplicativoModalComponent implements OnInit {
     nome: '',
     descricao: '',
     logo: '',
-    android: '',
-    androidTv: '',
-    ios: '',
-    windows: '',
-    mac: '',
-    tutorial: '',
     mensagem: '',
+    requerMac: false,
+    requerDeviceKey: false,
+    requerCodigo: false,
     ativo: true,
   };
 
@@ -39,13 +36,10 @@ export class NovoAplicativoModalComponent implements OnInit {
         nome: this.aplicativo.nome,
         descricao: this.aplicativo.descricao ?? '',
         logo: this.aplicativo.logo ?? '',
-        android: this.aplicativo.android ?? '',
-        androidTv: this.aplicativo.androidTv ?? '',
-        ios: this.aplicativo.ios ?? '',
-        windows: this.aplicativo.windows ?? '',
-        mac: this.aplicativo.mac ?? '',
-        tutorial: this.aplicativo.tutorial ?? '',
         mensagem: this.aplicativo.mensagem ?? '',
+        requerMac: this.aplicativo.requerMac,
+        requerDeviceKey: this.aplicativo.requerDeviceKey,
+        requerCodigo: this.aplicativo.requerCodigo,
         ativo: this.aplicativo.ativo,
       };
     }

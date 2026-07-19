@@ -164,6 +164,22 @@
       <label class="block text-slate-300 mb-2 text-sm">Observação</label>
       <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.observacao"></textarea>
     </div>
+
+    <div class="crm-card !p-4 border border-slate-800">
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900"
+          [(ngModel)]="form.incluirCobrancas"
+        />
+        <span>
+          <span class="block text-slate-200 text-sm font-medium">Incluir nas cobranças</span>
+          <span class="block text-slate-500 text-xs mt-1">
+            Desmarque para não aparecer na Cobrança Diária e rotinas automáticas de WhatsApp.
+          </span>
+        </span>
+      </label>
+    </div>
     </div>
 
     <div class="cliente-modal-footer">

@@ -36,6 +36,7 @@ model Cliente {
   expiraEm     DateTime?
   vencimento   Int
   valorMensal  Float    @default(0)
+  incluirCobrancas Boolean @default(true)
   status       String   @default("ATIVO")
   observacao   String?
   createdAt    DateTime @default(now())
@@ -67,6 +68,9 @@ model Aplicativo {
   mac       String?
   tutorial  String?
   mensagem  String?
+  requerMac       Boolean  @default(false)
+  requerDeviceKey Boolean  @default(false)
+  requerCodigo    Boolean  @default(false)
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   clientes  Cliente[]

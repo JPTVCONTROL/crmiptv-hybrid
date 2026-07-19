@@ -18,10 +18,6 @@ import {
   resolverTelefoneCliente,
 } from '../../shared/utils/formatters';
 import {
-  cobrarMensalidadesEmLote,
-  filtrarMensalidadesCobranca,
-  montarMensagemBloqueioMensalidade,
-  montarMensagemCobrancaMensalidade,
   nomeClienteMensalidade,
   trackByMensalidadeId,
 } from '../../shared/utils/cobranca-lote';
@@ -180,23 +176,6 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     return resolverTelefoneCliente(m, this.telefones);
   }
 
-  mensagem(m: Mensalidade): string {
-    return montarMensagemCobrancaMensalidade(
-      m,
-      this.configuracao,
-      this.nomesClientes,
-      this.status(m) === 'ATRASADO'
-    );
-  }
-
-  mensagemBloqueio(m: Mensalidade): string {
-    return montarMensagemBloqueioMensalidade(
-      m,
-      this.configuracao,
-      this.nomesClientes
-    );
-  }
-
   async editarCliente(m: Mensalidade): Promise<void> {
     const cliente = this.clientesPorId.get(m.clienteId);
     if (!cliente) {
@@ -269,10 +248,6 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
   get qtdSelecionados(): number {
     return this.selecionados.size;
-  }
-
-  get qtdAtrasadosFiltrados(): number {
-    return this.filtradas.filter((m) => this.status(m) === 'ATRASADO').length;
   }
 
   estaSelecionado(m: Mensalidade): boolean {
@@ -426,25 +401,6 @@ export class FinanceiroPage implements OnInit, OnDestroy {
       'bg-green-500/25': filtro === 'REGULAR',
       'bg-red-500/25': filtro === 'ATRASADO',
     };
-  }
-
-  async cobrarSelecionados(): Promise<void> {
-    await cobrarMensalidadesEmLote(
-      this.mensalidades,
-      this.selecionados,
-      this.telefones,
-      this.configuracao,
-      this.nomesClientes
-    );
-  }
-
-  async cobrarAtrasados(): Promise<void> {
-    const atrasados = filtrarMensalidadesCobranca(
-      this.filtradas,
-      'ATRASADO'
-    );
-    this.selecionados = new Set(atrasados.map((m) => m.id));
-    await this.cobrarSelecionados();
   }
 
   fmtValor = formatarValor;

@@ -1,9 +1,61 @@
 <div class="space-y-4 mb-6">
   <app-page-header title="Clientes" subtitle="Gerencie todos os clientes IPTV.">
-    <button type="button" class="crm-btn-primary shrink-0" (click)="novoCliente()">
-      + Novo Cliente
-    </button>
+    <div class="flex flex-wrap gap-2 shrink-0">
+      <button
+        type="button"
+        class="crm-btn-ghost shrink-0"
+        [disabled]="loading || clientesFiltrados.length === 0"
+        (click)="exportarClientes()"
+      >
+        Exportar CSV
+      </button>
+      <button
+        type="button"
+        class="crm-btn-ghost shrink-0"
+        [disabled]="importando"
+        (click)="baixarModeloCsv()"
+      >
+        Modelo CSV
+      </button>
+      <button
+        type="button"
+        class="crm-btn-ghost shrink-0"
+        [disabled]="importando"
+        (click)="abrirImportacaoCsv(csvInput)"
+      >
+        {{ importando ? 'Importando...' : 'Importar CSV' }}
+      </button>
+      <input
+        #csvInput
+        type="file"
+        accept=".csv,.txt,text/csv"
+        class="hidden"
+        (change)="onArquivoCsvSelecionado($event)"
+      />
+      <button type="button" class="crm-btn-primary shrink-0" (click)="novoCliente()">
+        + Novo Cliente
+      </button>
+    </div>
   </app-page-header>
+
+  <div
+    *ngIf="filtroCadastro"
+    class="crm-card border border-amber-500/20 bg-amber-500/5 mb-4"
+  >
+    <p class="text-slate-300 text-sm">
+      Exibindo clientes com pendência:
+      <span class="text-white font-medium">{{ rotuloFiltroCadastroAtivo }}</span>
+      (ativos e atrasados).
+    </p>
+    <p class="text-slate-500 text-xs mt-2">
+      As etiquetas em destaque na coluna <span class="text-slate-300">Pendências</span>
+      indicam exatamente o que falta. Clique em <span class="text-slate-300">Editar</span>
+      para corrigir.
+    </p>
+    <button type="button" class="crm-btn-ghost !py-1.5 !text-xs mt-3" (click)="limparFiltros()">
+      Limpar filtro de cadastro
+    </button>
+  </div>
 
   <div class="crm-card !p-4 md:!p-5 space-y-4">
     <div class="relative">
@@ -65,6 +117,39 @@
       </button>
     </div>
 
+    <div class="flex flex-wrap gap-2">
+      <button
+        *ngFor="let op of opcoesFiltroCobranca"
+        type="button"
+        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+        [ngClass]="classesChipCobranca(op.valor)"
+        (click)="definirFiltroCobranca(op.valor)"
+      >
+        <span>{{ op.rotulo }}</span>
+        <span class="min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-xs font-semibold tabular-nums bg-slate-700/80">
+          {{ contagemCobranca(op.valor) }}
+        </span>
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+        [ngClass]="{
+          'border-amber-500': filtroCadastroIncompleto,
+          'bg-amber-600/15': filtroCadastroIncompleto,
+          'text-amber-200': filtroCadastroIncompleto,
+          'border-slate-700': !filtroCadastroIncompleto,
+          'bg-slate-800/50': !filtroCadastroIncompleto,
+          'text-slate-400': !filtroCadastroIncompleto
+        }"
+        (click)="alternarFiltroCadastroIncompleto()"
+      >
+        <span>Cadastro incompleto</span>
+        <span class="min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-xs font-semibold tabular-nums bg-slate-700/80">
+          {{ contagemCadastroIncompleto() }}
+        </span>
+      </button>
+    </div>
+
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-slate-800/80"
     >
@@ -92,7 +177,7 @@
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading" class="crm-card overflow-x-auto">
-  <table class="w-full text-sm min-w-[760px]">
+  <table class="w-full text-sm min-w-[920px]">
     <thead>
       <tr class="text-slate-400 border-b border-slate-800">
         <th class="text-left py-3 px-2">Nome</th>
@@ -100,12 +185,33 @@
         <th class="text-left py-3 px-2 hidden md:table-cell">Aplicativo</th>
         <th class="text-left py-3 px-2">Vencimento</th>
         <th class="text-left py-3 px-2">Status</th>
+        <th class="text-left py-3 px-2 min-w-[220px]">Pendências</th>
         <th class="text-right py-3 px-2">Ações</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let c of clientesPaginados" class="border-b border-slate-800/50 hover:bg-slate-800/30">
-        <td class="py-3 px-2 text-white">{{ c.nome }}</td>
+      <tr
+        *ngFor="let c of clientesPaginados"
+        class="border-b border-slate-800/50 hover:bg-slate-800/30"
+        [ngClass]="{
+          'bg-amber-500/5': filtroCadastro && pendenciasCliente(c).length > 0
+        }"
+      >
+        <td class="py-3 px-2 text-white">
+          <div class="font-medium">{{ c.nome }}</div>
+          <span
+            *ngIf="c.incluirCobrancas === false"
+            class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200"
+          >
+            Sem cobrança
+          </span>
+          <p
+            *ngIf="pendenciasCliente(c).length > 0 && filtroCadastro"
+            class="text-amber-300/90 text-[11px] mt-1 md:hidden"
+          >
+            Falta: {{ rotuloPendenciaCurto(filtroCadastro!) }}
+          </p>
+        </td>
         <td class="py-3 px-2 text-slate-300">{{ c.telefone }}</td>
         <td class="py-3 px-2 text-slate-300 hidden md:table-cell">{{ c.aplicativo?.nome ?? '—' }}</td>
         <td class="py-3 px-2 text-slate-300 whitespace-nowrap">
@@ -121,15 +227,45 @@
             {{ status(c) }}
           </span>
         </td>
-        <td class="py-3 px-2 text-right space-x-1">
+        <td class="py-3 px-2 align-top">
+          <div *ngIf="pendenciasCliente(c).length > 0" class="flex flex-wrap gap-1.5 max-w-[320px]">
+            <span
+              *ngFor="let pendencia of pendenciasCliente(c)"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border"
+              [ngClass]="classesChipPendencia(pendencia)"
+              [title="rotuloPendencia(pendencia)"
+            >
+              <ion-icon [name]="iconePendencia(pendencia)" class="text-xs shrink-0"></ion-icon>
+              {{ rotuloPendenciaCurto(pendencia) }}
+            </span>
+          </div>
+          <span *ngIf="pendenciasCliente(c).length === 0" class="text-slate-600 text-xs">—</span>
+        </td>
+        <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
           <button class="crm-btn-ghost" (click)="verDetalhes(c.id)">Ver</button>
-          <button class="crm-btn-ghost" (click)="editar(c)">Editar</button>
+          <button
+            class="crm-btn-primary !py-1.5 !text-xs"
+            *ngIf="pendenciasCliente(c).length > 0; else editarPadrao"
+            (click)="editar(c)"
+          >
+            Corrigir
+          </button>
+          <ng-template #editarPadrao>
+            <button class="crm-btn-ghost" (click)="editar(c)">Editar</button>
+          </ng-template>
           <button class="crm-btn-danger" (click)="excluir(c)">Excluir</button>
         </td>
       </tr>
     </tbody>
   </table>
-  <app-empty-state *ngIf="clientesFiltrados.length === 0"></app-empty-state>
+  <app-empty-state
+    *ngIf="clientesFiltrados.length === 0"
+    [message]="
+      filtroCadastro
+        ? 'Nenhum cliente ativo/atrasado com esta pendência.'
+        : 'Nenhum cliente encontrado.'
+    "
+  ></app-empty-state>
 </div>
 
 <div *ngIf="!loading && clientesFiltrados.length > porPagina" class="flex gap-2 justify-center mt-4">

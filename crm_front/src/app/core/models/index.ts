@@ -10,13 +10,10 @@ export interface Aplicativo {
   nome: string;
   descricao?: string | null;
   logo?: string | null;
-  android?: string | null;
-  androidTv?: string | null;
-  ios?: string | null;
-  windows?: string | null;
-  mac?: string | null;
-  tutorial?: string | null;
   mensagem?: string | null;
+  requerMac: boolean;
+  requerDeviceKey: boolean;
+  requerCodigo: boolean;
   ativo: boolean;
   _count?: { clientes: number };
 }
@@ -84,9 +81,16 @@ export interface Cliente {
   expiraEm?: string | null;
   vencimento: number;
   valorMensal: number;
+  incluirCobrancas?: boolean;
   status: string;
   observacao?: string | null;
   mensalidades?: Mensalidade[];
+}
+
+export interface ImportacaoClientesResultado {
+  importados: number;
+  ignorados: number;
+  erros: Array<{ linha: number; motivo: string }>;
 }
 
 export interface Configuracao {
@@ -117,6 +121,13 @@ export type StatusFinanceiro = 'TODOS' | 'PENDENTE' | 'REGULAR' | 'ATRASADO';
 
 export interface AlertaOperacional {
   tipo:
+    | 'CADASTRO_SEM_TELEFONE'
+    | 'CADASTRO_SEM_PLANO'
+    | 'CADASTRO_SEM_VALOR'
+    | 'CADASTRO_SEM_EXPIRACAO'
+    | 'CADASTRO_SEM_CREDENCIAIS'
+    | 'CADASTRO_SEM_APLICATIVO'
+    | 'CADASTRO_SEM_MAC'
     | 'ROTINA_PENDENTE'
     | 'VENCE_HOJE'
     | 'SEM_TELEFONE'
@@ -135,6 +146,7 @@ export interface DashboardResumo {
     ativos: number;
     atrasados: number;
     inativos: number;
+    cadastrosIncompletos: number;
   };
   financeiro: {
     recebidoMes: number;

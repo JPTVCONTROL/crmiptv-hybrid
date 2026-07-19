@@ -1,7 +1,38 @@
 export function formatReferencia(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = date.getUTCFullYear();
   return `${month}/${year}`;
+}
+
+export function parseDataSomenteDia(valor: string | Date): Date {
+  if (valor instanceof Date) {
+    return new Date(
+      Date.UTC(valor.getUTCFullYear(), valor.getUTCMonth(), valor.getUTCDate(), 12, 0, 0)
+    );
+  }
+
+  const match = valor.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return new Date(
+      Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0)
+    );
+  }
+
+  const parsed = new Date(valor);
+  return new Date(
+    Date.UTC(
+      parsed.getUTCFullYear(),
+      parsed.getUTCMonth(),
+      parsed.getUTCDate(),
+      12,
+      0,
+      0
+    )
+  );
+}
+
+export function parseExpiraEm(valor: string | Date): Date {
+  return parseDataSomenteDia(valor);
 }
 
 export function normalizeToEndOfDay(date: Date): Date {

@@ -1,3 +1,4 @@
+import { formatarData } from './formatters';
 import { notificar } from './toast-notifier';
 import { confirmarUsuario } from './confirm-notifier';
 import {
@@ -39,7 +40,7 @@ function formatarValorMsg(valor: number): string {
 }
 
 function formatarDataMsg(data: string): string {
-  return new Date(data).toLocaleDateString('pt-BR');
+  return formatarData(data);
 }
 
 function montarLinhaPix(dados: DadosMensagemWhatsApp): string {

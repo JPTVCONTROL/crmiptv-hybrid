@@ -1,6 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, forkJoin } from 'rxjs';
+import { AplicativoService } from '../../core/services/aplicativo.service';
 import { ClienteService } from '../../core/services/cliente.service';
+import { DispositivoService } from '../../core/services/dispositivo.service';
+import { PlanoService } from '../../core/services/plano.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
@@ -12,7 +15,13 @@ import {
   formatarValor,
   statusCliente,
 } from '../../shared/utils/formatters';
-import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
+import {
+  DadoCatalogoDistribuicao,
+  montarDistribuicaoAplicativos,
+  montarDistribuicaoDispositivos,
+  montarDistribuicaoPlanos,
+  totalDistribuicao,
+} from '../../shared/utils/relatorio-catalogos';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 interface PagamentoRelatorio {
@@ -50,16 +59,21 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   clientesAtrasados = 0;
   clientesInativos = 0;
   recebidoPeriodo = '';
+  recebidoMesAnterior = '';
+  variacaoRecebido = '';
+  variacaoRecebidoPositiva = true;
   qtdPagamentosPeriodo = 0;
   totalPendente = '';
   totalAtrasado = '';
   qtdPendentes = 0;
+  qtdAtrasadas = 0;
   taxaInadimplencia = '0%';
   ticketMedio = '';
-  faturamentoMensal: DadoFaturamento[] = [];
   ultimosPagamentos: PagamentoRelatorio[] = [];
-  cobrancasAtrasadas: CobrancaAtrasadaRelatorio[] = [];
   todasCobrancasAtrasadas: CobrancaAtrasadaRelatorio[] = [];
+  distribuicaoPlanos: DadoCatalogoDistribuicao[] = [];
+  distribuicaoAplicativos: DadoCatalogoDistribuicao[] = [];
+  distribuicaoDispositivos: DadoCatalogoDistribuicao[] = [];
 
   fmtData = formatarData;
   fmtValor = formatarValor;
@@ -67,6 +81,9 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   constructor(
     private clienteService: ClienteService,
     private mensalidadeService: MensalidadeService,
+    private aplicativoService: AplicativoService,
+    private planoService: PlanoService,
+    private dispositivoService: DispositivoService,
     private toast: ToastService,
     private sync: DadosSyncService
   ) {}
@@ -76,7 +93,7 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'dashboard'],
+      ['clientes', 'mensalidades', 'dashboard', 'catalogos'],
       () => this.carregar(true)
     );
   }
@@ -100,15 +117,39 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     forkJoin([
       this.clienteService.listar(),
       this.mensalidadeService.listar(),
+      this.aplicativoService.listar(),
+      this.planoService.listar(),
+      this.dispositivoService.listar(),
     ]).subscribe({
-      next: ([clientes, mensalidades]) => {
+      next: ([clientes, mensalidades, aplicativos, planos, dispositivos]) => {
         this.clientes = clientes;
         this.mensalidades = mensalidades;
+        this.distribuicaoPlanos = montarDistribuicaoPlanos(clientes, planos);
+        this.distribuicaoAplicativos = montarDistribuicaoAplicativos(
+          clientes,
+          aplicativos
+        );
+        this.distribuicaoDispositivos = montarDistribuicaoDispositivos(
+          clientes,
+          dispositivos
+        );
         this.calcular();
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
+  }
+
+  get totalClientesPlanos(): number {
+    return totalDistribuicao(this.distribuicaoPlanos);
+  }
+
+  get totalClientesAplicativos(): number {
+    return totalDistribuicao(this.distribuicaoAplicativos);
+  }
+
+  get totalTelasDispositivos(): number {
+    return totalDistribuicao(this.distribuicaoDispositivos);
   }
 
   get rotuloPeriodo(): string {
@@ -200,24 +241,36 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     const pagosPeriodo = this.mensalidades.filter(
       (m) => m.status === 'PAGO' && this.estaNoPeriodo(m.pagoEm)
     );
+    const pagosMesAnterior = this.mensalidades.filter(
+      (m) => m.status === 'PAGO' && this.estaNoPeriodoAnterior(m.pagoEm)
+    );
 
     const pendenteValor = pendentes.reduce((t, m) => t + m.valor, 0);
-    const atrasadoValor = pendentes
-      .filter((m) => calcularDias(m.vencimento) < 0)
-      .reduce((t, m) => t + m.valor, 0);
+    const atrasadas = pendentes.filter((m) => calcularDias(m.vencimento) < 0);
+    const atrasadoValor = atrasadas.reduce((t, m) => t + m.valor, 0);
     const recebidoValor = pagosPeriodo.reduce((t, m) => t + m.valor, 0);
+    const recebidoAnteriorValor = pagosMesAnterior.reduce((t, m) => t + m.valor, 0);
 
     this.totalPendente = formatarValor(pendenteValor);
     this.totalAtrasado = formatarValor(atrasadoValor);
     this.recebidoPeriodo = formatarValor(recebidoValor);
+    this.recebidoMesAnterior = formatarValor(recebidoAnteriorValor);
     this.qtdPagamentosPeriodo = pagosPeriodo.length;
     this.qtdPendentes = pendentes.length;
+    this.qtdAtrasadas = atrasadas.length;
 
-    const pendentesAtrasadas = pendentes.filter(
-      (m) => calcularDias(m.vencimento) < 0
-    ).length;
+    if (recebidoAnteriorValor <= 0) {
+      this.variacaoRecebido = recebidoValor > 0 ? '+100%' : '0%';
+      this.variacaoRecebidoPositiva = recebidoValor >= recebidoAnteriorValor;
+    } else {
+      const variacao =
+        ((recebidoValor - recebidoAnteriorValor) / recebidoAnteriorValor) * 100;
+      this.variacaoRecebidoPositiva = variacao >= 0;
+      this.variacaoRecebido = `${variacao >= 0 ? '+' : ''}${variacao.toFixed(1)}%`;
+    }
+
     const taxa = pendentes.length
-      ? ((pendentesAtrasadas / pendentes.length) * 100).toFixed(1)
+      ? ((atrasadas.length / pendentes.length) * 100).toFixed(1)
       : '0';
     this.taxaInadimplencia = `${taxa}%`;
 
@@ -225,10 +278,8 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       ? formatarValor(pendenteValor / pendentes.length)
       : formatarValor(0);
 
-    this.faturamentoMensal = this.calcularFaturamentoMensal();
     this.ultimosPagamentos = this.montarPagamentosPeriodo(pagosPeriodo);
-    this.todasCobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes, false);
-    this.cobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes, true);
+    this.todasCobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes);
   }
 
   private estaNoPeriodo(dataIso?: string | null): boolean {
@@ -240,45 +291,17 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     return data.getFullYear() === ano && data.getMonth() + 1 === mes;
   }
 
-  private calcularFaturamentoMensal(): DadoFaturamento[] {
-    const meses = [
-      'Jan',
-      'Fev',
-      'Mar',
-      'Abr',
-      'Mai',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Set',
-      'Out',
-      'Nov',
-      'Dez',
-    ];
-    const hoje = new Date();
-    const resultado: DadoFaturamento[] = [];
+  private estaNoPeriodoAnterior(dataIso?: string | null): boolean {
+    if (!dataIso) return false;
 
-    for (let i = 5; i >= 0; i--) {
-      const referencia = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const rotulo = `${meses[referencia.getMonth()]}/${String(referencia.getFullYear()).slice(-2)}`;
+    const [ano, mes] = this.periodo.split('-').map(Number);
+    const referencia = new Date(ano, mes - 2, 1);
+    const data = new Date(dataIso);
 
-      let total = 0;
-      for (const mensalidade of this.mensalidades) {
-        if (mensalidade.status !== 'PAGO' || !mensalidade.pagoEm) continue;
-
-        const pago = new Date(mensalidade.pagoEm);
-        if (
-          pago.getMonth() === referencia.getMonth() &&
-          pago.getFullYear() === referencia.getFullYear()
-        ) {
-          total += mensalidade.valor;
-        }
-      }
-
-      resultado.push({ mes: rotulo, total });
-    }
-
-    return resultado;
+    return (
+      data.getFullYear() === referencia.getFullYear() &&
+      data.getMonth() === referencia.getMonth()
+    );
   }
 
   private montarPagamentosPeriodo(pagos: Mensalidade[]): PagamentoRelatorio[] {
@@ -297,10 +320,9 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   }
 
   private montarCobrancasAtrasadas(
-    pendentes: Mensalidade[],
-    limitar = true
+    pendentes: Mensalidade[]
   ): CobrancaAtrasadaRelatorio[] {
-    const lista = pendentes
+    return pendentes
       .filter((m) => calcularDias(m.vencimento) < 0)
       .map((m) => ({
         id: m.id,
@@ -312,7 +334,5 @@ export class RelatoriosPage implements OnInit, OnDestroy {
         diasAtraso: Math.abs(calcularDias(m.vencimento)),
       }))
       .sort((a, b) => b.diasAtraso - a.diasAtraso);
-
-    return limitar ? lista.slice(0, 8) : lista;
   }
 }

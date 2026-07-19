@@ -1,8 +1,18 @@
 import { clienteRepository } from '../repositories/clienteRepository.js';
 import { mensalidadeRepository } from '../repositories/mensalidadeRepository.js';
 import type { CreateClienteDto, UpdateClienteDto } from '../models/index.js';
-import { formatReferencia } from '../utils/helpers/dateHelpers.js';
+import { formatReferencia, parseExpiraEm } from '../utils/helpers/dateHelpers.js';
 import { aplicarStatusCliente } from '../utils/helpers/clienteStatus.js';
+import {
+  normalizarTelefoneComparacao,
+  parseCsvClientes,
+} from '../utils/helpers/clienteImportHelpers.js';
+
+export interface ImportacaoClientesResultado {
+  importados: number;
+  ignorados: number;
+  erros: Array<{ linha: number; motivo: string }>;
+}
 
 export class ClienteService {
   async listar() {
@@ -23,10 +33,12 @@ export class ClienteService {
       throw new ValidationError('Informe o valor mensal do cliente.');
     }
 
+    await this.assertTelefoneUnico(dados.telefone);
+
     const cliente = await clienteRepository.create(dados);
 
     if (dados.expiraEm) {
-      const dataVencimento = new Date(dados.expiraEm);
+      const dataVencimento = parseExpiraEm(dados.expiraEm);
       await mensalidadeRepository.create({
         clienteId: cliente.id,
         referencia: formatReferencia(dataVencimento),
@@ -41,6 +53,11 @@ export class ClienteService {
 
   async atualizar(id: number, dados: UpdateClienteDto) {
     await this.buscarPorId(id);
+
+    if (dados.telefone !== undefined) {
+      await this.assertTelefoneUnico(dados.telefone, id);
+    }
+
     const cliente = await clienteRepository.update(id, dados);
 
     await this.sincronizarMensalidadesPendentes(id, dados, cliente);
@@ -57,7 +74,7 @@ export class ClienteService {
     const valorInformado = dados.valorMensal !== undefined;
 
     if (expiraInformado) {
-      const vencimento = new Date(dados.expiraEm!);
+      const vencimento = parseExpiraEm(dados.expiraEm!);
       const valor = Number(dados.valorMensal ?? cliente.valorMensal);
 
       const resultado = await mensalidadeRepository.sincronizarPendentesDoCliente(
@@ -93,6 +110,85 @@ export class ClienteService {
     await clienteRepository.delete(id);
   }
 
+  async definirInclusaoCobrancas(id: number, incluirCobrancas: boolean) {
+    await this.buscarPorId(id);
+    const cliente = await clienteRepository.updateIncluirCobrancas(
+      id,
+      incluirCobrancas
+    );
+    return aplicarStatusCliente(cliente);
+  }
+
+  async importarCsv(conteudo: string): Promise<ImportacaoClientesResultado> {
+    if (!conteudo?.trim()) {
+      throw new ValidationError('Envie um arquivo CSV com nome e telefone.');
+    }
+
+    const parseado = parseCsvClientes(conteudo);
+
+    if (parseado.linhas.length === 0 && parseado.erros.length === 0) {
+      throw new ValidationError('Nenhuma linha válida encontrada no arquivo.');
+    }
+
+    const clientesExistentes = await clienteRepository.findAll();
+    const telefonesExistentes = new Set(
+      clientesExistentes.map((cliente) =>
+        normalizarTelefoneComparacao(cliente.telefone)
+      )
+    );
+    const telefonesImportados = new Set<string>();
+
+    let importados = 0;
+    let ignorados = 0;
+    const erros = [...parseado.erros];
+
+    for (const linha of parseado.linhas) {
+      const chave = normalizarTelefoneComparacao(linha.telefone);
+
+      if (telefonesExistentes.has(chave) || telefonesImportados.has(chave)) {
+        ignorados += 1;
+        continue;
+      }
+
+      await clienteRepository.create({
+        nome: linha.nome,
+        telefone: linha.telefone,
+        vencimento: 1,
+        valorMensal: 0,
+      });
+
+      telefonesImportados.add(chave);
+      importados += 1;
+    }
+
+    return { importados, ignorados, erros };
+  }
+
+  private async assertTelefoneUnico(
+    telefone: string,
+    ignorarClienteId?: number
+  ): Promise<void> {
+    const chave = normalizarTelefoneComparacao(telefone);
+    if (!chave) {
+      return;
+    }
+
+    const clientes = await clienteRepository.findAll();
+    const duplicado = clientes.find((cliente) => {
+      if (ignorarClienteId && cliente.id === ignorarClienteId) {
+        return false;
+      }
+
+      return normalizarTelefoneComparacao(cliente.telefone) === chave;
+    });
+
+    if (duplicado) {
+      throw new ValidationError(
+        `Telefone já cadastrado para ${duplicado.nome}.`
+      );
+    }
+  }
+
   async sincronizarCobrancasPendentes() {
     const clientes = await clienteRepository.findAll();
     let clientesAlinhados = 0;
@@ -103,7 +199,7 @@ export class ClienteService {
         continue;
       }
 
-      const vencimento = new Date(cliente.expiraEm);
+      const vencimento = parseExpiraEm(cliente.expiraEm);
       const valor = Number(cliente.valorMensal);
       const resultado = await mensalidadeRepository.sincronizarPendentesDoCliente(
         cliente.id,

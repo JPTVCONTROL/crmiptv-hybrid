@@ -1,7 +1,16 @@
 <app-page-header
   title="Vencimentos"
-  subtitle="Consulta de mensalidades pendentes por data."
-></app-page-header>
+  subtitle="Consulta de mensalidades pendentes por data — somente leitura."
+>
+  <button
+    type="button"
+    class="crm-btn-ghost"
+    [disabled]="mensalidadesFiltradas.length === 0"
+    (click)="exportarCsv()"
+  >
+    Exportar CSV
+  </button>
+</app-page-header>
 
 <app-loading *ngIf="loading"></app-loading>
 
@@ -108,20 +117,19 @@
           <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
           <td class="py-3 px-2 text-amber-400 text-xs">{{ statusLabel(m) }}</td>
-          <td class="py-3 px-2 text-right space-x-1">
-            <app-whatsapp-cobranca-btn
-              [telefone]="telefone(m)"
-              [mensagem]="mensagem(m)"
-              [mensalidadeId]="m.id"
-            ></app-whatsapp-cobranca-btn>
-            <app-whatsapp-cobranca-btn
-              *ngIf="mensalidadeAtrasada(m.vencimento)"
-              label="Bloqueio"
-              [telefone]="telefone(m)"
-              [mensagem]="mensagemBloqueio(m)"
-              [mensalidadeId]="m.id"
-            ></app-whatsapp-cobranca-btn>
-            <button class="crm-btn-success !py-1.5 !text-xs" (click)="pagar(m)">Pagar</button>
+          <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
+            <a
+              [routerLink]="['/clientes', m.clienteId]"
+              class="crm-btn-ghost !py-1.5 !text-xs no-underline inline-block"
+            >
+              Ver cliente
+            </a>
+            <a
+              routerLink="/financeiro"
+              class="crm-btn-primary !py-1.5 !text-xs no-underline inline-block"
+            >
+              Quitar
+            </a>
           </td>
         </tr>
       </tbody>

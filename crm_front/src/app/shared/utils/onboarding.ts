@@ -1,4 +1,5 @@
 import { Aplicativo, Cliente, Configuracao } from '../../core/models';
+import { formatarData } from './formatters';
 import { confirmarUsuario } from './confirm-notifier';
 import {
   DispositivoCliente,
@@ -20,7 +21,7 @@ function formatarValorMsg(valor: number): string {
 
 function formatarDataMsg(data?: string | null): string {
   if (!data?.trim()) return '—';
-  return new Date(data).toLocaleDateString('pt-BR');
+  return formatarData(data);
 }
 
 function substituirVariaveis(
@@ -62,49 +63,20 @@ function mapaVariaveisBoasVindas(
   };
 }
 
-function montarLinksApp(aplicativo: Aplicativo): string {
-  const linhas: string[] = [];
-
-  if (aplicativo.android?.trim()) {
-    linhas.push(`📱 Android: ${aplicativo.android.trim()}`);
-  }
-  if (aplicativo.androidTv?.trim()) {
-    linhas.push(`📺 Android TV: ${aplicativo.androidTv.trim()}`);
-  }
-  if (aplicativo.ios?.trim()) {
-    linhas.push(`🍎 iOS: ${aplicativo.ios.trim()}`);
-  }
-  if (aplicativo.windows?.trim()) {
-    linhas.push(`💻 Windows: ${aplicativo.windows.trim()}`);
-  }
-  if (aplicativo.mac?.trim()) {
-    linhas.push(`🖥 Mac: ${aplicativo.mac.trim()}`);
-  }
-
-  return linhas.join('\n');
-}
-
 function mapaVariaveisApp(
   cliente: Cliente,
   aplicativo: Aplicativo,
   configuracao: Configuracao | null
 ): Record<string, string> {
-  const links = montarLinksApp(aplicativo);
-  const tutorial = aplicativo.tutorial?.trim()
-    ? `Tutorial:\n${aplicativo.tutorial.trim()}`
-    : '';
+  const mensagemApp =
+    aplicativo.mensagem?.trim() ||
+    'Entre em contato conosco para receber as instruções de instalação.';
 
   return {
     '{nome}': cliente.nome.trim(),
     '{empresa}': configuracao?.nomeEmpresa?.trim() || 'JPTV',
     '{app}': aplicativo.nome.trim(),
-    '{links}': links || '—',
-    '{tutorial}': tutorial,
-    '{linkAndroid}': aplicativo.android?.trim() || '—',
-    '{linkAndroidTv}': aplicativo.androidTv?.trim() || '—',
-    '{linkIos}': aplicativo.ios?.trim() || '—',
-    '{linkWindows}': aplicativo.windows?.trim() || '—',
-    '{linkMac}': aplicativo.mac?.trim() || '—',
+    '{mensagemApp}': mensagemApp,
   };
 }
 
@@ -152,15 +124,7 @@ export function temAppParaEnviar(
   const app = aplicativo ?? cliente.aplicativo;
   if (!app) return false;
 
-  return !!(
-    app.mensagem?.trim() ||
-    app.tutorial?.trim() ||
-    app.android?.trim() ||
-    app.androidTv?.trim() ||
-    app.ios?.trim() ||
-    app.windows?.trim() ||
-    app.mac?.trim()
-  );
+  return !!app.mensagem?.trim();
 }
 
 export function resolverAplicativoDaTela(
@@ -238,7 +202,7 @@ export async function oferecerAppsDoCliente(
     const rotuloTela =
       dispositivos.length > 1 ? ` (tela ${i + 1})` : '';
     const confirmado = await confirmarUsuario(
-      `Enviar links do app ${app.nome}${rotuloTela} para ${cliente.nome}?`,
+      `Enviar orientações do app ${app.nome}${rotuloTela} para ${cliente.nome}?`,
       'Enviar aplicativo',
       'Enviar'
     );

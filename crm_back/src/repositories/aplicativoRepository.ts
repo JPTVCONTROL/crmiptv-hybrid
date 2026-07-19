@@ -22,20 +22,29 @@ export class AplicativoRepository {
         nome: data.nome,
         descricao: data.descricao,
         logo: data.logo,
-        android: data.android,
-        androidTv: data.androidTv,
-        ios: data.ios,
-        windows: data.windows,
-        mac: data.mac,
-        tutorial: data.tutorial,
         mensagem: data.mensagem,
+        requerMac: data.requerMac ?? false,
+        requerDeviceKey: data.requerDeviceKey ?? false,
+        requerCodigo: data.requerCodigo ?? false,
         ativo: data.ativo ?? true,
       },
     });
   }
 
   update(id: number, data: UpdateAplicativoDto) {
-    return prisma.aplicativo.update({ where: { id }, data });
+    return prisma.aplicativo.update({
+      where: { id },
+      data: {
+        nome: data.nome,
+        descricao: data.descricao,
+        logo: data.logo,
+        mensagem: data.mensagem,
+        requerMac: data.requerMac,
+        requerDeviceKey: data.requerDeviceKey,
+        requerCodigo: data.requerCodigo,
+        ativo: data.ativo,
+      },
+    });
   }
 
   delete(id: number) {

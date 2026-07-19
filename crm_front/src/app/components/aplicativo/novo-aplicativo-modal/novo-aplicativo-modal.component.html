@@ -71,39 +71,33 @@
     </div>
 
     <div>
-      <h3 class="text-white font-semibold mb-3 text-sm">Links de download</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Android</label>
-          <input class="crm-input" [(ngModel)]="form.android" placeholder="URL ou nome do APK" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Android TV</label>
-          <input class="crm-input" [(ngModel)]="form.androidTv" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">iOS</label>
-          <input class="crm-input" [(ngModel)]="form.ios" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Windows</label>
-          <input class="crm-input" [(ngModel)]="form.windows" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Mac</label>
-          <input class="crm-input" [(ngModel)]="form.mac" />
-        </div>
+      <h3 class="text-white font-semibold mb-2 text-sm">Itens necessários no cadastro</h3>
+      <p class="text-slate-500 text-xs mb-3">
+        Marque o que o operador precisa preencher para clientes deste aplicativo.
+      </p>
+      <div class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+          <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.requerMac" />
+          MAC Address
+        </label>
+        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+          <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.requerDeviceKey" />
+          Device Key
+        </label>
+        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+          <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.requerCodigo" />
+          Código
+        </label>
       </div>
     </div>
 
     <div>
-      <label class="block text-slate-300 mb-2 text-sm">Tutorial (URL ou texto)</label>
-      <input class="crm-input" [(ngModel)]="form.tutorial" />
-    </div>
-
-    <div>
       <label class="block text-slate-300 mb-2 text-sm">Mensagem padrão</label>
-      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.mensagem"></textarea>
+      <textarea
+        class="crm-input min-h-[80px]"
+        [(ngModel)]="form.mensagem"
+        placeholder="Texto enviado ao cliente com orientações do app (WhatsApp)"
+      ></textarea>
     </div>
 
     <label class="flex items-center gap-2 text-slate-300 text-sm">

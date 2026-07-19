@@ -48,6 +48,12 @@ export function elegivelCobrancaDiaria(
   return dias < 0 || (dias >= 0 && dias <= diasAntecedencia);
 }
 
+export function clienteParticipaCobrancas(
+  cliente?: { incluirCobrancas?: boolean | null } | null
+): boolean {
+  return cliente?.incluirCobrancas !== false;
+}
+
 export function rotuloDiasCobrancaDiaria(dias: number): string {
   if (dias < 0) {
     const atraso = Math.abs(dias);
@@ -71,7 +77,8 @@ export function filtrarMensalidadesCobrancaDiaria(
     .filter(
       (m) =>
         m.status === 'PENDENTE' &&
-        elegivelCobrancaDiaria(m.vencimento, diasAntecedencia)
+        elegivelCobrancaDiaria(m.vencimento, diasAntecedencia) &&
+        clienteParticipaCobrancas(m.cliente)
     )
     .sort(
       (a, b) =>

@@ -1,12 +1,17 @@
+import { parseDataSomenteDia } from './dateHelpers.js';
+
 export type StatusCliente = 'ATIVO' | 'ATRASADO' | 'INATIVO';
+
+function inicioDiaUtc(data: Date): number {
+  return Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate());
+}
 
 function calcularDiasAteExpiracao(expiraEm: Date | string): number {
   const hoje = new Date();
-  const data = new Date(expiraEm);
-  hoje.setHours(0, 0, 0, 0);
-  data.setHours(0, 0, 0, 0);
-  const diferenca = data.getTime() - hoje.getTime();
-  return Math.ceil(diferenca / (1000 * 60 * 60 * 24));
+  const hojeUtc = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const data = parseDataSomenteDia(expiraEm);
+  const diff = inicioDiaUtc(data) - hojeUtc;
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
 export function calcularStatusCliente(

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { DadosSyncService } from './dados-sync.service';
-import { Cliente, CreateClienteDto } from '../models';
+import { Cliente, CreateClienteDto, ImportacaoClientesResultado } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteService {
@@ -31,9 +31,24 @@ export class ClienteService {
       .pipe(tap(() => this.sync.notificarClientes()));
   }
 
+  definirInclusaoCobrancas(
+    id: number,
+    incluirCobrancas: boolean
+  ): Observable<Cliente> {
+    return this.api
+      .put<Cliente>(`/clientes/${id}/incluir-cobrancas`, { incluirCobrancas })
+      .pipe(tap(() => this.sync.notificarClientes()));
+  }
+
   excluir(id: number): Observable<void> {
     return this.api
       .delete(`/clientes/${id}`)
+      .pipe(tap(() => this.sync.notificarClientes()));
+  }
+
+  importarCsv(csv: string): Observable<ImportacaoClientesResultado> {
+    return this.api
+      .post<ImportacaoClientesResultado>('/clientes/importar', { csv })
       .pipe(tap(() => this.sync.notificarClientes()));
   }
 }

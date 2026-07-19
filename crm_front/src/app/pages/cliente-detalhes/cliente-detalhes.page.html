@@ -2,9 +2,39 @@
 
 <div *ngIf="!loading && cliente" class="space-y-6">
   <app-page-header [title]="cliente.nome" subtitle="Detalhes do cliente IPTV">
-    <button class="crm-btn-ghost" (click)="editar()">Editar</button>
-    <button class="crm-btn-danger" (click)="excluir()">Excluir</button>
+    <div class="flex flex-wrap gap-2 justify-end">
+      <button
+        type="button"
+        class="crm-btn-ghost"
+        [ngClass]="{
+          '!border-amber-500/40': !incluirNasCobrancas,
+          '!text-amber-200': !incluirNasCobrancas
+        }"
+        [disabled]="alternandoCobrancas"
+        (click)="alternarInclusaoCobrancas()"
+      >
+        {{
+          alternandoCobrancas
+            ? 'Salvando...'
+            : incluirNasCobrancas
+              ? 'Não incluir nas cobranças'
+              : 'Incluir'
+        }}
+      </button>
+      <button class="crm-btn-ghost" (click)="editar()">Editar</button>
+      <button class="crm-btn-danger" (click)="excluir()">Excluir</button>
+    </div>
   </app-page-header>
+
+  <div
+    *ngIf="!incluirNasCobrancas"
+    class="crm-card border border-amber-500/25 bg-amber-500/5"
+  >
+    <p class="text-amber-200 text-sm">
+      Este cliente está <span class="font-medium">fora das cobranças automáticas</span>
+      (Cobrança Diária e rotinas de WhatsApp).
+    </p>
+  </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <div class="crm-card space-y-3">
@@ -103,12 +133,13 @@
       <p class="text-slate-300"><span class="text-slate-500">Vencimento (dia):</span> {{ cliente.vencimento }}</p>
       <div *ngIf="mensalidadePendente() as pendente" class="flex flex-wrap gap-2 pt-2">
         <app-whatsapp-cobranca-btn
+          *ngIf="incluirNasCobrancas"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemWhatsApp(pendente)"
           [mensalidadeId]="pendente.id"
         ></app-whatsapp-cobranca-btn>
         <app-whatsapp-cobranca-btn
-          *ngIf="mensalidadeAtrasada(pendente)"
+          *ngIf="incluirNasCobrancas && mensalidadeAtrasada(pendente)"
           label="Bloqueio"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemBloqueio(pendente)"
@@ -142,13 +173,13 @@
             </td>
             <td class="py-2 text-right space-x-1">
               <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PENDENTE'"
+                *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas"
                 [telefone]="cliente.telefone"
                 [mensagem]="mensagemWhatsApp(m)"
                 [mensalidadeId]="m.id"
               ></app-whatsapp-cobranca-btn>
               <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PENDENTE' && mensalidadeAtrasada(m)"
+                *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas && mensalidadeAtrasada(m)"
                 label="Bloqueio"
                 [telefone]="cliente.telefone"
                 [mensagem]="mensagemBloqueio(m)"

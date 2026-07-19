@@ -28,6 +28,7 @@ import {
   resolverAplicativoDaTela,
 } from '../../shared/utils/onboarding';
 import { montarMensagemRecibo, oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
+import { clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
 import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
@@ -42,6 +43,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   dispositivosCatalogo: Dispositivo[] = [];
   aplicativosCatalogo: Aplicativo[] = [];
   loading = true;
+  alternandoCobrancas = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -122,6 +124,48 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
 
   mensalidadePendente(): Mensalidade | undefined {
     return this.cliente?.mensalidades?.find((m) => m.status === 'PENDENTE');
+  }
+
+  get incluirNasCobrancas(): boolean {
+    return clienteParticipaCobrancas(this.cliente);
+  }
+
+  async alternarInclusaoCobrancas(): Promise<void> {
+    if (!this.cliente || this.alternandoCobrancas) {
+      return;
+    }
+
+    const incluir = !this.incluirNasCobrancas;
+    const confirmado = await this.confirmacao.confirmar({
+      header: incluir ? 'Incluir nas cobranças' : 'Não incluir nas cobranças',
+      message: incluir
+        ? 'Este cliente voltará a aparecer na Cobrança Diária e nas rotinas automáticas.'
+        : 'Este cliente deixará de aparecer na Cobrança Diária e nas rotinas automáticas de WhatsApp.',
+      confirmText: incluir ? 'Incluir' : 'Excluir das cobranças',
+    });
+
+    if (!confirmado) {
+      return;
+    }
+
+    this.alternandoCobrancas = true;
+    this.clienteService
+      .definirInclusaoCobrancas(this.cliente.id, incluir)
+      .subscribe({
+        next: (cliente) => {
+          this.cliente = cliente;
+          this.alternandoCobrancas = false;
+          void this.toast.success(
+            incluir
+              ? 'Cliente incluído nas cobranças.'
+              : 'Cliente excluído das cobranças.'
+          );
+        },
+        error: (err) => {
+          this.alternandoCobrancas = false;
+          void this.toast.error(err.message);
+        },
+      });
   }
 
   mensagemWhatsApp(m: Mensalidade): string {

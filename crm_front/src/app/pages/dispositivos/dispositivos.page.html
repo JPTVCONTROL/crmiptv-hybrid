@@ -1,6 +1,6 @@
-<app-page-header title="Dispositivos" subtitle="Cadastre os aparelhos disponíveis para vincular aos clientes.">
+<div *ngIf="!loading" class="flex justify-end mb-4">
   <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Dispositivo</button>
-</app-page-header>
+</div>
 
 <div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
   <input type="search" class="crm-input flex-1" placeholder="Buscar dispositivo..." [(ngModel)]="busca" />

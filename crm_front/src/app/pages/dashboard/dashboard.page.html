@@ -7,7 +7,66 @@
 
 <app-loading *ngIf="loading"></app-loading>
 
-<div *ngIf="!loading" class="space-y-6 md:space-y-8">
+<div
+  *ngIf="!loading && erroCarregamento"
+  class="crm-card border border-red-500/30 bg-red-500/10 mb-4"
+>
+  <p class="text-red-300 text-sm">{{ erroCarregamento }}</p>
+  <p class="text-slate-400 text-xs mt-2">
+    Confirme se o backend está ativo em
+    <span class="text-slate-200">http://localhost:3001</span>
+    e clique em tentar novamente.
+  </p>
+  <button type="button" class="crm-btn-primary mt-3" (click)="carregar()">
+    Tentar novamente
+  </button>
+</div>
+
+<div *ngIf="!loading && !erroCarregamento" class="space-y-6 md:space-y-8">
+  <section class="crm-card border border-violet-500/20 bg-violet-500/5">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h2 class="text-white font-semibold">Rotina de hoje</h2>
+        <p class="text-slate-400 text-sm mt-1">
+          <span *ngIf="cobrancaRotinaFeita" class="text-green-400 font-medium">Rotina concluída</span>
+          <span *ngIf="!cobrancaRotinaFeita">
+            {{ cobrancaNaoContactados }} cliente(s) ainda não contactado(s) hoje
+          </span>
+          · {{ cobrancaContactadosHoje }} de {{ cobrancaTotalElegiveis }} contactados
+        </p>
+        <p class="text-slate-500 text-xs mt-1">
+          Cobrança WhatsApp na
+          <span class="text-slate-300">Cobrança Diária</span>
+          · Pagamentos no
+          <span class="text-slate-300">Financeiro</span>
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <a
+          routerLink="/cobranca-diaria"
+          [queryParams]="cobrancaNaoContactados > 0 ? { pendentes: 1 } : null"
+          class="crm-btn-success no-underline"
+        >
+          {{ cobrancaRotinaFeita ? 'Ver rotina' : 'Iniciar cobrança (' + cobrancaNaoContactados + ')' }}
+        </a>
+        <a routerLink="/financeiro" class="crm-btn-primary no-underline">Quitar cobranças</a>
+        <a routerLink="/vencimentos" class="crm-btn-ghost no-underline">Ver vencimentos</a>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-between text-xs text-slate-400 mb-1">
+        <span>Meta do mês (recebido vs. a receber)</span>
+        <span class="text-slate-300">{{ metaMesPercentual }}%</span>
+      </div>
+      <div class="h-2 rounded-full bg-slate-800 overflow-hidden">
+        <div
+          class="h-full rounded-full bg-gradient-to-r from-violet-600 to-green-500 transition-all"
+          [style.width.%]="metaMesPercentual"
+        ></div>
+      </div>
+    </div>
+  </section>
+
   <section>
     <h2 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Clientes</h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -22,6 +81,19 @@
       </a>
       <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="block no-underline h-full">
         <app-stat-card title="Inativos" [value]="qtdInativos.toString()" color="#EF4444" subtitle="+7 dias"></app-stat-card>
+      </a>
+      <a
+        *ngIf="cadastrosIncompletos > 0"
+        routerLink="/clientes"
+        [queryParams]="{ incompleto: 1 }"
+        class="block no-underline h-full col-span-2 lg:col-span-4"
+      >
+        <app-stat-card
+          title="Cadastro incompleto"
+          [value]="cadastrosIncompletos.toString()"
+          color="#F59E0B"
+          subtitle="falta plano, valor, vencimento ou credenciais"
+        ></app-stat-card>
       </a>
     </div>
   </section>
@@ -103,22 +175,24 @@
             </div>
           </div>
           <div class="flex justify-end gap-1">
-            <button
-              type="button"
-              class="crm-btn-success !py-1 !px-2.5 !text-xs"
-              [disabled]="!podeCobrarProximo(m)"
-              (click)="cobrarProximo(m)"
+            <a
+              [routerLink]="['/clientes', m.clienteId]"
+              class="crm-btn-ghost !py-1 !px-2.5 !text-xs no-underline"
             >
-              Cobrar
-            </button>
-            <button
-              type="button"
-              class="crm-btn-primary !py-1 !px-2.5 !text-xs"
-              [disabled]="estaPagando(m.id)"
-              (click)="pagarProximo(m)"
+              Ver
+            </a>
+            <a
+              routerLink="/cobranca-diaria"
+              class="crm-btn-success !py-1 !px-2.5 !text-xs no-underline"
             >
-              {{ estaPagando(m.id) ? 'Salvando...' : 'Pagar' }}
-            </button>
+              Cobrança
+            </a>
+            <a
+              routerLink="/financeiro"
+              class="crm-btn-primary !py-1 !px-2.5 !text-xs no-underline"
+            >
+              Quitar
+            </a>
           </div>
         </div>
         <app-empty-state
@@ -135,7 +209,7 @@
         <h2 class="text-white font-semibold">Precisam de atenção</h2>
         <p class="text-slate-500 text-xs mt-1">
           Com base na expiração do plano (não na mensalidade).
-          {{ qtdAtrasados }} atrasado(s) · {{ qtdInativos }} inativo(s)
+          {{ qtdAtencaoAtrasados }} atrasado(s) · {{ qtdAtencaoInativos }} inativo(s)
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -208,28 +282,27 @@
             </td>
             <td class="py-2.5 px-2 text-right whitespace-nowrap">
               <div class="inline-flex flex-wrap justify-end gap-1">
-                <button
-                  type="button"
-                  class="crm-btn-success !py-1 !px-2 !text-xs"
-                  [disabled]="!podeCobrarAtencao(c)"
-                  (click)="cobrarAtencao(c)"
-                >
-                  Cobrar
-                </button>
-                <button
-                  type="button"
-                  class="crm-btn-primary !py-1 !px-2 !text-xs"
-                  [disabled]="!c.mensalidadePendenteId || estaPagando(c.mensalidadePendenteId!)"
-                  (click)="pagarAtencao(c)"
-                >
-                  {{ rotuloPagarAtencao(c) }}
-                </button>
                 <a
                   [routerLink]="['/clientes', c.id]"
                   class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline inline-block"
                 >
                   Ver
                 </a>
+                <a
+                  routerLink="/cobranca-diaria"
+                  class="crm-btn-success !py-1 !px-2 !text-xs no-underline inline-block"
+                >
+                  Cobrança
+                </a>
+                <button
+                  *ngIf="c.mensalidadePendenteId"
+                  type="button"
+                  class="crm-btn-primary !py-1 !px-2 !text-xs"
+                  [disabled]="estaPagando(c)"
+                  (click)="quitarCliente(c)"
+                >
+                  {{ estaPagando(c) ? 'Salvando...' : 'Quitar' }}
+                </button>
               </div>
             </td>
           </tr>
@@ -237,6 +310,9 @@
       </table>
     </div>
 
-    <app-empty-state *ngIf="clientesAtencao.length === 0" message="Nenhum cliente atrasado ou inativo."></app-empty-state>
+    <app-empty-state
+      *ngIf="clientesAtencao.length === 0"
+      message="Nenhum cliente atrasado ou inativo nas cobranças."
+    ></app-empty-state>
   </div>
 </div>

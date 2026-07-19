@@ -4,29 +4,18 @@ import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
-import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
-import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Configuracao, Mensalidade } from '../../core/models';
 import {
   formatarValor,
   formatarData,
   calcularDias,
-  criarMapaTelefones,
-  resolverTelefoneCliente,
 } from '../../shared/utils/formatters';
-import {
-  mensalidadeEstaAtrasada,
-  montarMensagemBloqueioMensalidade,
-  montarMensagemCobrancaMensalidade,
-  nomeClienteMensalidade,
-  trackByMensalidadeId,
-} from '../../shared/utils/cobranca-lote';
+import { trackByMensalidadeId } from '../../shared/utils/cobranca-lote';
 import {
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
 } from '../../shared/utils/cobranca-diaria';
-import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
@@ -38,8 +27,6 @@ export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
 export class VencimentosPage implements OnInit, OnDestroy {
   mensalidades: Mensalidade[] = [];
   private readonly destroy$ = new Subject<void>();
-  telefones = new Map<number, string>();
-  nomesClientes = new Map<number, string>();
   loading = true;
   busca = '';
   filtro: FiltroVencimento = 'TODOS';
@@ -58,8 +45,6 @@ export class VencimentosPage implements OnInit, OnDestroy {
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
-    private pagamentoUi: PagamentoUiService,
-    private toast: ToastService,
     private sync: DadosSyncService
   ) {}
 
@@ -117,9 +102,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
       this.mensalidadeService.listar(),
       this.clienteService.listar(),
     ]).subscribe({
-      next: ([mensalidades, clientes]) => {
-        this.telefones = criarMapaTelefones(clientes);
-        this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
+      next: ([mensalidades]) => {
         this.mensalidades = mensalidades
           .filter((m) => m.status === 'PENDENTE')
           .sort(
@@ -263,49 +246,34 @@ export class VencimentosPage implements OnInit, OnDestroy {
     };
   }
 
-  telefone(m: Mensalidade): string {
-    return resolverTelefoneCliente(m, this.telefones);
-  }
+  exportarCsv(): void {
+    if (this.mensalidadesFiltradas.length === 0) return;
 
-  mensagem(m: Mensalidade): string {
-    return montarMensagemCobrancaMensalidade(
-      m,
-      this.configuracao,
-      this.nomesClientes
-    );
-  }
+    const linhas = [
+      ['Cliente', 'Referência', 'Valor', 'Vencimento', 'Status'].join(';'),
+      ...this.mensalidadesFiltradas.map((m) =>
+        [
+          `"${(m.cliente?.nome ?? 'Cliente').replace(/"/g, '""')}"`,
+          m.referencia,
+          m.valor.toFixed(2).replace('.', ','),
+          this.fmtData(m.vencimento),
+          this.statusLabel(m),
+        ].join(';')
+      ),
+    ];
 
-  mensagemBloqueio(m: Mensalidade): string {
-    return montarMensagemBloqueioMensalidade(
-      m,
-      this.configuracao,
-      this.nomesClientes
-    );
-  }
-
-  async pagar(m: Mensalidade): Promise<void> {
-    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
-    if (!pagoEm) return;
-
-    this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
-      next: (resultado) => {
-        void oferecerMensagemRenovacao({
-          telefone: this.telefone(m),
-          nome: nomeClienteMensalidade(m, this.nomesClientes),
-          referencia: m.referencia,
-          valor: resultado.valorRenovacao ?? m.valor,
-          novoVencimento: resultado.novoVencimento,
-          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
-          templateRenovacao: this.configuracao?.mensagemRenovacao,
-        });
-        this.carregar(true);
-      },
-      error: (err) => void this.toast.error(err.message),
+    const blob = new Blob(['\uFEFF' + linhas.join('\n')], {
+      type: 'text/csv;charset=utf-8;',
     });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `vencimentos-${this.filtro.toLowerCase()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   fmtValor = formatarValor;
   fmtData = formatarData;
   trackByMensalidade = trackByMensalidadeId;
-  mensalidadeAtrasada = mensalidadeEstaAtrasada;
 }

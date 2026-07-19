@@ -64,6 +64,22 @@
   </div>
 
   <div>
+    <h2 class="text-white font-semibold text-lg mb-2">Sincronização de cobranças</h2>
+    <p class="text-slate-500 text-sm mb-4">
+      Alinha mensalidades pendentes com as datas de vencimento dos clientes. Executado automaticamente no login.
+    </p>
+    <p *ngIf="ultimaSincronizacao" class="text-slate-400 text-sm mb-3">{{ ultimaSincronizacao }}</p>
+    <button
+      type="button"
+      class="crm-btn-primary"
+      [disabled]="sincronizandoCobrancas"
+      (click)="sincronizarCobrancas()"
+    >
+      {{ sincronizandoCobrancas ? 'Sincronizando...' : 'Sincronizar cobranças' }}
+    </button>
+  </div>
+
+  <div>
     <h2 class="text-white font-semibold text-lg mb-4">Empresa</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>

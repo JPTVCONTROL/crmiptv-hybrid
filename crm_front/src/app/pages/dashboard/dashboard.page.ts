@@ -2,32 +2,21 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
-import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
+import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
-import { ToastService } from '../../core/services/toast.service';
-import {
-  Configuracao,
-  DashboardResumo,
-  Mensalidade,
-} from '../../core/models';
+import { Configuracao, DashboardResumo } from '../../core/models';
 import {
   calcularDias,
   formatarData,
   formatarValor,
 } from '../../shared/utils/formatters';
-import {
-  montarItemCobrancaLote,
-} from '../../shared/utils/cobranca-lote';
-import {
-  abrirWhatsAppCobranca,
-  oferecerMensagemRenovacao,
-  telefoneValidoParaWhatsApp,
-} from '../../shared/utils/whatsapp';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
 import { rotuloUltimoContato } from '../../shared/utils/contato';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import { ToastService } from '../../core/services/toast.service';
+import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 
 type ProximoVencimentoResumo = DashboardResumo['proximosVencimentos'][number];
 type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
@@ -38,6 +27,7 @@ type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
 })
 export class DashboardPage implements OnInit, OnDestroy {
   loading = true;
+  erroCarregamento = '';
   resumo: DashboardResumo | null = null;
   private readonly destroy$ = new Subject<void>();
 
@@ -54,7 +44,13 @@ export class DashboardPage implements OnInit, OnDestroy {
   faturamentoMensal: DadoFaturamento[] = [];
   proximosVencimentos: ProximoVencimentoResumo[] = [];
   clientesAtencao: ClienteAtencaoResumo[] = [];
-  pagando = new Set<number>();
+
+  cobrancaNaoContactados = 0;
+  cobrancaContactadosHoje = 0;
+  cobrancaTotalElegiveis = 0;
+  cobrancaRotinaFeita = false;
+  cadastrosIncompletos = 0;
+  pagandoMensalidadeId: number | null = null;
 
   subtituloPagina = '';
 
@@ -62,13 +58,30 @@ export class DashboardPage implements OnInit, OnDestroy {
     return resolverDiasAntecedencia(this.configuracao);
   }
 
+  get metaMesPercentual(): number {
+    if (!this.resumo) return 0;
+    const recebido = this.resumo.financeiro.recebidoMes;
+    const aReceber = this.resumo.financeiro.aReceberEsteMes;
+    const total = recebido + aReceber;
+    if (total <= 0) return recebido > 0 ? 100 : 0;
+    return Math.min(100, Math.round((recebido / total) * 100));
+  }
+
+  get qtdAtencaoAtrasados(): number {
+    return this.clientesAtencao.filter((c) => c.status === 'ATRASADO').length;
+  }
+
+  get qtdAtencaoInativos(): number {
+    return this.clientesAtencao.filter((c) => c.status === 'INATIVO').length;
+  }
+
   constructor(
     private dashboardService: DashboardService,
-    private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
+    private mensalidadeService: MensalidadeService,
     private pagamentoUi: PagamentoUiService,
-    private toast: ToastService,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private toast: ToastService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -104,6 +117,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     if (!silencioso) {
       this.loading = true;
     }
+    this.erroCarregamento = '';
 
     this.dashboardService.obterResumo().subscribe({
       next: (resumo) => {
@@ -111,7 +125,15 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.aplicarResumo(resumo);
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: (err: Error) => {
+        this.loading = false;
+        this.erroCarregamento =
+          err.message?.trim() ||
+          'Não foi possível carregar o resumo. Verifique se a API está rodando.';
+        if (!silencioso) {
+          void this.toast.error(this.erroCarregamento);
+        }
+      },
     });
   }
 
@@ -131,6 +153,59 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.faturamentoMensal = resumo.faturamentoMensal;
     this.proximosVencimentos = resumo.proximosVencimentos;
     this.clientesAtencao = resumo.clientesAtencao;
+
+    this.cobrancaNaoContactados = resumo.cobrancaDiaria.naoContactados;
+    this.cobrancaContactadosHoje = resumo.cobrancaDiaria.contactadosHoje;
+    this.cobrancaTotalElegiveis = resumo.cobrancaDiaria.totalElegiveis;
+    this.cobrancaRotinaFeita = resumo.cobrancaDiaria.rotinaFeita;
+    this.cadastrosIncompletos = resumo.clientes.cadastrosIncompletos;
+  }
+
+  async quitarCliente(cliente: ClienteAtencaoResumo): Promise<void> {
+    if (!cliente.mensalidadePendenteId) {
+      void this.toast.warning('Este cliente não possui mensalidade pendente.');
+      return;
+    }
+
+    if (this.pagandoMensalidadeId !== null) {
+      return;
+    }
+
+    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
+    if (!pagoEm) {
+      return;
+    }
+
+    const mensalidadeId = cliente.mensalidadePendenteId;
+    this.pagandoMensalidadeId = mensalidadeId;
+
+    this.mensalidadeService.registrarPagamento(mensalidadeId, pagoEm).subscribe({
+      next: (resultado) => {
+        this.pagandoMensalidadeId = null;
+        void oferecerMensagemRenovacao({
+          telefone: cliente.telefone,
+          nome: cliente.nome,
+          referencia: cliente.mensalidadeReferencia ?? '',
+          valor: resultado.valorRenovacao ?? cliente.mensalidadeValor ?? 0,
+          novoVencimento: resultado.novoVencimento,
+          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
+          templateRenovacao: this.configuracao?.mensagemRenovacao,
+        });
+        void this.toast.success('Pagamento registrado.');
+        this.carregar(true);
+      },
+      error: (err: Error) => {
+        this.pagandoMensalidadeId = null;
+        void this.toast.error(err.message);
+      },
+    });
+  }
+
+  estaPagando(cliente: ClienteAtencaoResumo): boolean {
+    return (
+      cliente.mensalidadePendenteId !== null &&
+      this.pagandoMensalidadeId === cliente.mensalidadePendenteId
+    );
   }
 
   private montarSubtitulo(): string {
@@ -164,158 +239,6 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   rotuloContato(ultimoContatoEm?: string | null): string {
     return rotuloUltimoContato(ultimoContatoEm);
-  }
-
-  podeCobrarAtencao(cliente: ClienteAtencaoResumo): boolean {
-    return (
-      telefoneValidoParaWhatsApp(cliente.telefone) &&
-      !!cliente.mensalidadePendenteId
-    );
-  }
-
-  cobrarAtencao(cliente: ClienteAtencaoResumo): void {
-    if (!cliente.mensalidadePendenteId) {
-      void this.toast.warning('Nenhuma cobrança pendente encontrada para este cliente.');
-      return;
-    }
-
-    const mensalidade = this.mensalidadeDeAtencao(cliente);
-    this.cobrarMensalidade(mensalidade);
-  }
-
-  podeCobrarProximo(item: ProximoVencimentoResumo): boolean {
-    return telefoneValidoParaWhatsApp(item.telefone);
-  }
-
-  cobrarProximo(item: ProximoVencimentoResumo): void {
-    this.cobrarMensalidade(this.mensalidadeDeProximo(item));
-  }
-
-  cobrarMensalidade(m: Mensalidade): void {
-    const telefones = new Map<number, string>([[m.clienteId, m.cliente?.telefone ?? '']]);
-    const nomes = new Map<number, string>([[m.clienteId, m.cliente?.nome ?? 'Cliente']]);
-    const item = montarItemCobrancaLote(
-      m,
-      telefones,
-      this.configuracao,
-      nomes
-    );
-    abrirWhatsAppCobranca(item.telefone, item.mensagem);
-    this.registrarContato(m.id);
-  }
-
-  estaPagando(id: number): boolean {
-    return this.pagando.has(id);
-  }
-
-  async pagarProximo(item: ProximoVencimentoResumo): Promise<void> {
-    await this.pagarMensalidadeId(item.id, item.telefone, item.clienteNome, item.referencia, item.valor);
-  }
-
-  async pagarAtencao(cliente: ClienteAtencaoResumo): Promise<void> {
-    if (!cliente.mensalidadePendenteId) {
-      void this.toast.warning('Nenhuma mensalidade pendente para registrar pagamento.');
-      return;
-    }
-
-    await this.pagarMensalidadeId(
-      cliente.mensalidadePendenteId,
-      cliente.telefone,
-      cliente.nome,
-      cliente.mensalidadeReferencia ?? '',
-      cliente.mensalidadeValor ?? 0
-    );
-  }
-
-  rotuloPagarAtencao(cliente: ClienteAtencaoResumo): string {
-    if (!cliente.mensalidadePendenteId) return 'Pagar';
-    return this.estaPagando(cliente.mensalidadePendenteId) ? 'Salvando...' : 'Pagar';
-  }
-
-  private async pagarMensalidadeId(
-    mensalidadeId: number,
-    telefone: string,
-    nome: string,
-    referencia: string,
-    valor: number
-  ): Promise<void> {
-    if (this.pagando.has(mensalidadeId)) return;
-
-    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
-    if (!pagoEm) return;
-
-    this.pagando.add(mensalidadeId);
-    this.pagando = new Set(this.pagando);
-
-    this.mensalidadeService.registrarPagamento(mensalidadeId, pagoEm).subscribe({
-      next: (resultado) => {
-        this.pagando.delete(mensalidadeId);
-        this.pagando = new Set(this.pagando);
-
-        void oferecerMensagemRenovacao({
-          telefone,
-          nome,
-          referencia,
-          valor: resultado.valorRenovacao ?? valor,
-          novoVencimento: resultado.novoVencimento,
-          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
-          templateRenovacao: this.configuracao?.mensagemRenovacao,
-        });
-
-        this.carregar(true);
-      },
-      error: (err) => {
-        this.pagando.delete(mensalidadeId);
-        this.pagando = new Set(this.pagando);
-        void this.toast.error(err.message ?? 'Erro ao registrar pagamento.');
-      },
-    });
-  }
-
-  private mensalidadeDeProximo(item: ProximoVencimentoResumo): Mensalidade {
-    return {
-      id: item.id,
-      clienteId: item.clienteId,
-      referencia: item.referencia,
-      valor: item.valor,
-      vencimento: item.vencimento,
-      status: 'PENDENTE',
-      ultimoContatoEm: item.ultimoContatoEm,
-      cliente: {
-        id: item.clienteId,
-        nome: item.clienteNome,
-        telefone: item.telefone,
-      } as Mensalidade['cliente'],
-    };
-  }
-
-  private mensalidadeDeAtencao(cliente: ClienteAtencaoResumo): Mensalidade {
-    return {
-      id: cliente.mensalidadePendenteId!,
-      clienteId: cliente.id,
-      referencia: cliente.mensalidadeReferencia ?? '',
-      valor: cliente.mensalidadeValor ?? 0,
-      vencimento:
-        cliente.mensalidadeVencimento ??
-        cliente.expiraEm ??
-        new Date().toISOString(),
-      status: 'PENDENTE',
-      cliente: {
-        id: cliente.id,
-        nome: cliente.nome,
-        telefone: cliente.telefone,
-        expiraEm: cliente.expiraEm,
-      } as Mensalidade['cliente'],
-    };
-  }
-
-  private registrarContato(mensalidadeId: number): void {
-    this.mensalidadeService.registrarContato(mensalidadeId).subscribe({
-      next: () => this.carregar(true),
-      error: () => {
-        void this.toast.warning('WhatsApp aberto, mas o contato não foi salvo.');
-      },
-    });
   }
 
   fmtData = formatarData;

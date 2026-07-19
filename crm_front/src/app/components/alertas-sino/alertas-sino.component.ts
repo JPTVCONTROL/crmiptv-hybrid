@@ -60,6 +60,16 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
     );
   }
 
+  get alertasCadastro(): AlertaOperacional[] {
+    return this.estado.alertas.filter((alerta) => this.alertaEhCadastro(alerta));
+  }
+
+  get alertasOperacionais(): AlertaOperacional[] {
+    return this.estado.alertas.filter(
+      (alerta) => !this.alertaEhCadastro(alerta)
+    );
+  }
+
   alternarPainel(): void {
     this.aberto = !this.aberto;
   }
@@ -82,6 +92,20 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
 
   iconeAlerta(alerta: AlertaOperacional): string {
     switch (alerta.tipo) {
+      case 'CADASTRO_SEM_TELEFONE':
+        return 'call-outline';
+      case 'CADASTRO_SEM_PLANO':
+        return 'layers-outline';
+      case 'CADASTRO_SEM_VALOR':
+        return 'cash-outline';
+      case 'CADASTRO_SEM_EXPIRACAO':
+        return 'calendar-outline';
+      case 'CADASTRO_SEM_CREDENCIAIS':
+        return 'key-outline';
+      case 'CADASTRO_SEM_APLICATIVO':
+        return 'apps-outline';
+      case 'CADASTRO_SEM_MAC':
+        return 'hardware-chip-outline';
       case 'ROTINA_PENDENTE':
         return 'send-outline';
       case 'VENCE_HOJE':
@@ -101,6 +125,15 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
 
   classeAlerta(alerta: AlertaOperacional): string {
     switch (alerta.tipo) {
+      case 'CADASTRO_SEM_TELEFONE':
+      case 'CADASTRO_SEM_CREDENCIAIS':
+      case 'CADASTRO_SEM_MAC':
+        return 'alerta-red';
+      case 'CADASTRO_SEM_PLANO':
+      case 'CADASTRO_SEM_VALOR':
+      case 'CADASTRO_SEM_EXPIRACAO':
+      case 'CADASTRO_SEM_APLICATIVO':
+        return 'alerta-amber';
       case 'ROTINA_PENDENTE':
         return 'alerta-violeta';
       case 'VENCE_HOJE':
@@ -116,6 +149,10 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
       default:
         return 'alerta-neutral';
     }
+  }
+
+  alertaEhCadastro(alerta: AlertaOperacional): boolean {
+    return alerta.tipo.startsWith('CADASTRO_');
   }
 
   @HostListener('document:click', ['$event'])

@@ -1,5 +1,6 @@
 export interface DispositivoClienteJson {
   dispositivoId?: number | null;
+  aplicativoId?: number | null;
   macAddress?: string;
   aparelho?: string;
   modelo?: string;
@@ -54,12 +55,17 @@ function normalizarDispositivoClienteJson(valor: unknown): DispositivoClienteJso
 
   const item = valor as Record<string, unknown>;
   const dispositivoId = item['dispositivoId'];
+  const aplicativoId = item['aplicativoId'];
 
   return {
     dispositivoId:
       dispositivoId === null || dispositivoId === undefined
         ? null
         : Number(dispositivoId),
+    aplicativoId:
+      aplicativoId === null || aplicativoId === undefined
+        ? null
+        : Number(aplicativoId),
     macAddress: String(item['macAddress'] ?? '').trim(),
     aparelho: item['aparelho'] ? String(item['aparelho']).trim() : undefined,
     modelo: item['modelo'] ? String(item['modelo']).trim() : undefined,

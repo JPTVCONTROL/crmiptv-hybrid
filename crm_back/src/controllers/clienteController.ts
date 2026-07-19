@@ -54,7 +54,44 @@ export class ClienteController {
         sendError(res, error.message, 404);
         return;
       }
+      if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      console.error('Erro ao atualizar cliente:', error);
       sendError(res, 'Erro ao atualizar cliente');
+    }
+  }
+
+  async definirInclusaoCobrancas(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const incluirCobrancas = req.body?.incluirCobrancas;
+
+      if (typeof incluirCobrancas !== 'boolean') {
+        sendError(res, 'Informe se o cliente deve ser incluído nas cobranças.', 400);
+        return;
+      }
+
+      const cliente = await clienteService.definirInclusaoCobrancas(
+        id,
+        incluirCobrancas
+      );
+
+      sendSuccess(
+        res,
+        cliente,
+        incluirCobrancas
+          ? 'Cliente incluído nas cobranças.'
+          : 'Cliente excluído das cobranças.'
+      );
+    } catch (error) {
+      if (error instanceof ClienteNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      console.error('Erro ao alterar inclusão nas cobranças:', error);
+      sendError(res, 'Erro ao alterar inclusão nas cobranças.');
     }
   }
 
@@ -69,6 +106,24 @@ export class ClienteController {
         return;
       }
       sendError(res, 'Erro ao excluir cliente');
+    }
+  }
+
+  async importar(req: Request, res: Response): Promise<void> {
+    try {
+      const csv = String(req.body?.csv ?? '');
+      const resultado = await clienteService.importarCsv(csv);
+      sendSuccess(
+        res,
+        resultado,
+        `${resultado.importados} cliente(s) importado(s) com sucesso.`
+      );
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      sendError(res, 'Erro ao importar clientes.');
     }
   }
 }

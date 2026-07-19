@@ -1,6 +1,6 @@
-<app-page-header title="Aplicativos" subtitle="Gerencie todos os aplicativos da JPTV.">
+<div *ngIf="!loading" class="flex justify-end mb-4">
   <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Aplicativo</button>
-</app-page-header>
+</div>
 
 <div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
   <input
@@ -61,9 +61,24 @@
       </div>
     </div>
 
-    <p class="text-slate-400 text-sm line-clamp-2 flex-1 mb-4">
+    <p class="text-slate-400 text-sm line-clamp-2 flex-1 mb-3">
       {{ app.descricao || 'Sem descrição' }}
     </p>
+
+    <div
+      *ngIf="app.requerMac || app.requerDeviceKey || app.requerCodigo"
+      class="flex flex-wrap gap-1.5 mb-4"
+    >
+      <span *ngIf="app.requerMac" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+        MAC
+      </span>
+      <span *ngIf="app.requerDeviceKey" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+        Device Key
+      </span>
+      <span *ngIf="app.requerCodigo" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+        Código
+      </span>
+    </div>
 
     <div class="flex gap-2 mt-auto" (click)="$event.stopPropagation()">
       <button type="button" class="crm-btn-ghost flex-1" (click)="abrirModal(app)">Editar</button>

@@ -3,6 +3,7 @@ import { configuracaoRepository } from '../repositories/configuracaoRepository.j
 import { calcularStatusCliente } from '../utils/helpers/clienteStatus.js';
 import {
   calcularDiasVencimento,
+  clienteParticipaCobrancas,
   elegivelCobrancaDiaria,
   resolverDiasAntecedencia,
 } from '../utils/helpers/cobrancaDiariaHelpers.js';
@@ -11,8 +12,21 @@ import {
   telefoneValidoParaWhatsApp,
 } from '../utils/helpers/contatoHelpers.js';
 
+import {
+  resumirPendenciasCadastro,
+  rotaPendenciaCadastro,
+  contarCadastrosIncompletos,
+} from '../utils/helpers/clienteCadastroHelpers.js';
+
 export interface AlertaOperacional {
   tipo:
+    | 'CADASTRO_SEM_TELEFONE'
+    | 'CADASTRO_SEM_PLANO'
+    | 'CADASTRO_SEM_VALOR'
+    | 'CADASTRO_SEM_EXPIRACAO'
+    | 'CADASTRO_SEM_CREDENCIAIS'
+    | 'CADASTRO_SEM_APLICATIVO'
+    | 'CADASTRO_SEM_MAC'
     | 'ROTINA_PENDENTE'
     | 'VENCE_HOJE'
     | 'SEM_TELEFONE'
@@ -31,6 +45,7 @@ export interface DashboardResumo {
     ativos: number;
     atrasados: number;
     inativos: number;
+    cadastrosIncompletos: number;
   };
   financeiro: {
     recebidoMes: number;
@@ -90,13 +105,22 @@ const MESES = [
 
 export class DashboardService {
   async obterResumo(): Promise<DashboardResumo> {
-    const [clientes, mensalidades, configuracao] = await Promise.all([
+    const [clientes, mensalidades, configuracao, aplicativosCatalogo] = await Promise.all([
       prisma.cliente.findMany({
         select: {
           id: true,
           nome: true,
           telefone: true,
+          planoId: true,
+          valorMensal: true,
           expiraEm: true,
+          incluirCobrancas: true,
+          servidor: true,
+          usuario: true,
+          senha: true,
+          aplicativoId: true,
+          dispositivos: true,
+          macAddress: true,
         },
       }),
       prisma.mensalidade.findMany({
@@ -107,12 +131,21 @@ export class DashboardService {
               nome: true,
               telefone: true,
               expiraEm: true,
+              incluirCobrancas: true,
             },
           },
         },
         orderBy: { vencimento: 'asc' },
       }),
       configuracaoRepository.findOrCreate(),
+      prisma.aplicativo.findMany({
+        select: {
+          id: true,
+          requerMac: true,
+          requerDeviceKey: true,
+          requerCodigo: true,
+        },
+      }),
     ]);
 
     const diasAntecedencia = resolverDiasAntecedencia(
@@ -124,6 +157,10 @@ export class DashboardService {
     const pendentes = mensalidades.filter((m) => m.status === 'PENDENTE');
     const pagos = mensalidades.filter((m) => m.status === 'PAGO');
 
+    const aplicativosRequisitos = new Map(
+      aplicativosCatalogo.map((app) => [app.id, app])
+    );
+
     const clientesResumo = {
       total: clientes.length,
       ativos: clientes.filter((c) => calcularStatusCliente(c.expiraEm) === 'ATIVO')
@@ -134,6 +171,10 @@ export class DashboardService {
       inativos: clientes.filter(
         (c) => calcularStatusCliente(c.expiraEm) === 'INATIVO'
       ).length,
+      cadastrosIncompletos: contarCadastrosIncompletos(
+        clientes,
+        aplicativosRequisitos
+      ),
     };
 
     const recebidoMes = pagos
@@ -220,6 +261,7 @@ export class DashboardService {
     }
 
     const clientesAtencao = clientes
+      .filter((cliente) => clienteParticipaCobrancas(cliente))
       .map((cliente) => {
         const pendente = pendentesPorCliente.get(cliente.id);
         return {
@@ -245,8 +287,10 @@ export class DashboardService {
       })
       .slice(0, 10);
 
-    const elegiveis = pendentes.filter((m) =>
-      elegivelCobrancaDiaria(m.vencimento, diasAntecedencia)
+    const elegiveis = pendentes.filter(
+      (m) =>
+        elegivelCobrancaDiaria(m.vencimento, diasAntecedencia) &&
+        clienteParticipaCobrancas(m.cliente)
     );
     const contactaveis = elegiveis.filter((m) =>
       telefoneValidoParaWhatsApp(m.cliente.telefone)
@@ -271,6 +315,84 @@ export class DashboardService {
     }).length;
 
     const alertas: AlertaOperacional[] = [];
+
+    const pendenciasCadastro = resumirPendenciasCadastro(
+      clientes,
+      aplicativosRequisitos
+    );
+
+    if (pendenciasCadastro.semTelefone > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_TELEFONE',
+        titulo: 'Telefone inválido ou ausente',
+        descricao:
+          'Clientes ativos/atrasados sem número válido para WhatsApp.',
+        quantidade: pendenciasCadastro.semTelefone,
+        rota: rotaPendenciaCadastro('SEM_TELEFONE'),
+      });
+    }
+
+    if (pendenciasCadastro.semCredenciais > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_CREDENCIAIS',
+        titulo: 'Credenciais IPTV incompletas',
+        descricao:
+          'Falta servidor, usuário ou senha para acesso ao serviço.',
+        quantidade: pendenciasCadastro.semCredenciais,
+        rota: rotaPendenciaCadastro('SEM_CREDENCIAIS'),
+      });
+    }
+
+    if (pendenciasCadastro.semPlano > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_PLANO',
+        titulo: 'Sem plano vinculado',
+        descricao: 'Clientes gerenciados sem plano cadastrado.',
+        quantidade: pendenciasCadastro.semPlano,
+        rota: rotaPendenciaCadastro('SEM_PLANO'),
+      });
+    }
+
+    if (pendenciasCadastro.semValor > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_VALOR',
+        titulo: 'Sem valor mensal',
+        descricao: 'Clientes gerenciados com valor mensal zerado ou vazio.',
+        quantidade: pendenciasCadastro.semValor,
+        rota: rotaPendenciaCadastro('SEM_VALOR'),
+      });
+    }
+
+    if (pendenciasCadastro.semExpiracao > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_EXPIRACAO',
+        titulo: 'Sem data de expiração',
+        descricao: 'Clientes gerenciados sem vencimento do plano.',
+        quantidade: pendenciasCadastro.semExpiracao,
+        rota: rotaPendenciaCadastro('SEM_EXPIRACAO'),
+      });
+    }
+
+    if (pendenciasCadastro.semAplicativo > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_APLICATIVO',
+        titulo: 'Sem aplicativo IPTV',
+        descricao: 'Nenhum app vinculado ao cliente ou às telas.',
+        quantidade: pendenciasCadastro.semAplicativo,
+        rota: rotaPendenciaCadastro('SEM_APLICATIVO'),
+      });
+    }
+
+    if (pendenciasCadastro.semMac > 0) {
+      alertas.push({
+        tipo: 'CADASTRO_SEM_MAC',
+        titulo: 'Sem MAC cadastrada',
+        descricao:
+          'Apps que exigem MAC estão vinculados, mas o endereço não foi preenchido.',
+        quantidade: pendenciasCadastro.semMac,
+        rota: rotaPendenciaCadastro('SEM_MAC'),
+      });
+    }
 
     if (!rotinaFeita && contactaveis.length > 0) {
       alertas.push({
@@ -313,7 +435,7 @@ export class DashboardService {
         tipo: 'SEM_TELEFONE',
         titulo: 'Telefone inválido na rotina',
         descricao:
-          'Clientes na cobrança diária sem número válido para WhatsApp.',
+          'Cobranças elegíveis hoje sem número válido para WhatsApp.',
         quantidade: semTelefoneRotina,
         rota: '/cobranca-diaria',
       });

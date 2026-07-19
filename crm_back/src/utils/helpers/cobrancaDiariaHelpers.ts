@@ -22,3 +22,9 @@ export function elegivelCobrancaDiaria(
   const dias = calcularDiasVencimento(vencimento);
   return dias < 0 || (dias >= 0 && dias <= diasAntecedencia);
 }
+
+export function clienteParticipaCobrancas(
+  cliente: { incluirCobrancas?: boolean | null }
+): boolean {
+  return cliente.incluirCobrancas !== false;
+}

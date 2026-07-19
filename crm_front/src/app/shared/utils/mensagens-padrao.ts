@@ -14,11 +14,9 @@ Qualquer dúvida, estamos à disposição!
 
 — {empresa}`;
 
-export const MENSAGEM_APP_PADRAO = `Olá {nome}! Seguem os links para instalar o {app}:
+export const MENSAGEM_APP_PADRAO = `Olá {nome}! Seguem as orientações para o {app}:
 
-{links}
-
-{tutorial}
+{mensagemApp}
 
 — {empresa}`;
 

@@ -64,11 +64,18 @@ export class AplicativoController {
       const aplicativo = await aplicativoService.atualizar(id, req.body as UpdateAplicativoDto);
       sendSuccess(res, aplicativo, 'Aplicativo atualizado com sucesso.');
     } catch (error) {
+      console.error('Erro ao atualizar aplicativo:', error);
       if (error instanceof AplicativoNotFoundError) {
         sendError(res, error.message, 404);
         return;
       }
-      sendError(res, 'Erro ao atualizar aplicativo.');
+      if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      const message =
+        error instanceof Error ? error.message : 'Erro ao atualizar aplicativo.';
+      sendError(res, message, 500);
     }
   }
 

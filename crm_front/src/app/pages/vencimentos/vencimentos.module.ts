@@ -2,12 +2,11 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { VencimentosPage } from './vencimentos.page';
 import { SharedModule } from '../../shared/shared.module';
-import { ComponentsModule } from '../../components/components.module';
 
 const routes: Routes = [{ path: '', component: VencimentosPage }];
 
 @NgModule({
-  imports: [SharedModule, ComponentsModule, RouterModule.forChild(routes)],
+  imports: [SharedModule, RouterModule.forChild(routes)],
   declarations: [VencimentosPage],
 })
 export class VencimentosPageModule {}

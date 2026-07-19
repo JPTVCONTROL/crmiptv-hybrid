@@ -1,8 +1,8 @@
-<app-page-header title="Financeiro" subtitle="Cobranças pendentes, pagamentos e inadimplência."></app-page-header>
+<app-page-header title="Financeiro" subtitle="Quitação de cobranças pendentes e pagamentos em lote."></app-page-header>
 
 <div *ngIf="!loading" class="crm-card border border-violet-500/20 bg-violet-500/5 mb-6">
   <p class="text-slate-300 text-sm">
-    Envio em lote de WhatsApp:
+    Cobrança WhatsApp (individual ou em lote):
     <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
     Consulta por data:
     <a routerLink="/vencimentos" class="text-violet-400 hover:underline font-medium">Vencimentos</a>.
@@ -93,26 +93,15 @@
     >
       {{ pagandoLote ? 'Salvando...' : 'Pagar selecionados (' + qtdSelecionados + ')' }}
     </button>
-    <button
-      class="crm-btn-primary"
-      [disabled]="qtdSelecionados === 0"
-      (click)="cobrarSelecionados()"
-    >
-      Cobrar selecionados ({{ qtdSelecionados }})
-    </button>
     <button class="crm-btn-ghost" (click)="selecionarAtrasados()">
       Selecionar atrasados
     </button>
     <button class="crm-btn-ghost" (click)="alternarTodosFiltrados()">
       {{ todosFiltradosSelecionados ? 'Desmarcar filtrados' : 'Selecionar filtrados' }}
     </button>
-    <button
-      class="crm-btn-ghost"
-      [disabled]="qtdAtrasadosFiltrados === 0"
-      (click)="cobrarAtrasados()"
-    >
-      Cobrar atrasados ({{ qtdAtrasadosFiltrados }})
-    </button>
+    <a routerLink="/cobranca-diaria" class="crm-btn-primary no-underline">
+      Cobrança Diária
+    </a>
     <button
       class="crm-btn-ghost"
       [disabled]="qtdSelecionados === 0"
@@ -162,21 +151,9 @@
               [class.bg-amber-600]="status(m) === 'PENDENTE'"
               [class.bg-slate-700]="status(m) === 'REGULAR'">{{ status(m) }}</span>
           </td>
-          <td class="py-3 px-2 text-right space-x-1">
-            <app-whatsapp-cobranca-btn
-              [telefone]="telefone(m)"
-              [mensagem]="mensagem(m)"
-              [mensalidadeId]="m.id"
-            ></app-whatsapp-cobranca-btn>
-            <app-whatsapp-cobranca-btn
-              *ngIf="status(m) === 'ATRASADO'"
-              label="Bloqueio"
-              [telefone]="telefone(m)"
-              [mensagem]="mensagemBloqueio(m)"
-              [mensalidadeId]="m.id"
-            ></app-whatsapp-cobranca-btn>
-            <button class="crm-btn-ghost" (click)="editarCliente(m)">Editar</button>
-            <button class="crm-btn-success" (click)="pagar(m)">Pagar</button>
+          <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
+            <button class="crm-btn-ghost !py-1.5 !text-xs" (click)="editarCliente(m)">Editar</button>
+            <button class="crm-btn-success !py-1.5 !text-xs" (click)="pagar(m)">Pagar</button>
           </td>
         </tr>
       </tbody>

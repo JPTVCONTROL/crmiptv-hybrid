@@ -49,19 +49,26 @@ const routes: Routes = [
           ),
       },
       {
-        path: 'aplicativos',
+        path: 'catalogos',
         loadChildren: () =>
-          import('./pages/aplicativos/aplicativos.module').then((m) => m.AplicativosPageModule),
+          import('./pages/catalogos/catalogos.module').then(
+            (m) => m.CatalogosPageModule
+          ),
+      },
+      {
+        path: 'aplicativos',
+        redirectTo: 'catalogos/aplicativos',
+        pathMatch: 'full',
       },
       {
         path: 'planos',
-        loadChildren: () =>
-          import('./pages/planos/planos.module').then((m) => m.PlanosPageModule),
+        redirectTo: 'catalogos/planos',
+        pathMatch: 'full',
       },
       {
         path: 'dispositivos',
-        loadChildren: () =>
-          import('./pages/dispositivos/dispositivos.module').then((m) => m.DispositivosPageModule),
+        redirectTo: 'catalogos/dispositivos',
+        pathMatch: 'full',
       },
       {
         path: 'relatorios',

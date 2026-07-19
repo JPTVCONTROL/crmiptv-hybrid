@@ -6,7 +6,7 @@ import { DispositivoService } from '../../../core/services/dispositivo.service';
 import { PlanoService } from '../../../core/services/plano.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Cliente, Aplicativo, Dispositivo, Plano } from '../../../core/models';
-import { aplicarMascaraTelefone } from '../../../shared/utils/formatters';
+import { aplicarMascaraTelefone, dataIsoParaInput } from '../../../shared/utils/formatters';
 import {
   agruparPlanos,
   calcularExpiracaoPorPlano,
@@ -18,6 +18,7 @@ import {
 import { telefoneValidoParaWhatsApp } from '../../../shared/utils/whatsapp';
 import {
   aplicativosCompativeisComDispositivo,
+  AplicativoResumo,
   criarListaDispositivos,
   DispositivoCliente,
   parseDispositivos,
@@ -55,6 +56,7 @@ export class NovoClienteModalComponent implements OnInit {
     expiraEm: '',
     vencimento: 10,
     valorMensal: 0,
+    incluirCobrancas: true,
     observacao: '',
   };
 
@@ -97,10 +99,11 @@ export class NovoClienteModalComponent implements OnInit {
         servidor: this.cliente.servidor ?? '',
         usuario: this.cliente.usuario ?? '',
         senha: this.cliente.senha ?? '',
-        ativadoEm: this.cliente.ativadoEm?.substring(0, 10) ?? '',
-        expiraEm: this.cliente.expiraEm?.substring(0, 10) ?? '',
+        ativadoEm: dataIsoParaInput(this.cliente.ativadoEm),
+        expiraEm: dataIsoParaInput(this.cliente.expiraEm),
         vencimento: this.cliente.vencimento,
         valorMensal: this.cliente.valorMensal,
+        incluirCobrancas: this.cliente.incluirCobrancas !== false,
         observacao: this.cliente.observacao ?? '',
       };
     } else {
@@ -138,7 +141,7 @@ export class NovoClienteModalComponent implements OnInit {
   fmtRotuloPlano = rotuloPlanoOpcao;
   fmtRotuloDispositivo = rotuloDispositivo;
 
-  aplicativosDoDispositivo(dispositivoId: number | null): Aplicativo[] {
+  aplicativosDoDispositivo(dispositivoId: number | null): AplicativoResumo[] {
     if (!dispositivoId) {
       return [];
     }

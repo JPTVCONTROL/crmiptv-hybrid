@@ -36,25 +36,49 @@
       <p>Nenhum alerta no momento.</p>
     </div>
 
-    <ul *ngIf="!estado.carregando && estado.alertas.length > 0" class="alertas-sino-lista">
-      <li *ngFor="let alerta of estado.alertas">
-        <button
-          type="button"
-          class="alertas-sino-item"
-          [ngClass]="classeAlerta(alerta)"
-          (click)="abrirAlerta(alerta)"
-        >
-          <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
-          <div class="alertas-sino-item-texto">
-            <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
-            <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
-          </div>
-          <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
-            {{ alerta.quantidade }}
-          </span>
-        </button>
-      </li>
-    </ul>
+    <ng-container *ngIf="!estado.carregando && estado.alertas.length > 0">
+      <p *ngIf="alertasCadastro.length > 0" class="alertas-sino-secao">Cadastro incompleto</p>
+      <ul *ngIf="alertasCadastro.length > 0" class="alertas-sino-lista">
+        <li *ngFor="let alerta of alertasCadastro">
+          <button
+            type="button"
+            class="alertas-sino-item"
+            [ngClass]="classeAlerta(alerta)"
+            (click)="abrirAlerta(alerta)"
+          >
+            <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
+            <div class="alertas-sino-item-texto">
+              <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
+              <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
+            </div>
+            <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
+              {{ alerta.quantidade }}
+            </span>
+          </button>
+        </li>
+      </ul>
+
+      <p *ngIf="alertasOperacionais.length > 0" class="alertas-sino-secao">Operação do dia</p>
+      <ul *ngIf="alertasOperacionais.length > 0" class="alertas-sino-lista">
+        <li *ngFor="let alerta of alertasOperacionais">
+          <button
+            type="button"
+            class="alertas-sino-item"
+            [ngClass]="classeAlerta(alerta)"
+            (click)="abrirAlerta(alerta)"
+          >
+            <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
+            <div class="alertas-sino-item-texto">
+              <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
+              <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
+            </div>
+            <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
+              {{ alerta.quantidade }}
+            </span>
+          </button>
+        </li>
+      </ul>
+    </ng-container>
 
     <button type="button" class="alertas-sino-footer" (click)="irParaDashboard()">
       Ver resumo no Dashboard

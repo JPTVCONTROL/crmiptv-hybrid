@@ -10,24 +10,11 @@ export interface DispositivoCatalogo {
 export interface AplicativoResumo {
   id: number;
   nome: string;
-  android?: string | null;
-  androidTv?: string | null;
-  ios?: string | null;
-  windows?: string | null;
-  mac?: string | null;
+  requerMac?: boolean;
+  requerDeviceKey?: boolean;
+  requerCodigo?: boolean;
   ativo: boolean;
 }
-
-type PlataformaApp = 'android' | 'androidTv' | 'ios' | 'windows' | 'mac';
-
-const PLATAFORMAS_APP: PlataformaApp[] = [
-  'android',
-  'androidTv',
-  'ios',
-  'windows',
-  'mac',
-];
-
 
 export interface DispositivoCliente {
   dispositivoId: number | null;
@@ -44,63 +31,11 @@ export interface DispositivoClienteLegado {
   aplicativoId?: number | null;
 }
 
-function plataformasDoDispositivo(
-  dispositivo: DispositivoCatalogo
-): PlataformaApp[] {
-  const texto = `${dispositivo.nome} ${dispositivo.modelo ?? ''} ${
-    dispositivo.descricao ?? ''
-  }`.toUpperCase();
-
-  if (/IPHONE|IPAD|IOS|APPLE/.test(texto)) {
-    return ['ios'];
-  }
-
-  if (/TV BOX|TVBOX|ANDROID TV|FIRE|STICK|CHROMECAST|GOOGLE TV/.test(texto)) {
-    return ['androidTv', 'android'];
-  }
-
-  if (/ANDROID|CELULAR|SMARTPHONE|MOBILE/.test(texto)) {
-    return ['android'];
-  }
-
-  if (/WINDOWS|PC|NOTEBOOK|COMPUTADOR/.test(texto)) {
-    return ['windows'];
-  }
-
-  if (/MAC|MACBOOK|IMAC/.test(texto)) {
-    return ['mac'];
-  }
-
-  if (/\bTV\b|SMART TV/.test(texto)) {
-    return ['androidTv', 'android', 'ios'];
-  }
-
-  return [...PLATAFORMAS_APP];
-}
-
-function appSuportaPlataforma(
-  app: AplicativoResumo,
-  plataforma: PlataformaApp
-): boolean {
-  return !!app[plataforma]?.trim();
-}
-
 export function aplicativosCompativeisComDispositivo(
-  dispositivo: DispositivoCatalogo | undefined,
+  _dispositivo: DispositivoCatalogo | undefined,
   aplicativos: AplicativoResumo[]
 ): AplicativoResumo[] {
-  const ativos = aplicativos.filter((app) => app.ativo);
-
-  if (!dispositivo) {
-    return [];
-  }
-
-  const plataformas = plataformasDoDispositivo(dispositivo);
-  const compativeis = ativos.filter((app) =>
-    plataformas.some((plataforma) => appSuportaPlataforma(app, plataforma))
-  );
-
-  return compativeis.length > 0 ? compativeis : ativos;
+  return aplicativos.filter((app) => app.ativo);
 }
 
 export function resolverAplicativoIdPrincipal(

@@ -21,6 +21,8 @@ export class ConfiguracoesPage implements OnInit {
   loading = true;
   salvando = false;
   baixandoBackup = false;
+  sincronizandoCobrancas = false;
+  ultimaSincronizacao = '';
   alterandoSenha = false;
   mostrarFormSenha = false;
   senhaAtual = '';
@@ -228,6 +230,22 @@ export class ConfiguracoesPage implements OnInit {
       error: (err) => {
         this.baixandoBackup = false;
         void this.toast.error(err.message ?? 'Erro ao baixar backup.');
+      },
+    });
+  }
+
+  sincronizarCobrancas(): void {
+    this.sincronizandoCobrancas = true;
+    this.sistemaService.sincronizarCobrancas().subscribe({
+      next: (resultado) => {
+        this.sincronizandoCobrancas = false;
+        const hora = new Date().toLocaleString('pt-BR');
+        this.ultimaSincronizacao = `Última sync: ${hora} — ${resultado.clientes} cliente(s), ${resultado.mensalidades} mensalidade(s) alinhada(s).`;
+        void this.toast.success('Cobranças sincronizadas com sucesso.');
+      },
+      error: (err) => {
+        this.sincronizandoCobrancas = false;
+        void this.toast.error(err.message ?? 'Erro ao sincronizar cobranças.');
       },
     });
   }
