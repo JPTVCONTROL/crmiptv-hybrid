@@ -43,10 +43,11 @@
       <p class="text-slate-300 flex items-center gap-2">
         <span class="text-slate-500">Status:</span>
         <span
-          class="px-2 py-0.5 rounded text-xs font-medium"
-          [class.bg-green-600]="status() === 'ATIVO'"
-          [class.bg-amber-600]="status() === 'ATRASADO'"
-          [class.bg-red-600]="status() === 'INATIVO'"
+          [ngClass]="{
+            'crm-badge-ativo': status() === 'ATIVO',
+            'crm-badge-atrasado': status() === 'ATRASADO',
+            'crm-badge-inativo': status() === 'INATIVO'
+          }"
         >
           {{ status() }}
         </span>

@@ -201,7 +201,28 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto" *ngIf="ultimosPagamentos.length > 0">
+      <div class="md:hidden crm-mobile-list" *ngIf="ultimosPagamentos.length > 0">
+        <article *ngFor="let p of ultimosPagamentos" class="crm-mobile-card crm-mobile-card--atencao">
+          <div class="crm-mobile-card-header">
+            <div class="min-w-0">
+              <a
+                [routerLink]="['/clientes', p.clienteId]"
+                class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate"
+              >
+                {{ p.clienteNome }}
+              </a>
+              <p class="crm-mobile-card-subtitle">{{ p.referencia }}</p>
+            </div>
+            <span class="text-green-400 font-semibold text-sm shrink-0">{{ fmtValor(p.valor) }}</span>
+          </div>
+          <div class="crm-mobile-card-row">
+            <span class="crm-mobile-card-label">Pago em</span>
+            <span class="crm-mobile-card-value">{{ fmtData(p.pagoEm) }}</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="overflow-x-auto hidden md:block" *ngIf="ultimosPagamentos.length > 0">
         <table class="crm-table min-w-[520px]">
           <thead>
             <tr class="text-slate-400 border-b border-slate-800">

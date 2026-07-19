@@ -233,7 +233,74 @@
       </div>
     </div>
 
-    <div *ngIf="clientesAtencao.length > 0" class="overflow-x-auto">
+    <div *ngIf="clientesAtencao.length > 0" class="md:hidden crm-mobile-list">
+      <article
+        *ngFor="let c of clientesAtencao"
+        class="crm-mobile-card"
+        [ngClass]="{
+          'crm-mobile-card--atrasado': c.status === 'ATRASADO',
+          'crm-mobile-card--inativo': c.status === 'INATIVO'
+        }"
+      >
+        <div class="crm-mobile-card-header">
+          <div class="min-w-0">
+            <p class="crm-mobile-card-title">{{ c.nome }}</p>
+            <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
+          </div>
+          <span
+            [ngClass]="{
+              'crm-badge-atrasado': c.status === 'ATRASADO',
+              'crm-badge-inativo': c.status === 'INATIVO'
+            }"
+          >
+            {{ c.status }}
+          </span>
+        </div>
+
+        <div class="space-y-2">
+          <div class="crm-mobile-card-row">
+            <span class="crm-mobile-card-label">Expira em</span>
+            <span class="crm-mobile-card-value">{{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}</span>
+          </div>
+          <div class="crm-mobile-card-row">
+            <span class="crm-mobile-card-label">Situação</span>
+            <span
+              class="crm-mobile-card-value text-xs font-medium"
+              [class.text-amber-400]="c.status === 'ATRASADO'"
+              [class.text-red-400]="c.status === 'INATIVO'"
+            >
+              {{ rotuloExpiracao(c.expiraEm) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="crm-mobile-card-actions">
+          <a
+            [routerLink]="['/clientes', c.id]"
+            class="crm-btn-ghost flex-1 !py-1.5 !text-xs no-underline text-center"
+          >
+            Ver
+          </a>
+          <a
+            routerLink="/cobranca-diaria"
+            class="crm-btn-success flex-1 !py-1.5 !text-xs no-underline text-center"
+          >
+            Cobrança
+          </a>
+          <button
+            *ngIf="c.mensalidadePendenteId"
+            type="button"
+            class="crm-btn-primary flex-1 !py-1.5 !text-xs"
+            [disabled]="estaPagando(c)"
+            (click)="quitarCliente(c)"
+          >
+            {{ estaPagando(c) ? 'Salvando...' : 'Quitar' }}
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <div *ngIf="clientesAtencao.length > 0" class="overflow-x-auto hidden md:block">
       <table class="crm-table min-w-[620px]">
         <thead>
           <tr class="text-slate-500 text-xs border-b border-slate-800">
@@ -273,9 +340,10 @@
             </td>
             <td class="py-2.5 px-2">
               <span
-                class="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide"
-                [class.bg-amber-600]="c.status === 'ATRASADO'"
-                [class.bg-red-600]="c.status === 'INATIVO'"
+                [ngClass]="{
+                  'crm-badge-atrasado': c.status === 'ATRASADO',
+                  'crm-badge-inativo': c.status === 'INATIVO'
+                }"
               >
                 {{ c.status }}
               </span>
