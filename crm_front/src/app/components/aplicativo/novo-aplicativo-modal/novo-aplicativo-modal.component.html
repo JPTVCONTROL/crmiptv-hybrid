@@ -92,11 +92,46 @@
     </div>
 
     <div>
+      <h3 class="text-white font-semibold mb-2 text-sm">Links de download</h3>
+      <p class="text-slate-500 text-xs mb-3">
+        URLs das lojas ou arquivos de instalação. Use variáveis como
+        <span class="text-slate-400">{{ '{' }}android{{ '}' }}</span>,
+        <span class="text-slate-400">{{ '{' }}linksLoja{{ '}' }}</span> na mensagem padrão.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-slate-400 mb-1.5 text-xs">Android</label>
+          <input class="crm-input" [(ngModel)]="form.android" placeholder="Play Store ou APK" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1.5 text-xs">Android TV</label>
+          <input class="crm-input" [(ngModel)]="form.androidTv" placeholder="Link Android TV" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1.5 text-xs">iOS / iPhone</label>
+          <input class="crm-input" [(ngModel)]="form.ios" placeholder="App Store" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1.5 text-xs">Windows</label>
+          <input class="crm-input" [(ngModel)]="form.windows" placeholder="Instalador ou Microsoft Store" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1.5 text-xs">macOS</label>
+          <input class="crm-input" [(ngModel)]="form.mac" placeholder="Mac App Store ou DMG" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1.5 text-xs">Tutorial</label>
+          <input class="crm-input" [(ngModel)]="form.tutorial" placeholder="Vídeo ou guia de instalação" />
+        </div>
+      </div>
+    </div>
+
+    <div>
       <label class="block text-slate-300 mb-2 text-sm">Mensagem padrão</label>
       <textarea
         class="crm-input min-h-[80px]"
         [(ngModel)]="form.mensagem"
-        placeholder="Texto enviado ao cliente com orientações do app (WhatsApp)"
+        placeholder="Texto enviado ao cliente com orientações do app (WhatsApp). Variáveis: nome, app, android, ios, linksLoja, tutorial..."
       ></textarea>
     </div>
 

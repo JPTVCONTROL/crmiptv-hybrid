@@ -176,7 +176,84 @@
 
 <app-loading *ngIf="loading"></app-loading>
 
-<div *ngIf="!loading" class="crm-card overflow-x-auto">
+<div *ngIf="!loading" class="md:hidden crm-mobile-list">
+  <article
+    *ngFor="let c of clientesPaginados"
+    class="crm-mobile-card"
+    [ngClass]="{ 'border-amber-500/30 bg-amber-500/5': filtroCadastro && pendenciasCliente(c).length > 0 }"
+  >
+    <div class="crm-mobile-card-header">
+      <div class="min-w-0">
+        <h3 class="crm-mobile-card-title">{{ c.nome }}</h3>
+        <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
+      </div>
+      <span
+        [ngClass]="{
+          'crm-badge-ativo': status(c) === 'ATIVO',
+          'crm-badge-atrasado': status(c) === 'ATRASADO',
+          'crm-badge-inativo': status(c) === 'INATIVO'
+        }"
+      >
+        {{ status(c) }}
+      </span>
+    </div>
+
+    <div class="space-y-2">
+      <div class="crm-mobile-card-row">
+        <span class="crm-mobile-card-label">Aplicativo</span>
+        <span class="crm-mobile-card-value">{{ c.aplicativo?.nome ?? '—' }}</span>
+      </div>
+      <div class="crm-mobile-card-row">
+        <span class="crm-mobile-card-label">Vencimento</span>
+        <span class="crm-mobile-card-value">{{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}</span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-1.5">
+      <span
+        *ngIf="!participaCobrancas(c)"
+        class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200"
+      >
+        Sem cobrança
+      </span>
+      <span
+        *ngFor="let pendencia of pendenciasCliente(c)"
+        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border"
+        [ngClass]="classesChipPendencia(pendencia)"
+      >
+        <ion-icon [name]="iconePendencia(pendencia)" class="text-xs shrink-0"></ion-icon>
+        {{ rotuloPendenciaCurto(pendencia) }}
+      </span>
+    </div>
+
+    <div class="crm-mobile-card-actions">
+      <button type="button" class="crm-btn-ghost flex-1" (click)="verDetalhes(c.id)">Ver</button>
+      <button
+        type="button"
+        class="crm-btn-primary flex-1 !py-1.5 !text-xs"
+        *ngIf="pendenciasCliente(c).length > 0; else editarMobile"
+        (click)="editar(c)"
+      >
+        Corrigir
+      </button>
+      <ng-template #editarMobile>
+        <button type="button" class="crm-btn-ghost flex-1" (click)="editar(c)">Editar</button>
+      </ng-template>
+      <button type="button" class="crm-btn-danger flex-1" (click)="excluir(c)">Excluir</button>
+    </div>
+  </article>
+
+  <app-empty-state
+    *ngIf="clientesFiltrados.length === 0"
+    [message]="
+      filtroCadastro
+        ? 'Nenhum cliente ativo/atrasado com esta pendência.'
+        : 'Nenhum cliente encontrado.'
+    "
+  ></app-empty-state>
+</div>
+
+<div *ngIf="!loading" class="crm-card overflow-x-auto hidden md:block">
   <table class="crm-table min-w-[920px]">
     <thead>
       <tr class="text-slate-400 border-b border-slate-800">

@@ -434,11 +434,29 @@ Exemplo em rede local: `apiUrl: 'http://192.168.1.100:3001/api'`
    - Exclusão de cobrança (`incluirCobrancas: false`) e alertas do sino
    - Cobrança diária (seleção mantida após registrar contato)
    - Envio de WhatsApp com template configurado
-5. Executar `npm run build` em ambos os projetos e `npm test` no backend antes de publicar.
+5. Executar `npm run build` em ambos os projetos, `npm test` no backend e `npm run test:unit` no frontend antes de publicar.
+
+### Checklist de validação manual
+
+Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layout):
+
+| # | Fluxo | Como validar | Resultado esperado |
+|---|--------|--------------|-------------------|
+| 1 | Login | Entrar com admin do seed | Dashboard carrega sem 401 |
+| 2 | Novo cliente | Cadastrar com plano e app | Mensalidade criada; onboarding opcional |
+| 3 | Cadastro incompleto | Dashboard → alerta → filtro | Lista só clientes com pendência |
+| 4 | Pagamento | Financeiro → Pagar | Status REGULAR; recibo WhatsApp opcional |
+| 5 | Sem cobrança | Cliente com `incluirCobrancas` off | Badge “Sem cobrança”; fora da cobrança diária |
+| 6 | CSV | Importar modelo + exportar | Contagem bate; duplicados rejeitados |
+| 7 | Cobrança diária | Registrar contato | Seleção mantida após reload |
+| 8 | Aplicativo | Editar links de loja | Campos salvos; variáveis na mensagem WhatsApp |
+| 9 | Mobile | Clientes e Financeiro no celular | Cards legíveis; ações funcionam |
+| 10 | Sync | Editar plano/app em outra aba | Modal recarrega catálogo ao abrir |
 
 ### Backup recomendado (produção)
 
 - Baixe o SQLite periodicamente em **Configurações → Backup** (`GET /api/sistema/backup`).
+- **Desenvolvimento (Windows):** cópia local automática com `npm run db:backup` em `crm_back` (salva em `crm_back/backups/`).
 - Antes de `db:push` ou alterações no schema, faça cópia de `crm_back/prisma/dev.db`.
 - Após mudança no schema: pare o backend, rode `npm run db:refresh` e reinicie.
 
@@ -498,9 +516,7 @@ Itens ainda não implementados ou parciais:
 
 - **PostgreSQL** em produção com migrations Prisma versionadas (`db:migrate`)
 - **Multi-usuário** com perfis/permissões (hoje apenas um admin JWT)
-- Campos de loja do `Aplicativo` (android/ios/windows/mac) ainda não expostos na UI
 - WhatsApp automático via API oficial da Meta (hoje só envio manual `wa.me`)
-- Cards mobile alternativos às tabelas em telas longas
 
 ---
 

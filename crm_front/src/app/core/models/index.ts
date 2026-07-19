@@ -10,6 +10,12 @@ export interface Aplicativo {
   nome: string;
   descricao?: string | null;
   logo?: string | null;
+  android?: string | null;
+  androidTv?: string | null;
+  ios?: string | null;
+  windows?: string | null;
+  mac?: string | null;
+  tutorial?: string | null;
   mensagem?: string | null;
   requerMac: boolean;
   requerDeviceKey: boolean;

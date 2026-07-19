@@ -15,6 +15,29 @@ import {
   telefoneValidoParaWhatsApp,
 } from './whatsapp';
 
+function montarLinksLoja(aplicativo: Aplicativo): string {
+  const linhas: { rotulo: string; url?: string | null }[] = [
+    { rotulo: 'Android', url: aplicativo.android },
+    { rotulo: 'Android TV', url: aplicativo.androidTv },
+    { rotulo: 'iOS', url: aplicativo.ios },
+    { rotulo: 'Windows', url: aplicativo.windows },
+    { rotulo: 'macOS', url: aplicativo.mac },
+  ];
+
+  return linhas
+    .filter((item) => item.url?.trim())
+    .map((item) => `${item.rotulo}: ${item.url!.trim()}`)
+    .join('\n');
+}
+
+function aplicativoTemConteudoEnvio(aplicativo: Aplicativo): boolean {
+  return !!(
+    aplicativo.mensagem?.trim() ||
+    montarLinksLoja(aplicativo) ||
+    aplicativo.tutorial?.trim()
+  );
+}
+
 function formatarValorMsg(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -68,8 +91,12 @@ function mapaVariaveisApp(
   aplicativo: Aplicativo,
   configuracao: Configuracao | null
 ): Record<string, string> {
+  const linksLoja = montarLinksLoja(aplicativo);
+  const tutorial = aplicativo.tutorial?.trim() ?? '';
   const mensagemApp =
     aplicativo.mensagem?.trim() ||
+    linksLoja ||
+    (tutorial ? `Tutorial: ${tutorial}` : '') ||
     'Entre em contato conosco para receber as instruções de instalação.';
 
   return {
@@ -77,6 +104,13 @@ function mapaVariaveisApp(
     '{empresa}': configuracao?.nomeEmpresa?.trim() || 'JPTV',
     '{app}': aplicativo.nome.trim(),
     '{mensagemApp}': mensagemApp,
+    '{android}': aplicativo.android?.trim() ?? '',
+    '{androidTv}': aplicativo.androidTv?.trim() ?? '',
+    '{ios}': aplicativo.ios?.trim() ?? '',
+    '{windows}': aplicativo.windows?.trim() ?? '',
+    '{mac}': aplicativo.mac?.trim() ?? '',
+    '{tutorial}': tutorial,
+    '{linksLoja}': linksLoja,
   };
 }
 
@@ -124,7 +158,7 @@ export function temAppParaEnviar(
   const app = aplicativo ?? cliente.aplicativo;
   if (!app) return false;
 
-  return !!app.mensagem?.trim();
+  return aplicativoTemConteudoEnvio(app);
 }
 
 export function resolverAplicativoDaTela(

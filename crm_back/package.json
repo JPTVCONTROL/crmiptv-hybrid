@@ -14,6 +14,7 @@
     "db:refresh": "npm run db:push && npm run db:generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "db:backup": "powershell -ExecutionPolicy Bypass -File scripts/backup-db.ps1",
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {

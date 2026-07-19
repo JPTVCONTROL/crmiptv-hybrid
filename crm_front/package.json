@@ -13,6 +13,7 @@
     "cap:android": "npx cap open android",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:unit": "node --import tsx --test src/app/shared/utils/**/*.test.ts",
     "lint": "ng lint"
   },
   "private": true,
@@ -68,6 +69,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.1",
     "typescript": "~5.4.5"
   },
   "description": "CRM JPTV - Frontend Ionic Angular"
