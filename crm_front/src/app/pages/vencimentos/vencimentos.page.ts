@@ -3,6 +3,7 @@ import { forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
+import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
 import { Configuracao, Mensalidade } from '../../core/models';
 import {
   formatarValor,
@@ -11,7 +12,16 @@ import {
   criarMapaTelefones,
   resolverTelefoneCliente,
 } from '../../shared/utils/formatters';
-import { montarMensagemCobranca } from '../../shared/utils/whatsapp';
+import {
+  cobrarMensalidadesEmLote,
+  filtrarMensalidadesCobranca,
+  mensalidadeEstaAtrasada,
+  montarMensagemBloqueioMensalidade,
+  montarMensagemCobrancaMensalidade,
+  nomeClienteMensalidade,
+  trackByMensalidadeId,
+} from '../../shared/utils/cobranca-lote';
+import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 
 @Component({
   selector: 'app-vencimentos',
@@ -20,13 +30,16 @@ import { montarMensagemCobranca } from '../../shared/utils/whatsapp';
 export class VencimentosPage implements OnInit {
   mensalidades: Mensalidade[] = [];
   telefones = new Map<number, string>();
+  nomesClientes = new Map<number, string>();
   configuracao: Configuracao | null = null;
   loading = true;
+  selecionados = new Set<number>();
 
   constructor(
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
-    private configuracaoService: ConfiguracaoService
+    private configuracaoService: ConfiguracaoService,
+    private pagamentoUi: PagamentoUiService
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +50,7 @@ export class VencimentosPage implements OnInit {
     ]).subscribe({
       next: ([mensalidades, clientes]) => {
         this.telefones = criarMapaTelefones(clientes);
+        this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
         this.mensalidades = mensalidades
           .filter((m) => m.status === 'PENDENTE')
           .sort((a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime());
@@ -71,30 +85,108 @@ export class VencimentosPage implements OnInit {
   }
 
   mensagem(m: Mensalidade): string {
-    const cfg = this.configuracao;
-    return montarMensagemCobranca(
-      {
-        nome: m.cliente?.nome ?? '',
-        referencia: m.referencia,
-        valor: m.valor,
-        vencimento: m.vencimento,
-        empresa: cfg?.nomeEmpresa ?? 'JPTV',
-        atrasado: calcularDias(m.vencimento) < 0,
-        pix: cfg?.chavePix ?? undefined,
-        tipoPix: cfg?.tipoPix ?? undefined,
-        favorecido: cfg?.favorecidoPix ?? undefined,
-      },
-      cfg?.mensagemCobranca
+    return montarMensagemCobrancaMensalidade(
+      m,
+      this.configuracao,
+      this.nomesClientes
     );
   }
 
-  pagar(m: Mensalidade): void {
-    this.mensalidadeService.registrarPagamento(m.id).subscribe({
-      next: () => this.ngOnInit(),
+  mensagemBloqueio(m: Mensalidade): string {
+    return montarMensagemBloqueioMensalidade(
+      m,
+      this.configuracao,
+      this.nomesClientes
+    );
+  }
+
+  async pagar(m: Mensalidade): Promise<void> {
+    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
+    if (!pagoEm) return;
+
+    this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
+      next: (resultado) => {
+        oferecerMensagemRenovacao({
+          telefone: this.telefone(m),
+          nome: nomeClienteMensalidade(m, this.nomesClientes),
+          referencia: m.referencia,
+          valor: m.valor,
+          novoVencimento: resultado.novoVencimento,
+          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
+          templateRenovacao: this.configuracao?.mensagemRenovacao,
+        });
+        this.ngOnInit();
+      },
       error: (err) => alert(err.message),
     });
   }
 
+  get qtdSelecionados(): number {
+    return this.selecionados.size;
+  }
+
+  estaSelecionado(m: Mensalidade): boolean {
+    return this.selecionados.has(m.id);
+  }
+
+  alternarSelecao(m: Mensalidade): void {
+    if (this.selecionados.has(m.id)) {
+      this.selecionados.delete(m.id);
+    } else {
+      this.selecionados.add(m.id);
+    }
+    this.selecionados = new Set(this.selecionados);
+  }
+
+  alternarTodos(): void {
+    if (this.todosSelecionados) {
+      this.selecionados = new Set();
+      return;
+    }
+
+    this.selecionados = new Set(this.mensalidades.map((m) => m.id));
+  }
+
+  get todosSelecionados(): boolean {
+    return (
+      this.mensalidades.length > 0 &&
+      this.mensalidades.every((m) => this.selecionados.has(m.id))
+    );
+  }
+
+  selecionarAtrasados(): void {
+    this.selecionados = new Set(
+      this.mensalidades
+        .filter((m) => calcularDias(m.vencimento) < 0)
+        .map((m) => m.id)
+    );
+  }
+
+  limparSelecao(): void {
+    this.selecionados = new Set();
+  }
+
+  cobrarSelecionados(): void {
+    cobrarMensalidadesEmLote(
+      this.mensalidades,
+      this.selecionados,
+      this.telefones,
+      this.configuracao,
+      this.nomesClientes
+    );
+  }
+
+  cobrarAtrasados(): void {
+    const atrasados = filtrarMensalidadesCobranca(
+      this.mensalidades,
+      'ATRASADO'
+    );
+    this.selecionados = new Set(atrasados.map((m) => m.id));
+    this.cobrarSelecionados();
+  }
+
   fmtValor = formatarValor;
   fmtData = formatarData;
+  trackByMensalidade = trackByMensalidadeId;
+  mensalidadeAtrasada = mensalidadeEstaAtrasada;
 }

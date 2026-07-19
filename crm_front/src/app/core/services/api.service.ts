@@ -42,6 +42,20 @@ export class ApiService {
       );
   }
 
+  putActionResult<T>(path: string, body: unknown = {}): Observable<T> {
+    return this.http
+      .put<ApiResponse & T>(`${this.baseUrl}${path}`, body)
+      .pipe(
+        map((res) => {
+          if (!res.success) {
+            throw new Error(res.message ?? 'Erro na requisição');
+          }
+          return res as unknown as T;
+        }),
+        catchError(this.handleError)
+      );
+  }
+
   delete(path: string): Observable<void> {
     return this.http
       .delete<ApiResponse>(`${this.baseUrl}${path}`)

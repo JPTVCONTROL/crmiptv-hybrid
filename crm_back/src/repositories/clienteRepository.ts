@@ -5,7 +5,7 @@ export class ClienteRepository {
   findAll() {
     return prisma.cliente.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { aplicativo: true, mensalidades: true },
+      include: { aplicativo: true, plano: true, mensalidades: true },
     });
   }
 
@@ -14,6 +14,7 @@ export class ClienteRepository {
       where: { id },
       include: {
         aplicativo: true,
+        plano: true,
         mensalidades: { orderBy: { createdAt: 'desc' } },
       },
     });
@@ -24,6 +25,7 @@ export class ClienteRepository {
       data: {
         nome: data.nome,
         telefone: data.telefone,
+        planoId: data.planoId ? Number(data.planoId) : null,
         aplicativoId: data.aplicativoId ? Number(data.aplicativoId) : null,
         servidor: data.servidor,
         usuario: data.usuario,
@@ -31,13 +33,15 @@ export class ClienteRepository {
         aparelho: data.aparelho,
         modelo: data.modelo,
         macAddress: data.macAddress,
+        qtdTelas: data.qtdTelas !== undefined ? Number(data.qtdTelas) : 1,
+        dispositivos: data.dispositivos ?? null,
         ativadoEm: data.ativadoEm ? new Date(data.ativadoEm) : null,
         expiraEm: data.expiraEm ? new Date(data.expiraEm) : null,
         vencimento: Number(data.vencimento),
         valorMensal: Number(data.valorMensal),
         observacao: data.observacao,
       },
-      include: { aplicativo: true },
+      include: { aplicativo: true, plano: true },
     });
   }
 
@@ -47,6 +51,11 @@ export class ClienteRepository {
       data: {
         nome: data.nome,
         telefone: data.telefone,
+        planoId: data.planoId
+          ? Number(data.planoId)
+          : data.planoId === null
+            ? null
+            : undefined,
         aplicativoId: data.aplicativoId
           ? Number(data.aplicativoId)
           : data.aplicativoId === null
@@ -58,6 +67,10 @@ export class ClienteRepository {
         aparelho: data.aparelho,
         modelo: data.modelo,
         macAddress: data.macAddress,
+        qtdTelas:
+          data.qtdTelas !== undefined ? Number(data.qtdTelas) : undefined,
+        dispositivos:
+          data.dispositivos !== undefined ? data.dispositivos : undefined,
         ativadoEm: data.ativadoEm ? new Date(data.ativadoEm) : data.ativadoEm === null ? null : undefined,
         expiraEm: data.expiraEm ? new Date(data.expiraEm) : data.expiraEm === null ? null : undefined,
         vencimento: data.vencimento !== undefined ? Number(data.vencimento) : undefined,

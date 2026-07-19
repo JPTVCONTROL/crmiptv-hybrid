@@ -1,6 +1,6 @@
 <ion-header class="ion-no-border">
   <ion-toolbar class="bg-slate-900">
-    <ion-title class="text-white">Novo Aplicativo</ion-title>
+    <ion-title class="text-white">{{ aplicativo ? 'Editar Aplicativo' : 'Novo Aplicativo' }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
     </ion-buttons>
@@ -8,39 +8,110 @@
 </ion-header>
 
 <ion-content class="bg-slate-950">
-  <div class="p-4 md:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+  <div class="p-4 md:p-6 space-y-4 modal-form-body">
     <div>
       <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
       <input class="crm-input" [(ngModel)]="form.nome" />
     </div>
+
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Logo</label>
+      <div class="flex flex-col sm:flex-row gap-4 items-start">
+        <div
+          class="w-20 h-20 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0"
+        >
+          <img
+            *ngIf="logoPreview && !logoErro"
+            [src]="logoPreview"
+            [alt]="form.nome || 'Logo'"
+            class="w-full h-full object-cover"
+            (error)="onLogoErro()"
+          />
+          <span *ngIf="!logoPreview || logoErro" class="text-2xl">📱</span>
+        </div>
+
+        <div class="flex-1 space-y-2 w-full">
+          <input
+            class="crm-input"
+            [(ngModel)]="form.logo"
+            (ngModelChange)="onLogoUrlChange()"
+            placeholder="URL da imagem ou envie um arquivo abaixo"
+          />
+          <div class="flex flex-wrap gap-2">
+            <label class="crm-btn-ghost cursor-pointer inline-block">
+              Enviar imagem
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                class="hidden"
+                (change)="onLogoArquivo($event)"
+              />
+            </label>
+            <button
+              *ngIf="logoPreview"
+              type="button"
+              class="crm-btn-ghost"
+              (click)="removerLogo()"
+            >
+              Remover logo
+            </button>
+          </div>
+          <p *ngIf="logoErro" class="text-red-400 text-xs">
+            Não foi possível carregar a imagem. Verifique a URL ou envie outro arquivo.
+          </p>
+          <p class="text-slate-500 text-xs">PNG, JPG ou WEBP até 500 KB.</p>
+        </div>
+      </div>
+    </div>
+
     <div>
       <label class="block text-slate-300 mb-2 text-sm">Descrição</label>
-      <textarea class="crm-input" [(ngModel)]="form.descricao"></textarea>
+      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.descricao"></textarea>
     </div>
+
     <div>
-      <label class="block text-slate-300 mb-2 text-sm">URL do Logo</label>
-      <input class="crm-input" [(ngModel)]="form.logo" />
+      <h3 class="text-white font-semibold mb-3 text-sm">Links de download</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Android</label>
+          <input class="crm-input" [(ngModel)]="form.android" placeholder="URL ou nome do APK" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Android TV</label>
+          <input class="crm-input" [(ngModel)]="form.androidTv" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">iOS</label>
+          <input class="crm-input" [(ngModel)]="form.ios" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Windows</label>
+          <input class="crm-input" [(ngModel)]="form.windows" />
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-2 text-sm">Mac</label>
+          <input class="crm-input" [(ngModel)]="form.mac" />
+        </div>
+      </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Android</label>
-        <input class="crm-input" [(ngModel)]="form.android" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Android TV</label>
-        <input class="crm-input" [(ngModel)]="form.androidTv" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">iOS</label>
-        <input class="crm-input" [(ngModel)]="form.ios" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Windows</label>
-        <input class="crm-input" [(ngModel)]="form.windows" />
-      </div>
+
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Tutorial (URL ou texto)</label>
+      <input class="crm-input" [(ngModel)]="form.tutorial" />
     </div>
+
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Mensagem padrão</label>
+      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.mensagem"></textarea>
+    </div>
+
+    <label class="flex items-center gap-2 text-slate-300 text-sm">
+      <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.ativo" />
+      Aplicativo ativo
+    </label>
+
     <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
-      {{ salvando ? 'Salvando...' : 'Salvar Aplicativo' }}
+      {{ salvando ? 'Salvando...' : (aplicativo ? 'Salvar alterações' : 'Salvar Aplicativo') }}
     </button>
   </div>
 </ion-content>

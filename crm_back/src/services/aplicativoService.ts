@@ -27,7 +27,12 @@ export class AplicativoService {
   }
 
   async excluir(id: number) {
-    await this.buscarPorId(id);
+    const aplicativo = await this.buscarPorId(id);
+    if (aplicativo._count.clientes > 0) {
+      throw new ValidationError(
+        'Não é possível excluir um aplicativo com clientes vinculados.'
+      );
+    }
     await aplicativoRepository.delete(id);
   }
 }

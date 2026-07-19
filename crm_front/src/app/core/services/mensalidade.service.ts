@@ -3,6 +3,10 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { Mensalidade } from '../models';
 
+export interface ResultadoPagamento {
+  novoVencimento: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MensalidadeService {
   constructor(private api: ApiService) {}
@@ -11,7 +15,10 @@ export class MensalidadeService {
     return this.api.get<Mensalidade[]>('/mensalidades');
   }
 
-  registrarPagamento(id: number): Observable<void> {
-    return this.api.putAction(`/mensalidades/${id}/pagar`, {});
+  registrarPagamento(id: number, pagoEm?: string): Observable<ResultadoPagamento> {
+    return this.api.putActionResult<ResultadoPagamento>(
+      `/mensalidades/${id}/pagar`,
+      pagoEm ? { pagoEm } : {}
+    );
   }
 }

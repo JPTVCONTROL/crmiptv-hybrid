@@ -31,10 +31,48 @@
     </select>
   </div>
 
+  <div class="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+    <button
+      class="crm-btn-primary"
+      [disabled]="qtdSelecionados === 0"
+      (click)="cobrarSelecionados()"
+    >
+      Cobrar selecionados ({{ qtdSelecionados }})
+    </button>
+    <button class="crm-btn-ghost" (click)="selecionarAtrasados()">
+      Selecionar atrasados
+    </button>
+    <button class="crm-btn-ghost" (click)="alternarTodosFiltrados()">
+      {{ todosFiltradosSelecionados ? 'Desmarcar filtrados' : 'Selecionar filtrados' }}
+    </button>
+    <button
+      class="crm-btn-ghost"
+      [disabled]="qtdAtrasadosFiltrados === 0"
+      (click)="cobrarAtrasados()"
+    >
+      Cobrar atrasados ({{ qtdAtrasadosFiltrados }})
+    </button>
+    <button
+      class="crm-btn-ghost"
+      [disabled]="qtdSelecionados === 0"
+      (click)="limparSelecao()"
+    >
+      Limpar seleção
+    </button>
+  </div>
+
   <div class="crm-card overflow-x-auto">
-    <table class="w-full text-sm min-w-[700px]">
+    <table class="w-full text-sm min-w-[760px]">
       <thead>
         <tr class="text-slate-400 border-b border-slate-800">
+          <th class="text-left py-3 px-2 w-10">
+            <input
+              type="checkbox"
+              class="rounded border-slate-600"
+              [checked]="todosPaginaSelecionados"
+              (change)="alternarPagina()"
+            />
+          </th>
           <th class="text-left py-3 px-2">Cliente</th>
           <th class="text-left py-3 px-2">Referência</th>
           <th class="text-left py-3 px-2">Valor</th>
@@ -44,7 +82,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let m of paginadas" class="border-b border-slate-800/50">
+        <tr *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="border-b border-slate-800/50">
+          <td class="py-3 px-2">
+            <input
+              type="checkbox"
+              class="rounded border-slate-600"
+              [checked]="estaSelecionado(m)"
+              (change)="alternarSelecao(m)"
+            />
+          </td>
           <td class="py-3 px-2 text-white">{{ m.cliente?.nome }}</td>
           <td class="py-3 px-2 text-slate-300">{{ m.referencia }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
@@ -57,6 +103,12 @@
           </td>
           <td class="py-3 px-2 text-right space-x-1">
             <app-whatsapp-cobranca-btn [telefone]="telefone(m)" [mensagem]="mensagem(m)"></app-whatsapp-cobranca-btn>
+            <app-whatsapp-cobranca-btn
+              *ngIf="status(m) === 'ATRASADO'"
+              label="Bloqueio"
+              [telefone]="telefone(m)"
+              [mensagem]="mensagemBloqueio(m)"
+            ></app-whatsapp-cobranca-btn>
             <button class="crm-btn-success" (click)="pagar(m)">Pagar</button>
           </td>
         </tr>

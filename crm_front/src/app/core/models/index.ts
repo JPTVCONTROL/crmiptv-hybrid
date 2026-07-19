@@ -21,6 +21,24 @@ export interface Aplicativo {
   _count?: { clientes: number };
 }
 
+export interface Dispositivo {
+  id: number;
+  nome: string;
+  modelo?: string | null;
+  descricao?: string | null;
+  ativo: boolean;
+  _count?: { clientes: number };
+}
+
+export interface Plano {
+  id: number;
+  nome: string;
+  valor: number;
+  diasValidade: number;
+  ativo: boolean;
+  _count?: { clientes: number };
+}
+
 export interface Mensalidade {
   id: number;
   clienteId: number;
@@ -37,6 +55,7 @@ export interface Cliente {
   nome: string;
   telefone: string;
   planoId?: number | null;
+  plano?: Plano | null;
   servidor?: string | null;
   usuario?: string | null;
   senha?: string | null;
@@ -45,6 +64,8 @@ export interface Cliente {
   aparelho?: string | null;
   modelo?: string | null;
   macAddress?: string | null;
+  qtdTelas?: number;
+  dispositivos?: string | null;
   ativadoEm?: string | null;
   expiraEm?: string | null;
   vencimento: number;
@@ -74,5 +95,6 @@ export interface Configuracao {
 
 export type CreateClienteDto = Omit<Cliente, 'id' | 'aplicativo' | 'mensalidades' | 'status'>;
 export type CreateAplicativoDto = Omit<Aplicativo, 'id' | '_count'>;
+export type CreateDispositivoDto = Omit<Dispositivo, 'id' | '_count'>;
 
 export type StatusFinanceiro = 'TODOS' | 'PENDENTE' | 'REGULAR' | 'ATRASADO';

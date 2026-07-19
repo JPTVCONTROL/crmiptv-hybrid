@@ -19,9 +19,49 @@ export class ConfiguracoesPage implements OnInit {
     tipoPix: '',
     favorecidoPix: '',
     mensagemCobranca: '',
+    mensagemRenovacao: '',
+    mensagemRecibo: '',
+    mensagemBloqueio: '',
   };
 
-  readonly variaveis = ['{nome}', '{referencia}', '{valor}', '{vencimento}', '{empresa}', '{pix}', '{tipoPix}', '{favorecido}'];
+  readonly variaveisCobranca = [
+    '{nome}',
+    '{referencia}',
+    '{valor}',
+    '{vencimento}',
+    '{empresa}',
+    '{pix}',
+    '{tipoPix}',
+    '{favorecido}',
+  ];
+
+  readonly variaveisRenovacao = [
+    '{nome}',
+    '{referencia}',
+    '{valor}',
+    '{vencimento}',
+    '{expiraEm}',
+    '{empresa}',
+  ];
+
+  readonly variaveisRecibo = [
+    '{nome}',
+    '{referencia}',
+    '{valor}',
+    '{pagoEm}',
+    '{empresa}',
+  ];
+
+  readonly variaveisBloqueio = [
+    '{nome}',
+    '{referencia}',
+    '{valor}',
+    '{vencimento}',
+    '{empresa}',
+    '{pix}',
+    '{tipoPix}',
+    '{favorecido}',
+  ];
 
   constructor(private configuracaoService: ConfiguracaoService) {}
 
@@ -38,6 +78,9 @@ export class ConfiguracoesPage implements OnInit {
           tipoPix: dados.tipoPix ?? '',
           favorecidoPix: dados.favorecidoPix ?? '',
           mensagemCobranca: dados.mensagemCobranca ?? '',
+          mensagemRenovacao: dados.mensagemRenovacao ?? '',
+          mensagemRecibo: dados.mensagemRecibo ?? '',
+          mensagemBloqueio: dados.mensagemBloqueio ?? '',
         };
         this.loading = false;
       },

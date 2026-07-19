@@ -1,4 +1,4 @@
-<app-page-header title="Configurações" subtitle="Empresa, PIX e mensagens de cobrança."></app-page-header>
+<app-page-header title="Configurações" subtitle="Empresa, PIX e mensagens do WhatsApp."></app-page-header>
 
 <app-loading *ngIf="loading"></app-loading>
 
@@ -48,9 +48,29 @@
   </div>
 
   <div>
-    <h2 class="text-white font-semibold text-lg mb-2">Mensagem de Cobrança (WhatsApp)</h2>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveis.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px]" [(ngModel)]="form.mensagemCobranca"></textarea>
+    <h2 class="text-white font-semibold text-lg mb-2">Mensagem de Cobrança</h2>
+    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
+    <textarea class="crm-input min-h-[120px]" [(ngModel)]="form.mensagemCobranca"></textarea>
+  </div>
+
+  <div>
+    <h2 class="text-white font-semibold text-lg mb-2">Mensagem de Renovação</h2>
+    <p class="text-slate-500 text-xs mb-1">Enviada após registrar o pagamento e renovar o plano.</p>
+    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRenovacao.join(', ') }}</p>
+    <textarea class="crm-input min-h-[120px]" [(ngModel)]="form.mensagemRenovacao"></textarea>
+  </div>
+
+  <div>
+    <h2 class="text-white font-semibold text-lg mb-2">Mensagem de Recibo</h2>
+    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRecibo.join(', ') }}</p>
+    <textarea class="crm-input min-h-[120px]" [(ngModel)]="form.mensagemRecibo"></textarea>
+  </div>
+
+  <div>
+    <h2 class="text-white font-semibold text-lg mb-2">Mensagem de Bloqueio</h2>
+    <p class="text-slate-500 text-xs mb-1">Para clientes inadimplentes com acesso suspenso.</p>
+    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBloqueio.join(', ') }}</p>
+    <textarea class="crm-input min-h-[120px]" [(ngModel)]="form.mensagemBloqueio"></textarea>
   </div>
 
   <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">

@@ -2,6 +2,7 @@ import type { Cliente, Mensalidade, Aplicativo, Configuracao } from '@prisma/cli
 
 export type ClienteWithRelations = Cliente & {
   aplicativo?: Aplicativo | null;
+  plano?: { id: number; nome: string; valor: number; diasValidade: number; ativo: boolean } | null;
   mensalidades?: Mensalidade[];
 };
 
@@ -13,9 +14,29 @@ export type AplicativoWithCount = Aplicativo & {
   _count: { clientes: number };
 };
 
+export interface CreatePlanoDto {
+  nome: string;
+  valor: number;
+  diasValidade: number;
+  ativo?: boolean;
+}
+
+export type UpdatePlanoDto = Partial<CreatePlanoDto>;
+
+export type PlanoWithCount = {
+  id: number;
+  nome: string;
+  valor: number;
+  diasValidade: number;
+  ativo: boolean;
+  createdAt: Date;
+  _count: { clientes: number };
+};
+
 export interface CreateClienteDto {
   nome: string;
   telefone: string;
+  planoId?: number | null;
   aplicativoId?: number | null;
   servidor?: string | null;
   usuario?: string | null;
@@ -23,6 +44,8 @@ export interface CreateClienteDto {
   aparelho?: string | null;
   modelo?: string | null;
   macAddress?: string | null;
+  qtdTelas?: number;
+  dispositivos?: string | null;
   ativadoEm?: string | null;
   expiraEm?: string | null;
   vencimento: number;
@@ -31,6 +54,25 @@ export interface CreateClienteDto {
 }
 
 export interface UpdateClienteDto extends Partial<CreateClienteDto> {}
+
+export interface CreateDispositivoDto {
+  nome: string;
+  modelo?: string | null;
+  descricao?: string | null;
+  ativo?: boolean;
+}
+
+export type UpdateDispositivoDto = Partial<CreateDispositivoDto>;
+
+export type DispositivoWithCount = {
+  id: number;
+  nome: string;
+  modelo?: string | null;
+  descricao?: string | null;
+  ativo: boolean;
+  createdAt: Date;
+  _count: { clientes: number };
+};
 
 export interface CreateAplicativoDto {
   nome: string;

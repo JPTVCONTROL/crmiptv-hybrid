@@ -13,7 +13,17 @@
     <div class="crm-card space-y-3">
       <h2 class="text-white font-semibold">Dados Pessoais</h2>
       <p class="text-slate-300"><span class="text-slate-500">Telefone:</span> {{ cliente.telefone }}</p>
-      <p class="text-slate-300"><span class="text-slate-500">Status:</span> {{ cliente.status }}</p>
+      <p class="text-slate-300 flex items-center gap-2">
+        <span class="text-slate-500">Status:</span>
+        <span
+          class="px-2 py-0.5 rounded text-xs font-medium"
+          [class.bg-green-600]="status() === 'ATIVO'"
+          [class.bg-amber-600]="status() === 'ATRASADO'"
+          [class.bg-red-600]="status() === 'INATIVO'"
+        >
+          {{ status() }}
+        </span>
+      </p>
       <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span> {{ fmtValor(cliente.valorMensal) }}</p>
     </div>
 
@@ -26,20 +36,37 @@
     </div>
 
     <div class="crm-card space-y-3">
-      <h2 class="text-white font-semibold">Dispositivo</h2>
-      <p class="text-slate-300"><span class="text-slate-500">Aparelho:</span> {{ cliente.aparelho || '—' }}</p>
-      <p class="text-slate-300"><span class="text-slate-500">Modelo:</span> {{ cliente.modelo || '—' }}</p>
-      <p class="text-slate-300"><span class="text-slate-500">MAC:</span> {{ cliente.macAddress || '—' }}</p>
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-white font-semibold">Dispositivos</h2>
+        <span class="text-slate-400 text-sm">{{ qtdTelas() }} tela(s)</span>
+      </div>
+      <div
+        *ngFor="let disp of dispositivos(); let i = index"
+        class="rounded-lg border border-slate-800/80 bg-slate-900/30 p-3 space-y-2"
+        [class.mt-0]="i === 0"
+      >
+        <p *ngIf="qtdTelas() > 1" class="text-violet-400 text-xs font-medium">Tela {{ i + 1 }}</p>
+        <p class="text-slate-300"><span class="text-slate-500">Dispositivo:</span> {{ rotuloTela(disp, i) }}</p>
+        <p class="text-slate-300"><span class="text-slate-500">MAC:</span> {{ disp.macAddress || '—' }}</p>
+      </div>
     </div>
 
     <div class="crm-card space-y-3">
       <h2 class="text-white font-semibold">Plano</h2>
+      <p class="text-slate-300"><span class="text-slate-500">Plano:</span> {{ cliente.plano?.nome || '—' }}</p>
+      <p class="text-slate-300" *ngIf="cliente.plano"><span class="text-slate-500">Validade:</span> {{ rotuloValidadePlano(cliente.plano) }}</p>
       <p class="text-slate-300"><span class="text-slate-500">Expira em:</span> {{ cliente.expiraEm ? fmtData(cliente.expiraEm) : '—' }}</p>
       <p class="text-slate-300"><span class="text-slate-500">Vencimento (dia):</span> {{ cliente.vencimento }}</p>
       <div *ngIf="mensalidadePendente() as pendente" class="flex flex-wrap gap-2 pt-2">
         <app-whatsapp-cobranca-btn
           [telefone]="cliente.telefone"
           [mensagem]="mensagemWhatsApp(pendente)"
+        ></app-whatsapp-cobranca-btn>
+        <app-whatsapp-cobranca-btn
+          *ngIf="mensalidadeAtrasada(pendente)"
+          label="Bloqueio"
+          [telefone]="cliente.telefone"
+          [mensagem]="mensagemBloqueio(pendente)"
         ></app-whatsapp-cobranca-btn>
         <button class="crm-btn-success" (click)="pagar(pendente)">Marcar como Pago</button>
       </div>
@@ -56,6 +83,7 @@
             <th class="text-left py-2">Valor</th>
             <th class="text-left py-2">Vencimento</th>
             <th class="text-left py-2">Status</th>
+            <th class="text-right py-2">WhatsApp</th>
           </tr>
         </thead>
         <tbody>
@@ -65,6 +93,25 @@
             <td class="py-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
             <td class="py-2">
               <span [class.text-green-400]="m.status === 'PAGO'" [class.text-amber-400]="m.status === 'PENDENTE'">{{ m.status }}</span>
+            </td>
+            <td class="py-2 text-right space-x-1">
+              <app-whatsapp-cobranca-btn
+                *ngIf="m.status === 'PENDENTE'"
+                [telefone]="cliente.telefone"
+                [mensagem]="mensagemWhatsApp(m)"
+              ></app-whatsapp-cobranca-btn>
+              <app-whatsapp-cobranca-btn
+                *ngIf="m.status === 'PENDENTE' && mensalidadeAtrasada(m)"
+                label="Bloqueio"
+                [telefone]="cliente.telefone"
+                [mensagem]="mensagemBloqueio(m)"
+              ></app-whatsapp-cobranca-btn>
+              <app-whatsapp-cobranca-btn
+                *ngIf="m.status === 'PAGO'"
+                label="Recibo"
+                [telefone]="cliente.telefone"
+                [mensagem]="mensagemRecibo(m)"
+              ></app-whatsapp-cobranca-btn>
             </td>
           </tr>
         </tbody>

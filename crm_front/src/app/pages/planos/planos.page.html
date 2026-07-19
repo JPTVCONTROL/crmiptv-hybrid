@@ -1,0 +1,48 @@
+<div class="flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
+  <app-page-header title="Planos" subtitle="Cadastre planos com valor e validade para vincular aos clientes."></app-page-header>
+  <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Plano</button>
+</div>
+
+<app-loading *ngIf="loading"></app-loading>
+<p *ngIf="error" class="text-red-400 mb-4">{{ error }}</p>
+
+<div *ngIf="!loading" class="space-y-5">
+  <section *ngFor="let grupo of gruposPlanos">
+    <h2 class="text-white font-semibold text-base mb-2">{{ grupo.titulo }}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div
+        *ngFor="let plano of grupo.planos"
+        class="crm-card !p-3 hover:border-violet-600 transition-colors"
+        [class.opacity-60]="!plano.ativo"
+      >
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="min-w-0">
+            <h3 class="text-white font-semibold text-sm truncate">
+              {{ plano.nome.split(' - ').slice(1).join(' - ') || plano.nome }}
+            </h3>
+            <p class="text-violet-400 font-bold text-base mt-0.5">{{ fmtValor(plano.valor) }}</p>
+          </div>
+          <span
+            class="text-[10px] leading-none px-1.5 py-1 rounded shrink-0"
+            [class.bg-green-600]="plano.ativo"
+            [class.bg-slate-700]="!plano.ativo"
+          >
+            {{ plano.ativo ? 'Ativo' : 'Inativo' }}
+          </span>
+        </div>
+
+        <div class="space-y-0.5 text-xs text-slate-400 mb-2.5">
+          <p>{{ rotuloValidade(plano) }} de validade</p>
+          <p>{{ plano._count?.clientes ?? 0 }} cliente(s) vinculado(s)</p>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="crm-btn-ghost flex-1 !py-1.5 !text-xs" (click)="abrirModal(plano)">Editar</button>
+          <button class="crm-btn-danger flex-1 !py-1.5 !text-xs" (click)="excluir(plano)">Excluir</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<app-empty-state *ngIf="!loading && planos.length === 0"></app-empty-state>

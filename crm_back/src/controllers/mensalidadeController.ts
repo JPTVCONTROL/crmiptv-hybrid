@@ -23,7 +23,9 @@ export class MensalidadeController {
   async registrarPagamento(req: Request, res: Response): Promise<void> {
     try {
       const id = Number(req.params.id);
-      const novoVencimento = await mensalidadeService.registrarPagamento(id);
+      const pagoEm =
+        typeof req.body?.pagoEm === 'string' ? req.body.pagoEm : undefined;
+      const novoVencimento = await mensalidadeService.registrarPagamento(id, pagoEm);
       res.json({
         success: true,
         message: 'Pagamento registrado com sucesso.',

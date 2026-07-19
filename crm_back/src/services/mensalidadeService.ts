@@ -2,6 +2,7 @@ import { mensalidadeRepository } from '../repositories/mensalidadeRepository.js'
 import {
   calcularNovoVencimento,
   formatReferencia,
+  stripTime,
 } from '../utils/helpers/dateHelpers.js';
 
 export class MensalidadeService {
@@ -9,7 +10,7 @@ export class MensalidadeService {
     return mensalidadeRepository.findAll();
   }
 
-  async registrarPagamento(id: number) {
+  async registrarPagamento(id: number, pagoEm?: string) {
     const mensalidade = await mensalidadeRepository.findById(id);
 
     if (!mensalidade) {
@@ -20,10 +21,12 @@ export class MensalidadeService {
       throw new ValidationError('Esta mensalidade já foi paga.');
     }
 
-    const pagamento = new Date();
+    const pagamento = parseDataPagamento(pagoEm);
+    const plano = mensalidade.cliente.plano ?? null;
     const novoVencimento = calcularNovoVencimento(
       new Date(mensalidade.vencimento),
-      pagamento
+      pagamento,
+      plano
     );
     const referencia = formatReferencia(novoVencimento);
 
@@ -37,6 +40,35 @@ export class MensalidadeService {
     );
 
     return novoVencimento;
+  }
+}
+
+function parseDataPagamento(valor?: string): Date {
+  if (!valor?.trim()) {
+    return new Date();
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    const data = new Date(`${valor}T12:00:00`);
+    if (Number.isNaN(data.getTime())) {
+      throw new ValidationError('Data de pagamento inválida.');
+    }
+    validarDataPagamento(data);
+    return data;
+  }
+
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) {
+    throw new ValidationError('Data de pagamento inválida.');
+  }
+
+  validarDataPagamento(data);
+  return data;
+}
+
+function validarDataPagamento(data: Date): void {
+  if (stripTime(data).getTime() > stripTime(new Date()).getTime()) {
+    throw new ValidationError('A data do pagamento não pode ser futura.');
   }
 }
 

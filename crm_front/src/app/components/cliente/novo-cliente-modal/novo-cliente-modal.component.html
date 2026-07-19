@@ -8,7 +8,7 @@
 </ion-header>
 
 <ion-content class="bg-slate-950">
-  <div class="p-4 md:p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+  <div class="p-4 md:p-6 space-y-6 cliente-modal-body">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
@@ -16,7 +16,35 @@
       </div>
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Telefone *</label>
-        <input class="crm-input" [(ngModel)]="form.telefone" placeholder="(62) 99999-9999" />
+        <input
+          class="crm-input"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel"
+          maxlength="15"
+          [ngModel]="form.telefone"
+          (ngModelChange)="onTelefoneInput($event)"
+          (blur)="telefoneTocado = true"
+          placeholder="(62) 99999-9999"
+          [class.border-red-500]="telefoneInvalido"
+        />
+        <p *ngIf="telefoneInvalido" class="text-red-400 text-xs mt-1">
+          Informe o DDD e o número completo (10 ou 11 dígitos).
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Plano</label>
+        <select class="crm-input" [(ngModel)]="form.planoId" (ngModelChange)="onPlanoChange()">
+          <option [ngValue]="null">Selecione...</option>
+          <optgroup *ngFor="let grupo of gruposPlanos" [label]="grupo.titulo">
+            <option *ngFor="let plano of grupo.planos" [ngValue]="plano.id">
+              {{ fmtRotuloPlano(plano) }}
+            </option>
+          </optgroup>
+        </select>
       </div>
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Aplicativo</label>
@@ -50,21 +78,52 @@
     </div>
 
     <div>
-      <h3 class="text-white font-semibold mb-3">Dispositivo</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Aparelho</label>
-          <input class="crm-input" [(ngModel)]="form.aparelho" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Modelo</label>
-          <input class="crm-input" [(ngModel)]="form.modelo" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">MAC Address</label>
-          <input class="crm-input" [(ngModel)]="form.macAddress" />
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+        <h3 class="text-white font-semibold">Dispositivos</h3>
+        <div class="flex items-center gap-3">
+          <label class="text-slate-300 text-sm whitespace-nowrap">Quantidade de telas</label>
+          <select
+            class="crm-input w-24 shrink-0"
+            [(ngModel)]="qtdTelas"
+            (ngModelChange)="onQtdTelasChange()"
+          >
+            <option *ngFor="let n of opcoesTelas" [ngValue]="n">{{ n }}</option>
+          </select>
         </div>
       </div>
+
+      <div
+        *ngFor="let disp of dispositivosVisiveis; let i = index"
+        class="rounded-lg border border-slate-800/80 bg-slate-900/40 p-4 mb-3 last:mb-0"
+      >
+        <p *ngIf="qtdTelas > 1" class="text-violet-400 text-sm font-medium mb-3">
+          Tela {{ i + 1 }}
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Dispositivo</label>
+            <select class="crm-input" [(ngModel)]="disp.dispositivoId">
+              <option [ngValue]="null">Selecione...</option>
+              <option *ngFor="let d of dispositivosOpcoes" [ngValue]="d.id">
+                {{ fmtRotuloDispositivo(d) }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">MAC Address</label>
+            <input class="crm-input" [(ngModel)]="disp.macAddress" placeholder="00:1A:2B:3C:4D:5E" />
+          </div>
+        </div>
+      </div>
+
+      <button
+        *ngIf="podeAdicionarDispositivo"
+        type="button"
+        class="crm-btn-ghost text-sm"
+        (click)="adicionarDispositivo()"
+      >
+        + Adicionar dispositivo
+      </button>
     </div>
 
     <div>

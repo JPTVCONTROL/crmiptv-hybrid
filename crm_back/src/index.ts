@@ -19,7 +19,9 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 app.listen(env.port, () => {
-  console.log(`CRM JPTV API rodando em http://localhost:${env.port}`);
+  const modo = env.nodeEnv === 'production' ? 'produção' : 'desenvolvimento';
+  console.log(`CRM JPTV API (${modo}) → http://localhost:${env.port}`);
+  console.log(`Health check: http://localhost:${env.port}/health`);
 });
 
 export default app;

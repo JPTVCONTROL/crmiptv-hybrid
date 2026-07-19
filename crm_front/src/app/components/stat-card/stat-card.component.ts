@@ -7,5 +7,6 @@ import { Component, Input } from '@angular/core';
 export class StatCardComponent {
   @Input() title = '';
   @Input() value = '';
+  @Input() subtitle = '';
   @Input() color = '#A855F7';
 }

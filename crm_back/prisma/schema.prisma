@@ -7,6 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Dispositivo {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  modelo    String?
+  descricao String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 model Cliente {
   id           Int      @id @default(autoincrement())
   nome         String
@@ -21,6 +30,8 @@ model Cliente {
   aparelho     String?
   modelo       String?
   macAddress   String?
+  qtdTelas     Int      @default(1)
+  dispositivos String?
   ativadoEm    DateTime?
   expiraEm     DateTime?
   vencimento   Int

@@ -36,6 +36,11 @@ const routes: Routes = [
       import('./pages/aplicativos/aplicativos.module').then((m) => m.AplicativosPageModule),
   },
   {
+    path: 'planos',
+    loadChildren: () =>
+      import('./pages/planos/planos.module').then((m) => m.PlanosPageModule),
+  },
+  {
     path: 'dispositivos',
     loadChildren: () =>
       import('./pages/dispositivos/dispositivos.module').then((m) => m.DispositivosPageModule),

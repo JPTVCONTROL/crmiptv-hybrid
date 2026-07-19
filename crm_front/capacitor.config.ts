@@ -1,9 +1,15 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'crm_front',
-  webDir: 'www'
+  appId: 'com.jptv.crm',
+  appName: 'CRM JPTV',
+  webDir: 'www',
+  android: {
+    allowMixedContent: true,
+  },
+  server: {
+    androidScheme: 'https',
+  },
 };
 
 export default config;

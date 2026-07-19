@@ -1,45 +1,226 @@
-<app-page-header title="Dashboard" subtitle="Bem-vindo ao CRM JPTV."></app-page-header>
+<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
+  <app-page-header title="Dashboard" [subtitle]="subtituloPagina"></app-page-header>
+  <div class="flex flex-wrap gap-2 shrink-0">
+    <a routerLink="/clientes" class="crm-btn-primary no-underline">Clientes</a>
+    <a routerLink="/financeiro" class="crm-btn-ghost no-underline">Financeiro</a>
+    <a routerLink="/vencimentos" class="crm-btn-ghost no-underline">Vencimentos</a>
+  </div>
+</div>
 
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading" class="space-y-6 md:space-y-8">
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-    <app-stat-card title="Clientes Ativos" [value]="clientesAtivos.toString()" color="#A855F7"></app-stat-card>
-    <app-stat-card title="Recebido" [value]="totalRecebido" color="#22C55E"></app-stat-card>
-    <app-stat-card title="Pendentes" [value]="pendentes.toString()" color="#EF4444"></app-stat-card>
-    <app-stat-card title="Vencem Hoje" [value]="vencemHoje.toString()" color="#F59E0B"></app-stat-card>
-  </div>
+  <section>
+    <h2 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Clientes</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <a routerLink="/clientes" class="block no-underline h-full">
+        <app-stat-card title="Total" [value]="totalClientes.toString()" color="#E2E8F0" subtitle="cadastrados"></app-stat-card>
+      </a>
+      <a routerLink="/clientes" [queryParams]="{ status: 'ATIVO' }" class="block no-underline h-full">
+        <app-stat-card title="Ativos" [value]="qtdAtivos.toString()" color="#22C55E" subtitle="em dia"></app-stat-card>
+      </a>
+      <a routerLink="/clientes" [queryParams]="{ status: 'ATRASADO' }" class="block no-underline h-full">
+        <app-stat-card title="Atrasados" [value]="qtdAtrasados.toString()" color="#F59E0B" subtitle="até 7 dias"></app-stat-card>
+      </a>
+      <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="block no-underline h-full">
+        <app-stat-card title="Inativos" [value]="qtdInativos.toString()" color="#EF4444" subtitle="+7 dias"></app-stat-card>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Financeiro</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <app-stat-card title="Recebido no mês" [value]="recebidoMes" color="#22C55E"></app-stat-card>
+      <app-stat-card title="A receber" [value]="valorPendente" color="#A855F7" [subtitle]="pendentes + ' cobrança(s)'"></app-stat-card>
+      <app-stat-card title="Vencem hoje" [value]="vencemHoje.toString()" color="#F59E0B"></app-stat-card>
+      <app-stat-card title="Recebido total" [value]="totalRecebido" color="#38BDF8" subtitle="histórico"></app-stat-card>
+    </div>
+  </section>
 
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
     <div class="crm-card xl:col-span-2">
-      <h2 class="text-white font-semibold mb-4">Faturamento Mensal</h2>
-      <div *ngIf="faturamentoMensal.length === 0" class="text-slate-500 text-sm">Sem dados de pagamento.</div>
-      <div class="flex items-end gap-3 h-48" *ngIf="faturamentoMensal.length > 0">
-        <div *ngFor="let mes of faturamentoMensal" class="flex-1 flex flex-col items-center gap-2">
-          <div
-            class="w-full bg-violet-600 rounded-t-md transition-all"
-            [style.height.%]="(mes.valor / maxFaturamento()) * 100"
-          ></div>
-          <span class="text-xs text-slate-400 text-center">{{ mes.label }}</span>
-        </div>
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h2 class="text-white font-semibold">Faturamento</h2>
+        <span class="text-slate-500 text-xs">Últimos 6 meses</span>
       </div>
+      <app-faturamento-chart [data]="faturamentoMensal" [height]="260"></app-faturamento-chart>
     </div>
 
     <div class="crm-card">
-      <h2 class="text-white font-semibold mb-4">Próximos Vencimentos</h2>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-white font-semibold">Próximos vencimentos</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Vencem nos próximos 5 dias</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="crm-btn-success !py-1.5 !text-xs"
+            [disabled]="proximosVencimentos.length === 0"
+            (click)="cobrarProximosVencimentos()"
+          >
+            Cobrar todos
+          </button>
+          <a routerLink="/vencimentos" class="crm-btn-ghost !py-1.5 !text-xs no-underline">Ver todos</a>
+        </div>
+      </div>
       <div class="space-y-3">
         <div
           *ngFor="let m of proximosVencimentos"
-          class="flex justify-between items-center border-b border-slate-800 pb-2 last:border-0"
+          class="border-b border-slate-800 pb-3 last:border-0"
         >
-          <div>
-            <p class="text-white text-sm font-medium">{{ m.cliente?.nome ?? 'Cliente' }}</p>
-            <p class="text-slate-400 text-xs">{{ m.referencia }}</p>
+          <div class="flex justify-between items-start gap-3 mb-2">
+            <div class="min-w-0">
+              <a
+                [routerLink]="['/clientes', m.clienteId]"
+                class="text-white text-sm font-medium truncate no-underline hover:text-violet-300 block"
+              >
+                {{ m.cliente?.nome ?? 'Cliente' }}
+              </a>
+              <p class="text-slate-400 text-xs">{{ m.referencia }} · {{ fmtValor(m.valor) }}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-amber-400 text-sm">{{ fmtData(m.vencimento) }}</p>
+              <p class="text-slate-500 text-xs">{{ rotuloVencimento(m.vencimento) }}</p>
+            </div>
           </div>
-          <span class="text-amber-400 text-sm">{{ m.vencimento | date:'dd/MM/yyyy' }}</span>
+          <div class="flex justify-end gap-1">
+            <button
+              type="button"
+              class="crm-btn-success !py-1 !px-2.5 !text-xs"
+              [disabled]="!podeCobrarMensalidade(m)"
+              (click)="cobrarMensalidade(m)"
+            >
+              Cobrar
+            </button>
+            <button
+              type="button"
+              class="crm-btn-primary !py-1 !px-2.5 !text-xs"
+              [disabled]="estaPagando(m.id)"
+              (click)="pagarMensalidade(m)"
+            >
+              {{ estaPagando(m.id) ? 'Salvando...' : 'Pagar' }}
+            </button>
+          </div>
         </div>
-        <app-empty-state *ngIf="proximosVencimentos.length === 0" message="Nenhum vencimento pendente."></app-empty-state>
+        <app-empty-state *ngIf="proximosVencimentos.length === 0" message="Nenhum vencimento nos próximos 5 dias."></app-empty-state>
       </div>
     </div>
+  </div>
+
+  <div class="crm-card">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div>
+        <h2 class="text-white font-semibold">Precisam de atenção</h2>
+        <p class="text-slate-500 text-xs mt-1">
+          {{ qtdAtrasados }} atrasado(s) · {{ qtdInativos }} inativo(s)
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="crm-btn-success !py-1.5 !text-xs"
+          [disabled]="clientesAtencao.length === 0"
+          (click)="cobrarTodos()"
+        >
+          Cobrar todos
+        </button>
+        <a
+          routerLink="/clientes"
+          [queryParams]="{ status: 'ATRASADO' }"
+          class="crm-btn-ghost !py-1.5 !text-xs no-underline"
+        >
+          Ver atrasados
+        </a>
+        <a
+          routerLink="/clientes"
+          [queryParams]="{ status: 'INATIVO' }"
+          class="crm-btn-ghost !py-1.5 !text-xs no-underline"
+        >
+          Ver inativos
+        </a>
+      </div>
+    </div>
+
+    <div *ngIf="clientesAtencao.length > 0" class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[620px]">
+        <thead>
+          <tr class="text-slate-500 text-xs border-b border-slate-800">
+            <th class="text-left py-2 px-2 font-medium">Cliente</th>
+            <th class="text-left py-2 px-2 font-medium hidden sm:table-cell">Telefone</th>
+            <th class="text-left py-2 px-2 font-medium">Expira em</th>
+            <th class="text-left py-2 px-2 font-medium">Situação</th>
+            <th class="text-left py-2 px-2 font-medium">Status</th>
+            <th class="text-right py-2 px-2 font-medium">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let c of clientesAtencao"
+            class="border-b border-slate-800/50 hover:bg-slate-800/20 border-l-2"
+            [class.border-l-amber-500]="status(c) === 'ATRASADO'"
+            [class.border-l-red-500]="status(c) === 'INATIVO'"
+          >
+            <td class="py-2.5 px-2">
+              <p class="text-white font-medium truncate max-w-[180px] sm:max-w-none">{{ c.nome }}</p>
+              <p class="text-slate-500 text-xs sm:hidden">{{ c.telefone }}</p>
+            </td>
+            <td class="py-2.5 px-2 text-slate-400 hidden sm:table-cell whitespace-nowrap">
+              {{ c.telefone }}
+            </td>
+            <td class="py-2.5 px-2 text-slate-300 whitespace-nowrap">
+              {{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}
+            </td>
+            <td class="py-2.5 px-2 whitespace-nowrap">
+              <span
+                class="text-xs font-medium"
+                [class.text-amber-400]="status(c) === 'ATRASADO'"
+                [class.text-red-400]="status(c) === 'INATIVO'"
+              >
+                {{ rotuloExpiracao(c.expiraEm) }}
+              </span>
+            </td>
+            <td class="py-2.5 px-2">
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide"
+                [class.bg-amber-600]="status(c) === 'ATRASADO'"
+                [class.bg-red-600]="status(c) === 'INATIVO'"
+              >
+                {{ status(c) }}
+              </span>
+            </td>
+            <td class="py-2.5 px-2 text-right whitespace-nowrap">
+              <div class="inline-flex flex-wrap justify-end gap-1">
+                <button
+                  type="button"
+                  class="crm-btn-success !py-1 !px-2 !text-xs"
+                  [disabled]="!podeCobrar(c)"
+                  (click)="cobrar(c)"
+                >
+                  Cobrar
+                </button>
+                <button
+                  type="button"
+                  class="crm-btn-primary !py-1 !px-2 !text-xs"
+                  [disabled]="!podePagarCliente(c) || (mensalidadePendente(c) && estaPagando(mensalidadePendente(c)!.id))"
+                  (click)="pagarCliente(c)"
+                >
+                  {{ rotuloPagarCliente(c) }}
+                </button>
+                <a
+                  [routerLink]="['/clientes', c.id]"
+                  class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline inline-block"
+                >
+                  Ver
+                </a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-empty-state *ngIf="clientesAtencao.length === 0" message="Nenhum cliente atrasado ou inativo."></app-empty-state>
   </div>
 </div>

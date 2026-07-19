@@ -1,3 +1,21 @@
+export function aplicarMascaraTelefone(valor: string): string {
+  const numeros = valor.replace(/\D/g, '').slice(0, 11);
+
+  if (numeros.length <= 2) {
+    return numeros.length ? `(${numeros}` : '';
+  }
+
+  if (numeros.length <= 6) {
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+  }
+
+  if (numeros.length <= 10) {
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 6)}-${numeros.slice(6)}`;
+  }
+
+  return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
+}
+
 export function formatarValor(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -13,6 +31,22 @@ export function calcularDias(vencimento: string): number {
   dataVencimento.setHours(0, 0, 0, 0);
   const diferenca = dataVencimento.getTime() - hoje.getTime();
   return Math.ceil(diferenca / (1000 * 60 * 60 * 24));
+}
+
+export type StatusCliente = 'ATIVO' | 'ATRASADO' | 'INATIVO';
+
+/** Status do cliente com base na data de expiração do serviço. */
+export function statusCliente(expiraEm?: string | null): StatusCliente {
+  if (!expiraEm) return 'ATIVO';
+
+  const dias = calcularDias(expiraEm);
+  if (dias >= 0) return 'ATIVO';
+  if (dias >= -7) return 'ATRASADO';
+  return 'INATIVO';
+}
+
+export function clienteEstaAtivo(expiraEm?: string | null): boolean {
+  return statusCliente(expiraEm) !== 'INATIVO';
 }
 
 export function statusFinanceiro(vencimento: string): 'ATRASADO' | 'PENDENTE' | 'REGULAR' {

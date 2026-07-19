@@ -1,29 +1,32 @@
 <ion-app class="bg-slate-950">
   <ion-split-pane contentId="main-content" when="lg">
     <ion-menu contentId="main-content" type="overlay" class="crm-menu">
-      <ion-content class="bg-slate-900">
-        <div class="p-5 border-b border-slate-800">
-          <h1 class="text-2xl md:text-3xl font-black text-purple-500">CRM JPTV</h1>
-          <p class="text-sm text-slate-400 mt-1">Sistema de Gestão IPTV</p>
-        </div>
+      <ion-content class="menu-content" [scrollY]="false">
+        <div class="menu-shell">
+          <div class="menu-header">
+            <img
+              src="assets/logo-crm-jptv.png"
+              alt="CRM JPTV"
+              class="menu-logo"
+            />
+            <p class="menu-subtitle">Sistema de Gestão IPTV</p>
+          </div>
 
-        <ion-list lines="none" class="bg-transparent p-3">
-          <ion-menu-toggle *ngFor="let menu of menus" auto-hide="false">
-            <ion-item
+          <nav class="menu-nav">
+            <a
+              *ngFor="let menu of menus"
               [routerLink]="menu.rota"
-              routerLinkActive="menu-active"
+              routerLinkActive="menu-link-active"
               [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
-              detail="false"
-              class="rounded-xl mb-1 text-white"
+              class="menu-link"
+              (click)="fecharMenu()"
             >
-              <ion-icon [name]="menu.icon" slot="start" class="text-purple-400"></ion-icon>
-              <ion-label>{{ menu.nome }}</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-        </ion-list>
+              <ion-icon [name]="menu.icon" aria-hidden="true"></ion-icon>
+              <span>{{ menu.nome }}</span>
+            </a>
+          </nav>
 
-        <div class="absolute bottom-0 left-0 right-0 border-t border-slate-800 p-4 text-xs text-slate-500">
-          CRM JPTV v1.0
+          <div class="menu-footer">CRM JPTV v1.0</div>
         </div>
       </ion-content>
     </ion-menu>
@@ -34,7 +37,9 @@
           <ion-buttons slot="start">
             <ion-menu-button class="text-white"></ion-menu-button>
           </ion-buttons>
-          <ion-title class="text-purple-500 font-bold">CRM JPTV</ion-title>
+          <ion-title class="mobile-logo-title">
+            <img src="assets/logo-crm-jptv.png" alt="CRM JPTV" class="mobile-logo" />
+          </ion-title>
         </ion-toolbar>
       </ion-header>
 

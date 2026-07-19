@@ -2,10 +2,12 @@ import { clienteRepository } from '../repositories/clienteRepository.js';
 import { mensalidadeRepository } from '../repositories/mensalidadeRepository.js';
 import type { CreateClienteDto, UpdateClienteDto } from '../models/index.js';
 import { formatReferencia } from '../utils/helpers/dateHelpers.js';
+import { aplicarStatusCliente } from '../utils/helpers/clienteStatus.js';
 
 export class ClienteService {
-  listar() {
-    return clienteRepository.findAll();
+  async listar() {
+    const clientes = await clienteRepository.findAll();
+    return clientes.map(aplicarStatusCliente);
   }
 
   async buscarPorId(id: number) {
@@ -13,7 +15,7 @@ export class ClienteService {
     if (!cliente) {
       throw new ClienteNotFoundError();
     }
-    return cliente;
+    return aplicarStatusCliente(cliente);
   }
 
   async criar(dados: CreateClienteDto) {
@@ -34,12 +36,13 @@ export class ClienteService {
       });
     }
 
-    return cliente;
+    return aplicarStatusCliente(cliente);
   }
 
   async atualizar(id: number, dados: UpdateClienteDto) {
     await this.buscarPorId(id);
-    return clienteRepository.update(id, dados);
+    const cliente = await clienteRepository.update(id, dados);
+    return aplicarStatusCliente(cliente);
   }
 
   async excluir(id: number) {

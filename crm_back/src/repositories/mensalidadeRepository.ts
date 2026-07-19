@@ -11,7 +11,11 @@ export class MensalidadeRepository {
   findById(id: number) {
     return prisma.mensalidade.findUnique({
       where: { id },
-      include: { cliente: true },
+      include: {
+        cliente: {
+          include: { plano: true },
+        },
+      },
     });
   }
 

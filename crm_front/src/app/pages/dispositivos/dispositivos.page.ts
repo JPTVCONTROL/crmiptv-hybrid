@@ -1,38 +1,67 @@
 import { Component, OnInit } from '@angular/core';
-import { ClienteService } from '../../core/services/cliente.service';
-import { Cliente } from '../../core/models';
+import { ModalController } from '@ionic/angular';
+import { DispositivoService } from '../../core/services/dispositivo.service';
+import { Dispositivo } from '../../core/models';
+import { NovoDispositivoModalComponent } from '../../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
+import { rotuloDispositivo } from '../../shared/utils/dispositivos';
 
 @Component({
   selector: 'app-dispositivos',
   templateUrl: './dispositivos.page.html',
 })
 export class DispositivosPage implements OnInit {
-  clientes: Cliente[] = [];
+  dispositivos: Dispositivo[] = [];
   loading = true;
-  busca = '';
+  error = '';
 
-  constructor(private clienteService: ClienteService) {}
+  constructor(
+    private dispositivoService: DispositivoService,
+    private modalCtrl: ModalController
+  ) {}
 
   ngOnInit(): void {
-    this.clienteService.listar().subscribe({
+    this.carregar();
+  }
+
+  carregar(): void {
+    this.loading = true;
+    this.dispositivoService.listar().subscribe({
       next: (data) => {
-        this.clientes = data.filter(
-          (c) => c.aparelho || c.modelo || c.macAddress
-        );
+        this.dispositivos = data;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: (err) => {
+        this.error = err.message;
+        this.loading = false;
+      },
     });
   }
 
-  get filtrados(): Cliente[] {
-    const t = this.busca.toLowerCase();
-    if (!t) return this.clientes;
-    return this.clientes.filter(
-      (c) =>
-        c.nome.toLowerCase().includes(t) ||
-        (c.aparelho?.toLowerCase().includes(t) ?? false) ||
-        (c.macAddress?.toLowerCase().includes(t) ?? false)
-    );
+  async abrirModal(dispositivo?: Dispositivo): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: NovoDispositivoModalComponent,
+      componentProps: { dispositivo: dispositivo ?? null },
+      cssClass: 'crm-modal',
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data) this.carregar();
   }
+
+  excluir(item: Dispositivo): void {
+    const qtd = item._count?.clientes ?? 0;
+    const avisoClientes =
+      qtd > 0
+        ? `\n\n${qtd} cliente(s) usam este dispositivo.`
+        : '';
+
+    if (!confirm(`Excluir o dispositivo "${rotuloDispositivo(item)}"?${avisoClientes}`)) return;
+
+    this.dispositivoService.excluir(item.id).subscribe({
+      next: () => this.carregar(),
+      error: (err) => alert(err.message ?? 'Erro ao excluir dispositivo.'),
+    });
+  }
+
+  rotulo = rotuloDispositivo;
 }

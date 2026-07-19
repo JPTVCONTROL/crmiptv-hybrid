@@ -1,0 +1,34 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="bg-slate-900">
+    <ion-title class="text-white">{{ plano ? 'Editar Plano' : 'Novo Plano' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-slate-950">
+  <div class="p-4 md:p-6 space-y-4 modal-form-body">
+    <div>
+      <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
+      <input class="crm-input" [(ngModel)]="form.nome" placeholder="Mensal, Trimestral..." />
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Valor (R$) *</label>
+        <input class="crm-input" type="number" step="0.01" min="0" [(ngModel)]="form.valor" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Dias de validade *</label>
+        <input class="crm-input" type="number" min="1" [(ngModel)]="form.diasValidade" />
+      </div>
+    </div>
+    <label class="flex items-center gap-2 text-slate-300 text-sm">
+      <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.ativo" />
+      Plano ativo
+    </label>
+    <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
+      {{ salvando ? 'Salvando...' : 'Salvar Plano' }}
+    </button>
+  </div>
+</ion-content>

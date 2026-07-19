@@ -42,6 +42,58 @@ body {
   background: #020617;
 }
 
+ion-split-pane {
+  --side-max-width: 15rem;
+  --side-min-width: 15rem;
+  --border: 0;
+}
+
+ion-menu.crm-menu {
+  --width: 15rem;
+  --max-width: 15rem;
+}
+
+ion-modal.crm-modal {
+  --width: min(720px, 95vw);
+  --height: min(640px, 92vh);
+  --max-height: 92vh;
+  --border-radius: 12px;
+}
+
+ion-modal.crm-modal::part(content) {
+  max-height: 92vh;
+}
+
+ion-modal.crm-modal ion-content {
+  --overflow: hidden;
+  --background: #020617;
+}
+
+ion-modal.crm-modal .modal-form-body {
+  max-height: calc(min(640px, 92vh) - 3.5rem);
+  overflow-y: auto;
+}
+
+ion-modal.crm-modal-cliente {
+  --width: min(960px, 96vw);
+  --height: min(90vh, 920px);
+  --max-height: 90vh;
+  --border-radius: 12px;
+}
+
+ion-modal.crm-modal-cliente::part(content) {
+  max-height: 90vh;
+}
+
+ion-modal.crm-modal-cliente ion-content {
+  --overflow: hidden;
+}
+
+ion-modal.crm-modal-cliente .cliente-modal-body {
+  max-height: calc(90vh - 3.5rem);
+  overflow-y: auto;
+}
+
 /* Remove margens padrão do Ionic Typography nos títulos das páginas */
 .crm-page-header h1,
 .crm-page-header p {

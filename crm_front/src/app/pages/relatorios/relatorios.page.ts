@@ -3,7 +3,7 @@ import { forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { Cliente, Mensalidade } from '../../core/models';
-import { formatarValor, calcularDias } from '../../shared/utils/formatters';
+import { formatarValor, calcularDias, clienteEstaAtivo } from '../../shared/utils/formatters';
 
 @Component({
   selector: 'app-relatorios',
@@ -44,7 +44,7 @@ export class RelatoriosPage implements OnInit {
   }
 
   private calcular(): void {
-    this.clientesAtivos = this.clientes.filter((c) => c.status === 'ATIVO').length;
+    this.clientesAtivos = this.clientes.filter((c) => clienteEstaAtivo(c.expiraEm)).length;
 
     const pagos = this.mensalidades.filter((m) => m.status === 'PAGO');
     const pendentes = this.mensalidades.filter((m) => m.status === 'PENDENTE');

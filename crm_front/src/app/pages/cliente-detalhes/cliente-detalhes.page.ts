@@ -4,10 +4,19 @@ import { ModalController } from '@ionic/angular';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
-import { Cliente, Configuracao, Mensalidade } from '../../core/models';
+import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { DispositivoService } from '../../core/services/dispositivo.service';
+import { Cliente, Configuracao, Dispositivo, Mensalidade } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
-import { formatarValor, formatarData, calcularDias } from '../../shared/utils/formatters';
-import { montarMensagemCobranca } from '../../shared/utils/whatsapp';
+import { formatarValor, formatarData, statusCliente as calcularStatusCliente, StatusCliente } from '../../shared/utils/formatters';
+import { rotuloValidadePlano } from '../../shared/utils/planos';
+import {
+  mensalidadeEstaAtrasada,
+  montarMensagemBloqueioMensalidade,
+  montarMensagemCobrancaMensalidade,
+} from '../../shared/utils/cobranca-lote';
+import { montarMensagemRecibo, oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
+import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
 
 @Component({
   selector: 'app-cliente-detalhes',
@@ -16,20 +25,26 @@ import { montarMensagemCobranca } from '../../shared/utils/whatsapp';
 export class ClienteDetalhesPage implements OnInit {
   cliente: Cliente | null = null;
   configuracao: Configuracao | null = null;
+  dispositivosCatalogo: Dispositivo[] = [];
   loading = true;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private clienteService: ClienteService,
+    private dispositivoService: DispositivoService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
+    private pagamentoUi: PagamentoUiService,
     private modalCtrl: ModalController
   ) {}
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.configuracaoService.carregar().subscribe({ next: (c) => (this.configuracao = c) });
+    this.dispositivoService.listar().subscribe({
+      next: (items) => (this.dispositivosCatalogo = items),
+    });
     this.carregar(id);
   }
 
@@ -52,26 +67,62 @@ export class ClienteDetalhesPage implements OnInit {
   }
 
   mensagemWhatsApp(m: Mensalidade): string {
+    return montarMensagemCobrancaMensalidade(
+      m,
+      this.configuracao,
+      undefined,
+      undefined,
+      this.cliente?.nome
+    );
+  }
+
+  mensagemBloqueio(m: Mensalidade): string {
+    return montarMensagemBloqueioMensalidade(
+      m,
+      this.configuracao,
+      undefined,
+      this.cliente?.nome
+    );
+  }
+
+  mensalidadeAtrasada(m: Mensalidade): boolean {
+    return mensalidadeEstaAtrasada(m.vencimento);
+  }
+
+  mensagemRecibo(m: Mensalidade): string {
     const cfg = this.configuracao;
-    return montarMensagemCobranca(
+    return montarMensagemRecibo(
       {
         nome: this.cliente?.nome ?? '',
         referencia: m.referencia,
         valor: m.valor,
         vencimento: m.vencimento,
+        pagoEm: m.pagoEm ?? new Date().toISOString(),
         empresa: cfg?.nomeEmpresa ?? 'JPTV',
-        atrasado: calcularDias(m.vencimento) < 0,
-        pix: cfg?.chavePix ?? undefined,
-        tipoPix: cfg?.tipoPix ?? undefined,
-        favorecido: cfg?.favorecidoPix ?? undefined,
       },
-      cfg?.mensagemCobranca
+      cfg?.mensagemRecibo
     );
   }
 
-  pagar(m: Mensalidade): void {
-    this.mensalidadeService.registrarPagamento(m.id).subscribe({
-      next: () => this.carregar(this.cliente!.id),
+  async pagar(m: Mensalidade): Promise<void> {
+    if (!this.cliente) return;
+
+    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
+    if (!pagoEm) return;
+
+    this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
+      next: (resultado) => {
+        oferecerMensagemRenovacao({
+          telefone: this.cliente!.telefone,
+          nome: this.cliente!.nome,
+          referencia: m.referencia,
+          valor: m.valor,
+          novoVencimento: resultado.novoVencimento,
+          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
+          templateRenovacao: this.configuracao?.mensagemRenovacao,
+        });
+        this.carregar(this.cliente!.id);
+      },
       error: (err) => alert(err.message),
     });
   }
@@ -80,7 +131,7 @@ export class ClienteDetalhesPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: NovoClienteModalComponent,
       componentProps: { cliente: this.cliente },
-      cssClass: 'crm-modal',
+      cssClass: 'crm-modal crm-modal-cliente',
     });
     await modal.present();
     const { data } = await modal.onDidDismiss();
@@ -97,4 +148,33 @@ export class ClienteDetalhesPage implements OnInit {
 
   fmtValor = formatarValor;
   fmtData = formatarData;
+
+  status(): StatusCliente {
+    return calcularStatusCliente(this.cliente?.expiraEm);
+  }
+
+  rotuloValidadePlano = rotuloValidadePlano;
+
+  dispositivos(): DispositivoCliente[] {
+    return parseDispositivos(this.cliente ?? {});
+  }
+
+  qtdTelas(): number {
+    return this.cliente?.qtdTelas ?? this.dispositivos().length;
+  }
+
+  rotuloTela(item: DispositivoCliente, indice: number): string {
+    const catalogo = resolverDispositivoCliente(item, this.dispositivosCatalogo);
+    if (catalogo) {
+      return rotuloDispositivo(catalogo);
+    }
+
+    if (indice === 0 && this.cliente?.aparelho) {
+      return this.cliente.modelo
+        ? `${this.cliente.aparelho} — ${this.cliente.modelo}`
+        : this.cliente.aparelho;
+    }
+
+    return '—';
+  }
 }

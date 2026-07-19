@@ -1,19 +1,113 @@
+ion-split-pane {
+  --side-max-width: 15rem;
+  --side-min-width: 15rem;
+  --border: 0;
+}
+
 ion-menu.crm-menu {
-  --width: 18rem;
+  --width: 15rem;
+  --max-width: 15rem;
   --background: #0f172a;
 }
 
-ion-item.menu-active {
-  --background: #9333ea;
-  --color: #ffffff;
-  border-radius: 0.75rem;
+ion-menu.crm-menu ion-content.menu-content {
+  --background: #0f172a;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
 }
 
-ion-item {
-  --background: transparent;
-  --color: #e2e8f0;
-  --background-hover: rgba(147, 51, 234, 0.4);
-  --background-focused: rgba(147, 51, 234, 0.4);
+ion-menu.crm-menu ion-content.menu-content::part(scroll) {
+  height: 100%;
+  overflow: hidden;
+}
+
+.menu-shell {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  background: #0f172a;
+}
+
+.menu-header {
+  flex: 0 0 auto;
+  padding: 1.25rem 0.875rem 1.125rem;
+  border-bottom: 1px solid #1e293b;
+  text-align: center;
+}
+
+.menu-logo {
+  display: block;
+  width: 100%;
+  max-width: 10rem;
+  height: auto;
+  margin: 0 auto;
+}
+
+.menu-subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.menu-nav {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.875rem 0.75rem 0.5rem;
+}
+
+.menu-link {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.625rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.625rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.menu-link ion-icon {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: #c084fc;
+}
+
+.menu-link:hover {
+  background: rgba(147, 51, 234, 0.2);
+}
+
+.menu-link-active {
+  background: #9333ea;
+  color: #ffffff;
+}
+
+.menu-link-active ion-icon {
+  color: #ffffff;
+}
+
+.menu-footer {
+  flex: 0 0 auto;
+  margin-top: 0.75rem;
+  border-top: 1px solid #1e293b;
+  padding: 0.75rem 1rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  text-align: center;
+  color: #475569;
 }
 
 ion-content {
@@ -25,8 +119,13 @@ ion-toolbar {
   --color: #ffffff;
 }
 
-.crm-modal {
-  --width: min(720px, 95vw);
-  --height: auto;
-  --border-radius: 12px;
+.mobile-logo-title {
+  text-align: center;
+}
+
+.mobile-logo {
+  display: inline-block;
+  height: 2.125rem;
+  width: auto;
+  vertical-align: middle;
 }
