@@ -1,6 +1,11 @@
 <ion-app class="bg-slate-950">
   <ion-split-pane contentId="main-content" when="lg">
-    <ion-menu contentId="main-content" type="overlay" class="crm-menu">
+    <ion-menu
+      *ngIf="!isLoginRoute"
+      contentId="main-content"
+      type="overlay"
+      class="crm-menu"
+    >
       <ion-content class="menu-content" [scrollY]="false">
         <div class="menu-shell">
           <div class="menu-header">
@@ -10,6 +15,7 @@
               class="menu-logo"
             />
             <p class="menu-subtitle">Sistema de Gestão IPTV</p>
+            <p *ngIf="usuario" class="menu-user">{{ usuario.nome }}</p>
           </div>
 
           <nav class="menu-nav">
@@ -26,13 +32,19 @@
             </a>
           </nav>
 
-          <div class="menu-footer">CRM JPTV v1.0</div>
+          <div class="menu-footer space-y-3">
+            <button type="button" class="menu-link menu-link-logout w-full" (click)="sair()">
+              <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
+              <span>Sair</span>
+            </button>
+            <p>CRM JPTV v1.0</p>
+          </div>
         </div>
       </ion-content>
     </ion-menu>
 
     <div class="ion-page" id="main-content">
-      <ion-header class="ion-no-border lg:hidden">
+      <ion-header *ngIf="!isLoginRoute" class="ion-no-border lg:hidden">
         <ion-toolbar class="bg-slate-900">
           <ion-buttons slot="start">
             <ion-menu-button class="text-white"></ion-menu-button>
@@ -44,7 +56,7 @@
       </ion-header>
 
       <ion-content class="bg-slate-950">
-        <div class="p-4 md:p-6 lg:p-8">
+        <div [class]="isLoginRoute ? 'login-shell' : 'p-4 md:p-6 lg:p-8'">
           <router-outlet></router-outlet>
         </div>
       </ion-content>

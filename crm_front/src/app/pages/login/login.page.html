@@ -1,0 +1,51 @@
+<div class="min-h-[calc(100vh-2rem)] flex items-center justify-center py-8">
+  <div class="w-full max-w-md space-y-6">
+    <div class="text-center space-y-3">
+      <img
+        src="assets/logo-crm-jptv.png"
+        alt="CRM JPTV"
+        class="h-16 w-auto mx-auto"
+      />
+      <div>
+        <h1 class="crm-page-title">Entrar</h1>
+        <p class="crm-page-subtitle">Acesse o painel de gestão IPTV</p>
+      </div>
+    </div>
+
+    <form class="crm-card space-y-4" [formGroup]="form" (ngSubmit)="entrar()">
+      <div>
+        <label class="block text-slate-400 text-sm mb-1.5" for="email">E-mail</label>
+        <input
+          id="email"
+          type="email"
+          class="crm-input"
+          formControlName="email"
+          autocomplete="username"
+          placeholder="admin@jptv.com.br"
+        />
+      </div>
+
+      <div>
+        <label class="block text-slate-400 text-sm mb-1.5" for="senha">Senha</label>
+        <input
+          id="senha"
+          type="password"
+          class="crm-input"
+          formControlName="senha"
+          autocomplete="current-password"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <p *ngIf="erro" class="text-red-400 text-sm">{{ erro }}</p>
+
+      <button
+        type="submit"
+        class="crm-btn-primary w-full"
+        [disabled]="carregando"
+      >
+        {{ carregando ? 'Entrando...' : 'Entrar' }}
+      </button>
+    </form>
+  </div>
+</div>

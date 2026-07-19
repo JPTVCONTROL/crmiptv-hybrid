@@ -1,5 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { MenuController } from '@ionic/angular';
+import { filter } from 'rxjs/operators';
+import { AuthService } from './core/services/auth.service';
+import { Usuario } from './core/models';
 
 interface MenuItem {
   nome: string;
@@ -12,7 +16,7 @@ interface MenuItem {
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   readonly menus: MenuItem[] = [
     { nome: 'Dashboard', rota: '/dashboard', icon: 'grid-outline' },
     { nome: 'Clientes', rota: '/clientes', icon: 'people-outline' },
@@ -25,9 +29,42 @@ export class AppComponent {
     { nome: 'Configurações', rota: '/configuracoes', icon: 'settings-outline' },
   ];
 
-  constructor(private menuCtrl: MenuController) {}
+  isLoginRoute = false;
+  usuario: Usuario | null = null;
+
+  constructor(
+    private menuCtrl: MenuController,
+    private router: Router,
+    private auth: AuthService
+  ) {
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.isLoginRoute = this.router.url.startsWith('/login');
+      });
+  }
+
+  ngOnInit(): void {
+    this.isLoginRoute = this.router.url.startsWith('/login');
+    this.usuario = this.auth.getUsuario();
+
+    this.auth.usuario$.subscribe((usuario) => {
+      this.usuario = usuario;
+    });
+
+    if (this.auth.estaAutenticado()) {
+      this.auth.restaurarSessao().subscribe({
+        error: () => this.auth.logout(),
+      });
+    }
+  }
 
   fecharMenu(): void {
     void this.menuCtrl.close();
+  }
+
+  sair(): void {
+    this.fecharMenu();
+    this.auth.logout();
   }
 }

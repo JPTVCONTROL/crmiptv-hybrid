@@ -1,4 +1,8 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const prisma = new PrismaClient();
 
@@ -14,7 +18,33 @@ const PLANOS_JPTV = [
   { nome: '3 Telas - Anual', valor: 600, diasValidade: 365 },
 ] as const;
 
+async function seedAdmin(): Promise<void> {
+  const email = (process.env.ADMIN_EMAIL || 'admin@jptv.com.br').trim().toLowerCase();
+  const senha = process.env.ADMIN_PASSWORD || 'admin123';
+  const nome = process.env.ADMIN_NOME || 'Administrador';
+  const passwordHash = await bcrypt.hash(senha, 10);
+
+  const existente = await prisma.usuario.findUnique({ where: { email } });
+
+  if (existente) {
+    await prisma.usuario.update({
+      where: { id: existente.id },
+      data: { nome, passwordHash },
+    });
+    console.log(`Admin atualizado: ${email}`);
+    return;
+  }
+
+  await prisma.usuario.create({
+    data: { email, nome, passwordHash },
+  });
+
+  console.log(`Admin criado: ${email}`);
+}
+
 async function main(): Promise<void> {
+  await seedAdmin();
+
   for (const plano of PLANOS_JPTV) {
     const existente = await prisma.plano.findFirst({
       where: { nome: plano.nome },

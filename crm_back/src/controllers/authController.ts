@@ -1,0 +1,43 @@
+import type { Request, Response } from 'express';
+import { authService, AuthError } from '../services/authService.js';
+import { sendSuccess, sendError } from '../utils/helpers/response.js';
+
+export class AuthController {
+  async login(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, senha } = req.body as {
+        email?: string;
+        senha?: string;
+      };
+
+      const resultado = await authService.login(email ?? '', senha ?? '');
+      sendSuccess(res, resultado, 'Login realizado com sucesso.');
+    } catch (error) {
+      if (error instanceof AuthError) {
+        sendError(res, error.message, 401);
+        return;
+      }
+      sendError(res, 'Erro ao realizar login.');
+    }
+  }
+
+  async me(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.usuario) {
+        sendError(res, 'Não autenticado.', 401);
+        return;
+      }
+
+      const usuario = await authService.obterPorId(req.usuario.id);
+      sendSuccess(res, usuario);
+    } catch (error) {
+      if (error instanceof AuthError) {
+        sendError(res, error.message, 401);
+        return;
+      }
+      sendError(res, 'Erro ao buscar usuário autenticado.');
+    }
+  }
+}
+
+export const authController = new AuthController();

@@ -110,6 +110,24 @@ ion-menu.crm-menu ion-content.menu-content::part(scroll) {
   color: #475569;
 }
 
+.menu-user {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: #94a3b8;
+}
+
+.menu-link-logout {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.login-shell {
+  min-height: calc(100vh - 2rem);
+}
+
 ion-content {
   --background: #020617;
 }

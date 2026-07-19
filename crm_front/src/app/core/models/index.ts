@@ -98,3 +98,14 @@ export type CreateAplicativoDto = Omit<Aplicativo, 'id' | '_count'>;
 export type CreateDispositivoDto = Omit<Dispositivo, 'id' | '_count'>;
 
 export type StatusFinanceiro = 'TODOS' | 'PENDENTE' | 'REGULAR' | 'ATRASADO';
+
+export interface Usuario {
+  id: number;
+  email: string;
+  nome: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  usuario: Usuario;
+}
