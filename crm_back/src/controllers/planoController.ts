@@ -93,6 +93,24 @@ export class PlanoController {
       sendError(res, 'Erro ao excluir plano.');
     }
   }
+
+  async reajustarClientes(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const resultado = await planoService.reajustarClientes(id);
+      sendSuccess(
+        res,
+        resultado,
+        'Valores dos clientes atualizados conforme o plano.'
+      );
+    } catch (error) {
+      if (error instanceof PlanoNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      sendError(res, 'Erro ao reajustar clientes do plano.');
+    }
+  }
 }
 
 export const planoController = new PlanoController();

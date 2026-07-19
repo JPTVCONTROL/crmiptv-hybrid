@@ -161,6 +161,24 @@
 
   <div>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+      <h2 class="text-white font-semibold text-lg">Mensagem de Boas-vindas</h2>
+      <button
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs self-start"
+        (click)="restaurarMensagem('mensagemBoasVindas')"
+      >
+        Restaurar padrão
+      </button>
+    </div>
+    <p class="text-slate-500 text-xs mb-1">
+      Enviada ao cadastrar um cliente ou pelo botão Boas-vindas no detalhe do cliente.
+    </p>
+    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBoasVindas.join(', ') }}</p>
+    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBoasVindas"></textarea>
+  </div>
+
+  <div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
       <h2 class="text-white font-semibold text-lg">Mensagem de Lembrete</h2>
       <button
         type="button"

@@ -17,9 +17,11 @@ import {
 } from '../../../shared/utils/planos';
 import { telefoneValidoParaWhatsApp } from '../../../shared/utils/whatsapp';
 import {
+  aplicativosCompativeisComDispositivo,
   criarListaDispositivos,
   DispositivoCliente,
   parseDispositivos,
+  resolverAplicativoIdPrincipal,
   rotuloDispositivo,
   serializarDispositivos,
   sincronizarCamposLegadoDispositivo,
@@ -46,7 +48,6 @@ export class NovoClienteModalComponent implements OnInit {
     nome: '',
     telefone: '',
     planoId: null as number | null,
-    aplicativoId: null as number | null,
     servidor: '',
     usuario: '',
     senha: '',
@@ -68,7 +69,7 @@ export class NovoClienteModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.aplicativoService.listar().subscribe({
-      next: (apps) => (this.aplicativos = apps),
+      next: (apps) => (this.aplicativos = apps.filter((app) => app.ativo)),
     });
     this.dispositivoService.listar().subscribe({
       next: (items) =>
@@ -85,12 +86,14 @@ export class NovoClienteModalComponent implements OnInit {
       const parsed = parseDispositivos(this.cliente);
       this.qtdTelas = Math.max(1, this.cliente.qtdTelas ?? parsed.length);
       this.dispositivos = criarListaDispositivos(this.qtdTelas, parsed);
+      if (this.cliente.aplicativoId && this.dispositivos[0] && !this.dispositivos[0].aplicativoId) {
+        this.dispositivos[0].aplicativoId = this.cliente.aplicativoId;
+      }
 
       this.form = {
         nome: this.cliente.nome,
         telefone: aplicarMascaraTelefone(this.cliente.telefone),
         planoId: this.cliente.planoId ?? null,
-        aplicativoId: this.cliente.aplicativoId ?? null,
         servidor: this.cliente.servidor ?? '',
         usuario: this.cliente.usuario ?? '',
         senha: this.cliente.senha ?? '',
@@ -134,6 +137,33 @@ export class NovoClienteModalComponent implements OnInit {
 
   fmtRotuloPlano = rotuloPlanoOpcao;
   fmtRotuloDispositivo = rotuloDispositivo;
+
+  aplicativosDoDispositivo(dispositivoId: number | null): Aplicativo[] {
+    if (!dispositivoId) {
+      return [];
+    }
+
+    const dispositivo = this.dispositivosCatalogo.find(
+      (item) => item.id === dispositivoId
+    );
+
+    return aplicativosCompativeisComDispositivo(dispositivo, this.aplicativos);
+  }
+
+  onDispositivoChange(disp: DispositivoCliente): void {
+    if (!disp.dispositivoId) {
+      disp.aplicativoId = null;
+      return;
+    }
+
+    const compativeis = this.aplicativosDoDispositivo(disp.dispositivoId);
+    if (
+      disp.aplicativoId &&
+      !compativeis.some((app) => app.id === disp.aplicativoId)
+    ) {
+      disp.aplicativoId = null;
+    }
+  }
 
   onQtdTelasChange(): void {
     this.qtdTelas = Math.max(1, Math.min(5, this.qtdTelas));
@@ -213,6 +243,7 @@ export class NovoClienteModalComponent implements OnInit {
     const lista = this.dispositivos.slice(0, this.qtdTelas);
     const payload = {
       ...this.form,
+      aplicativoId: resolverAplicativoIdPrincipal(lista),
       ...sincronizarCamposLegadoDispositivo(lista, this.dispositivosCatalogo),
       qtdTelas: this.qtdTelas,
       dispositivos: serializarDispositivos(lista),
@@ -223,9 +254,12 @@ export class NovoClienteModalComponent implements OnInit {
       : this.clienteService.criar(payload);
 
     req.subscribe({
-      next: () => {
+      next: (clienteSalvo) => {
         this.salvando = false;
-        this.modalCtrl.dismiss(true, 'confirm');
+        this.modalCtrl.dismiss(
+          this.cliente ? true : { novo: true, cliente: clienteSalvo },
+          'confirm'
+        );
       },
       error: (err) => {
         this.salvando = false;

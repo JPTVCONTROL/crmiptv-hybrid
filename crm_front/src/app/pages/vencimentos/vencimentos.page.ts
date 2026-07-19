@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Configuracao, Mensalidade } from '../../core/models';
 import {
   formatarValor,
@@ -25,6 +27,7 @@ import {
   rotuloDiasCobrancaDiaria,
 } from '../../shared/utils/cobranca-diaria';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
 
@@ -32,8 +35,9 @@ export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
   selector: 'app-vencimentos',
   templateUrl: './vencimentos.page.html',
 })
-export class VencimentosPage implements OnInit {
+export class VencimentosPage implements OnInit, OnDestroy {
   mensalidades: Mensalidade[] = [];
+  private readonly destroy$ = new Subject<void>();
   telefones = new Map<number, string>();
   nomesClientes = new Map<number, string>();
   loading = true;
@@ -50,11 +54,13 @@ export class VencimentosPage implements OnInit {
   ];
 
   constructor(
+    private route: ActivatedRoute,
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
-    private toast: ToastService
+    private toast: ToastService,
+    private sync: DadosSyncService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -69,7 +75,31 @@ export class VencimentosPage implements OnInit {
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
+
+    this.route.queryParamMap.subscribe((params) => {
+      const filtro = params.get('filtro');
+      if (
+        filtro === 'HOJE' ||
+        filtro === 'PROXIMO' ||
+        filtro === 'ATRASADO'
+      ) {
+        this.filtro = filtro;
+        this.pagina = 1;
+      }
+    });
+
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades'],
+      () => this.carregar(true)
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ionViewWillEnter(): void {
@@ -263,7 +293,7 @@ export class VencimentosPage implements OnInit {
           telefone: this.telefone(m),
           nome: nomeClienteMensalidade(m, this.nomesClientes),
           referencia: m.referencia,
-          valor: m.valor,
+          valor: resultado.valorRenovacao ?? m.valor,
           novoVencimento: resultado.novoVencimento,
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,

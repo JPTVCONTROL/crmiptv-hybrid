@@ -7,6 +7,7 @@ import dispositivoRoutes from './dispositivoRoutes.js';
 import configuracaoRoutes from './configuracaoRoutes.js';
 import sistemaRoutes from './sistemaRoutes.js';
 import authRoutes from './authRoutes.js';
+import dashboardRoutes from './dashboardRoutes.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -21,6 +22,7 @@ router.use('/aplicativos', aplicativoRoutes);
 router.use('/dispositivos', dispositivoRoutes);
 router.use('/planos', planoRoutes);
 router.use('/configuracoes', configuracaoRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/sistema', sistemaRoutes);
 
 export default router;

@@ -17,7 +17,10 @@
           <a routerLink="/financeiro" class="text-violet-400 hover:underline">Financeiro</a>.
         </p>
         <p *ngIf="rotinaFeitaHoje" class="text-green-400 text-xs mt-2">
-          Rotina marcada como enviada hoje.
+          Rotina concluída hoje · {{ progressoRotina }}
+        </p>
+        <p *ngIf="!rotinaFeitaHoje && itensContactaveis.length > 0" class="text-amber-400 text-xs mt-2">
+          Rotina em andamento · {{ progressoRotina }}
         </p>
         <p *ngIf="qtdSelecionados > 0" class="text-slate-400 text-xs mt-2">
           Selecionados: {{ resumoEnvio }}
@@ -97,6 +100,9 @@
     <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('A_VENCER')">
       Selecionar a vencer
     </button>
+    <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarNaoContactados()">
+      Selecionar pendentes
+    </button>
   </div>
 
   <app-empty-state
@@ -126,6 +132,7 @@
               <th class="text-left py-3 px-2">Valor</th>
               <th class="text-left py-3 px-2">Vencimento</th>
               <th class="text-left py-3 px-2">Tipo</th>
+              <th class="text-left py-3 px-2">Contato</th>
               <th class="text-right py-3 px-2">WhatsApp</th>
             </tr>
           </thead>
@@ -161,11 +168,16 @@
                   {{ rotuloTipo(item.tipo) }}
                 </span>
               </td>
+              <td class="py-3 px-2">
+                <p class="text-xs" [class]="classeContato(item)">{{ rotuloContato(item) }}</p>
+              </td>
               <td class="py-3 px-2 text-right">
                 <app-whatsapp-cobranca-btn
                   [telefone]="item.telefone"
                   [mensagem]="item.mensagem"
+                  [mensalidadeId]="item.mensalidadeId"
                   [disabled]="!item.telefoneValido"
+                  (contatoRegistrado)="onContatoRegistrado($event)"
                 ></app-whatsapp-cobranca-btn>
               </td>
             </tr>
@@ -195,6 +207,7 @@
               <th class="text-left py-3 px-2">Valor</th>
               <th class="text-left py-3 px-2">Vencimento</th>
               <th class="text-left py-3 px-2">Tipo</th>
+              <th class="text-left py-3 px-2">Contato</th>
               <th class="text-right py-3 px-2">WhatsApp</th>
             </tr>
           </thead>
@@ -230,11 +243,16 @@
                   {{ rotuloTipo(item.tipo) }}
                 </span>
               </td>
+              <td class="py-3 px-2">
+                <p class="text-xs" [class]="classeContato(item)">{{ rotuloContato(item) }}</p>
+              </td>
               <td class="py-3 px-2 text-right">
                 <app-whatsapp-cobranca-btn
                   [telefone]="item.telefone"
                   [mensagem]="item.mensagem"
+                  [mensalidadeId]="item.mensalidadeId"
                   [disabled]="!item.telefoneValido"
+                  (contatoRegistrado)="onContatoRegistrado($event)"
                 ></app-whatsapp-cobranca-btn>
               </td>
             </tr>

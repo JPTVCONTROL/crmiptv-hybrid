@@ -1,0 +1,63 @@
+<div class="alertas-sino">
+  <button
+    type="button"
+    class="alertas-sino-btn"
+    [class.alertas-sino-btn-ativo]="aberto"
+    [attr.aria-expanded]="aberto"
+    aria-label="Alertas operacionais"
+    (click)="alternarPainel()"
+  >
+    <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
+    <span *ngIf="badge > 0" class="alertas-sino-badge">{{ badge > 99 ? '99+' : badge }}</span>
+  </button>
+
+  <div *ngIf="aberto" class="alertas-sino-painel" role="dialog" aria-label="Lista de alertas">
+    <div class="alertas-sino-header">
+      <div>
+        <p class="alertas-sino-titulo">Alertas</p>
+        <p class="alertas-sino-subtitulo" *ngIf="estado.progressoRotina">
+          Rotina: {{ estado.progressoRotina }}
+        </p>
+      </div>
+      <span
+        *ngIf="estado.rotinaFeita && temUrgencias === false"
+        class="alertas-sino-ok"
+      >
+        Em dia
+      </span>
+    </div>
+
+    <div *ngIf="estado.carregando" class="alertas-sino-loading">
+      Carregando alertas...
+    </div>
+
+    <div *ngIf="!estado.carregando && estado.alertas.length === 0" class="alertas-sino-vazio">
+      <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+      <p>Nenhum alerta no momento.</p>
+    </div>
+
+    <ul *ngIf="!estado.carregando && estado.alertas.length > 0" class="alertas-sino-lista">
+      <li *ngFor="let alerta of estado.alertas">
+        <button
+          type="button"
+          class="alertas-sino-item"
+          [ngClass]="classeAlerta(alerta)"
+          (click)="abrirAlerta(alerta)"
+        >
+          <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
+          <div class="alertas-sino-item-texto">
+            <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
+            <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
+          </div>
+          <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
+            {{ alerta.quantidade }}
+          </span>
+        </button>
+      </li>
+    </ul>
+
+    <button type="button" class="alertas-sino-footer" (click)="irParaDashboard()">
+      Ver resumo no Dashboard
+    </button>
+  </div>
+</div>

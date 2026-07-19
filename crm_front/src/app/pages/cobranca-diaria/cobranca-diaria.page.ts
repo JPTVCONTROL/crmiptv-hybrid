@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Configuracao } from '../../core/models';
 import {
   criarMapaTelefones,
@@ -20,6 +22,12 @@ import {
   trackByItemCobrancaDiaria,
 } from '../../shared/utils/cobranca-diaria';
 import { executarCobrancaEmLote } from '../../shared/utils/whatsapp';
+import {
+  contatoRegistradoHoje,
+  rotuloUltimoContato,
+  classeIndicadorContato,
+} from '../../shared/utils/contato';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 export type FiltroGrupoCobranca = 'TODOS' | TipoCobrancaDiaria;
 
@@ -27,18 +35,21 @@ export type FiltroGrupoCobranca = 'TODOS' | TipoCobrancaDiaria;
   selector: 'app-cobranca-diaria',
   templateUrl: './cobranca-diaria.page.html',
 })
-export class CobrancaDiariaPage implements OnInit {
+export class CobrancaDiariaPage implements OnInit, OnDestroy {
   loading = true;
+  private readonly destroy$ = new Subject<void>();
   itens: ItemCobrancaDiaria[] = [];
   selecionados = new Set<number>();
   enviando = false;
   filtroGrupo: FiltroGrupoCobranca = 'TODOS';
 
   constructor(
+    private route: ActivatedRoute,
     private clienteService: ClienteService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
-    private toast: ToastService
+    private toast: ToastService,
+    private sync: DadosSyncService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -58,8 +69,25 @@ export class CobrancaDiariaPage implements OnInit {
     return `Rotina de ${hoje} · atrasados e vencimentos em até ${this.diasAntecedencia} dias`;
   }
 
+  get itensContactaveis(): ItemCobrancaDiaria[] {
+    return this.itens.filter((item) => item.telefoneValido);
+  }
+
+  get contactadosHoje(): number {
+    return this.itensContactaveis.filter((item) =>
+      contatoRegistradoHoje(item.ultimoContatoEm)
+    ).length;
+  }
+
   get rotinaFeitaHoje(): boolean {
-    return localStorage.getItem('crm-rotina-diaria-data') === new Date().toISOString().slice(0, 10);
+    return (
+      this.itensContactaveis.length === 0 ||
+      this.contactadosHoje === this.itensContactaveis.length
+    );
+  }
+
+  get progressoRotina(): string {
+    return `${this.contactadosHoje} de ${this.itensContactaveis.length} contactados hoje`;
   }
 
   get resumoEnvio(): string {
@@ -73,8 +101,34 @@ export class CobrancaDiariaPage implements OnInit {
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
+
+    this.route.queryParamMap.subscribe((params) => {
+      this.aplicarQueryParams(params.get('pendentes') === '1');
+    });
+
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades'],
+      () => this.carregar(true)
+    );
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private aplicarQueryParams(selecionarPendentes: boolean): void {
+    if (selecionarPendentes && this.itens.length > 0) {
+      this.selecionarNaoContactados();
+    } else {
+      this.selecionarPendentesViaQuery = selecionarPendentes;
+    }
+  }
+
+  private selecionarPendentesViaQuery = false;
 
   ionViewWillEnter(): void {
     if (!this.loading) {
@@ -103,6 +157,10 @@ export class CobrancaDiariaPage implements OnInit {
         );
 
         this.selecionarElegiveis();
+        if (this.selecionarPendentesViaQuery) {
+          this.selecionarNaoContactados();
+          this.selecionarPendentesViaQuery = false;
+        }
         this.loading = false;
       },
       error: () => {
@@ -126,6 +184,14 @@ export class CobrancaDiariaPage implements OnInit {
     this.selecionados = new Set(
       this.itensPorTipo(tipo)
         .filter((item) => item.telefoneValido)
+        .map((item) => item.mensalidadeId)
+    );
+  }
+
+  selecionarNaoContactados(): void {
+    this.selecionados = new Set(
+      this.itensContactaveis
+        .filter((item) => !contatoRegistradoHoje(item.ultimoContatoEm))
         .map((item) => item.mensalidadeId)
     );
   }
@@ -208,6 +274,22 @@ export class CobrancaDiariaPage implements OnInit {
     this.selecionados = new Set(this.selecionados);
   }
 
+  contatoRegistradoHoje(item: ItemCobrancaDiaria): boolean {
+    return contatoRegistradoHoje(item.ultimoContatoEm);
+  }
+
+  rotuloContato(item: ItemCobrancaDiaria): string {
+    return rotuloUltimoContato(item.ultimoContatoEm);
+  }
+
+  classeContato(item: ItemCobrancaDiaria): string {
+    return classeIndicadorContato(item.ultimoContatoEm);
+  }
+
+  onContatoRegistrado(mensalidadeId: number): void {
+    this.atualizarContatosLocais([mensalidadeId]);
+  }
+
   async enviarSelecionados(): Promise<void> {
     const selecionados = this.itens.filter(
       (item) =>
@@ -223,7 +305,7 @@ export class CobrancaDiariaPage implements OnInit {
 
     this.enviando = true;
 
-    await executarCobrancaEmLote(
+    const resultado = await executarCobrancaEmLote(
       selecionados.map((item) => ({
         id: item.mensalidadeId,
         nome: item.nome,
@@ -232,8 +314,33 @@ export class CobrancaDiariaPage implements OnInit {
       }))
     );
 
-    localStorage.setItem('crm-rotina-diaria-data', new Date().toISOString().slice(0, 10));
+    if (resultado.idsEnviados.length > 0) {
+      this.mensalidadeService.registrarContatos(resultado.idsEnviados).subscribe({
+        next: () => {
+          this.atualizarContatosLocais(resultado.idsEnviados);
+          this.enviando = false;
+        },
+        error: () => {
+          void this.toast.warning(
+            'WhatsApp aberto, mas nem todos os contatos foram salvos.'
+          );
+          this.enviando = false;
+        },
+      });
+      return;
+    }
+
     this.enviando = false;
+  }
+
+  private atualizarContatosLocais(ids: number[]): void {
+    const agora = new Date().toISOString();
+    const idsSet = new Set(ids);
+    this.itens = this.itens.map((item) =>
+      idsSet.has(item.mensalidadeId)
+        ? { ...item, ultimoContatoEm: agora }
+        : item
+    );
   }
 
   rotuloDias = rotuloDiasCobrancaDiaria;

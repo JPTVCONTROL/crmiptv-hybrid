@@ -109,12 +109,17 @@
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
           <td class="py-3 px-2 text-amber-400 text-xs">{{ statusLabel(m) }}</td>
           <td class="py-3 px-2 text-right space-x-1">
-            <app-whatsapp-cobranca-btn [telefone]="telefone(m)" [mensagem]="mensagem(m)"></app-whatsapp-cobranca-btn>
+            <app-whatsapp-cobranca-btn
+              [telefone]="telefone(m)"
+              [mensagem]="mensagem(m)"
+              [mensalidadeId]="m.id"
+            ></app-whatsapp-cobranca-btn>
             <app-whatsapp-cobranca-btn
               *ngIf="mensalidadeAtrasada(m.vencimento)"
               label="Bloqueio"
               [telefone]="telefone(m)"
               [mensagem]="mensagemBloqueio(m)"
+              [mensalidadeId]="m.id"
             ></app-whatsapp-cobranca-btn>
             <button class="crm-btn-success !py-1.5 !text-xs" (click)="pagar(m)">Pagar</button>
           </td>

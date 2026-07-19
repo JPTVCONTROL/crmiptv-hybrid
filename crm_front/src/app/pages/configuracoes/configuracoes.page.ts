@@ -38,6 +38,7 @@ export class ConfiguracoesPage implements OnInit {
     favorecidoPix: '',
     corPrincipal: COR_TEMA_PADRAO,
     diasAntecedenciaLembrete: DIAS_ANTECEDENCIA_LEMBRETE_PADRAO,
+    mensagemBoasVindas: MENSAGENS_PADRAO.mensagemBoasVindas,
     mensagemCobranca: MENSAGENS_PADRAO.mensagemCobranca,
     mensagemLembrete: MENSAGENS_PADRAO.mensagemLembrete,
     mensagemRenovacao: MENSAGENS_PADRAO.mensagemRenovacao,
@@ -52,6 +53,20 @@ export class ConfiguracoesPage implements OnInit {
     '#DC2626',
     '#EA580C',
     '#DB2777',
+  ];
+
+  readonly variaveisBoasVindas = [
+    '{nome}',
+    '{empresa}',
+    '{servidor}',
+    '{usuario}',
+    '{senha}',
+    '{app}',
+    '{expiraEm}',
+    '{valor}',
+    '{pix}',
+    '{tipoPix}',
+    '{favorecido}',
   ];
 
   readonly variaveisLembrete = [
@@ -127,6 +142,10 @@ export class ConfiguracoesPage implements OnInit {
           corPrincipal: dados.corPrincipal ?? COR_TEMA_PADRAO,
           diasAntecedenciaLembrete:
             dados.diasAntecedenciaLembrete ?? DIAS_ANTECEDENCIA_LEMBRETE_PADRAO,
+          mensagemBoasVindas: resolverTextoMensagem(
+            dados.mensagemBoasVindas,
+            MENSAGENS_PADRAO.mensagemBoasVindas
+          ),
           mensagemCobranca: resolverTextoMensagem(
             dados.mensagemCobranca,
             MENSAGENS_PADRAO.mensagemCobranca

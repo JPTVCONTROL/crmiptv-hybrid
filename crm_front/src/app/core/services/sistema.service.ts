@@ -1,17 +1,28 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { Observable, tap } from 'rxjs';
+import { ApiService } from './api.service';
+import { DadosSyncService } from './dados-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class SistemaService {
-  private readonly baseUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) {}
+  constructor(
+    private api: ApiService,
+    private sync: DadosSyncService
+  ) {}
 
   baixarBackup(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/sistema/backup`, {
-      responseType: 'blob',
-    });
+    return this.api.getBlob('/sistema/backup');
+  }
+
+  sincronizarCobrancas(): Observable<{
+    clientes: number;
+    mensalidades: number;
+  }> {
+    return this.api
+      .post<{ clientes: number; mensalidades: number }>(
+        '/sistema/sincronizar-cobrancas',
+        {}
+      )
+      .pipe(tap(() => this.sync.notificarTudo()));
   }
 }

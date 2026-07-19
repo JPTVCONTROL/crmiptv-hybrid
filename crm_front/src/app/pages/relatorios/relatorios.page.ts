@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Cliente, Mensalidade } from '../../core/models';
 import {
   calcularDias,
@@ -12,6 +13,7 @@ import {
   statusCliente,
 } from '../../shared/utils/formatters';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 interface PagamentoRelatorio {
   id: number;
@@ -36,8 +38,9 @@ interface CobrancaAtrasadaRelatorio {
   selector: 'app-relatorios',
   templateUrl: './relatorios.page.html',
 })
-export class RelatoriosPage implements OnInit {
+export class RelatoriosPage implements OnInit, OnDestroy {
   loading = true;
+  private readonly destroy$ = new Subject<void>();
   clientes: Cliente[] = [];
   mensalidades: Mensalidade[] = [];
 
@@ -56,6 +59,7 @@ export class RelatoriosPage implements OnInit {
   faturamentoMensal: DadoFaturamento[] = [];
   ultimosPagamentos: PagamentoRelatorio[] = [];
   cobrancasAtrasadas: CobrancaAtrasadaRelatorio[] = [];
+  todasCobrancasAtrasadas: CobrancaAtrasadaRelatorio[] = [];
 
   fmtData = formatarData;
   fmtValor = formatarValor;
@@ -63,10 +67,36 @@ export class RelatoriosPage implements OnInit {
   constructor(
     private clienteService: ClienteService,
     private mensalidadeService: MensalidadeService,
-    private toast: ToastService
+    private toast: ToastService,
+    private sync: DadosSyncService
   ) {}
 
   ngOnInit(): void {
+    this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades', 'dashboard'],
+      () => this.carregar(true)
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar(true);
+    }
+  }
+
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     forkJoin([
       this.clienteService.listar(),
       this.mensalidadeService.listar(),
@@ -121,14 +151,14 @@ export class RelatoriosPage implements OnInit {
   }
 
   exportarCsvInadimplentes(): void {
-    if (this.cobrancasAtrasadas.length === 0) {
+    if (this.todasCobrancasAtrasadas.length === 0) {
       void this.toast.warning('Nenhuma cobrança atrasada para exportar.');
       return;
     }
 
     const linhas = [
       ['Cliente', 'Referência', 'Valor', 'Vencimento', 'Dias atraso'].join(';'),
-      ...this.cobrancasAtrasadas.map((item) =>
+      ...this.todasCobrancasAtrasadas.map((item) =>
         [
           `"${item.clienteNome.replace(/"/g, '""')}"`,
           item.referencia,
@@ -197,7 +227,8 @@ export class RelatoriosPage implements OnInit {
 
     this.faturamentoMensal = this.calcularFaturamentoMensal();
     this.ultimosPagamentos = this.montarPagamentosPeriodo(pagosPeriodo);
-    this.cobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes);
+    this.todasCobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes, false);
+    this.cobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes, true);
   }
 
   private estaNoPeriodo(dataIso?: string | null): boolean {
@@ -266,9 +297,10 @@ export class RelatoriosPage implements OnInit {
   }
 
   private montarCobrancasAtrasadas(
-    pendentes: Mensalidade[]
+    pendentes: Mensalidade[],
+    limitar = true
   ): CobrancaAtrasadaRelatorio[] {
-    return pendentes
+    const lista = pendentes
       .filter((m) => calcularDias(m.vencimento) < 0)
       .map((m) => ({
         id: m.id,
@@ -279,7 +311,8 @@ export class RelatoriosPage implements OnInit {
         vencimento: m.vencimento,
         diasAtraso: Math.abs(calcularDias(m.vencimento)),
       }))
-      .sort((a, b) => b.diasAtraso - a.diasAtraso)
-      .slice(0, 8);
+      .sort((a, b) => b.diasAtraso - a.diasAtraso);
+
+    return limitar ? lista.slice(0, 8) : lista;
   }
 }

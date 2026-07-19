@@ -69,6 +69,12 @@ export class ApiService {
       );
   }
 
+  getBlob(path: string): Observable<Blob> {
+    return this.http
+      .get(`${this.baseUrl}${path}`, { responseType: 'blob' })
+      .pipe(catchError(this.handleError));
+  }
+
   private extractData<T>(response: ApiResponse<T>): T {
     if (!response.success) {
       throw new Error(response.message ?? 'Erro na requisição');

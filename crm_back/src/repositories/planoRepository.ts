@@ -57,6 +57,36 @@ export class PlanoRepository {
       orderBy: { nome: 'asc' },
     });
   }
+
+  async reajustarValorClientes(planoId: number, valor: number) {
+    const clientes = await prisma.cliente.findMany({
+      where: { planoId },
+      select: { id: true },
+    });
+    const clienteIds = clientes.map((cliente) => cliente.id);
+
+    const clientesAtualizados = await prisma.cliente.updateMany({
+      where: { planoId },
+      data: { valorMensal: valor },
+    });
+
+    let mensalidadesAtualizadas = 0;
+    if (clienteIds.length > 0) {
+      const resultado = await prisma.mensalidade.updateMany({
+        where: {
+          clienteId: { in: clienteIds },
+          status: 'PENDENTE',
+        },
+        data: { valor },
+      });
+      mensalidadesAtualizadas = resultado.count;
+    }
+
+    return {
+      clientes: clientesAtualizados.count,
+      mensalidades: mensalidadesAtualizadas,
+    };
+  }
 }
 
 export const planoRepository = new PlanoRepository();

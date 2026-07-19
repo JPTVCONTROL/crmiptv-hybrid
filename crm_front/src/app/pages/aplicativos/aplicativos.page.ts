@@ -1,18 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
+import { Subject } from 'rxjs';
 import { AplicativoService } from '../../core/services/aplicativo.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Aplicativo } from '../../core/models';
 import { NovoAplicativoModalComponent } from '../../components/aplicativo/novo-aplicativo-modal/novo-aplicativo-modal.component';
 import { AplicativoClientesModalComponent } from '../../components/aplicativo/aplicativo-clientes-modal/aplicativo-clientes-modal.component';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-aplicativos',
   templateUrl: './aplicativos.page.html',
 })
-export class AplicativosPage implements OnInit {
+export class AplicativosPage implements OnInit, OnDestroy {
   aplicativos: Aplicativo[] = [];
+  private readonly destroy$ = new Subject<void>();
   loading = true;
   error = '';
   logosQuebrados = new Set<number>();
@@ -23,11 +27,23 @@ export class AplicativosPage implements OnInit {
     private aplicativoService: AplicativoService,
     private modalCtrl: ModalController,
     private toast: ToastService,
-    private confirmacao: ConfirmacaoService
+    private confirmacao: ConfirmacaoService,
+    private sync: DadosSyncService
   ) {}
 
   ngOnInit(): void {
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['catalogos'],
+      () => this.carregar()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ionViewWillEnter(): void {

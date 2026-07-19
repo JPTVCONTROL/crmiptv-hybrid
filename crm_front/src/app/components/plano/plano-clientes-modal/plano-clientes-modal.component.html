@@ -33,13 +33,16 @@
           </a>
           <p class="text-slate-400 text-sm mt-1">{{ cliente.telefone }}</p>
         </div>
-        <a
-          [routerLink]="['/clientes', cliente.id]"
-          class="crm-btn-ghost no-underline shrink-0 self-start sm:self-auto"
-          (click)="fechar()"
-        >
-          Ver cliente
-        </a>
+        <div class="flex flex-wrap gap-2 shrink-0 self-start sm:self-auto">
+          <button type="button" class="crm-btn-ghost" (click)="editar(cliente)">Editar</button>
+          <a
+            [routerLink]="['/clientes', cliente.id]"
+            class="crm-btn-ghost no-underline"
+            (click)="fechar()"
+          >
+            Ver cliente
+          </a>
+        </div>
       </div>
 
       <app-empty-state

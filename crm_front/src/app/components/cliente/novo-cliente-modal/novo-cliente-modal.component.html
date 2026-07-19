@@ -8,7 +8,8 @@
 </ion-header>
 
 <ion-content class="bg-slate-950">
-  <div class="p-4 md:p-6 space-y-6 cliente-modal-body">
+  <div class="cliente-modal-shell">
+    <div class="p-4 md:p-6 space-y-6 cliente-modal-body">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
@@ -34,7 +35,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Plano</label>
         <select class="crm-input" [(ngModel)]="form.planoId" (ngModelChange)="onPlanoChange()">
@@ -44,13 +45,6 @@
               {{ fmtRotuloPlano(plano) }}
             </option>
           </optgroup>
-        </select>
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Aplicativo</label>
-        <select class="crm-input" [(ngModel)]="form.aplicativoId">
-          <option [ngValue]="null">Selecione...</option>
-          <option *ngFor="let app of aplicativos" [ngValue]="app.id">{{ app.nome }}</option>
         </select>
       </div>
       <div>
@@ -99,13 +93,35 @@
         <p *ngIf="qtdTelas > 1" class="text-violet-400 text-sm font-medium mb-3">
           Tela {{ i + 1 }}
         </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-slate-300 mb-2 text-sm">Dispositivo</label>
-            <select class="crm-input" [(ngModel)]="disp.dispositivoId">
+            <select
+              class="crm-input"
+              [(ngModel)]="disp.dispositivoId"
+              (ngModelChange)="onDispositivoChange(disp)"
+            >
               <option [ngValue]="null">Selecione...</option>
               <option *ngFor="let d of dispositivosOpcoes" [ngValue]="d.id">
                 {{ fmtRotuloDispositivo(d) }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Aplicativo</label>
+            <select
+              class="crm-input"
+              [(ngModel)]="disp.aplicativoId"
+              [disabled]="!disp.dispositivoId"
+            >
+              <option [ngValue]="null">
+                {{ disp.dispositivoId ? 'Selecione...' : 'Escolha o dispositivo primeiro' }}
+              </option>
+              <option
+                *ngFor="let app of aplicativosDoDispositivo(disp.dispositivoId)"
+                [ngValue]="app.id"
+              >
+                {{ app.nome }}
               </option>
             </select>
           </div>
@@ -148,9 +164,17 @@
       <label class="block text-slate-300 mb-2 text-sm">Observação</label>
       <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.observacao"></textarea>
     </div>
+    </div>
 
-    <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
-      {{ salvando ? 'Salvando...' : 'Salvar Cliente' }}
-    </button>
+    <div class="cliente-modal-footer">
+      <button
+        type="button"
+        class="crm-btn-primary w-full"
+        [disabled]="salvando"
+        (click)="salvar()"
+      >
+        {{ salvando ? 'Salvando...' : 'Salvar Cliente' }}
+      </button>
+    </div>
   </div>
 </ion-content>

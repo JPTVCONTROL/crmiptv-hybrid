@@ -1,4 +1,5 @@
 import prisma from '../config/database.js';
+import { formatReferencia } from '../utils/helpers/dateHelpers.js';
 
 export class MensalidadeRepository {
   findAll() {
@@ -36,6 +37,24 @@ export class MensalidadeRepository {
     });
   }
 
+  registrarContato(id: number, contatoEm: Date) {
+    return prisma.mensalidade.update({
+      where: { id },
+      data: { ultimoContatoEm: contatoEm },
+    });
+  }
+
+  registrarContatos(ids: number[], contatoEm: Date) {
+    if (ids.length === 0) {
+      return Promise.resolve({ count: 0 });
+    }
+
+    return prisma.mensalidade.updateMany({
+      where: { id: { in: ids } },
+      data: { ultimoContatoEm: contatoEm },
+    });
+  }
+
   async registrarPagamento(
     mensalidadeId: number,
     clienteId: number,
@@ -66,6 +85,42 @@ export class MensalidadeRepository {
         },
       }),
     ]);
+  }
+
+  findPendentesByClienteId(clienteId: number) {
+    return prisma.mensalidade.findMany({
+      where: { clienteId, status: 'PENDENTE' },
+      orderBy: { vencimento: 'asc' },
+    });
+  }
+
+  sincronizarPendentesDoCliente(
+    clienteId: number,
+    opcoes: { vencimento?: Date; valor?: number }
+  ) {
+    const data: {
+      vencimento?: Date;
+      referencia?: string;
+      valor?: number;
+    } = {};
+
+    if (opcoes.vencimento) {
+      data.vencimento = opcoes.vencimento;
+      data.referencia = formatReferencia(opcoes.vencimento);
+    }
+
+    if (opcoes.valor !== undefined) {
+      data.valor = opcoes.valor;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return Promise.resolve({ count: 0 });
+    }
+
+    return prisma.mensalidade.updateMany({
+      where: { clienteId, status: 'PENDENTE' },
+      data,
+    });
   }
 }
 

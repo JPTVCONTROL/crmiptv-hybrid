@@ -1,21 +1,18 @@
 <div class="space-y-6">
-  <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-    <app-page-header
-      title="Relatórios"
-      [subtitle]="'Resumo financeiro de ' + rotuloPeriodo + '.'"
-    ></app-page-header>
-
-    <div class="flex flex-wrap gap-2 shrink-0">
-      <input
-        type="month"
-        class="crm-input !py-2 !w-auto min-w-[10.5rem]"
-        [(ngModel)]="periodo"
-        (ngModelChange)="recalcular()"
-      />
-      <button
+  <app-page-header
+    title="Relatórios"
+    [subtitle]="'Resumo financeiro de ' + rotuloPeriodo + '.'"
+  >
+    <input
+      type="month"
+      class="crm-input !py-2 !w-auto min-w-[10.5rem]"
+      [(ngModel)]="periodo"
+      (ngModelChange)="recalcular()"
+    />
+    <button
         type="button"
         class="crm-btn-ghost"
-        [disabled]="cobrancasAtrasadas.length === 0"
+        [disabled]="todasCobrancasAtrasadas.length === 0"
         (click)="exportarCsvInadimplentes()"
       >
         Exportar inadimplentes
@@ -30,8 +27,7 @@
       </button>
       <a routerLink="/cobranca-diaria" class="crm-btn-ghost no-underline">Cobrança Diária</a>
       <a routerLink="/financeiro" class="crm-btn-primary no-underline">Financeiro</a>
-    </div>
-  </div>
+  </app-page-header>
 
   <app-loading *ngIf="loading"></app-loading>
 

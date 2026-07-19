@@ -1,10 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ModalController } from '@ionic/angular';
+import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
+import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
 import { Cliente, Configuracao, Mensalidade, StatusFinanceiro } from '../../core/models';
 import {
   formatarValor,
@@ -23,21 +27,25 @@ import {
 } from '../../shared/utils/cobranca-lote';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-financeiro',
   templateUrl: './financeiro.page.html',
 })
-export class FinanceiroPage implements OnInit {
+export class FinanceiroPage implements OnInit, OnDestroy {
   mensalidades: Mensalidade[] = [];
+  private readonly destroy$ = new Subject<void>();
   telefones = new Map<number, string>();
   nomesClientes = new Map<number, string>();
+  clientesPorId = new Map<number, Cliente>();
   loading = true;
   busca = '';
   filtro: StatusFinanceiro = 'TODOS';
   pagina = 1;
   readonly porPagina = 10;
   selecionados = new Set<number>();
+  pagandoLote = false;
 
   readonly opcoesFiltro: { valor: StatusFinanceiro; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -47,11 +55,14 @@ export class FinanceiroPage implements OnInit {
   ];
 
   constructor(
+    private route: ActivatedRoute,
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
-    private toast: ToastService
+    private toast: ToastService,
+    private modalCtrl: ModalController,
+    private sync: DadosSyncService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -66,7 +77,31 @@ export class FinanceiroPage implements OnInit {
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
+
+    this.route.queryParamMap.subscribe((params) => {
+      const status = params.get('status');
+      if (
+        status === 'PENDENTE' ||
+        status === 'REGULAR' ||
+        status === 'ATRASADO'
+      ) {
+        this.filtro = status;
+        this.pagina = 1;
+      }
+    });
+
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades'],
+      () => this.carregar()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ionViewWillEnter(): void {
@@ -85,6 +120,7 @@ export class FinanceiroPage implements OnInit {
         this.mensalidades = mensalidades.filter((m) => m.status !== 'PAGO');
         this.telefones = criarMapaTelefones(clientes);
         this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
+        this.clientesPorId = new Map(clientes.map((c) => [c.id, c]));
         this.loading = false;
       },
       error: () => (this.loading = false),
@@ -161,6 +197,23 @@ export class FinanceiroPage implements OnInit {
     );
   }
 
+  async editarCliente(m: Mensalidade): Promise<void> {
+    const cliente = this.clientesPorId.get(m.clienteId);
+    if (!cliente) {
+      void this.toast.error('Cliente não encontrado.');
+      return;
+    }
+
+    const modal = await this.modalCtrl.create({
+      component: NovoClienteModalComponent,
+      componentProps: { cliente },
+      cssClass: 'crm-modal crm-modal-cliente',
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data) this.carregar();
+  }
+
   async pagar(m: Mensalidade): Promise<void> {
     const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
     if (!pagoEm) return;
@@ -171,7 +224,7 @@ export class FinanceiroPage implements OnInit {
           telefone: this.telefone(m),
           nome: nomeClienteMensalidade(m, this.nomesClientes),
           referencia: m.referencia,
-          valor: m.valor,
+          valor: resultado.valorRenovacao ?? m.valor,
           novoVencimento: resultado.novoVencimento,
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,
@@ -180,6 +233,38 @@ export class FinanceiroPage implements OnInit {
       },
       error: (err) => void this.toast.error(err.message),
     });
+  }
+
+  async pagarSelecionados(): Promise<void> {
+    if (this.selecionados.size === 0 || this.pagandoLote) return;
+
+    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
+    if (!pagoEm) return;
+
+    this.pagandoLote = true;
+    this.mensalidadeService
+      .registrarPagamentos([...this.selecionados], pagoEm)
+      .subscribe({
+        next: (resultado) => {
+          this.pagandoLote = false;
+          this.limparSelecao();
+          this.carregar();
+
+          if (resultado.erros.length > 0) {
+            void this.toast.warning(
+              `${resultado.sucesso} pago(s), ${resultado.erros.length} falha(s).`
+            );
+          } else {
+            void this.toast.success(
+              `${resultado.sucesso} pagamento(s) registrado(s) com sucesso.`
+            );
+          }
+        },
+        error: (err) => {
+          this.pagandoLote = false;
+          void this.toast.error(err.message ?? 'Erro ao registrar pagamentos.');
+        },
+      });
   }
 
   get qtdSelecionados(): number {

@@ -52,11 +52,14 @@
           <ion-title class="mobile-logo-title">
             <img src="assets/logo-crm-jptv.png" alt="CRM JPTV" class="mobile-logo" />
           </ion-title>
+          <ion-buttons slot="end">
+            <app-alertas-sino></app-alertas-sino>
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>
 
       <ion-content class="bg-slate-950">
-        <div [class]="isLoginRoute ? 'login-shell' : 'p-4 md:p-6 lg:p-8'">
+        <div [class]="isLoginRoute ? 'login-shell' : 'app-content-shell p-4 md:p-6 lg:p-8'">
           <router-outlet></router-outlet>
         </div>
       </ion-content>

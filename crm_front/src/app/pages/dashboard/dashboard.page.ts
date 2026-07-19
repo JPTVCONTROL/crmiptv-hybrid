@@ -1,57 +1,59 @@
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
-import { ClienteService } from '../../core/services/cliente.service';
-import { MensalidadeService } from '../../core/services/mensalidade.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { DashboardService } from '../../core/services/dashboard.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
+import { MensalidadeService } from '../../core/services/mensalidade.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Cliente, Configuracao, Mensalidade } from '../../core/models';
+import {
+  Configuracao,
+  DashboardResumo,
+  Mensalidade,
+} from '../../core/models';
 import {
   calcularDias,
-  criarMapaTelefones,
   formatarData,
   formatarValor,
-  resolverTelefoneCliente,
-  statusCliente,
-  StatusCliente,
 } from '../../shared/utils/formatters';
 import {
   montarItemCobrancaLote,
-  nomeClienteMensalidade,
 } from '../../shared/utils/cobranca-lote';
 import {
   abrirWhatsAppCobranca,
-  montarMensagemBloqueio,
-  montarMensagemCobranca,
   oferecerMensagemRenovacao,
   telefoneValidoParaWhatsApp,
 } from '../../shared/utils/whatsapp';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
+import { rotuloUltimoContato } from '../../shared/utils/contato';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+
+type ProximoVencimentoResumo = DashboardResumo['proximosVencimentos'][number];
+type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.page.html',
 })
-export class DashboardPage implements OnInit {
+export class DashboardPage implements OnInit, OnDestroy {
   loading = true;
-  clientes: Cliente[] = [];
-  mensalidades: Mensalidade[] = [];
+  resumo: DashboardResumo | null = null;
+  private readonly destroy$ = new Subject<void>();
 
   totalClientes = 0;
   qtdAtivos = 0;
   qtdAtrasados = 0;
   qtdInativos = 0;
   recebidoMes = '';
-  valorPendente = '';
-  totalRecebido = '';
-  pendentes = 0;
+  aReceberEsteMes = '';
+  qtdEsteMes = 0;
+  aReceberProximosMeses = '';
+  qtdProximosMeses = 0;
   vencemHoje = 0;
   faturamentoMensal: DadoFaturamento[] = [];
-  proximosVencimentos: Mensalidade[] = [];
-  clientesAtencao: Cliente[] = [];
-  telefones = new Map<number, string>();
-  nomesClientes = new Map<number, string>();
+  proximosVencimentos: ProximoVencimentoResumo[] = [];
+  clientesAtencao: ClienteAtencaoResumo[] = [];
   pagando = new Set<number>();
 
   subtituloPagina = '';
@@ -61,11 +63,12 @@ export class DashboardPage implements OnInit {
   }
 
   constructor(
-    private clienteService: ClienteService,
+    private dashboardService: DashboardService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
-    private toast: ToastService
+    private toast: ToastService,
+    private sync: DadosSyncService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -78,6 +81,17 @@ export class DashboardPage implements OnInit {
       this.configuracaoService.carregar().subscribe();
     }
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades', 'dashboard'],
+      () => this.carregar(true)
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ionViewWillEnter(): void {
@@ -91,20 +105,32 @@ export class DashboardPage implements OnInit {
       this.loading = true;
     }
 
-    forkJoin([
-      this.clienteService.listar(),
-      this.mensalidadeService.listar(),
-    ]).subscribe({
-      next: ([clientes, mensalidades]) => {
-        this.clientes = clientes;
-        this.mensalidades = mensalidades;
-        this.telefones = criarMapaTelefones(clientes);
-        this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
-        this.calcularKpis();
+    this.dashboardService.obterResumo().subscribe({
+      next: (resumo) => {
+        this.resumo = resumo;
+        this.aplicarResumo(resumo);
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
+  }
+
+  private aplicarResumo(resumo: DashboardResumo): void {
+    this.totalClientes = resumo.clientes.total;
+    this.qtdAtivos = resumo.clientes.ativos;
+    this.qtdAtrasados = resumo.clientes.atrasados;
+    this.qtdInativos = resumo.clientes.inativos;
+    this.recebidoMes = formatarValor(resumo.financeiro.recebidoMes);
+    this.aReceberEsteMes = formatarValor(resumo.financeiro.aReceberEsteMes);
+    this.qtdEsteMes = resumo.financeiro.qtdEsteMes;
+    this.aReceberProximosMeses = formatarValor(
+      resumo.financeiro.aReceberProximosMeses
+    );
+    this.qtdProximosMeses = resumo.financeiro.qtdProximosMeses;
+    this.vencemHoje = resumo.financeiro.vencemHoje;
+    this.faturamentoMensal = resumo.faturamentoMensal;
+    this.proximosVencimentos = resumo.proximosVencimentos;
+    this.clientesAtencao = resumo.clientesAtencao;
   }
 
   private montarSubtitulo(): string {
@@ -115,91 +141,6 @@ export class DashboardPage implements OnInit {
       year: 'numeric',
     });
     return `Resumo de ${hoje}`;
-  }
-
-  private calcularKpis(): void {
-    this.totalClientes = this.clientes.length;
-    this.qtdAtivos = this.clientes.filter((c) => statusCliente(c.expiraEm) === 'ATIVO').length;
-    this.qtdAtrasados = this.clientes.filter((c) => statusCliente(c.expiraEm) === 'ATRASADO').length;
-    this.qtdInativos = this.clientes.filter((c) => statusCliente(c.expiraEm) === 'INATIVO').length;
-
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    const pagos = this.mensalidades.filter((m) => m.status === 'PAGO');
-    const pendentesLista = this.mensalidades.filter((m) => m.status === 'PENDENTE');
-
-    const recebidoTotal = pagos.reduce((t, m) => t + m.valor, 0);
-    this.totalRecebido = formatarValor(recebidoTotal);
-
-    const recebidoNoMes = pagos
-      .filter((m) => {
-        if (!m.pagoEm) return false;
-        const pago = new Date(m.pagoEm);
-        return (
-          pago.getMonth() === hoje.getMonth() &&
-          pago.getFullYear() === hoje.getFullYear()
-        );
-      })
-      .reduce((t, m) => t + m.valor, 0);
-    this.recebidoMes = formatarValor(recebidoNoMes);
-
-    const pendenteValor = pendentesLista.reduce((t, m) => t + m.valor, 0);
-    this.valorPendente = formatarValor(pendenteValor);
-    this.pendentes = pendentesLista.length;
-
-    this.vencemHoje = pendentesLista.filter((m) => calcularDias(m.vencimento) === 0).length;
-
-    this.proximosVencimentos = pendentesLista
-      .filter((m) => {
-        const dias = calcularDias(m.vencimento);
-        const antecedencia = resolverDiasAntecedencia(this.configuracao);
-        return dias >= 0 && dias <= antecedencia;
-      })
-      .sort((a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime());
-
-    this.clientesAtencao = this.clientes
-      .filter((c) => statusCliente(c.expiraEm) !== 'ATIVO')
-      .sort((a, b) => {
-        const da = a.expiraEm ? new Date(a.expiraEm).getTime() : 0;
-        const db = b.expiraEm ? new Date(b.expiraEm).getTime() : 0;
-        return da - db;
-      })
-      .slice(0, 10);
-
-    this.faturamentoMensal = this.calcularFaturamentoMensal();
-  }
-
-  private calcularFaturamentoMensal(): DadoFaturamento[] {
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const hoje = new Date();
-    const resultado: DadoFaturamento[] = [];
-
-    for (let i = 5; i >= 0; i--) {
-      const referencia = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const rotulo = `${meses[referencia.getMonth()]}/${String(referencia.getFullYear()).slice(-2)}`;
-
-      let total = 0;
-      for (const mensalidade of this.mensalidades) {
-        if (mensalidade.status !== 'PAGO' || !mensalidade.pagoEm) continue;
-
-        const pago = new Date(mensalidade.pagoEm);
-        if (
-          pago.getMonth() === referencia.getMonth() &&
-          pago.getFullYear() === referencia.getFullYear()
-        ) {
-          total += mensalidade.valor;
-        }
-      }
-
-      resultado.push({ mes: rotulo, total });
-    }
-
-    return resultado;
-  }
-
-  status(cliente: Cliente): StatusCliente {
-    return statusCliente(cliente.expiraEm);
   }
 
   rotuloExpiracao(expiraEm?: string | null): string {
@@ -221,110 +162,101 @@ export class DashboardPage implements OnInit {
     return `${Math.abs(dias)} dia(s) atrasado`;
   }
 
-  podeCobrar(cliente: Cliente): boolean {
-    return telefoneValidoParaWhatsApp(cliente.telefone) && !!this.dadosCobranca(cliente);
+  rotuloContato(ultimoContatoEm?: string | null): string {
+    return rotuloUltimoContato(ultimoContatoEm);
   }
 
-  cobrar(cliente: Cliente): void {
-    const dados = this.dadosCobranca(cliente);
-    if (!dados) {
+  podeCobrarAtencao(cliente: ClienteAtencaoResumo): boolean {
+    return (
+      telefoneValidoParaWhatsApp(cliente.telefone) &&
+      !!cliente.mensalidadePendenteId
+    );
+  }
+
+  cobrarAtencao(cliente: ClienteAtencaoResumo): void {
+    if (!cliente.mensalidadePendenteId) {
       void this.toast.warning('Nenhuma cobrança pendente encontrada para este cliente.');
       return;
     }
 
-    abrirWhatsAppCobranca(cliente.telefone, this.montarMensagem(cliente, dados));
+    const mensalidade = this.mensalidadeDeAtencao(cliente);
+    this.cobrarMensalidade(mensalidade);
   }
 
-  mensalidadePendente(cliente: Cliente): Mensalidade | undefined {
-    return (
-      cliente.mensalidades?.find((m) => m.status === 'PENDENTE') ??
-      this.mensalidades.find(
-        (m) => m.clienteId === cliente.id && m.status === 'PENDENTE'
-      )
-    );
+  podeCobrarProximo(item: ProximoVencimentoResumo): boolean {
+    return telefoneValidoParaWhatsApp(item.telefone);
   }
 
-  telefoneMensalidade(m: Mensalidade): string {
-    return resolverTelefoneCliente(m, this.telefones);
-  }
-
-  podeCobrarMensalidade(m: Mensalidade): boolean {
-    return telefoneValidoParaWhatsApp(this.telefoneMensalidade(m));
+  cobrarProximo(item: ProximoVencimentoResumo): void {
+    this.cobrarMensalidade(this.mensalidadeDeProximo(item));
   }
 
   cobrarMensalidade(m: Mensalidade): void {
+    const telefones = new Map<number, string>([[m.clienteId, m.cliente?.telefone ?? '']]);
+    const nomes = new Map<number, string>([[m.clienteId, m.cliente?.nome ?? 'Cliente']]);
     const item = montarItemCobrancaLote(
       m,
-      this.telefones,
+      telefones,
       this.configuracao,
-      this.nomesClientes
+      nomes
     );
     abrirWhatsAppCobranca(item.telefone, item.mensagem);
+    this.registrarContato(m.id);
   }
 
   estaPagando(id: number): boolean {
     return this.pagando.has(id);
   }
 
-  async pagarMensalidade(m: Mensalidade): Promise<void> {
-    if (this.pagando.has(m.id)) return;
-
-    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
-    if (!pagoEm) return;
-
-    this.pagando.add(m.id);
-    this.pagando = new Set(this.pagando);
-
-    this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
-      next: (resultado) => {
-        this.pagando.delete(m.id);
-        this.pagando = new Set(this.pagando);
-
-        void oferecerMensagemRenovacao({
-          telefone: this.telefoneMensalidade(m),
-          nome: nomeClienteMensalidade(m, this.nomesClientes),
-          referencia: m.referencia,
-          valor: m.valor,
-          novoVencimento: resultado.novoVencimento,
-          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
-          templateRenovacao: this.configuracao?.mensagemRenovacao,
-        });
-
-        this.carregar(true);
-      },
-      error: (err) => {
-        this.pagando.delete(m.id);
-        this.pagando = new Set(this.pagando);
-        void this.toast.error(err.message ?? 'Erro ao registrar pagamento.');
-      },
-    });
+  async pagarProximo(item: ProximoVencimentoResumo): Promise<void> {
+    await this.pagarMensalidadeId(item.id, item.telefone, item.clienteNome, item.referencia, item.valor);
   }
 
-  async pagarCliente(cliente: Cliente): Promise<void> {
-    const mensalidade = this.mensalidadePendente(cliente);
-    if (!mensalidade) {
+  async pagarAtencao(cliente: ClienteAtencaoResumo): Promise<void> {
+    if (!cliente.mensalidadePendenteId) {
       void this.toast.warning('Nenhuma mensalidade pendente para registrar pagamento.');
       return;
     }
 
+    await this.pagarMensalidadeId(
+      cliente.mensalidadePendenteId,
+      cliente.telefone,
+      cliente.nome,
+      cliente.mensalidadeReferencia ?? '',
+      cliente.mensalidadeValor ?? 0
+    );
+  }
+
+  rotuloPagarAtencao(cliente: ClienteAtencaoResumo): string {
+    if (!cliente.mensalidadePendenteId) return 'Pagar';
+    return this.estaPagando(cliente.mensalidadePendenteId) ? 'Salvando...' : 'Pagar';
+  }
+
+  private async pagarMensalidadeId(
+    mensalidadeId: number,
+    telefone: string,
+    nome: string,
+    referencia: string,
+    valor: number
+  ): Promise<void> {
+    if (this.pagando.has(mensalidadeId)) return;
+
     const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
     if (!pagoEm) return;
 
-    if (this.pagando.has(mensalidade.id)) return;
-
-    this.pagando.add(mensalidade.id);
+    this.pagando.add(mensalidadeId);
     this.pagando = new Set(this.pagando);
 
-    this.mensalidadeService.registrarPagamento(mensalidade.id, pagoEm).subscribe({
+    this.mensalidadeService.registrarPagamento(mensalidadeId, pagoEm).subscribe({
       next: (resultado) => {
-        this.pagando.delete(mensalidade.id);
+        this.pagando.delete(mensalidadeId);
         this.pagando = new Set(this.pagando);
 
         void oferecerMensagemRenovacao({
-          telefone: cliente.telefone,
-          nome: cliente.nome,
-          referencia: mensalidade.referencia,
-          valor: mensalidade.valor,
+          telefone,
+          nome,
+          referencia,
+          valor: resultado.valorRenovacao ?? valor,
           novoVencimento: resultado.novoVencimento,
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,
@@ -333,84 +265,57 @@ export class DashboardPage implements OnInit {
         this.carregar(true);
       },
       error: (err) => {
-        this.pagando.delete(mensalidade.id);
+        this.pagando.delete(mensalidadeId);
         this.pagando = new Set(this.pagando);
         void this.toast.error(err.message ?? 'Erro ao registrar pagamento.');
       },
     });
   }
 
-  podePagarCliente(cliente: Cliente): boolean {
-    return !!this.mensalidadePendente(cliente);
-  }
-
-  rotuloPagarCliente(cliente: Cliente): string {
-    const mensalidade = this.mensalidadePendente(cliente);
-    if (!mensalidade) return 'Pagar';
-    return this.estaPagando(mensalidade.id) ? 'Salvando...' : 'Pagar';
-  }
-
-  private dadosCobranca(
-    cliente: Cliente
-  ): { referencia: string; valor: number; vencimento: string } | null {
-    const pendente = cliente.mensalidades?.find((m) => m.status === 'PENDENTE');
-    if (pendente) {
-      return {
-        referencia: pendente.referencia,
-        valor: pendente.valor,
-        vencimento: pendente.vencimento,
-      };
-    }
-
-    const pendenteGlobal = this.mensalidades.find(
-      (m) => m.clienteId === cliente.id && m.status === 'PENDENTE'
-    );
-    if (pendenteGlobal) {
-      return {
-        referencia: pendenteGlobal.referencia,
-        valor: pendenteGlobal.valor,
-        vencimento: pendenteGlobal.vencimento,
-      };
-    }
-
-    if (cliente.expiraEm) {
-      const data = new Date(cliente.expiraEm);
-      return {
-        referencia: `${String(data.getMonth() + 1).padStart(2, '0')}/${data.getFullYear()}`,
-        valor: cliente.valorMensal,
-        vencimento: cliente.expiraEm,
-      };
-    }
-
-    return null;
-  }
-
-  private montarMensagem(
-    cliente: Cliente,
-    dados: { referencia: string; valor: number; vencimento: string }
-  ): string {
-    const cfg = this.configuracao;
-    const base = {
-      nome: cliente.nome,
-      referencia: dados.referencia,
-      valor: dados.valor,
-      vencimento: dados.vencimento,
-      expiraEm: cliente.expiraEm ?? dados.vencimento,
-      empresa: cfg?.nomeEmpresa ?? 'JPTV',
-      pix: cfg?.chavePix ?? undefined,
-      tipoPix: cfg?.tipoPix ?? undefined,
-      favorecido: cfg?.favorecidoPix ?? undefined,
+  private mensalidadeDeProximo(item: ProximoVencimentoResumo): Mensalidade {
+    return {
+      id: item.id,
+      clienteId: item.clienteId,
+      referencia: item.referencia,
+      valor: item.valor,
+      vencimento: item.vencimento,
+      status: 'PENDENTE',
+      ultimoContatoEm: item.ultimoContatoEm,
+      cliente: {
+        id: item.clienteId,
+        nome: item.clienteNome,
+        telefone: item.telefone,
+      } as Mensalidade['cliente'],
     };
+  }
 
-    if (this.status(cliente) === 'INATIVO') {
-      return montarMensagemBloqueio(base, cfg?.mensagemBloqueio);
-    }
+  private mensalidadeDeAtencao(cliente: ClienteAtencaoResumo): Mensalidade {
+    return {
+      id: cliente.mensalidadePendenteId!,
+      clienteId: cliente.id,
+      referencia: cliente.mensalidadeReferencia ?? '',
+      valor: cliente.mensalidadeValor ?? 0,
+      vencimento:
+        cliente.mensalidadeVencimento ??
+        cliente.expiraEm ??
+        new Date().toISOString(),
+      status: 'PENDENTE',
+      cliente: {
+        id: cliente.id,
+        nome: cliente.nome,
+        telefone: cliente.telefone,
+        expiraEm: cliente.expiraEm,
+      } as Mensalidade['cliente'],
+    };
+  }
 
-    return montarMensagemCobranca(
-      { ...base, atrasado: calcularDias(dados.vencimento) < 0 },
-      cfg?.mensagemCobranca,
-      cfg?.mensagemLembrete
-    );
+  private registrarContato(mensalidadeId: number): void {
+    this.mensalidadeService.registrarContato(mensalidadeId).subscribe({
+      next: () => this.carregar(true),
+      error: () => {
+        void this.toast.warning('WhatsApp aberto, mas o contato não foi salvo.');
+      },
+    });
   }
 
   fmtData = formatarData;

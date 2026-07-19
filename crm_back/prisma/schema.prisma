@@ -51,6 +51,7 @@ model Mensalidade {
   vencimento DateTime
   status     String   @default("PENDENTE")
   pagoEm     DateTime?
+  ultimoContatoEm DateTime?
   createdAt  DateTime @default(now())
 }
 

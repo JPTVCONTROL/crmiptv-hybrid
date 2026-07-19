@@ -1,7 +1,6 @@
-<div class="flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
-  <app-page-header title="Aplicativos" subtitle="Gerencie todos os aplicativos da JPTV."></app-page-header>
+<app-page-header title="Aplicativos" subtitle="Gerencie todos os aplicativos da JPTV.">
   <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Aplicativo</button>
-</div>
+</app-page-header>
 
 <div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
   <input

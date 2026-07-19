@@ -46,6 +46,15 @@ export class PlanoService {
     }
     await planoRepository.delete(id);
   }
+
+  async reajustarClientes(id: number) {
+    const plano = await this.buscarPorId(id);
+    const resultado = await planoRepository.reajustarValorClientes(
+      id,
+      plano.valor
+    );
+    return { ...resultado, valor: plano.valor };
+  }
 }
 
 export class PlanoNotFoundError extends Error {

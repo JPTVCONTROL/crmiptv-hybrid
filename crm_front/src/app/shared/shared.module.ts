@@ -7,6 +7,7 @@ import { StatCardComponent } from '../components/stat-card/stat-card.component';
 import { PageHeaderComponent } from '../components/page-header/page-header.component';
 import { LoadingComponent } from '../components/loading/loading.component';
 import { EmptyStateComponent } from '../components/empty-state/empty-state.component';
+import { AlertasSinoModule } from '../components/alertas-sino/alertas-sino.module';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,14 @@ import { EmptyStateComponent } from '../components/empty-state/empty-state.compo
     LoadingComponent,
     EmptyStateComponent,
   ],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, IonicModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
+    IonicModule,
+    AlertasSinoModule,
+  ],
   exports: [
     CommonModule,
     FormsModule,
@@ -26,6 +34,7 @@ import { EmptyStateComponent } from '../components/empty-state/empty-state.compo
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
+    AlertasSinoModule,
   ],
 })
 export class SharedModule {}

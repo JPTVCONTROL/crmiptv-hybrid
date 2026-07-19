@@ -2,7 +2,8 @@ import type { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { env } from '../config/env.js';
-import { sendError } from '../utils/helpers/response.js';
+import { clienteService } from '../services/clienteService.js';
+import { sendError, sendSuccess } from '../utils/helpers/response.js';
 
 function resolverCaminhoBanco(): string {
   const url = env.databaseUrl;
@@ -35,6 +36,17 @@ export class SistemaController {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Erro ao gerar backup.';
+      sendError(res, message);
+    }
+  }
+
+  async sincronizarCobrancas(_req: Request, res: Response): Promise<void> {
+    try {
+      const resultado = await clienteService.sincronizarCobrancasPendentes();
+      sendSuccess(res, resultado);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro ao sincronizar cobranças.';
       sendError(res, message);
     }
   }

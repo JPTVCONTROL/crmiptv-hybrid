@@ -32,6 +32,7 @@ export interface ItemCobrancaDiaria {
   tipo: TipoCobrancaDiaria;
   telefone: string;
   telefoneValido: boolean;
+  ultimoContatoEm?: string | null;
   mensagem: string;
 }
 
@@ -104,6 +105,7 @@ export function montarItensCobrancaDiaria(
       tipo,
       telefone,
       telefoneValido: telefoneValidoParaWhatsApp(telefone),
+      ultimoContatoEm: m.ultimoContatoEm ?? null,
       mensagem: montarMensagemCobrancaMensalidade(
         m,
         configuracao,

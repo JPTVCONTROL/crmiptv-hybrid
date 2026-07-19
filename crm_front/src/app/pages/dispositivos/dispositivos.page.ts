@@ -1,19 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
+import { Subject } from 'rxjs';
 import { DispositivoService } from '../../core/services/dispositivo.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Dispositivo } from '../../core/models';
 import { NovoDispositivoModalComponent } from '../../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
 import { DispositivoClientesModalComponent } from '../../components/dispositivo/dispositivo-clientes-modal/dispositivo-clientes-modal.component';
 import { rotuloDispositivo } from '../../shared/utils/dispositivos';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-dispositivos',
   templateUrl: './dispositivos.page.html',
 })
-export class DispositivosPage implements OnInit {
+export class DispositivosPage implements OnInit, OnDestroy {
   dispositivos: Dispositivo[] = [];
+  private readonly destroy$ = new Subject<void>();
   loading = true;
   error = '';
   busca = '';
@@ -23,11 +27,23 @@ export class DispositivosPage implements OnInit {
     private dispositivoService: DispositivoService,
     private modalCtrl: ModalController,
     private toast: ToastService,
-    private confirmacao: ConfirmacaoService
+    private confirmacao: ConfirmacaoService,
+    private sync: DadosSyncService
   ) {}
 
   ngOnInit(): void {
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['catalogos'],
+      () => this.carregar()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ionViewWillEnter(): void {

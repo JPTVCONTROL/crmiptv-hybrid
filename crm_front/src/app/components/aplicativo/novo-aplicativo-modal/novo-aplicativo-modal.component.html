@@ -8,7 +8,8 @@
 </ion-header>
 
 <ion-content class="bg-slate-950">
-  <div class="p-4 md:p-6 space-y-4 modal-form-body">
+  <div class="modal-form-shell">
+    <div class="p-4 md:p-6 space-y-4 modal-form-body">
     <div>
       <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
       <input class="crm-input" [(ngModel)]="form.nome" />
@@ -109,9 +110,17 @@
       <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.ativo" />
       Aplicativo ativo
     </label>
+    </div>
 
-    <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
-      {{ salvando ? 'Salvando...' : (aplicativo ? 'Salvar alterações' : 'Salvar Aplicativo') }}
-    </button>
+    <div class="modal-form-footer">
+      <button
+        type="button"
+        class="crm-btn-primary w-full"
+        [disabled]="salvando"
+        (click)="salvar()"
+      >
+        {{ salvando ? 'Salvando...' : (aplicativo ? 'Salvar alterações' : 'Salvar Aplicativo') }}
+      </button>
+    </div>
   </div>
 </ion-content>

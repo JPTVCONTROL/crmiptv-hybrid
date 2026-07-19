@@ -214,10 +214,12 @@ export interface ResultadoCobrancaLote {
   abertos: number;
   ignorados: number;
   cancelado: boolean;
+  idsEnviados: number[];
 }
 
 export async function executarCobrancaEmLote(
-  itens: CobrancaLoteItem[]
+  itens: CobrancaLoteItem[],
+  onContato?: (id: number) => void | Promise<void>
 ): Promise<ResultadoCobrancaLote> {
   const validos = itens.filter((item) =>
     telefoneValidoParaWhatsApp(item.telefone)
@@ -231,7 +233,7 @@ export async function executarCobrancaEmLote(
         : 'Selecione ao menos um cliente para cobrar.',
       'warning'
     );
-    return { abertos: 0, ignorados, cancelado: true };
+    return { abertos: 0, ignorados, cancelado: true, idsEnviados: [] };
   }
 
   const avisoIgnorados =
@@ -241,6 +243,7 @@ export async function executarCobrancaEmLote(
 
   let abertos = 0;
   let cancelado = false;
+  const idsEnviados: number[] = [];
 
   for (let indice = 0; indice < validos.length; indice++) {
     const atual = validos[indice];
@@ -264,6 +267,11 @@ export async function executarCobrancaEmLote(
 
     abrirWhatsAppCobranca(atual.telefone, atual.mensagem);
     abertos++;
+    idsEnviados.push(atual.id);
+
+    if (onContato) {
+      await onContato(atual.id);
+    }
 
     if (indice + 1 < validos.length) {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -281,5 +289,5 @@ export async function executarCobrancaEmLote(
     );
   }
 
-  return { abertos, ignorados, cancelado };
+  return { abertos, ignorados, cancelado, idsEnviados };
 }

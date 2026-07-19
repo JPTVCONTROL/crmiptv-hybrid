@@ -1,7 +1,6 @@
-<div class="flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
-  <app-page-header title="Dispositivos" subtitle="Cadastre os aparelhos disponíveis para vincular aos clientes."></app-page-header>
+<app-page-header title="Dispositivos" subtitle="Cadastre os aparelhos disponíveis para vincular aos clientes.">
   <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Dispositivo</button>
-</div>
+</app-page-header>
 
 <div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
   <input type="search" class="crm-input flex-1" placeholder="Buscar dispositivo..." [(ngModel)]="busca" />

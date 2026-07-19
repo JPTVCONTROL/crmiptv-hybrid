@@ -60,6 +60,7 @@ export interface Mensalidade {
   vencimento: string;
   status: string;
   pagoEm?: string | null;
+  ultimoContatoEm?: string | null;
   cliente?: Cliente;
 }
 
@@ -113,6 +114,68 @@ export type CreateAplicativoDto = Omit<Aplicativo, 'id' | '_count'>;
 export type CreateDispositivoDto = Omit<Dispositivo, 'id' | '_count'>;
 
 export type StatusFinanceiro = 'TODOS' | 'PENDENTE' | 'REGULAR' | 'ATRASADO';
+
+export interface AlertaOperacional {
+  tipo:
+    | 'ROTINA_PENDENTE'
+    | 'VENCE_HOJE'
+    | 'SEM_TELEFONE'
+    | 'EXPIRADO_SEM_MENSALIDADE'
+    | 'NAO_CONTACTADO'
+    | 'ROTINA_CONCLUIDA';
+  titulo: string;
+  descricao: string;
+  quantidade: number;
+  rota?: string;
+}
+
+export interface DashboardResumo {
+  clientes: {
+    total: number;
+    ativos: number;
+    atrasados: number;
+    inativos: number;
+  };
+  financeiro: {
+    recebidoMes: number;
+    aReceberEsteMes: number;
+    qtdEsteMes: number;
+    vencemHoje: number;
+    aReceberProximosMeses: number;
+    qtdProximosMeses: number;
+  };
+  faturamentoMensal: Array<{ mes: string; total: number }>;
+  proximosVencimentos: Array<{
+    id: number;
+    clienteId: number;
+    referencia: string;
+    valor: number;
+    vencimento: string;
+    ultimoContatoEm: string | null;
+    clienteNome: string;
+    telefone: string;
+  }>;
+  clientesAtencao: Array<{
+    id: number;
+    nome: string;
+    telefone: string;
+    expiraEm: string | null;
+    status: 'ATRASADO' | 'INATIVO';
+    mensalidadePendenteId: number | null;
+    mensalidadeReferencia: string | null;
+    mensalidadeValor: number | null;
+    mensalidadeVencimento: string | null;
+  }>;
+  cobrancaDiaria: {
+    totalElegiveis: number;
+    contactadosHoje: number;
+    contactaveis: number;
+    semTelefone: number;
+    naoContactados: number;
+    rotinaFeita: boolean;
+  };
+  alertas: AlertaOperacional[];
+}
 
 export interface Usuario {
   id: number;

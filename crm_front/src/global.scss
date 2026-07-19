@@ -69,9 +69,31 @@ ion-modal.crm-modal ion-content {
   --background: #020617;
 }
 
-ion-modal.crm-modal .modal-form-body {
-  max-height: calc(min(640px, 92vh) - 3.5rem);
+ion-modal.crm-modal ion-content::part(scroll) {
+  height: 100%;
+}
+
+ion-modal.crm-modal .modal-form-shell,
+ion-modal.crm-modal-cliente .cliente-modal-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+ion-modal.crm-modal .modal-form-body,
+ion-modal.crm-modal-cliente .cliente-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+}
+
+ion-modal.crm-modal .modal-form-footer,
+ion-modal.crm-modal-cliente .cliente-modal-footer {
+  flex: 0 0 auto;
+  padding: 1rem 1rem 1.25rem;
+  border-top: 1px solid #1e293b;
+  background: #020617;
 }
 
 ion-modal.crm-modal-cliente {
@@ -89,9 +111,8 @@ ion-modal.crm-modal-cliente ion-content {
   --overflow: hidden;
 }
 
-ion-modal.crm-modal-cliente .cliente-modal-body {
-  max-height: calc(90vh - 3.5rem);
-  overflow-y: auto;
+ion-modal.crm-modal-cliente ion-content::part(scroll) {
+  height: 100%;
 }
 
 /* Remove margens padrão do Ionic Typography nos títulos das páginas */

@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ToastService } from '../../core/services/toast.service';
+import { MensalidadeService } from '../../core/services/mensalidade.service';
 import {
   abrirWhatsAppCobranca,
   telefoneValidoParaWhatsApp,
@@ -21,11 +22,16 @@ import {
 export class WhatsappCobrancaBtnComponent {
   @Input() telefone = '';
   @Input() mensagem = '';
+  @Input() mensalidadeId?: number;
   @Input() label = 'WhatsApp';
   @Input() disabled = false;
   @Output() erro = new EventEmitter<string>();
+  @Output() contatoRegistrado = new EventEmitter<number>();
 
-  constructor(private toast: ToastService) {}
+  constructor(
+    private toast: ToastService,
+    private mensalidadeService: MensalidadeService
+  ) {}
 
   get desabilitado(): boolean {
     return this.disabled || !telefoneValidoParaWhatsApp(this.telefone);
@@ -51,5 +57,19 @@ export class WhatsappCobrancaBtnComponent {
     }
 
     abrirWhatsAppCobranca(telefoneAtual, mensagemAtual);
+    this.registrarContatoSeNecessario();
+  }
+
+  private registrarContatoSeNecessario(): void {
+    if (!this.mensalidadeId) return;
+
+    this.mensalidadeService.registrarContato(this.mensalidadeId).subscribe({
+      next: () => {
+        this.contatoRegistrado.emit(this.mensalidadeId!);
+      },
+      error: () => {
+        void this.toast.warning('WhatsApp aberto, mas o contato não foi salvo.');
+      },
+    });
   }
 }

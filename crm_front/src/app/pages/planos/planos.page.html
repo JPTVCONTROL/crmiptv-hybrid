@@ -1,7 +1,6 @@
-<div class="flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
-  <app-page-header title="Planos" subtitle="Cadastre planos com valor e validade para vincular aos clientes."></app-page-header>
+<app-page-header title="Planos" subtitle="Cadastre planos com valor e validade para vincular aos clientes.">
   <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Plano</button>
-</div>
+</app-page-header>
 
 <div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
   <input type="search" class="crm-input flex-1" placeholder="Buscar plano..." [(ngModel)]="busca" />
@@ -55,8 +54,15 @@
           </button>
         </div>
 
-        <div class="flex gap-2" (click)="$event.stopPropagation()">
+        <div class="flex flex-wrap gap-2" (click)="$event.stopPropagation()">
           <button class="crm-btn-ghost flex-1 !py-1.5 !text-xs" (click)="abrirModal(plano)">Editar</button>
+          <button
+            *ngIf="(plano._count?.clientes ?? 0) > 0"
+            class="crm-btn-ghost flex-1 !py-1.5 !text-xs"
+            (click)="reajustarClientes(plano)"
+          >
+            Reajustar
+          </button>
           <button class="crm-btn-danger flex-1 !py-1.5 !text-xs" (click)="excluir(plano)">Excluir</button>
         </div>
       </div>

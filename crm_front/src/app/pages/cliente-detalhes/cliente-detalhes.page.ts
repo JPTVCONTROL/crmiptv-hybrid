@@ -1,15 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
+import { Subject } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
 import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { copiarTexto } from '../../shared/utils/clipboard';
 import { DispositivoService } from '../../core/services/dispositivo.service';
-import { Cliente, Configuracao, Dispositivo, Mensalidade } from '../../core/models';
+import { AplicativoService } from '../../core/services/aplicativo.service';
+import { Cliente, Configuracao, Dispositivo, Mensalidade, Aplicativo } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
 import { formatarValor, formatarData, statusCliente as calcularStatusCliente, StatusCliente } from '../../shared/utils/formatters';
 import { rotuloValidadePlano } from '../../shared/utils/planos';
@@ -18,16 +21,26 @@ import {
   montarMensagemBloqueioMensalidade,
   montarMensagemCobrancaMensalidade,
 } from '../../shared/utils/cobranca-lote';
+import {
+  montarMensagemBoasVindas,
+  montarMensagemApp,
+  temAppParaEnviar,
+  resolverAplicativoDaTela,
+} from '../../shared/utils/onboarding';
 import { montarMensagemRecibo, oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
-import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
+import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-cliente-detalhes',
   templateUrl: './cliente-detalhes.page.html',
 })
-export class ClienteDetalhesPage implements OnInit {
+export class ClienteDetalhesPage implements OnInit, OnDestroy {
   cliente: Cliente | null = null;
+  private clienteId = 0;
+  private readonly destroy$ = new Subject<void>();
   dispositivosCatalogo: Dispositivo[] = [];
+  aplicativosCatalogo: Aplicativo[] = [];
   loading = true;
 
   constructor(
@@ -35,12 +48,14 @@ export class ClienteDetalhesPage implements OnInit {
     private router: Router,
     private clienteService: ClienteService,
     private dispositivoService: DispositivoService,
+    private aplicativoService: AplicativoService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
     private modalCtrl: ModalController,
     private toast: ToastService,
-    private confirmacao: ConfirmacaoService
+    private confirmacao: ConfirmacaoService,
+    private sync: DadosSyncService
   ) {}
 
   mostrarSenhaIptv = false;
@@ -50,18 +65,49 @@ export class ClienteDetalhesPage implements OnInit {
   }
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.clienteId = Number(this.route.snapshot.paramMap.get('id'));
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
+    this.carregarCatalogos();
+    this.carregar(this.clienteId);
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades', 'catalogos'],
+      () => {
+        this.carregarCatalogos();
+        if (this.clienteId) {
+          this.carregar(this.clienteId, true);
+        }
+      }
+    );
+  }
+
+  ionViewWillEnter(): void {
+    if (this.clienteId && !this.loading) {
+      this.carregar(this.clienteId, true);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private carregarCatalogos(): void {
     this.dispositivoService.listar().subscribe({
       next: (items) => (this.dispositivosCatalogo = items),
     });
-    this.carregar(id);
+    this.aplicativoService.listar().subscribe({
+      next: (items) => (this.aplicativosCatalogo = items),
+    });
   }
 
-  carregar(id: number): void {
-    this.loading = true;
+  carregar(id: number, silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
     this.clienteService.buscarPorId(id).subscribe({
       next: (cliente) => {
         this.cliente = cliente;
@@ -116,6 +162,32 @@ export class ClienteDetalhesPage implements OnInit {
     );
   }
 
+  mensagemBoasVindas(): string {
+    if (!this.cliente) return '';
+    return montarMensagemBoasVindas(this.cliente, this.configuracao);
+  }
+
+  mensagemAppTela(disp: DispositivoCliente): string {
+    if (!this.cliente) return '';
+    const app = resolverAplicativoDaTela(
+      this.cliente,
+      disp,
+      this.aplicativosCatalogo
+    );
+    if (!app) return '';
+    return montarMensagemApp(this.cliente, this.configuracao, app);
+  }
+
+  podeEnviarAppTela(disp: DispositivoCliente): boolean {
+    if (!this.cliente) return false;
+    const app = resolverAplicativoDaTela(
+      this.cliente,
+      disp,
+      this.aplicativosCatalogo
+    );
+    return !!app && temAppParaEnviar(this.cliente, app);
+  }
+
   async pagar(m: Mensalidade): Promise<void> {
     if (!this.cliente) return;
 
@@ -128,7 +200,7 @@ export class ClienteDetalhesPage implements OnInit {
           telefone: this.cliente!.telefone,
           nome: this.cliente!.nome,
           referencia: m.referencia,
-          valor: m.valor,
+          valor: resultado.valorRenovacao ?? m.valor,
           novoVencimento: resultado.novoVencimento,
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,
@@ -248,6 +320,33 @@ export class ClienteDetalhesPage implements OnInit {
 
   qtdTelas(): number {
     return this.cliente?.qtdTelas ?? this.dispositivos().length;
+  }
+
+  rotuloAplicativoTela(item: DispositivoCliente): string {
+    const app = resolverAplicativoCliente(item, this.aplicativosCatalogo);
+    if (app?.nome) {
+      return app.nome;
+    }
+
+    if (item.aplicativoId && this.cliente?.aplicativo?.id === item.aplicativoId) {
+      return this.cliente.aplicativo.nome;
+    }
+
+    return '—';
+  }
+
+  rotuloAplicativoPrincipal(): string {
+    const dispositivos = this.dispositivos();
+    const apps = dispositivos
+      .map((item) => this.rotuloAplicativoTela(item))
+      .filter((nome) => nome !== '—');
+
+    if (apps.length === 0) {
+      return this.cliente?.aplicativo?.nome || '—';
+    }
+
+    const unicos = [...new Set(apps)];
+    return unicos.join(' · ');
   }
 
   rotuloTela(item: DispositivoCliente, indice: number): string {

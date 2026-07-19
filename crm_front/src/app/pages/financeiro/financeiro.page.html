@@ -87,6 +87,13 @@
 
   <div class="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
     <button
+      class="crm-btn-success"
+      [disabled]="qtdSelecionados === 0 || pagandoLote"
+      (click)="pagarSelecionados()"
+    >
+      {{ pagandoLote ? 'Salvando...' : 'Pagar selecionados (' + qtdSelecionados + ')' }}
+    </button>
+    <button
       class="crm-btn-primary"
       [disabled]="qtdSelecionados === 0"
       (click)="cobrarSelecionados()"
@@ -156,13 +163,19 @@
               [class.bg-slate-700]="status(m) === 'REGULAR'">{{ status(m) }}</span>
           </td>
           <td class="py-3 px-2 text-right space-x-1">
-            <app-whatsapp-cobranca-btn [telefone]="telefone(m)" [mensagem]="mensagem(m)"></app-whatsapp-cobranca-btn>
+            <app-whatsapp-cobranca-btn
+              [telefone]="telefone(m)"
+              [mensagem]="mensagem(m)"
+              [mensalidadeId]="m.id"
+            ></app-whatsapp-cobranca-btn>
             <app-whatsapp-cobranca-btn
               *ngIf="status(m) === 'ATRASADO'"
               label="Bloqueio"
               [telefone]="telefone(m)"
               [mensagem]="mensagemBloqueio(m)"
+              [mensalidadeId]="m.id"
             ></app-whatsapp-cobranca-btn>
+            <button class="crm-btn-ghost" (click)="editarCliente(m)">Editar</button>
             <button class="crm-btn-success" (click)="pagar(m)">Pagar</button>
           </td>
         </tr>

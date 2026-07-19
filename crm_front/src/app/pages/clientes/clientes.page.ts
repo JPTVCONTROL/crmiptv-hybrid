@@ -1,12 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
+import { Subject } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
+import { AplicativoService } from '../../core/services/aplicativo.service';
+import { ConfiguracaoService } from '../../core/services/configuracao.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Cliente } from '../../core/models';
+import { Cliente, Aplicativo } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
 import { statusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
+import { oferecerOnboardingCompleto } from '../../shared/utils/onboarding';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
 
@@ -19,9 +25,10 @@ interface OpcaoFiltroCatalogo {
   selector: 'app-clientes',
   templateUrl: './clientes.page.html',
 })
-export class ClientesPage implements OnInit {
+export class ClientesPage implements OnInit, OnDestroy {
   clientes: Cliente[] = [];
   loading = true;
+  private readonly destroy$ = new Subject<void>();
   busca = '';
   filtroStatus: FiltroStatusCliente = 'TODOS';
   filtroAplicativoId: number | null = null;
@@ -30,6 +37,7 @@ export class ClientesPage implements OnInit {
   readonly porPagina = 15;
   opcoesAplicativos: OpcaoFiltroCatalogo[] = [];
   opcoesPlanos: OpcaoFiltroCatalogo[] = [];
+  aplicativos: Aplicativo[] = [];
 
   readonly opcoesFiltroStatus: { valor: FiltroStatusCliente; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -137,14 +145,24 @@ export class ClientesPage implements OnInit {
 
   constructor(
     private clienteService: ClienteService,
+    private aplicativoService: AplicativoService,
+    private configuracaoService: ConfiguracaoService,
     private modalCtrl: ModalController,
     private router: Router,
     private route: ActivatedRoute,
     private toast: ToastService,
-    private confirmacao: ConfirmacaoService
+    private confirmacao: ConfirmacaoService,
+    private sync: DadosSyncService
   ) {}
 
   ngOnInit(): void {
+    if (!this.configuracaoService.getSnapshot()) {
+      this.configuracaoService.carregar().subscribe();
+    }
+    this.aplicativoService.listar().subscribe({
+      next: (apps) => (this.aplicativos = apps),
+    });
+
     this.route.queryParamMap.subscribe((params) => {
       const status = params.get('status');
       if (status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO') {
@@ -152,6 +170,22 @@ export class ClientesPage implements OnInit {
       }
     });
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades', 'catalogos'],
+      () => {
+        this.carregar(true);
+        this.aplicativoService.listar().subscribe({
+          next: (apps) => (this.aplicativos = apps),
+        });
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ionViewWillEnter(): void {
@@ -247,7 +281,16 @@ export class ClientesPage implements OnInit {
     });
     await modal.present();
     const { data } = await modal.onDidDismiss();
-    if (data) this.carregar();
+    if (data) {
+      this.carregar();
+      if (data.novo && data.cliente) {
+        await oferecerOnboardingCompleto(
+          data.cliente as Cliente,
+          this.configuracaoService.getSnapshot(),
+          this.aplicativos
+        );
+      }
+    }
   }
 
   async editar(cliente: Cliente): Promise<void> {

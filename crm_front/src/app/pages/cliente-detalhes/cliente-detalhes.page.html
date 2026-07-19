@@ -1,13 +1,10 @@
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading && cliente" class="space-y-6">
-  <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-    <app-page-header [title]="cliente.nome" subtitle="Detalhes do cliente IPTV"></app-page-header>
-    <div class="flex gap-2">
-      <button class="crm-btn-ghost" (click)="editar()">Editar</button>
-      <button class="crm-btn-danger" (click)="excluir()">Excluir</button>
-    </div>
-  </div>
+  <app-page-header [title]="cliente.nome" subtitle="Detalhes do cliente IPTV">
+    <button class="crm-btn-ghost" (click)="editar()">Editar</button>
+    <button class="crm-btn-danger" (click)="excluir()">Excluir</button>
+  </app-page-header>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <div class="crm-card space-y-3">
@@ -33,14 +30,21 @@
     <div class="crm-card space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 class="text-white font-semibold">Credenciais IPTV</h2>
-        <button
-          *ngIf="temCredenciais()"
-          type="button"
-          class="crm-btn-ghost !py-1.5 !text-xs self-start"
-          (click)="copiarCredenciais()"
-        >
-          Copiar credenciais
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button
+            *ngIf="temCredenciais()"
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs"
+            (click)="copiarCredenciais()"
+          >
+            Copiar credenciais
+          </button>
+          <app-whatsapp-cobranca-btn
+            label="Boas-vindas"
+            [telefone]="cliente.telefone"
+            [mensagem]="mensagemBoasVindas()"
+          ></app-whatsapp-cobranca-btn>
+        </div>
       </div>
       <p class="text-slate-300"><span class="text-slate-500">Servidor:</span> {{ cliente.servidor || '—' }}</p>
       <p class="text-slate-300"><span class="text-slate-500">Usuário:</span> {{ cliente.usuario || '—' }}</p>
@@ -56,7 +60,7 @@
           {{ mostrarSenhaIptv ? 'Ocultar' : 'Mostrar' }}
         </button>
       </p>
-      <p class="text-slate-300"><span class="text-slate-500">Aplicativo:</span> {{ cliente.aplicativo?.nome || '—' }}</p>
+      <p class="text-slate-300"><span class="text-slate-500">Aplicativo:</span> {{ rotuloAplicativoPrincipal() }}</p>
       <button
         *ngIf="temPix()"
         type="button"
@@ -79,7 +83,15 @@
       >
         <p *ngIf="qtdTelas() > 1" class="text-violet-400 text-xs font-medium">Tela {{ i + 1 }}</p>
         <p class="text-slate-300"><span class="text-slate-500">Dispositivo:</span> {{ rotuloTela(disp, i) }}</p>
+        <p class="text-slate-300"><span class="text-slate-500">Aplicativo:</span> {{ rotuloAplicativoTela(disp) }}</p>
         <p class="text-slate-300"><span class="text-slate-500">MAC:</span> {{ disp.macAddress || '—' }}</p>
+        <div *ngIf="podeEnviarAppTela(disp)" class="pt-1">
+          <app-whatsapp-cobranca-btn
+            label="Enviar app"
+            [telefone]="cliente.telefone"
+            [mensagem]="mensagemAppTela(disp)"
+          ></app-whatsapp-cobranca-btn>
+        </div>
       </div>
     </div>
 
@@ -93,12 +105,14 @@
         <app-whatsapp-cobranca-btn
           [telefone]="cliente.telefone"
           [mensagem]="mensagemWhatsApp(pendente)"
+          [mensalidadeId]="pendente.id"
         ></app-whatsapp-cobranca-btn>
         <app-whatsapp-cobranca-btn
           *ngIf="mensalidadeAtrasada(pendente)"
           label="Bloqueio"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemBloqueio(pendente)"
+          [mensalidadeId]="pendente.id"
         ></app-whatsapp-cobranca-btn>
         <button class="crm-btn-success" (click)="pagar(pendente)">Marcar como Pago</button>
       </div>
@@ -131,12 +145,14 @@
                 *ngIf="m.status === 'PENDENTE'"
                 [telefone]="cliente.telefone"
                 [mensagem]="mensagemWhatsApp(m)"
+                [mensalidadeId]="m.id"
               ></app-whatsapp-cobranca-btn>
               <app-whatsapp-cobranca-btn
                 *ngIf="m.status === 'PENDENTE' && mensalidadeAtrasada(m)"
                 label="Bloqueio"
                 [telefone]="cliente.telefone"
                 [mensagem]="mensagemBloqueio(m)"
+                [mensalidadeId]="m.id"
               ></app-whatsapp-cobranca-btn>
               <app-whatsapp-cobranca-btn
                 *ngIf="m.status === 'PAGO'"
