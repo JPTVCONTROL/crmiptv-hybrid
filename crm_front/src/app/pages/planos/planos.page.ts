@@ -39,7 +39,7 @@ export class PlanosPage implements OnInit, OnDestroy {
       this.sync,
       this.destroy$,
       ['catalogos', 'clientes', 'mensalidades'],
-      () => this.carregar()
+      () => this.carregar(true)
     );
   }
 
@@ -50,7 +50,7 @@ export class PlanosPage implements OnInit, OnDestroy {
 
   ionViewWillEnter(): void {
     if (!this.loading) {
-      this.carregar();
+      this.carregar(true);
     }
   }
 
@@ -70,8 +70,11 @@ export class PlanosPage implements OnInit, OnDestroy {
     return agruparPlanos(this.planosFiltrados);
   }
 
-  carregar(): void {
-    this.loading = true;
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     this.planoService.listar().subscribe({
       next: (data) => {
         this.planos = ordenarPlanos(data);

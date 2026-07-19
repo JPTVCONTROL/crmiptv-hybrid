@@ -23,7 +23,7 @@
 </div>
 
 <div *ngIf="!loading && !erroCarregamento" class="space-y-6 md:space-y-8">
-  <section class="crm-card border border-violet-500/20 bg-violet-500/5">
+  <section class="crm-hero-card">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
         <h2 class="text-white font-semibold">Rotina de hoje</h2>
@@ -58,9 +58,9 @@
         <span>Meta do mês (recebido vs. a receber)</span>
         <span class="text-slate-300">{{ metaMesPercentual }}%</span>
       </div>
-      <div class="h-2 rounded-full bg-slate-800 overflow-hidden">
+      <div class="crm-progress-track">
         <div
-          class="h-full rounded-full bg-gradient-to-r from-violet-600 to-green-500 transition-all"
+          class="crm-progress-fill"
           [style.width.%]="metaMesPercentual"
         ></div>
       </div>
@@ -68,25 +68,25 @@
   </section>
 
   <section>
-    <h2 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Clientes</h2>
+    <h2 class="crm-section-label">Clientes</h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <a routerLink="/clientes" class="block no-underline h-full">
+      <a routerLink="/clientes" class="crm-stat-card-link">
         <app-stat-card title="Total" [value]="totalClientes.toString()" color="#E2E8F0" subtitle="cadastrados"></app-stat-card>
       </a>
-      <a routerLink="/clientes" [queryParams]="{ status: 'ATIVO' }" class="block no-underline h-full">
+      <a routerLink="/clientes" [queryParams]="{ status: 'ATIVO' }" class="crm-stat-card-link">
         <app-stat-card title="Ativos" [value]="qtdAtivos.toString()" color="#22C55E" subtitle="em dia"></app-stat-card>
       </a>
-      <a routerLink="/clientes" [queryParams]="{ status: 'ATRASADO' }" class="block no-underline h-full">
+      <a routerLink="/clientes" [queryParams]="{ status: 'ATRASADO' }" class="crm-stat-card-link">
         <app-stat-card title="Atrasados" [value]="qtdAtrasados.toString()" color="#F59E0B" subtitle="até 7 dias"></app-stat-card>
       </a>
-      <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="block no-underline h-full">
+      <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="crm-stat-card-link">
         <app-stat-card title="Inativos" [value]="qtdInativos.toString()" color="#EF4444" subtitle="+7 dias"></app-stat-card>
       </a>
       <a
         *ngIf="cadastrosIncompletos > 0"
         routerLink="/clientes"
         [queryParams]="{ incompleto: 1 }"
-        class="block no-underline h-full col-span-2 lg:col-span-4"
+        class="crm-stat-card-link col-span-2 lg:col-span-4"
       >
         <app-stat-card
           title="Cadastro incompleto"
@@ -99,7 +99,7 @@
   </section>
 
   <section>
-    <h2 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Financeiro</h2>
+    <h2 class="crm-section-label">Financeiro</h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <app-stat-card
         title="Vencem hoje"
@@ -107,7 +107,7 @@
         color="#F59E0B"
         subtitle="atenção imediata"
       ></app-stat-card>
-      <a routerLink="/financeiro" class="block no-underline h-full">
+      <a routerLink="/financeiro" class="crm-stat-card-link">
         <app-stat-card
           title="A receber neste mês"
           [value]="aReceberEsteMes"
@@ -120,7 +120,7 @@
         [value]="recebidoMes"
         color="#22C55E"
       ></app-stat-card>
-      <a routerLink="/vencimentos" class="block no-underline h-full">
+      <a routerLink="/vencimentos" class="crm-stat-card-link">
         <app-stat-card
           title="A receber nos próximos meses"
           [value]="aReceberProximosMeses"
@@ -234,7 +234,7 @@
     </div>
 
     <div *ngIf="clientesAtencao.length > 0" class="overflow-x-auto">
-      <table class="w-full text-sm min-w-[620px]">
+      <table class="crm-table min-w-[620px]">
         <thead>
           <tr class="text-slate-500 text-xs border-b border-slate-800">
             <th class="text-left py-2 px-2 font-medium">Cliente</th>

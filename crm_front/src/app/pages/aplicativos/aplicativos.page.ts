@@ -36,8 +36,8 @@ export class AplicativosPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['catalogos'],
-      () => this.carregar()
+      ['catalogos', 'clientes'],
+      () => this.carregar(true)
     );
   }
 
@@ -48,7 +48,7 @@ export class AplicativosPage implements OnInit, OnDestroy {
 
   ionViewWillEnter(): void {
     if (!this.loading) {
-      this.carregar();
+      this.carregar(true);
     }
   }
 
@@ -66,9 +66,12 @@ export class AplicativosPage implements OnInit, OnDestroy {
     });
   }
 
-  carregar(): void {
-    this.loading = true;
-    this.logosQuebrados = new Set();
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+      this.logosQuebrados = new Set();
+    }
+
     this.aplicativoService.listar().subscribe({
       next: (data) => {
         this.aplicativos = data;

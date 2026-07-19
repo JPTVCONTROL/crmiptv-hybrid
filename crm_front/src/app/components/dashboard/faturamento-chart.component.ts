@@ -63,6 +63,11 @@ export class FaturamentoChartComponent
       this.root = createRoot(this.chartHost.nativeElement);
     }
 
+    const primary =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--crm-primary')
+        .trim() || '#7c3aed';
+
     const barChart = React.createElement(
       BarChart,
       { data: this.data, margin: { top: 8, right: 8, left: 0, bottom: 0 } },
@@ -89,12 +94,13 @@ export class FaturamentoChartComponent
           }),
       }),
       React.createElement(Tooltip, {
-        cursor: { fill: 'rgba(124, 58, 237, 0.12)' },
+        cursor: { fill: 'rgba(148, 163, 184, 0.08)' },
         contentStyle: {
           backgroundColor: '#0f172a',
-          border: '1px solid #334155',
-          borderRadius: '8px',
+          border: '1px solid rgba(148, 163, 184, 0.2)',
+          borderRadius: '12px',
           color: '#f8fafc',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
         },
         formatter: (value) => {
           const valor = Number(value ?? 0);
@@ -110,8 +116,8 @@ export class FaturamentoChartComponent
       }),
       React.createElement(Bar, {
         dataKey: 'total',
-        fill: '#7C3AED',
-        radius: [6, 6, 0, 0],
+        fill: primary,
+        radius: [8, 8, 0, 0],
         maxBarSize: 48,
       })
     );

@@ -9,18 +9,19 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--crm-border-subtle);
   border-radius: 0.75rem;
-  background: #1e293b;
+  background: rgba(30, 41, 59, 0.75);
   color: #e2e8f0;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .alertas-sino-btn:hover,
 .alertas-sino-btn-ativo {
-  background: #334155;
-  border-color: #475569;
+  background: rgba(51, 65, 85, 0.85);
+  border-color: var(--crm-primary-border);
+  box-shadow: 0 0 0 3px var(--crm-primary-soft);
 }
 
 .alertas-sino-btn ion-icon {
@@ -50,10 +51,10 @@
   right: 0;
   z-index: 1000;
   width: min(22rem, calc(100vw - 2rem));
-  border: 1px solid #334155;
-  border-radius: 0.875rem;
-  background: #0f172a;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--crm-border-subtle);
+  border-radius: 1rem;
+  background: var(--crm-surface);
+  box-shadow: var(--crm-shadow-lg);
   overflow: hidden;
 }
 
@@ -203,14 +204,14 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border: 0;
-  border-top: 1px solid #1e293b;
-  background: #0b1220;
-  color: #c4b5fd;
+  border-top: 1px solid var(--crm-border-subtle);
+  background: var(--crm-bg-subtle);
+  color: var(--crm-primary-text);
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
 }
 
 .alertas-sino-footer:hover {
-  background: #111827;
+  background: rgba(30, 41, 59, 0.65);
 }

@@ -141,6 +141,10 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
       this.loading = true;
     }
 
+    const selecionadosAnteriores = silencioso
+      ? new Set(this.selecionados)
+      : null;
+
     forkJoin([
       this.mensalidadeService.listar(),
       this.clienteService.listar(),
@@ -156,10 +160,17 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
           nomes
         );
 
-        this.selecionarElegiveis();
-        if (this.selecionarPendentesViaQuery) {
-          this.selecionarNaoContactados();
-          this.selecionarPendentesViaQuery = false;
+        if (selecionadosAnteriores) {
+          const idsValidos = new Set(this.itens.map((item) => item.mensalidadeId));
+          this.selecionados = new Set(
+            [...selecionadosAnteriores].filter((id) => idsValidos.has(id))
+          );
+        } else {
+          this.selecionarElegiveis();
+          if (this.selecionarPendentesViaQuery) {
+            this.selecionarNaoContactados();
+            this.selecionarPendentesViaQuery = false;
+          }
         }
         this.loading = false;
       },

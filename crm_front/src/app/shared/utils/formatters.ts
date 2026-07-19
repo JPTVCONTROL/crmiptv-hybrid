@@ -20,30 +20,25 @@ export function formatarValor(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function extrairParteDataIso(valor: string): string | null {
-  const match = valor.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : null;
-}
-
 export function dataIsoParaDateUtc(valor: string | Date): Date {
   if (valor instanceof Date) {
     return new Date(
-      Date.UTC(valor.getUTCFullYear(), valor.getUTCMonth(), valor.getUTCDate(), 12, 0, 0)
+      Date.UTC(valor.getFullYear(), valor.getMonth(), valor.getDate(), 12, 0, 0)
     );
   }
 
-  const parte = extrairParteDataIso(valor);
-  if (parte) {
-    const [ano, mes, dia] = parte.split('-').map(Number);
+  const trimmed = valor.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [ano, mes, dia] = trimmed.split('-').map(Number);
     return new Date(Date.UTC(ano, mes - 1, dia, 12, 0, 0));
   }
 
   const parsed = new Date(valor);
   return new Date(
     Date.UTC(
-      parsed.getUTCFullYear(),
-      parsed.getUTCMonth(),
-      parsed.getUTCDate(),
+      parsed.getFullYear(),
+      parsed.getMonth(),
+      parsed.getDate(),
       12,
       0,
       0
@@ -56,15 +51,15 @@ export function dataIsoParaInput(valor?: string | null): string {
     return '';
   }
 
-  const parte = extrairParteDataIso(valor);
-  if (parte) {
-    return parte;
+  const trimmed = valor.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
   }
 
   const parsed = new Date(valor);
-  const ano = parsed.getUTCFullYear();
-  const mes = String(parsed.getUTCMonth() + 1).padStart(2, '0');
-  const dia = String(parsed.getUTCDate()).padStart(2, '0');
+  const ano = parsed.getFullYear();
+  const mes = String(parsed.getMonth() + 1).padStart(2, '0');
+  const dia = String(parsed.getDate()).padStart(2, '0');
   return `${ano}-${mes}-${dia}`;
 }
 

@@ -7,23 +7,22 @@ export function formatReferencia(date: Date): string {
 export function parseDataSomenteDia(valor: string | Date): Date {
   if (valor instanceof Date) {
     return new Date(
-      Date.UTC(valor.getUTCFullYear(), valor.getUTCMonth(), valor.getUTCDate(), 12, 0, 0)
+      Date.UTC(valor.getFullYear(), valor.getMonth(), valor.getDate(), 12, 0, 0)
     );
   }
 
-  const match = valor.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    return new Date(
-      Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0)
-    );
+  const trimmed = valor.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [ano, mes, dia] = trimmed.split('-').map(Number);
+    return new Date(Date.UTC(ano, mes - 1, dia, 12, 0, 0));
   }
 
   const parsed = new Date(valor);
   return new Date(
     Date.UTC(
-      parsed.getUTCFullYear(),
-      parsed.getUTCMonth(),
-      parsed.getUTCDate(),
+      parsed.getFullYear(),
+      parsed.getMonth(),
+      parsed.getDate(),
       12,
       0,
       0

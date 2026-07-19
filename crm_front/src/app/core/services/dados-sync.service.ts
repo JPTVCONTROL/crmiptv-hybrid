@@ -15,11 +15,19 @@ export class DadosSyncService {
   readonly mudancas$ = this.mudancasSubject.asObservable();
 
   notificarClientes(): void {
-    this.emit(['clientes', 'mensalidades', 'dashboard']);
+    this.emit(['clientes', 'mensalidades', 'dashboard', 'catalogos']);
   }
 
   notificarMensalidades(): void {
     this.emit(['mensalidades', 'clientes', 'dashboard']);
+  }
+
+  notificarContatos(): void {
+    this.emit(['mensalidades', 'dashboard']);
+  }
+
+  notificarConfiguracao(): void {
+    this.emit(['dashboard']);
   }
 
   notificarCatalogos(): void {

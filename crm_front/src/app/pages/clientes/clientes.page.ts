@@ -92,7 +92,7 @@ export class ClientesPage implements OnInit, OnDestroy {
       return this.clientes.filter((c) => clienteParticipaCobrancas(c)).length;
     }
 
-    return this.clientes.filter((c) => c.incluirCobrancas === false).length;
+    return this.clientes.filter((c) => !clienteParticipaCobrancas(c)).length;
   }
 
   contagemCadastroIncompleto(): number {
@@ -325,7 +325,7 @@ export class ClientesPage implements OnInit, OnDestroy {
         (this.filtroCobranca === 'COM_COBRANCA' &&
           clienteParticipaCobrancas(c)) ||
         (this.filtroCobranca === 'SEM_COBRANCA' &&
-          c.incluirCobrancas === false);
+          !clienteParticipaCobrancas(c));
 
       const matchIncompleto =
         !this.filtroCadastroIncompleto ||
@@ -503,6 +503,8 @@ export class ClientesPage implements OnInit, OnDestroy {
   }
 
   fmtData = formatarData;
+
+  participaCobrancas = clienteParticipaCobrancas;
 
   abrirImportacaoCsv(input: HTMLInputElement): void {
     if (this.importando) {

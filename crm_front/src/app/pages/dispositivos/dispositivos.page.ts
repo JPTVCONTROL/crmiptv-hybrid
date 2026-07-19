@@ -36,8 +36,8 @@ export class DispositivosPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['catalogos'],
-      () => this.carregar()
+      ['catalogos', 'clientes'],
+      () => this.carregar(true)
     );
   }
 
@@ -48,7 +48,7 @@ export class DispositivosPage implements OnInit, OnDestroy {
 
   ionViewWillEnter(): void {
     if (!this.loading) {
-      this.carregar();
+      this.carregar(true);
     }
   }
 
@@ -67,8 +67,11 @@ export class DispositivosPage implements OnInit, OnDestroy {
     });
   }
 
-  carregar(): void {
-    this.loading = true;
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     this.dispositivoService.listar().subscribe({
       next: (data) => {
         this.dispositivos = data;

@@ -91,7 +91,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
       this.sync,
       this.destroy$,
       ['clientes', 'mensalidades'],
-      () => this.carregar()
+      () => this.carregar(true)
     );
   }
 
@@ -102,12 +102,15 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
   ionViewWillEnter(): void {
     if (!this.loading) {
-      this.carregar();
+      this.carregar(true);
     }
   }
 
-  carregar(): void {
-    this.loading = true;
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     forkJoin([
       this.mensalidadeService.listar(),
       this.clienteService.listar(),
@@ -117,6 +120,12 @@ export class FinanceiroPage implements OnInit, OnDestroy {
         this.telefones = criarMapaTelefones(clientes);
         this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
         this.clientesPorId = new Map(clientes.map((c) => [c.id, c]));
+
+        const idsValidos = new Set(this.mensalidades.map((m) => m.id));
+        this.selecionados = new Set(
+          [...this.selecionados].filter((id) => idsValidos.has(id))
+        );
+
         this.loading = false;
       },
       error: () => (this.loading = false),
@@ -199,6 +208,8 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
     this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
       next: (resultado) => {
+        this.selecionados.delete(m.id);
+        this.selecionados = new Set(this.selecionados);
         void oferecerMensagemRenovacao({
           telefone: this.telefone(m),
           nome: nomeClienteMensalidade(m, this.nomesClientes),
@@ -208,7 +219,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,
         });
-        this.carregar();
+        this.carregar(true);
       },
       error: (err) => void this.toast.error(err.message),
     });
@@ -227,7 +238,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
         next: (resultado) => {
           this.pagandoLote = false;
           this.limparSelecao();
-          this.carregar();
+          this.carregar(true);
 
           if (resultado.erros.length > 0) {
             void this.toast.warning(

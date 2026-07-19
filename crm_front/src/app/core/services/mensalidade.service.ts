@@ -50,7 +50,7 @@ export class MensalidadeService {
   registrarContato(id: number): Observable<{ contatoEm: string }> {
     return this.api
       .put<{ contatoEm: string }>(`/mensalidades/${id}/contato`, {})
-      .pipe(tap(() => this.sync.notificarMensalidades()));
+      .pipe(tap(() => this.sync.notificarContatos()));
   }
 
   registrarContatos(ids: number[]): Observable<{ atualizados: number; contatoEm: string }> {
@@ -59,6 +59,6 @@ export class MensalidadeService {
         '/mensalidades/contatos',
         { ids }
       )
-      .pipe(tap(() => this.sync.notificarMensalidades()));
+      .pipe(tap(() => this.sync.notificarContatos()));
   }
 }

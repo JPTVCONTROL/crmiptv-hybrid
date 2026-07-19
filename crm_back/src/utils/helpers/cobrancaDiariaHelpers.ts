@@ -1,4 +1,4 @@
-import { inicioDoDia } from './contatoHelpers.js';
+import { parseDataSomenteDia } from './dateHelpers.js';
 
 export const DIAS_ANTECEDENCIA_LEMBRETE_PADRAO = 5;
 
@@ -10,9 +10,15 @@ export function resolverDiasAntecedencia(valor?: number | null): number {
 }
 
 export function calcularDiasVencimento(vencimento: Date | string): number {
-  const hoje = inicioDoDia(new Date());
-  const data = inicioDoDia(new Date(vencimento));
-  return Math.round((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+  const hoje = new Date();
+  const hojeUtc = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const data = parseDataSomenteDia(vencimento);
+  const vencUtc = Date.UTC(
+    data.getUTCFullYear(),
+    data.getUTCMonth(),
+    data.getUTCDate()
+  );
+  return Math.ceil((vencUtc - hojeUtc) / (1000 * 60 * 60 * 24));
 }
 
 export function elegivelCobrancaDiaria(

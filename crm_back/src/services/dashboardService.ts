@@ -11,6 +11,7 @@ import {
   contatoRegistradoHoje,
   telefoneValidoParaWhatsApp,
 } from '../utils/helpers/contatoHelpers.js';
+import { parseDataSomenteDia } from '../utils/helpers/dateHelpers.js';
 
 import {
   resumirPendenciasCadastro,
@@ -189,26 +190,37 @@ export class DashboardService {
       .reduce((total, m) => total + m.valor, 0);
 
     const pendentesEsteMes = pendentes.filter((m) => {
-      const vencimento = new Date(m.vencimento);
+      const vencimento = parseDataSomenteDia(m.vencimento);
       return (
-        vencimento.getMonth() === hoje.getMonth() &&
-        vencimento.getFullYear() === hoje.getFullYear()
+        vencimento.getUTCMonth() === hoje.getMonth() &&
+        vencimento.getUTCFullYear() === hoje.getFullYear()
       );
     });
     const aReceberEsteMes = pendentesEsteMes.reduce((total, m) => total + m.valor, 0);
     const qtdEsteMes = pendentesEsteMes.length;
-    const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+    const pendentesCobranca = pendentes.filter((m) =>
+      clienteParticipaCobrancas(m.cliente)
+    );
     const pendentesProximosMeses = pendentes.filter((m) => {
-      const vencimento = new Date(m.vencimento);
-      vencimento.setHours(0, 0, 0, 0);
-      return vencimento >= inicioProximoMes;
+      const vencimento = parseDataSomenteDia(m.vencimento);
+      const inicioProximoMesUtc = Date.UTC(
+        hoje.getFullYear(),
+        hoje.getMonth() + 1,
+        1
+      );
+      const vencUtc = Date.UTC(
+        vencimento.getUTCFullYear(),
+        vencimento.getUTCMonth(),
+        vencimento.getUTCDate()
+      );
+      return vencUtc >= inicioProximoMesUtc;
     });
     const aReceberProximosMeses = pendentesProximosMeses.reduce(
       (total, m) => total + m.valor,
       0
     );
     const qtdProximosMeses = pendentesProximosMeses.length;
-    const vencemHoje = pendentes.filter(
+    const vencemHoje = pendentesCobranca.filter(
       (m) => calcularDiasVencimento(m.vencimento) === 0
     ).length;
 
@@ -231,7 +243,7 @@ export class DashboardService {
       faturamentoMensal.push({ mes: rotulo, total });
     }
 
-    const proximosVencimentos = pendentes
+    const proximosVencimentos = pendentesCobranca
       .filter((m) => {
         const dias = calcularDiasVencimento(m.vencimento);
         return dias >= 0 && dias <= diasAntecedencia;
@@ -404,7 +416,7 @@ export class DashboardService {
       });
     }
 
-    const atrasadosSemContato = pendentes.filter((m) => {
+    const atrasadosSemContato = pendentesCobranca.filter((m) => {
       if (calcularDiasVencimento(m.vencimento) >= 0) return false;
       if (!telefoneValidoParaWhatsApp(m.cliente.telefone)) return false;
       return !contatoRegistradoHoje(m.ultimoContatoEm);

@@ -5,45 +5,134 @@
 :root {
   --crm-primary: #7c3aed;
   --crm-primary-hover: #6d28d9;
-  --crm-primary-soft: rgba(124, 58, 237, 0.15);
-  --crm-primary-soft-strong: rgba(124, 58, 237, 0.25);
-  --crm-primary-border: rgba(124, 58, 237, 0.4);
+  --crm-primary-soft: rgba(124, 58, 237, 0.12);
+  --crm-primary-soft-strong: rgba(124, 58, 237, 0.22);
+  --crm-primary-border: rgba(124, 58, 237, 0.35);
   --crm-primary-text: #ddd6fe;
   --crm-primary-icon: #c4b5fd;
+  --crm-primary-glow: rgba(124, 58, 237, 0.18);
+
+  --crm-bg: #020617;
+  --crm-bg-subtle: #030712;
+  --crm-surface: #0f172a;
+  --crm-surface-elevated: #111827;
+  --crm-border: #1e293b;
+  --crm-border-subtle: rgba(148, 163, 184, 0.14);
+  --crm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --crm-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --crm-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
 @layer components {
   .crm-input {
-    @apply w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none transition-colors;
+    @apply w-full rounded-xl px-4 py-3 text-white outline-none transition-all duration-200;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--crm-border-subtle);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .crm-input::placeholder {
+    @apply text-slate-500;
   }
 
   .crm-input:focus {
-    border-color: var(--crm-primary);
+    border-color: var(--crm-primary-border);
+    box-shadow:
+      0 0 0 3px var(--crm-primary-soft),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .crm-card {
-    @apply bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-6;
+    @apply rounded-2xl p-4 md:p-6;
+    background: linear-gradient(
+      165deg,
+      rgba(30, 41, 59, 0.35) 0%,
+      rgba(15, 23, 42, 0.92) 55%,
+      rgba(2, 6, 23, 0.98) 100%
+    );
+    border: 1px solid var(--crm-border-subtle);
+    box-shadow: var(--crm-shadow-sm);
+  }
+
+  .crm-card-interactive {
+    @apply transition-all duration-200;
+  }
+
+  .crm-card-interactive:hover {
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow: var(--crm-shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .crm-hero-card {
+    @apply rounded-2xl p-4 md:p-6;
+    background: linear-gradient(
+      135deg,
+      var(--crm-primary-soft) 0%,
+      rgba(15, 23, 42, 0.95) 48%,
+      rgba(2, 6, 23, 0.98) 100%
+    );
+    border: 1px solid var(--crm-primary-border);
+    box-shadow:
+      var(--crm-shadow-md),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .crm-btn-primary {
-    @apply text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50;
-    background-color: var(--crm-primary);
+    @apply text-white px-4 py-2.5 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--crm-primary) 92%, white 8%) 0%,
+      var(--crm-primary) 100%
+    );
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 4px 14px var(--crm-primary-glow);
   }
 
   .crm-btn-primary:hover:not(:disabled) {
     background-color: var(--crm-primary-hover);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.1) inset,
+      0 6px 20px var(--crm-primary-glow);
+  }
+
+  .crm-btn-primary:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px var(--crm-primary-soft-strong),
+      0 4px 14px var(--crm-primary-glow);
   }
 
   .crm-btn-success {
-    @apply bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors;
+    @apply text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200;
+    background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.2);
+  }
+
+  .crm-btn-success:hover {
+    @apply brightness-110;
   }
 
   .crm-btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors;
+    @apply text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200;
+    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18);
+  }
+
+  .crm-btn-danger:hover {
+    @apply brightness-110;
   }
 
   .crm-btn-ghost {
-    @apply bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm transition-colors;
+    @apply text-slate-200 px-3 py-2 rounded-xl text-sm transition-all duration-200;
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid var(--crm-border-subtle);
+  }
+
+  .crm-btn-ghost:hover {
+    background: rgba(51, 65, 85, 0.75);
+    border-color: rgba(148, 163, 184, 0.22);
   }
 
   .crm-contador-clientes {
@@ -66,14 +155,177 @@
   }
 
   .crm-page-header {
-    @apply block mb-3;
+    @apply block mb-5 md:mb-6 pb-4 md:pb-5;
+    border-bottom: 1px solid var(--crm-border-subtle);
   }
 
   .crm-page-title {
-    @apply text-2xl md:text-3xl font-bold text-white m-0 leading-tight;
+    @apply text-2xl md:text-3xl font-bold text-white m-0 leading-tight tracking-tight;
+    letter-spacing: -0.02em;
   }
 
   .crm-page-subtitle {
-    @apply text-slate-400 mt-1 mb-0 text-sm md:text-base leading-snug;
+    @apply text-slate-400 mt-1.5 mb-0 text-sm md:text-base leading-snug;
+  }
+
+  .crm-section-label {
+    @apply text-slate-400 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] mb-3;
+  }
+
+  .crm-table {
+    @apply w-full text-sm;
+  }
+
+  .crm-table thead tr {
+    border-bottom: 1px solid var(--crm-border-subtle);
+  }
+
+  .crm-table th {
+    @apply text-left py-3 px-2 font-medium text-slate-400 text-xs uppercase tracking-wide;
+  }
+
+  .crm-table tbody tr {
+    border-bottom: 1px solid rgba(30, 41, 59, 0.55);
+    @apply transition-colors duration-150;
+  }
+
+  .crm-table tbody tr:hover {
+    background: rgba(30, 41, 59, 0.35);
+  }
+
+  .crm-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .crm-table td {
+    @apply py-3 px-2 align-middle text-slate-200;
+  }
+
+  .crm-badge-ativo {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25;
+  }
+
+  .crm-badge-atrasado {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/25;
+  }
+
+  .crm-badge-inativo {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-red-500/15 text-red-300 ring-1 ring-red-500/25;
+  }
+
+  .crm-badge-neutral {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-700/50 text-slate-300 ring-1 ring-slate-600/40;
+  }
+
+  .crm-stat-card {
+    @apply crm-card flex flex-col gap-1.5 h-full relative overflow-hidden;
+  }
+
+  .crm-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--stat-accent, var(--crm-primary));
+    opacity: 0.85;
+  }
+
+  .crm-stat-card-label {
+    @apply text-slate-400 text-xs md:text-sm font-medium;
+  }
+
+  .crm-stat-card-value {
+    @apply text-xl md:text-2xl font-bold leading-tight tracking-tight;
+    color: var(--stat-accent, var(--crm-primary-text));
+  }
+
+  .crm-stat-card-subtitle {
+    @apply text-slate-500 text-xs;
+  }
+
+  .crm-stat-card-link {
+    @apply block no-underline h-full rounded-2xl transition-transform duration-200;
+  }
+
+  .crm-stat-card-link:hover .crm-stat-card {
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow: var(--crm-shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .crm-progress-track {
+    @apply h-2 rounded-full overflow-hidden;
+    background: rgba(30, 41, 59, 0.85);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .crm-progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background: linear-gradient(
+      90deg,
+      var(--crm-primary) 0%,
+      #22c55e 100%
+    );
+  }
+
+  .crm-loading {
+    @apply flex flex-col items-center justify-center gap-3 py-12 text-slate-400;
+  }
+
+  .crm-loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 2px solid rgba(148, 163, 184, 0.2);
+    border-top-color: var(--crm-primary);
+    animation: crm-spin 0.75s linear infinite;
+  }
+
+  .crm-empty-state {
+    @apply flex flex-col items-center justify-center gap-2 py-14 px-4 text-center;
+  }
+
+  .crm-empty-state-icon {
+    @apply flex items-center justify-center w-12 h-12 rounded-2xl mb-1;
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid var(--crm-border-subtle);
+    color: var(--crm-primary-icon);
+  }
+
+  .crm-empty-state-message {
+    @apply text-slate-400 text-sm max-w-sm;
+  }
+
+  .crm-auth-shell {
+    @apply relative min-h-[calc(100vh-2rem)] flex items-center justify-center py-8 px-4;
+  }
+
+  .crm-auth-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--crm-primary-glow), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 100%, rgba(34, 197, 94, 0.06), transparent 50%);
+  }
+
+  .crm-auth-card {
+    @apply crm-card relative w-full max-w-md space-y-4;
+    box-shadow: var(--crm-shadow-lg);
+  }
+
+  .app-content-shell {
+    @apply relative;
+    max-width: 88rem;
+    margin-inline: auto;
+  }
+}
+
+@keyframes crm-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

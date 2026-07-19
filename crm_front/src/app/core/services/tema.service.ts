@@ -33,5 +33,6 @@ export class TemaService {
     root.style.setProperty('--crm-primary-border', hexParaRgba(hex, 0.4));
     root.style.setProperty('--crm-primary-text', clarearCor(hex, 0.55));
     root.style.setProperty('--crm-primary-icon', clarearCor(hex, 0.2));
+    root.style.setProperty('--crm-primary-glow', hexParaRgba(hex, 0.22));
   }
 }
