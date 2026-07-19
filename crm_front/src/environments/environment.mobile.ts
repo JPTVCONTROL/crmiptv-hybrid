@@ -1,11 +1,8 @@
 /**
  * Build mobile (Capacitor / APK).
  *
- * Antes de gerar o APK, altere apiUrl para o endereço acessível pelo celular:
- * - Rede local: http://SEU_IP:3001/api  (ex.: http://192.168.1.100:3001/api)
- * - Produção: https://seudominio.com/api
- *
- * O backend deve estar rodando e acessível na mesma rede Wi‑Fi do celular.
+ * Atualize automaticamente com: npm run mobile:prepare  (ou npm run cap:home)
+ * Rede local: http://SEU_IP:3001/api — nunca use localhost no APK.
  */
 export const environment = {
   production: true,

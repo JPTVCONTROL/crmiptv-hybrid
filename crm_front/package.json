@@ -10,6 +10,8 @@
     "build:prod": "ng build --configuration production",
     "build:mobile": "ng build --configuration mobile",
     "cap:sync": "npm run build:mobile && npx cap sync android",
+    "mobile:prepare": "powershell -ExecutionPolicy Bypass -File scripts/prepare-mobile-env.ps1",
+    "cap:home": "npm run mobile:prepare && npm run cap:sync",
     "cap:android": "npx cap open android",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

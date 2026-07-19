@@ -384,21 +384,102 @@ server {
 
 ---
 
-## 9. Build Mobile (Capacitor)
+## 9. Build Mobile (Capacitor) — teste em casa
 
-O frontend já inclui Capacitor 6. Para gerar app nativo:
+O frontend inclui Capacitor 6. O APK **não** guarda banco local: ele consome a mesma API do PC (`crm_back`), na mesma rede Wi‑Fi.
+
+### Pré-requisitos
+
+- **Android Studio** instalado
+- Backend rodando no PC (`npm run dev` em `crm_back`)
+- Tablet/celular na **mesma Wi‑Fi** que o PC
+- Firewall do Windows liberando a porta **3001** na rede privada (veja abaixo)
+
+### Passo a passo (rede local)
+
+**1. Subir a API no PC**
+
+```bash
+cd crm_back
+npm run dev
+```
+
+Ao iniciar, o terminal lista os endereços de rede local, por exemplo:
+
+```
+Rede local (tablet/APK na mesma Wi-Fi):
+  http://192.168.1.100:3001/health
+  http://192.168.1.100:3001/api
+```
+
+**2. Liberar firewall (Windows, uma vez)**
+
+PowerShell **como Administrador** (botão direito → *Executar como administrador*):
+
+```bash
+cd crm_back
+npm run firewall:api
+```
+
+> Se aparecer *Acesso negado*, o terminal não está elevado. Abra um PowerShell admin e rode de novo.
+
+**3. Testar do celular/tablet**
+
+No navegador do dispositivo, abra o `/health` mostrado no terminal. Deve aparecer JSON `CRM JPTV API online`.
+
+**4. Gerar o APK com IP automático**
 
 ```bash
 cd crm_front
-npm run build
-npx cap add android    # ou ios
-npx cap sync
-npx cap open android   # abre Android Studio
+npm run cap:home
 ```
 
-**Atenção para mobile:** altere `environment.prod.ts` para apontar para a URL acessível pelo dispositivo (IP da rede local ou domínio público), não `localhost`.
+Esse comando:
 
-Exemplo em rede local: `apiUrl: 'http://192.168.1.100:3001/api'`
+1. Detecta o IP da Wi‑Fi/Ethernet e atualiza `environment.mobile.ts`
+2. Faz `build:mobile` + `cap sync android`
+
+**5. Abrir no Android Studio e gerar APK**
+
+```bash
+npm run cap:android
+```
+
+No Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**. Instale o APK no tablet (sideload).
+
+### Scripts úteis
+
+| Comando | Onde | Função |
+|---------|------|--------|
+| `npm run mobile:prepare` | `crm_front` | Só atualiza `apiUrl` com IP da rede |
+| `npm run cap:home` | `crm_front` | IP + build mobile + sync Android |
+| `npm run cap:sync` | `crm_front` | Build mobile + sync (sem alterar IP) |
+| `npm run firewall:api` | `crm_back` | Regra de firewall TCP 3001 (rede privada) |
+
+### IP manual
+
+Se a detecção automática falhar:
+
+```powershell
+cd crm_front
+powershell -File scripts/prepare-mobile-env.ps1 -Ip 192.168.1.100
+```
+
+Ou edite `src/environments/environment.mobile.ts`:
+
+```typescript
+apiUrl: 'http://192.168.1.100:3001/api',
+```
+
+**Nunca use `localhost` no APK** — no tablet isso aponta para o próprio aparelho, não para o PC.
+
+### Sincronização tablet ↔ PC
+
+Alterações no tablet ou no PC vão para o **mesmo SQLite** no servidor. Ao reabrir uma tela, os dados são recarregados da API. Não há banco offline no app.
+
+### Produção (futuro)
+
+Para acesso fora de casa: VPS, domínio, HTTPS e `apiUrl` com `https://seudominio.com/api`.
 
 ---
 
