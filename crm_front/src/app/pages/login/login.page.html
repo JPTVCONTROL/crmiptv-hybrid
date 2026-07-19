@@ -27,14 +27,23 @@
 
       <div>
         <label class="block text-slate-400 text-sm mb-1.5" for="senha">Senha</label>
-        <input
-          id="senha"
-          type="password"
-          class="crm-input"
-          formControlName="senha"
-          autocomplete="current-password"
-          placeholder="••••••••"
-        />
+        <div class="relative">
+          <input
+            id="senha"
+            [type]="mostrarSenha ? 'text' : 'password'"
+            class="crm-input pr-24"
+            formControlName="senha"
+            autocomplete="current-password"
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs px-2 py-1 hover:text-slate-200"
+            (click)="alternarSenha()"
+          >
+            {{ mostrarSenha ? 'Ocultar' : 'Mostrar' }}
+          </button>
+        </div>
       </div>
 
       <p *ngIf="erro" class="text-red-400 text-sm">{{ erro }}</p>

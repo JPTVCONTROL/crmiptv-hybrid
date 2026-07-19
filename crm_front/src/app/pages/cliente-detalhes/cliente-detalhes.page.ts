@@ -5,7 +5,9 @@ import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
+import { copiarTexto } from '../../shared/utils/clipboard';
 import { DispositivoService } from '../../core/services/dispositivo.service';
 import { Cliente, Configuracao, Dispositivo, Mensalidade } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
@@ -25,7 +27,6 @@ import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, rotu
 })
 export class ClienteDetalhesPage implements OnInit {
   cliente: Cliente | null = null;
-  configuracao: Configuracao | null = null;
   dispositivosCatalogo: Dispositivo[] = [];
   loading = true;
 
@@ -38,12 +39,21 @@ export class ClienteDetalhesPage implements OnInit {
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
     private modalCtrl: ModalController,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmacao: ConfirmacaoService
   ) {}
+
+  mostrarSenhaIptv = false;
+
+  private get configuracao(): Configuracao | null {
+    return this.configuracaoService.getSnapshot();
+  }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.configuracaoService.carregar().subscribe({ next: (c) => (this.configuracao = c) });
+    if (!this.configuracaoService.getSnapshot()) {
+      this.configuracaoService.carregar().subscribe();
+    }
     this.dispositivoService.listar().subscribe({
       next: (items) => (this.dispositivosCatalogo = items),
     });
@@ -114,7 +124,7 @@ export class ClienteDetalhesPage implements OnInit {
 
     this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
       next: (resultado) => {
-        oferecerMensagemRenovacao({
+        void oferecerMensagemRenovacao({
           telefone: this.cliente!.telefone,
           nome: this.cliente!.nome,
           referencia: m.referencia,
@@ -140,12 +150,87 @@ export class ClienteDetalhesPage implements OnInit {
     if (data && this.cliente) this.carregar(this.cliente.id);
   }
 
-  excluir(): void {
-    if (!this.cliente || !confirm('Excluir este cliente?')) return;
+  async excluir(): Promise<void> {
+    if (!this.cliente) return;
+
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Excluir cliente',
+      message: 'Excluir este cliente?',
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
+
     this.clienteService.excluir(this.cliente.id).subscribe({
       next: () => this.router.navigate(['/clientes']),
       error: (err) => void this.toast.error(err.message),
     });
+  }
+
+  temCredenciais(): boolean {
+    if (!this.cliente) return false;
+    return !!(
+      this.cliente.servidor?.trim() ||
+      this.cliente.usuario?.trim() ||
+      this.cliente.senha?.trim() ||
+      this.cliente.aplicativo?.nome?.trim()
+    );
+  }
+
+  temPix(): boolean {
+    return !!this.configuracao?.chavePix?.trim();
+  }
+
+  alternarSenhaIptv(): void {
+    this.mostrarSenhaIptv = !this.mostrarSenhaIptv;
+  }
+
+  async copiarPix(): Promise<void> {
+    const cfg = this.configuracao;
+    if (!cfg?.chavePix?.trim()) {
+      void this.toast.warning('Nenhuma chave PIX cadastrada em Configurações.');
+      return;
+    }
+
+    const tipo = cfg.tipoPix?.trim() ? ` (${cfg.tipoPix})` : '';
+    const favorecido = cfg.favorecidoPix?.trim()
+      ? `\nFavorecido: ${cfg.favorecidoPix}`
+      : '';
+    const texto = `PIX${tipo}: ${cfg.chavePix}${favorecido}`;
+    const ok = await copiarTexto(texto);
+    if (ok) {
+      void this.toast.success('Chave PIX copiada.');
+    } else {
+      void this.toast.error('Não foi possível copiar. Tente novamente.');
+    }
+  }
+
+  async copiarCredenciais(): Promise<void> {
+    if (!this.cliente) return;
+
+    const linhas = [
+      this.cliente.servidor?.trim()
+        ? `Servidor: ${this.cliente.servidor.trim()}`
+        : '',
+      this.cliente.usuario?.trim()
+        ? `Usuário: ${this.cliente.usuario.trim()}`
+        : '',
+      this.cliente.senha?.trim() ? `Senha: ${this.cliente.senha.trim()}` : '',
+      this.cliente.aplicativo?.nome?.trim()
+        ? `App: ${this.cliente.aplicativo.nome.trim()}`
+        : '',
+    ].filter(Boolean);
+
+    if (linhas.length === 0) {
+      void this.toast.warning('Nenhuma credencial cadastrada para copiar.');
+      return;
+    }
+
+    const ok = await copiarTexto(linhas.join('\n'));
+    if (ok) {
+      void this.toast.success('Credenciais copiadas.');
+    } else {
+      void this.toast.error('Não foi possível copiar. Tente novamente.');
+    }
   }
 
   fmtValor = formatarValor;

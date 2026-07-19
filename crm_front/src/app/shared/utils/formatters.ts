@@ -49,10 +49,13 @@ export function clienteEstaAtivo(expiraEm?: string | null): boolean {
   return statusCliente(expiraEm) !== 'INATIVO';
 }
 
-export function statusFinanceiro(vencimento: string): 'ATRASADO' | 'PENDENTE' | 'REGULAR' {
+export function statusFinanceiro(
+  vencimento: string,
+  diasAntecedencia = 5
+): 'ATRASADO' | 'PENDENTE' | 'REGULAR' {
   const dias = calcularDias(vencimento);
   if (dias < 0) return 'ATRASADO';
-  if (dias <= 3) return 'PENDENTE';
+  if (dias <= diasAntecedencia) return 'PENDENTE';
   return 'REGULAR';
 }
 

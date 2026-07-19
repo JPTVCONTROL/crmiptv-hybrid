@@ -4,6 +4,7 @@ import { PlanoService } from '../../core/services/plano.service';
 import { Plano } from '../../core/models';
 import { PlanoClientesModalComponent } from '../../components/plano/plano-clientes-modal/plano-clientes-modal.component';
 import { NovoPlanoModalComponent } from '../../components/plano/novo-plano-modal/novo-plano-modal.component';
+import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { formatarValor } from '../../shared/utils/formatters';
 import { agruparPlanos, GrupoPlanos, ordenarPlanos, rotuloValidadePlano } from '../../shared/utils/planos';
@@ -17,15 +18,40 @@ export class PlanosPage implements OnInit {
   gruposPlanos: GrupoPlanos[] = [];
   loading = true;
   error = '';
+  busca = '';
+  filtroAtivo: 'TODOS' | 'ATIVO' | 'INATIVO' = 'TODOS';
 
   constructor(
     private planoService: PlanoService,
     private modalCtrl: ModalController,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmacao: ConfirmacaoService
   ) {}
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar();
+    }
+  }
+
+  get planosFiltrados(): Plano[] {
+    const termo = this.busca.toLowerCase().trim();
+    return this.planos.filter((plano) => {
+      const matchBusca =
+        !termo || plano.nome.toLowerCase().includes(termo);
+      const matchAtivo =
+        this.filtroAtivo === 'TODOS' ||
+        (this.filtroAtivo === 'ATIVO' ? plano.ativo : !plano.ativo);
+      return matchBusca && matchAtivo;
+    });
+  }
+
+  get gruposVisiveis(): GrupoPlanos[] {
+    return agruparPlanos(this.planosFiltrados);
   }
 
   carregar(): void {
@@ -63,8 +89,13 @@ export class PlanosPage implements OnInit {
     if (data) this.carregar();
   }
 
-  excluir(plano: Plano): void {
-    if (!confirm(`Excluir o plano "${plano.nome}"?`)) return;
+  async excluir(plano: Plano): Promise<void> {
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Excluir plano',
+      message: `Excluir o plano "${plano.nome}"?`,
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
 
     this.planoService.excluir(plano.id).subscribe({
       next: () => this.carregar(),

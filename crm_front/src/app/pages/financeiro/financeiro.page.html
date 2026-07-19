@@ -1,11 +1,20 @@
-<app-page-header title="Financeiro" subtitle="Cobranças pendentes e inadimplência."></app-page-header>
+<app-page-header title="Financeiro" subtitle="Cobranças pendentes, pagamentos e inadimplência."></app-page-header>
+
+<div *ngIf="!loading" class="crm-card border border-violet-500/20 bg-violet-500/5 mb-6">
+  <p class="text-slate-300 text-sm">
+    Envio em lote de WhatsApp:
+    <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
+    Consulta por data:
+    <a routerLink="/vencimentos" class="text-violet-400 hover:underline font-medium">Vencimentos</a>.
+  </p>
+</div>
 
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading" class="space-y-6">
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <div class="crm-card">
-      <p class="text-slate-400 text-sm">Vencendo (3 dias)</p>
+      <p class="text-slate-400 text-sm">Vencendo ({{ diasAntecedencia }} dias)</p>
       <p class="text-amber-400 text-xl font-bold">{{ resumo('PENDENTE').valor }}</p>
       <p class="text-slate-500 text-xs">{{ resumo('PENDENTE').qtd }} cobranças</p>
     </div>

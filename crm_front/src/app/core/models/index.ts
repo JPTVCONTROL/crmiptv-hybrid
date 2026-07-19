@@ -99,8 +99,10 @@ export interface Configuracao {
   tipoPix?: string | null;
   favorecidoPix?: string | null;
   corPrincipal?: string;
+  diasAntecedenciaLembrete?: number;
   mensagemBoasVindas?: string | null;
   mensagemCobranca?: string | null;
+  mensagemLembrete?: string | null;
   mensagemRenovacao?: string | null;
   mensagemBloqueio?: string | null;
   mensagemRecibo?: string | null;

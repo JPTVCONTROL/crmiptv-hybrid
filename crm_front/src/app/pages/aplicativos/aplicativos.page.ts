@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { AplicativoService } from '../../core/services/aplicativo.service';
+import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Aplicativo } from '../../core/models';
 import { NovoAplicativoModalComponent } from '../../components/aplicativo/novo-aplicativo-modal/novo-aplicativo-modal.component';
@@ -15,15 +16,38 @@ export class AplicativosPage implements OnInit {
   loading = true;
   error = '';
   logosQuebrados = new Set<number>();
+  busca = '';
+  filtroAtivo: 'TODOS' | 'ATIVO' | 'INATIVO' = 'TODOS';
 
   constructor(
     private aplicativoService: AplicativoService,
     private modalCtrl: ModalController,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmacao: ConfirmacaoService
   ) {}
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar();
+    }
+  }
+
+  get aplicativosFiltrados(): Aplicativo[] {
+    const termo = this.busca.toLowerCase().trim();
+    return this.aplicativos.filter((app) => {
+      const matchBusca =
+        !termo ||
+        app.nome.toLowerCase().includes(termo) ||
+        (app.descricao?.toLowerCase().includes(termo) ?? false);
+      const matchAtivo =
+        this.filtroAtivo === 'TODOS' ||
+        (this.filtroAtivo === 'ATIVO' ? app.ativo : !app.ativo);
+      return matchBusca && matchAtivo;
+    });
   }
 
   carregar(): void {
@@ -63,14 +87,19 @@ export class AplicativosPage implements OnInit {
     await modal.present();
   }
 
-  excluir(app: Aplicativo): void {
+  async excluir(app: Aplicativo): Promise<void> {
     const qtd = app._count?.clientes ?? 0;
     const avisoClientes =
       qtd > 0
         ? `\n\n${qtd} cliente(s) usam este aplicativo. Eles ficarão sem aplicativo vinculado.`
         : '';
 
-    if (!confirm(`Excluir o aplicativo "${app.nome}"?${avisoClientes}`)) return;
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Excluir aplicativo',
+      message: `Excluir o aplicativo "${app.nome}"?${avisoClientes}`,
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
 
     this.aplicativoService.excluir(app.id).subscribe({
       next: () => this.carregar(),

@@ -39,12 +39,12 @@ export function clienteUsaDispositivo(
   dispositivoId: number
 ): { usa: boolean; macs: string[] } {
   const lista = parseDispositivosClienteJson(dispositivosJson);
-  const macs = lista
-    .filter((item) => Number(item.dispositivoId) === dispositivoId)
+  const itens = lista.filter((item) => Number(item.dispositivoId) === dispositivoId);
+  const macs = itens
     .map((item) => item.macAddress?.trim())
     .filter((mac): mac is string => !!mac);
 
-  return { usa: macs.length > 0, macs };
+  return { usa: itens.length > 0, macs };
 }
 
 function normalizarDispositivoClienteJson(valor: unknown): DispositivoClienteJson {

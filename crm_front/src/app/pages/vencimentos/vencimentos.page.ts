@@ -14,14 +14,16 @@ import {
   resolverTelefoneCliente,
 } from '../../shared/utils/formatters';
 import {
-  cobrarMensalidadesEmLote,
-  filtrarMensalidadesCobranca,
   mensalidadeEstaAtrasada,
   montarMensagemBloqueioMensalidade,
   montarMensagemCobrancaMensalidade,
   nomeClienteMensalidade,
   trackByMensalidadeId,
 } from '../../shared/utils/cobranca-lote';
+import {
+  resolverDiasAntecedencia,
+  rotuloDiasCobrancaDiaria,
+} from '../../shared/utils/cobranca-diaria';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 
 export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
@@ -34,11 +36,11 @@ export class VencimentosPage implements OnInit {
   mensalidades: Mensalidade[] = [];
   telefones = new Map<number, string>();
   nomesClientes = new Map<number, string>();
-  configuracao: Configuracao | null = null;
   loading = true;
   busca = '';
   filtro: FiltroVencimento = 'TODOS';
-  selecionados = new Set<number>();
+  pagina = 1;
+  readonly porPagina = 10;
 
   readonly opcoesFiltro: { valor: FiltroVencimento; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -55,13 +57,32 @@ export class VencimentosPage implements OnInit {
     private toast: ToastService
   ) {}
 
+  private get configuracao(): Configuracao | null {
+    return this.configuracaoService.getSnapshot();
+  }
+
+  get diasAntecedencia(): number {
+    return resolverDiasAntecedencia(this.configuracao);
+  }
+
   ngOnInit(): void {
-    this.configuracaoService.carregar().subscribe({ next: (c) => (this.configuracao = c) });
+    if (!this.configuracaoService.getSnapshot()) {
+      this.configuracaoService.carregar().subscribe();
+    }
     this.carregar();
   }
 
-  carregar(): void {
-    this.loading = true;
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar(true);
+    }
+  }
+
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     forkJoin([
       this.mensalidadeService.listar(),
       this.clienteService.listar(),
@@ -71,7 +92,10 @@ export class VencimentosPage implements OnInit {
         this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
         this.mensalidades = mensalidades
           .filter((m) => m.status === 'PENDENTE')
-          .sort((a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime());
+          .sort(
+            (a, b) =>
+              new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime()
+          );
         this.loading = false;
       },
       error: () => (this.loading = false),
@@ -85,18 +109,26 @@ export class VencimentosPage implements OnInit {
       const matchBusca =
         !termo || m.cliente?.nome?.toLowerCase().includes(termo);
 
-      const matchFiltro =
-        this.filtro === 'TODOS' || this.categoriaVencimento(m) === this.filtro;
+      if (this.filtro === 'TODOS') return matchBusca;
 
-      return matchBusca && matchFiltro;
+      const dias = calcularDias(m.vencimento);
+      if (this.filtro === 'ATRASADO') return matchBusca && dias < 0;
+      if (this.filtro === 'HOJE') return matchBusca && dias === 0;
+      if (this.filtro === 'PROXIMO') {
+        return matchBusca && dias > 0 && dias <= this.diasAntecedencia;
+      }
+
+      return matchBusca;
     });
   }
 
-  categoriaVencimento(m: Mensalidade): FiltroVencimento {
-    const dias = calcularDias(m.vencimento);
-    if (dias < 0) return 'ATRASADO';
-    if (dias === 0) return 'HOJE';
-    return 'PROXIMO';
+  get paginadas(): Mensalidade[] {
+    const inicio = (this.pagina - 1) * this.porPagina;
+    return this.mensalidadesFiltradas.slice(inicio, inicio + this.porPagina);
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.mensalidadesFiltradas.length / this.porPagina));
   }
 
   get totalPendente(): string {
@@ -113,14 +145,12 @@ export class VencimentosPage implements OnInit {
   }
 
   statusLabel(m: Mensalidade): string {
-    const dias = calcularDias(m.vencimento);
-    if (dias < 0) return 'ATRASADO';
-    if (dias === 0) return 'HOJE';
-    return 'PRÓXIMO';
+    return rotuloDiasCobrancaDiaria(calcularDias(m.vencimento)).toUpperCase();
   }
 
   definirFiltro(valor: FiltroVencimento): void {
     this.filtro = valor;
+    this.pagina = 1;
   }
 
   contagemFiltro(valor: FiltroVencimento): number {
@@ -128,9 +158,13 @@ export class VencimentosPage implements OnInit {
       return this.mensalidades.length;
     }
 
-    return this.mensalidades.filter(
-      (m) => this.categoriaVencimento(m) === valor
-    ).length;
+    return this.mensalidades.filter((m) => {
+      const dias = calcularDias(m.vencimento);
+      if (valor === 'ATRASADO') return dias < 0;
+      if (valor === 'HOJE') return dias === 0;
+      if (valor === 'PROXIMO') return dias > 0 && dias <= this.diasAntecedencia;
+      return false;
+    }).length;
   }
 
   get temFiltrosAtivos(): boolean {
@@ -140,6 +174,7 @@ export class VencimentosPage implements OnInit {
   limparFiltros(): void {
     this.busca = '';
     this.filtro = 'TODOS';
+    this.pagina = 1;
   }
 
   classesChipStatus(filtro: FiltroVencimento): Record<string, boolean> {
@@ -224,7 +259,7 @@ export class VencimentosPage implements OnInit {
 
     this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
       next: (resultado) => {
-        oferecerMensagemRenovacao({
+        void oferecerMensagemRenovacao({
           telefone: this.telefone(m),
           nome: nomeClienteMensalidade(m, this.nomesClientes),
           referencia: m.referencia,
@@ -233,74 +268,10 @@ export class VencimentosPage implements OnInit {
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,
         });
-        this.carregar();
+        this.carregar(true);
       },
       error: (err) => void this.toast.error(err.message),
     });
-  }
-
-  get qtdSelecionados(): number {
-    return this.selecionados.size;
-  }
-
-  estaSelecionado(m: Mensalidade): boolean {
-    return this.selecionados.has(m.id);
-  }
-
-  alternarSelecao(m: Mensalidade): void {
-    if (this.selecionados.has(m.id)) {
-      this.selecionados.delete(m.id);
-    } else {
-      this.selecionados.add(m.id);
-    }
-    this.selecionados = new Set(this.selecionados);
-  }
-
-  alternarTodos(): void {
-    if (this.todosSelecionados) {
-      this.selecionados = new Set();
-      return;
-    }
-
-    this.selecionados = new Set(this.mensalidadesFiltradas.map((m) => m.id));
-  }
-
-  get todosSelecionados(): boolean {
-    return (
-      this.mensalidadesFiltradas.length > 0 &&
-      this.mensalidadesFiltradas.every((m) => this.selecionados.has(m.id))
-    );
-  }
-
-  selecionarAtrasados(): void {
-    this.selecionados = new Set(
-      this.mensalidadesFiltradas
-        .filter((m) => calcularDias(m.vencimento) < 0)
-        .map((m) => m.id)
-    );
-  }
-
-  limparSelecao(): void {
-    this.selecionados = new Set();
-  }
-
-  cobrarSelecionados(): void {
-    cobrarMensalidadesEmLote(
-      this.mensalidades,
-      this.selecionados,
-      this.telefones,
-      this.configuracao,
-      this.nomesClientes
-    );
-  }
-
-  cobrarAtrasados(): void {
-    const atrasados = filtrarMensalidadesCobranca(
-      this.mensalidades,
-      'ATRASADO'
-    );
-    this.selecionados = new Set(atrasados.map((m) => m.id));
-    this.cobrarSelecionados();
   }
 
   fmtValor = formatarValor;

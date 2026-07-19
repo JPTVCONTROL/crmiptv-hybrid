@@ -15,11 +15,20 @@
       <button
         type="button"
         class="crm-btn-ghost"
+        [disabled]="cobrancasAtrasadas.length === 0"
+        (click)="exportarCsvInadimplentes()"
+      >
+        Exportar inadimplentes
+      </button>
+      <button
+        type="button"
+        class="crm-btn-ghost"
         [disabled]="ultimosPagamentos.length === 0"
         (click)="exportarCsv()"
       >
-        Exportar CSV
+        Exportar pagamentos
       </button>
+      <a routerLink="/cobranca-diaria" class="crm-btn-ghost no-underline">Cobrança Diária</a>
       <a routerLink="/financeiro" class="crm-btn-primary no-underline">Financeiro</a>
     </div>
   </div>

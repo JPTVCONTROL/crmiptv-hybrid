@@ -5,6 +5,7 @@ import aplicativoRoutes from './aplicativoRoutes.js';
 import planoRoutes from './planoRoutes.js';
 import dispositivoRoutes from './dispositivoRoutes.js';
 import configuracaoRoutes from './configuracaoRoutes.js';
+import sistemaRoutes from './sistemaRoutes.js';
 import authRoutes from './authRoutes.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 
@@ -20,5 +21,6 @@ router.use('/aplicativos', aplicativoRoutes);
 router.use('/dispositivos', dispositivoRoutes);
 router.use('/planos', planoRoutes);
 router.use('/configuracoes', configuracaoRoutes);
+router.use('/sistema', sistemaRoutes);
 
 export default router;

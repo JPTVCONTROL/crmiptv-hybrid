@@ -1,8 +1,24 @@
-<app-page-header title="Vencimentos" subtitle="Mensalidades pendentes ordenadas por data."></app-page-header>
+<app-page-header
+  title="Vencimentos"
+  subtitle="Consulta de mensalidades pendentes por data."
+></app-page-header>
 
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading" class="space-y-6">
+  <div class="crm-card border border-violet-500/20 bg-violet-500/5">
+    <p class="text-slate-300 text-sm">
+      Tela de <span class="text-white font-medium">consulta</span>. Para enviar lembretes e cobranças em lote,
+      use a
+      <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
+      Pagamentos em lote ficam no
+      <a routerLink="/financeiro" class="text-violet-400 hover:underline font-medium">Financeiro</a>.
+    </p>
+    <p class="text-slate-500 text-xs mt-2">
+      Filtro “Próximos” considera até {{ diasAntecedencia }} dias (configurável em Configurações).
+    </p>
+  </div>
+
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <app-stat-card title="Total Pendente" [value]="totalPendente" color="#F59E0B"></app-stat-card>
     <app-stat-card title="Vencem Hoje" [value]="vencemHoje.toString()" color="#EF4444"></app-stat-card>
@@ -21,6 +37,7 @@
         class="crm-input !pl-11"
         placeholder="Buscar cliente..."
         [(ngModel)]="busca"
+        (ngModelChange)="pagina = 1"
         autocomplete="off"
       />
     </div>
@@ -63,45 +80,17 @@
     </div>
   </div>
 
-  <div class="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-    <button
-      class="crm-btn-primary"
-      [disabled]="qtdSelecionados === 0"
-      (click)="cobrarSelecionados()"
-    >
-      Cobrar selecionados ({{ qtdSelecionados }})
-    </button>
-    <button class="crm-btn-ghost" (click)="selecionarAtrasados()">
-      Selecionar atrasados
-    </button>
-    <button
-      class="crm-btn-ghost"
-      [disabled]="atrasados === 0"
-      (click)="cobrarAtrasados()"
-    >
-      Cobrar todos atrasados ({{ atrasados }})
-    </button>
-    <button
-      class="crm-btn-ghost"
-      [disabled]="qtdSelecionados === 0"
-      (click)="limparSelecao()"
-    >
-      Limpar seleção
-    </button>
+  <div class="flex flex-wrap gap-2">
+    <a routerLink="/cobranca-diaria" class="crm-btn-primary no-underline">
+      Abrir Cobrança Diária
+    </a>
+    <a routerLink="/financeiro" class="crm-btn-ghost no-underline">Ir para Financeiro</a>
   </div>
 
   <div class="crm-card overflow-x-auto">
-    <table class="w-full text-sm min-w-[700px]">
+    <table class="w-full text-sm min-w-[640px]">
       <thead>
         <tr class="text-slate-400 border-b border-slate-800">
-          <th class="text-left py-3 px-2 w-10">
-            <input
-              type="checkbox"
-              class="rounded border-slate-600"
-              [checked]="todosSelecionados"
-              (change)="alternarTodos()"
-            />
-          </th>
           <th class="text-left py-3 px-2">Cliente</th>
           <th class="text-left py-3 px-2">Referência</th>
           <th class="text-left py-3 px-2">Valor</th>
@@ -111,15 +100,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let m of mensalidadesFiltradas; trackBy: trackByMensalidade" class="border-b border-slate-800/50">
-          <td class="py-3 px-2">
-            <input
-              type="checkbox"
-              class="rounded border-slate-600"
-              [checked]="estaSelecionado(m)"
-              (change)="alternarSelecao(m)"
-            />
-          </td>
+        <tr *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="border-b border-slate-800/50">
           <td class="py-3 px-2">
             <a [routerLink]="['/clientes', m.clienteId]" class="text-violet-400 hover:underline">{{ m.cliente?.nome }}</a>
           </td>
@@ -135,11 +116,17 @@
               [telefone]="telefone(m)"
               [mensagem]="mensagemBloqueio(m)"
             ></app-whatsapp-cobranca-btn>
-            <button class="crm-btn-success" (click)="pagar(m)">Pagar</button>
+            <button class="crm-btn-success !py-1.5 !text-xs" (click)="pagar(m)">Pagar</button>
           </td>
         </tr>
       </tbody>
     </table>
     <app-empty-state *ngIf="mensalidadesFiltradas.length === 0"></app-empty-state>
+  </div>
+
+  <div *ngIf="mensalidadesFiltradas.length > porPagina" class="flex gap-2 justify-center">
+    <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="pagina = pagina - 1">Anterior</button>
+    <span class="text-slate-400 self-center">{{ pagina }} / {{ totalPaginas }}</span>
+    <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="pagina = pagina + 1">Próxima</button>
   </div>
 </div>

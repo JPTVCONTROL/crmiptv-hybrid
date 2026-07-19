@@ -240,7 +240,7 @@ CRUD do **catálogo** de aparelhos (nome, modelo, descrição). No cadastro do c
 | GET | `/configuracoes` | Obtém config (cria registro padrão se não existir) |
 | PUT | `/configuracoes` | Atualiza campos permitidos (whitelist) |
 
-Campos editáveis: dados da empresa, PIX, cor principal e templates de mensagens.
+Campos editáveis: dados da empresa, PIX, cor principal, dias de antecedência do lembrete, templates de mensagens e backup do banco.
 
 ---
 
@@ -249,11 +249,12 @@ Campos editáveis: dados da empresa, PIX, cor principal e templates de mensagens
 | Rota | Tela | Função |
 |------|------|--------|
 | `/login` | Login | Autenticação (JWT) |
-| `/dashboard` | Dashboard | KPIs, gráfico de faturamento, cobrança em lote |
+| `/dashboard` | Dashboard | KPIs, gráfico de faturamento, links para Cobrança Diária |
 | `/clientes` | Clientes | Listagem com filtros por status, busca, CRUD |
 | `/clientes/:id` | Detalhe | Perfil completo, mensalidades, WhatsApp, pagamento |
-| `/financeiro` | Financeiro | Cobranças pendentes com filtros, paginação e lote |
-| `/vencimentos` | Vencimentos | Pendentes ordenados por data, cobrança em lote |
+| `/financeiro` | Financeiro | Cobranças pendentes, paginação, pagamentos e lote |
+| `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp: atrasados + lembretes (até N dias) |
+| `/vencimentos` | Vencimentos | Consulta de pendentes por data (sem lote duplicado) |
 | `/aplicativos` | Aplicativos | Catálogo de apps IPTV |
 | `/planos` | Planos | Catálogo de planos (valor e validade) |
 | `/dispositivos` | Dispositivos | Catálogo de aparelhos para vincular aos clientes |
@@ -466,13 +467,9 @@ Atualize `apiUrl` no frontend se a porta do backend mudar.
 
 Itens ainda não implementados ou parciais:
 
-- Relatórios com filtro de período, gráfico e exportação CSV
-- Tela para **trocar senha** do admin (sem editar `.env`)
-- Aplicação dinâmica de `corPrincipal` no tema
-- Unificação visual Financeiro × Vencimentos (padrão da tela Clientes)
-- Toasts Ionic no lugar de `alert()` nativo
-- WhatsApp automático via API oficial da Meta (hoje só envio manual `wa.me`)
 - Migrations Prisma versionadas para deploy em produção
+- WhatsApp automático via API oficial da Meta (hoje só envio manual `wa.me`)
+- Cards mobile alternativos às tabelas em telas longas
 
 ---
 

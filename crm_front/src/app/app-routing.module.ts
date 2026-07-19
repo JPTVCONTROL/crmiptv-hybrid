@@ -42,6 +42,13 @@ const routes: Routes = [
           import('./pages/vencimentos/vencimentos.module').then((m) => m.VencimentosPageModule),
       },
       {
+        path: 'cobranca-diaria',
+        loadChildren: () =>
+          import('./pages/cobranca-diaria/cobranca-diaria.module').then(
+            (m) => m.CobrancaDiariaPageModule
+          ),
+      },
+      {
         path: 'aplicativos',
         loadChildren: () =>
           import('./pages/aplicativos/aplicativos.module').then((m) => m.AplicativosPageModule),

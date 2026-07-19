@@ -120,6 +120,36 @@ export class RelatoriosPage implements OnInit {
     URL.revokeObjectURL(url);
   }
 
+  exportarCsvInadimplentes(): void {
+    if (this.cobrancasAtrasadas.length === 0) {
+      void this.toast.warning('Nenhuma cobrança atrasada para exportar.');
+      return;
+    }
+
+    const linhas = [
+      ['Cliente', 'Referência', 'Valor', 'Vencimento', 'Dias atraso'].join(';'),
+      ...this.cobrancasAtrasadas.map((item) =>
+        [
+          `"${item.clienteNome.replace(/"/g, '""')}"`,
+          item.referencia,
+          item.valor.toFixed(2).replace('.', ','),
+          this.fmtData(item.vencimento),
+          item.diasAtraso.toString(),
+        ].join(';')
+      ),
+    ];
+
+    const blob = new Blob(['\uFEFF' + linhas.join('\n')], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inadimplentes-${this.periodo}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   private periodoAtual(): string {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;

@@ -83,15 +83,15 @@ ion-menu.crm-menu ion-content.menu-content::part(scroll) {
   flex-shrink: 0;
   width: 1.125rem;
   height: 1.125rem;
-  color: #c084fc;
+  color: var(--crm-primary-icon);
 }
 
 .menu-link:hover {
-  background: rgba(147, 51, 234, 0.2);
+  background: var(--crm-primary-soft);
 }
 
 .menu-link-active {
-  background: #9333ea;
+  background: var(--crm-primary);
   color: #ffffff;
 }
 

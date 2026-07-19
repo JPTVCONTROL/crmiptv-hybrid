@@ -2,12 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { ClienteService } from '../../core/services/cliente.service';
+import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Cliente } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
 import { statusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
+
+interface OpcaoFiltroCatalogo {
+  id: number;
+  nome: string;
+}
 
 @Component({
   selector: 'app-clientes',
@@ -18,6 +24,12 @@ export class ClientesPage implements OnInit {
   loading = true;
   busca = '';
   filtroStatus: FiltroStatusCliente = 'TODOS';
+  filtroAplicativoId: number | null = null;
+  filtroPlanoId: number | null = null;
+  pagina = 1;
+  readonly porPagina = 15;
+  opcoesAplicativos: OpcaoFiltroCatalogo[] = [];
+  opcoesPlanos: OpcaoFiltroCatalogo[] = [];
 
   readonly opcoesFiltroStatus: { valor: FiltroStatusCliente; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -28,6 +40,7 @@ export class ClientesPage implements OnInit {
 
   definirFiltroStatus(filtro: FiltroStatusCliente): void {
     this.filtroStatus = filtro;
+    this.pagina = 1;
   }
 
   contagemStatus(filtro: FiltroStatusCliente): number {
@@ -39,12 +52,20 @@ export class ClientesPage implements OnInit {
   }
 
   get temFiltrosAtivos(): boolean {
-    return this.busca.trim().length > 0 || this.filtroStatus !== 'TODOS';
+    return (
+      this.busca.trim().length > 0 ||
+      this.filtroStatus !== 'TODOS' ||
+      this.filtroAplicativoId !== null ||
+      this.filtroPlanoId !== null
+    );
   }
 
   limparFiltros(): void {
     this.busca = '';
     this.filtroStatus = 'TODOS';
+    this.filtroAplicativoId = null;
+    this.filtroPlanoId = null;
+    this.pagina = 1;
   }
 
   classesChipStatus(filtro: FiltroStatusCliente): Record<string, boolean> {
@@ -119,7 +140,8 @@ export class ClientesPage implements OnInit {
     private modalCtrl: ModalController,
     private router: Router,
     private route: ActivatedRoute,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmacao: ConfirmacaoService
   ) {}
 
   ngOnInit(): void {
@@ -130,6 +152,12 @@ export class ClientesPage implements OnInit {
       }
     });
     this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar(true);
+    }
   }
 
   get clientesFiltrados(): Cliente[] {
@@ -144,7 +172,14 @@ export class ClientesPage implements OnInit {
       const matchStatus =
         this.filtroStatus === 'TODOS' || this.status(c) === this.filtroStatus;
 
-      return matchBusca && matchStatus;
+      const matchAplicativo =
+        this.filtroAplicativoId === null ||
+        c.aplicativoId === this.filtroAplicativoId;
+
+      const matchPlano =
+        this.filtroPlanoId === null || c.planoId === this.filtroPlanoId;
+
+      return matchBusca && matchStatus && matchAplicativo && matchPlano;
     });
 
     return filtrados.sort((a, b) => {
@@ -159,15 +194,50 @@ export class ClientesPage implements OnInit {
     });
   }
 
-  carregar(): void {
-    this.loading = true;
+  get clientesPaginados(): Cliente[] {
+    const inicio = (this.pagina - 1) * this.porPagina;
+    return this.clientesFiltrados.slice(inicio, inicio + this.porPagina);
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.clientesFiltrados.length / this.porPagina));
+  }
+
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
+
     this.clienteService.listar().subscribe({
       next: (data) => {
         this.clientes = data;
+        this.atualizarOpcoesCatalogo(data);
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
+  }
+
+  private atualizarOpcoesCatalogo(clientes: Cliente[]): void {
+    const apps = new Map<number, string>();
+    const planos = new Map<number, string>();
+
+    for (const cliente of clientes) {
+      if (cliente.aplicativoId && cliente.aplicativo?.nome) {
+        apps.set(cliente.aplicativoId, cliente.aplicativo.nome);
+      }
+      if (cliente.planoId && cliente.plano?.nome) {
+        planos.set(cliente.planoId, cliente.plano.nome);
+      }
+    }
+
+    this.opcoesAplicativos = [...apps.entries()]
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+    this.opcoesPlanos = [...planos.entries()]
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
   async novoCliente(): Promise<void> {
@@ -195,8 +265,14 @@ export class ClientesPage implements OnInit {
     this.router.navigate(['/clientes', id]);
   }
 
-  excluir(cliente: Cliente): void {
-    if (!confirm(`Excluir o cliente ${cliente.nome}?`)) return;
+  async excluir(cliente: Cliente): Promise<void> {
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Excluir cliente',
+      message: `Excluir o cliente ${cliente.nome}?`,
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
+
     this.clienteService.excluir(cliente.id).subscribe({
       next: () => this.carregar(),
       error: (err) => void this.toast.error(err.message),

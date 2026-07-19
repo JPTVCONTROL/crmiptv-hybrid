@@ -3,6 +3,7 @@
   <div class="flex flex-wrap gap-2 shrink-0">
     <a routerLink="/clientes" class="crm-btn-primary no-underline">Clientes</a>
     <a routerLink="/financeiro" class="crm-btn-ghost no-underline">Financeiro</a>
+    <a routerLink="/cobranca-diaria" class="crm-btn-ghost no-underline">Cobrança Diária</a>
     <a routerLink="/vencimentos" class="crm-btn-ghost no-underline">Vencimentos</a>
   </div>
 </div>
@@ -51,17 +52,12 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h2 class="text-white font-semibold">Próximos vencimentos</h2>
-          <p class="text-slate-500 text-xs mt-0.5">Vencem nos próximos 5 dias</p>
+          <p class="text-slate-500 text-xs mt-0.5">Vencem nos próximos {{ diasAntecedencia }} dias</p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button
-            type="button"
-            class="crm-btn-success !py-1.5 !text-xs"
-            [disabled]="proximosVencimentos.length === 0"
-            (click)="cobrarProximosVencimentos()"
-          >
-            Cobrar todos
-          </button>
+          <a routerLink="/cobranca-diaria" class="crm-btn-success !py-1.5 !text-xs no-underline">
+            Rotina diária
+          </a>
           <a routerLink="/vencimentos" class="crm-btn-ghost !py-1.5 !text-xs no-underline">Ver todos</a>
         </div>
       </div>
@@ -104,7 +100,10 @@
             </button>
           </div>
         </div>
-        <app-empty-state *ngIf="proximosVencimentos.length === 0" message="Nenhum vencimento nos próximos 5 dias."></app-empty-state>
+        <app-empty-state
+          *ngIf="proximosVencimentos.length === 0"
+          [message]="'Nenhum vencimento nos próximos ' + diasAntecedencia + ' dias.'"
+        ></app-empty-state>
       </div>
     </div>
   </div>
@@ -114,18 +113,14 @@
       <div>
         <h2 class="text-white font-semibold">Precisam de atenção</h2>
         <p class="text-slate-500 text-xs mt-1">
+          Com base na expiração do plano (não na mensalidade).
           {{ qtdAtrasados }} atrasado(s) · {{ qtdInativos }} inativo(s)
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          class="crm-btn-success !py-1.5 !text-xs"
-          [disabled]="clientesAtencao.length === 0"
-          (click)="cobrarTodos()"
-        >
-          Cobrar todos
-        </button>
+        <a routerLink="/cobranca-diaria" class="crm-btn-success !py-1.5 !text-xs no-underline">
+          Rotina diária
+        </a>
         <a
           routerLink="/clientes"
           [queryParams]="{ status: 'ATRASADO' }"

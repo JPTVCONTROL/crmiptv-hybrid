@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { DispositivoService } from '../../core/services/dispositivo.service';
+import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Dispositivo } from '../../core/models';
 import { NovoDispositivoModalComponent } from '../../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
@@ -15,15 +16,39 @@ export class DispositivosPage implements OnInit {
   dispositivos: Dispositivo[] = [];
   loading = true;
   error = '';
+  busca = '';
+  filtroAtivo: 'TODOS' | 'ATIVO' | 'INATIVO' = 'TODOS';
 
   constructor(
     private dispositivoService: DispositivoService,
     private modalCtrl: ModalController,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmacao: ConfirmacaoService
   ) {}
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar();
+    }
+  }
+
+  get dispositivosFiltrados(): Dispositivo[] {
+    const termo = this.busca.toLowerCase().trim();
+    return this.dispositivos.filter((item) => {
+      const rotulo = rotuloDispositivo(item).toLowerCase();
+      const matchBusca =
+        !termo ||
+        rotulo.includes(termo) ||
+        (item.descricao?.toLowerCase().includes(termo) ?? false);
+      const matchAtivo =
+        this.filtroAtivo === 'TODOS' ||
+        (this.filtroAtivo === 'ATIVO' ? item.ativo : !item.ativo);
+      return matchBusca && matchAtivo;
+    });
   }
 
   carregar(): void {
@@ -62,14 +87,19 @@ export class DispositivosPage implements OnInit {
     await modal.present();
   }
 
-  excluir(item: Dispositivo): void {
+  async excluir(item: Dispositivo): Promise<void> {
     const qtd = item._count?.clientes ?? 0;
     const avisoClientes =
       qtd > 0
         ? `\n\n${qtd} cliente(s) usam este dispositivo.`
         : '';
 
-    if (!confirm(`Excluir o dispositivo "${rotuloDispositivo(item)}"?${avisoClientes}`)) return;
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Excluir dispositivo',
+      message: `Excluir o dispositivo "${rotuloDispositivo(item)}"?${avisoClientes}`,
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
 
     this.dispositivoService.excluir(item.id).subscribe({
       next: () => this.carregar(),

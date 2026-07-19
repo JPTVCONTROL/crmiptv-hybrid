@@ -3,6 +3,9 @@ import { NavigationEnd, Router } from '@angular/router';
 import { MenuController } from '@ionic/angular';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/services/auth.service';
+import { ConfirmacaoService } from './core/services/confirmacao.service';
+import { ConfiguracaoService } from './core/services/configuracao.service';
+import { TemaService } from './core/services/tema.service';
 import { ToastService } from './core/services/toast.service';
 import { Usuario } from './core/models';
 
@@ -22,6 +25,7 @@ export class AppComponent implements OnInit {
     { nome: 'Dashboard', rota: '/dashboard', icon: 'grid-outline' },
     { nome: 'Clientes', rota: '/clientes', icon: 'people-outline' },
     { nome: 'Financeiro', rota: '/financeiro', icon: 'cash-outline' },
+    { nome: 'Cobrança Diária', rota: '/cobranca-diaria', icon: 'send-outline' },
     { nome: 'Vencimentos', rota: '/vencimentos', icon: 'calendar-outline' },
     { nome: 'Aplicativos', rota: '/aplicativos', icon: 'apps-outline' },
     { nome: 'Planos', rota: '/planos', icon: 'layers-outline' },
@@ -37,6 +41,9 @@ export class AppComponent implements OnInit {
     private menuCtrl: MenuController,
     private router: Router,
     private auth: AuthService,
+    private configuracao: ConfiguracaoService,
+    private confirmacao: ConfirmacaoService,
+    private tema: TemaService,
     private toast: ToastService
   ) {
     this.router.events
@@ -56,8 +63,15 @@ export class AppComponent implements OnInit {
 
     if (this.auth.estaAutenticado()) {
       this.auth.restaurarSessao().subscribe({
+        next: () => {
+          this.configuracao.carregar().subscribe({
+            error: () => this.tema.restaurarPadrao(),
+          });
+        },
         error: () => this.auth.logout(),
       });
+    } else {
+      this.tema.restaurarPadrao();
     }
   }
 

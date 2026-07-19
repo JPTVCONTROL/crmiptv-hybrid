@@ -1,4 +1,12 @@
 import { notificar } from './toast-notifier';
+import { confirmarUsuario } from './confirm-notifier';
+import {
+  MENSAGEM_BLOQUEIO_PADRAO,
+  MENSAGEM_COBRANCA_LEMBRETE_PADRAO,
+  MENSAGEM_COBRANCA_PADRAO,
+  MENSAGEM_RECIBO_PADRAO,
+  MENSAGEM_RENOVACAO_PADRAO,
+} from './mensagens-padrao';
 
 export interface DadosMensagemWhatsApp {
   nome: string;
@@ -78,23 +86,28 @@ function substituirVariaveis(
 
 export function montarMensagemCobranca(
   dados: DadosMensagemCobranca,
-  template?: string | null
+  templateAtrasado?: string | null,
+  templateLembrete?: string | null
 ): string {
   const linhaPix = montarLinhaPix(dados);
 
   if (dados.atrasado) {
-    if (template?.trim()) {
-      return substituirVariaveis(template.trim(), dados);
+    if (templateAtrasado?.trim()) {
+      return substituirVariaveis(templateAtrasado.trim(), dados);
     }
 
-    return substituirVariaveis(
-      `Olá {nome}! Sua mensalidade referente a {referencia}, no valor de {valor}, venceu em {vencimento}. Por favor, regularize seu pagamento.${linhaPix}\n\n— {empresa}`,
-      dados
-    );
+    return substituirVariaveis(MENSAGEM_COBRANCA_PADRAO, dados);
+  }
+
+  if (templateLembrete?.trim()) {
+    return substituirVariaveis(templateLembrete.trim(), dados);
   }
 
   return substituirVariaveis(
-    `Olá {nome}! Passando para lembrar da mensalidade {referencia}, no valor de {valor}, com vencimento em {vencimento}.${linhaPix}\n\n— {empresa}`,
+    MENSAGEM_COBRANCA_LEMBRETE_PADRAO.replace(
+      '\n\n— {empresa}',
+      `${linhaPix}\n\n— {empresa}`
+    ),
     dados
   );
 }
@@ -107,10 +120,7 @@ export function montarMensagemRenovacao(
     return substituirVariaveis(template.trim(), dados);
   }
 
-  return substituirVariaveis(
-    `Olá {nome}! Recebemos seu pagamento de {valor} referente a {referencia}. Seu plano foi renovado e agora vence em {vencimento}. Obrigado pela preferência!\n\n— {empresa}`,
-    dados
-  );
+  return substituirVariaveis(MENSAGEM_RENOVACAO_PADRAO, dados);
 }
 
 export function montarMensagemRecibo(
@@ -121,10 +131,7 @@ export function montarMensagemRecibo(
     return substituirVariaveis(template.trim(), dados);
   }
 
-  return substituirVariaveis(
-    `Olá {nome}! Confirmamos o recebimento de {valor} referente a {referencia}, pago em {pagoEm}.\n\n— {empresa}`,
-    dados
-  );
+  return substituirVariaveis(MENSAGEM_RECIBO_PADRAO, dados);
 }
 
 export function montarMensagemBloqueio(
@@ -135,12 +142,7 @@ export function montarMensagemBloqueio(
     return substituirVariaveis(template.trim(), dados);
   }
 
-  const linhaPix = montarLinhaPix(dados);
-
-  return substituirVariaveis(
-    `Olá {nome}! Seu acesso foi suspenso por pendência referente a {referencia}, no valor de {valor}, vencida em {vencimento}. Regularize para reativar.${linhaPix}\n\n— {empresa}`,
-    dados
-  );
+  return substituirVariaveis(MENSAGEM_BLOQUEIO_PADRAO, dados);
 }
 
 export function abrirWhatsAppCobranca(telefone: string, mensagem: string): void {
@@ -171,7 +173,9 @@ export interface ParamsPosPagamento {
   templateRenovacao?: string | null;
 }
 
-export function oferecerMensagemRenovacao(params: ParamsPosPagamento): void {
+export async function oferecerMensagemRenovacao(
+  params: ParamsPosPagamento
+): Promise<void> {
   if (!telefoneValidoParaWhatsApp(params.telefone)) {
     return;
   }
@@ -189,7 +193,11 @@ export function oferecerMensagemRenovacao(params: ParamsPosPagamento): void {
   );
 
   if (
-    confirm('Pagamento registrado! Deseja enviar a mensagem de renovação no WhatsApp?')
+    await confirmarUsuario(
+      'Deseja enviar a mensagem de renovação no WhatsApp?',
+      'Pagamento registrado',
+      'Enviar'
+    )
   ) {
     abrirWhatsAppCobranca(params.telefone, mensagem);
   }
@@ -208,9 +216,9 @@ export interface ResultadoCobrancaLote {
   cancelado: boolean;
 }
 
-export function executarCobrancaEmLote(
+export async function executarCobrancaEmLote(
   itens: CobrancaLoteItem[]
-): ResultadoCobrancaLote {
+): Promise<ResultadoCobrancaLote> {
   const validos = itens.filter((item) =>
     telefoneValidoParaWhatsApp(item.telefone)
   );
@@ -234,11 +242,7 @@ export function executarCobrancaEmLote(
   let abertos = 0;
   let cancelado = false;
 
-  const abrirIndice = (indice: number): void => {
-    if (indice >= validos.length) {
-      return;
-    }
-
+  for (let indice = 0; indice < validos.length; indice++) {
     const atual = validos[indice];
     const instrucaoLote =
       validos.length > 1
@@ -249,22 +253,24 @@ export function executarCobrancaEmLote(
         ? `Abrir WhatsApp para ${atual.nome}?${avisoIgnorados}`
         : `Abrir WhatsApp (${indice + 1}/${validos.length})?\n\nCliente: ${atual.nome}${indice === 0 ? avisoIgnorados : ''}${instrucaoLote}`;
 
-    if (!confirm(rotulo)) {
+    const confirmado = await confirmarUsuario(rotulo, 'WhatsApp', 'Abrir');
+    if (!confirmado) {
       cancelado = true;
       if (abertos > 0) {
         notificar(`Cobrança interrompida. ${abertos} WhatsApp(s) aberto(s).`, 'info');
       }
-      return;
+      break;
     }
 
     abrirWhatsAppCobranca(atual.telefone, atual.mensagem);
     abertos++;
 
     if (indice + 1 < validos.length) {
-      setTimeout(() => abrirIndice(indice + 1), 500);
-      return;
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
+  }
 
+  if (!cancelado && abertos > 0) {
     setTimeout(
       () =>
         notificar(
@@ -273,9 +279,7 @@ export function executarCobrancaEmLote(
         ),
       300
     );
-  };
-
-  abrirIndice(0);
+  }
 
   return { abertos, ignorados, cancelado };
 }

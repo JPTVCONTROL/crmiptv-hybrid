@@ -21,13 +21,13 @@ import {
 } from '../../shared/utils/cobranca-lote';
 import {
   abrirWhatsAppCobranca,
-  executarCobrancaEmLote,
   montarMensagemBloqueio,
   montarMensagemCobranca,
   oferecerMensagemRenovacao,
   telefoneValidoParaWhatsApp,
 } from '../../shared/utils/whatsapp';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
+import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
 
 @Component({
   selector: 'app-dashboard',
@@ -50,12 +50,15 @@ export class DashboardPage implements OnInit {
   faturamentoMensal: DadoFaturamento[] = [];
   proximosVencimentos: Mensalidade[] = [];
   clientesAtencao: Cliente[] = [];
-  configuracao: Configuracao | null = null;
   telefones = new Map<number, string>();
   nomesClientes = new Map<number, string>();
   pagando = new Set<number>();
 
   subtituloPagina = '';
+
+  get diasAntecedencia(): number {
+    return resolverDiasAntecedencia(this.configuracao);
+  }
 
   constructor(
     private clienteService: ClienteService,
@@ -65,10 +68,22 @@ export class DashboardPage implements OnInit {
     private toast: ToastService
   ) {}
 
+  private get configuracao(): Configuracao | null {
+    return this.configuracaoService.getSnapshot();
+  }
+
   ngOnInit(): void {
     this.subtituloPagina = this.montarSubtitulo();
-    this.configuracaoService.carregar().subscribe({ next: (c) => (this.configuracao = c) });
+    if (!this.configuracaoService.getSnapshot()) {
+      this.configuracaoService.carregar().subscribe();
+    }
     this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar(true);
+    }
   }
 
   carregar(silencioso = false): void {
@@ -138,7 +153,8 @@ export class DashboardPage implements OnInit {
     this.proximosVencimentos = pendentesLista
       .filter((m) => {
         const dias = calcularDias(m.vencimento);
-        return dias >= 0 && dias <= 5;
+        const antecedencia = resolverDiasAntecedencia(this.configuracao);
+        return dias >= 0 && dias <= antecedencia;
       })
       .sort((a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime());
 
@@ -219,22 +235,6 @@ export class DashboardPage implements OnInit {
     abrirWhatsAppCobranca(cliente.telefone, this.montarMensagem(cliente, dados));
   }
 
-  cobrarTodos(): void {
-    const itens = this.clientesAtencao
-      .filter((c) => this.podeCobrar(c))
-      .map((c) => {
-        const dados = this.dadosCobranca(c)!;
-        return {
-          id: c.id,
-          nome: c.nome,
-          telefone: c.telefone,
-          mensagem: this.montarMensagem(c, dados),
-        };
-      });
-
-    executarCobrancaEmLote(itens);
-  }
-
   mensalidadePendente(cliente: Cliente): Mensalidade | undefined {
     return (
       cliente.mensalidades?.find((m) => m.status === 'PENDENTE') ??
@@ -262,16 +262,6 @@ export class DashboardPage implements OnInit {
     abrirWhatsAppCobranca(item.telefone, item.mensagem);
   }
 
-  cobrarProximosVencimentos(): void {
-    const itens = this.proximosVencimentos
-      .filter((m) => this.podeCobrarMensalidade(m))
-      .map((m) =>
-        montarItemCobrancaLote(m, this.telefones, this.configuracao, this.nomesClientes)
-      );
-
-    executarCobrancaEmLote(itens);
-  }
-
   estaPagando(id: number): boolean {
     return this.pagando.has(id);
   }
@@ -290,7 +280,7 @@ export class DashboardPage implements OnInit {
         this.pagando.delete(m.id);
         this.pagando = new Set(this.pagando);
 
-        oferecerMensagemRenovacao({
+        void oferecerMensagemRenovacao({
           telefone: this.telefoneMensalidade(m),
           nome: nomeClienteMensalidade(m, this.nomesClientes),
           referencia: m.referencia,
@@ -330,7 +320,7 @@ export class DashboardPage implements OnInit {
         this.pagando.delete(mensalidade.id);
         this.pagando = new Set(this.pagando);
 
-        oferecerMensagemRenovacao({
+        void oferecerMensagemRenovacao({
           telefone: cliente.telefone,
           nome: cliente.nome,
           referencia: mensalidade.referencia,
@@ -418,7 +408,8 @@ export class DashboardPage implements OnInit {
 
     return montarMensagemCobranca(
       { ...base, atrasado: calcularDias(dados.vencimento) < 0 },
-      cfg?.mensagemCobranca
+      cfg?.mensagemCobranca,
+      cfg?.mensagemLembrete
     );
   }
 

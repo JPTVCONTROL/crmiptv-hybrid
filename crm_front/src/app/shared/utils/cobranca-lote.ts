@@ -52,7 +52,8 @@ export function montarMensagemCobrancaMensalidade(
       tipoPix: cfg?.tipoPix ?? undefined,
       favorecido: cfg?.favorecidoPix ?? undefined,
     },
-    cfg?.mensagemCobranca
+    cfg?.mensagemCobranca,
+    cfg?.mensagemLembrete
   );
 }
 

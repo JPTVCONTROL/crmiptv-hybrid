@@ -2,9 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --crm-primary: #7c3aed;
+  --crm-primary-hover: #6d28d9;
+  --crm-primary-soft: rgba(124, 58, 237, 0.15);
+  --crm-primary-soft-strong: rgba(124, 58, 237, 0.25);
+  --crm-primary-border: rgba(124, 58, 237, 0.4);
+  --crm-primary-text: #ddd6fe;
+  --crm-primary-icon: #c4b5fd;
+}
+
 @layer components {
   .crm-input {
-    @apply w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none focus:border-violet-500 transition-colors;
+    @apply w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none transition-colors;
+  }
+
+  .crm-input:focus {
+    border-color: var(--crm-primary);
   }
 
   .crm-card {
@@ -12,7 +26,12 @@
   }
 
   .crm-btn-primary {
-    @apply bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50;
+    @apply text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50;
+    background-color: var(--crm-primary);
+  }
+
+  .crm-btn-primary:hover:not(:disabled) {
+    background-color: var(--crm-primary-hover);
   }
 
   .crm-btn-success {
@@ -25,6 +44,25 @@
 
   .crm-btn-ghost {
     @apply bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm transition-colors;
+  }
+
+  .crm-contador-clientes {
+    @apply inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors appearance-none cursor-pointer;
+  }
+
+  .crm-contador-clientes--ativo {
+    border-color: var(--crm-primary-border);
+    background-color: var(--crm-primary-soft);
+    color: var(--crm-primary-text);
+  }
+
+  .crm-contador-clientes--ativo:hover {
+    background-color: var(--crm-primary-soft-strong);
+    border-color: var(--crm-primary);
+  }
+
+  .crm-contador-clientes--vazio {
+    @apply border-slate-700 bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-300;
   }
 
   .crm-page-header {

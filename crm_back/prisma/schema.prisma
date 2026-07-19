@@ -92,8 +92,10 @@ model Configuracao {
   tipoPix            String?
   favorecidoPix      String?
   corPrincipal       String   @default("#7C3AED")
+  diasAntecedenciaLembrete Int @default(5)
   mensagemBoasVindas String?
   mensagemCobranca   String?
+  mensagemLembrete   String?
   mensagemRenovacao  String?
   mensagemBloqueio   String?
   mensagemRecibo     String?

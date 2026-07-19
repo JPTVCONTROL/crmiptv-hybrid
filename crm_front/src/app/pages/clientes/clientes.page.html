@@ -18,8 +18,34 @@
         class="crm-input !pl-11"
         placeholder="Buscar por nome ou telefone..."
         [(ngModel)]="busca"
+        (ngModelChange)="pagina = 1"
         autocomplete="off"
       />
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-slate-500 text-xs mb-1.5">Aplicativo</label>
+        <select
+          class="crm-input"
+          [(ngModel)]="filtroAplicativoId"
+          (ngModelChange)="pagina = 1"
+        >
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let app of opcoesAplicativos" [ngValue]="app.id">{{ app.nome }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-slate-500 text-xs mb-1.5">Plano</label>
+        <select
+          class="crm-input"
+          [(ngModel)]="filtroPlanoId"
+          (ngModelChange)="pagina = 1"
+        >
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let plano of opcoesPlanos" [ngValue]="plano.id">{{ plano.nome }}</option>
+        </select>
+      </div>
     </div>
 
     <div class="flex flex-wrap gap-2">
@@ -79,7 +105,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let c of clientesFiltrados" class="border-b border-slate-800/50 hover:bg-slate-800/30">
+      <tr *ngFor="let c of clientesPaginados" class="border-b border-slate-800/50 hover:bg-slate-800/30">
         <td class="py-3 px-2 text-white">{{ c.nome }}</td>
         <td class="py-3 px-2 text-slate-300">{{ c.telefone }}</td>
         <td class="py-3 px-2 text-slate-300 hidden md:table-cell">{{ c.aplicativo?.nome ?? '—' }}</td>
@@ -105,4 +131,10 @@
     </tbody>
   </table>
   <app-empty-state *ngIf="clientesFiltrados.length === 0"></app-empty-state>
+</div>
+
+<div *ngIf="!loading && clientesFiltrados.length > porPagina" class="flex gap-2 justify-center mt-4">
+  <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="pagina = pagina - 1">Anterior</button>
+  <span class="text-slate-400 self-center">{{ pagina }} / {{ totalPaginas }}</span>
+  <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="pagina = pagina + 1">Próxima</button>
 </div>

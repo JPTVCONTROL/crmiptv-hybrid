@@ -25,14 +25,46 @@
         </span>
       </p>
       <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span> {{ fmtValor(cliente.valorMensal) }}</p>
+      <p *ngIf="cliente.observacao?.trim()" class="text-slate-300 whitespace-pre-wrap">
+        <span class="text-slate-500">Observação:</span> {{ cliente.observacao }}
+      </p>
     </div>
 
     <div class="crm-card space-y-3">
-      <h2 class="text-white font-semibold">Credenciais IPTV</h2>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h2 class="text-white font-semibold">Credenciais IPTV</h2>
+        <button
+          *ngIf="temCredenciais()"
+          type="button"
+          class="crm-btn-ghost !py-1.5 !text-xs self-start"
+          (click)="copiarCredenciais()"
+        >
+          Copiar credenciais
+        </button>
+      </div>
       <p class="text-slate-300"><span class="text-slate-500">Servidor:</span> {{ cliente.servidor || '—' }}</p>
       <p class="text-slate-300"><span class="text-slate-500">Usuário:</span> {{ cliente.usuario || '—' }}</p>
-      <p class="text-slate-300"><span class="text-slate-500">Senha:</span> {{ cliente.senha || '—' }}</p>
+      <p class="text-slate-300 flex flex-wrap items-center gap-2">
+        <span class="text-slate-500">Senha:</span>
+        <span>{{ mostrarSenhaIptv ? (cliente.senha || '—') : (cliente.senha ? '••••••••' : '—') }}</span>
+        <button
+          *ngIf="cliente.senha?.trim()"
+          type="button"
+          class="crm-btn-ghost !py-0.5 !px-2 !text-xs"
+          (click)="alternarSenhaIptv()"
+        >
+          {{ mostrarSenhaIptv ? 'Ocultar' : 'Mostrar' }}
+        </button>
+      </p>
       <p class="text-slate-300"><span class="text-slate-500">Aplicativo:</span> {{ cliente.aplicativo?.nome || '—' }}</p>
+      <button
+        *ngIf="temPix()"
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs"
+        (click)="copiarPix()"
+      >
+        Copiar PIX
+      </button>
     </div>
 
     <div class="crm-card space-y-3">

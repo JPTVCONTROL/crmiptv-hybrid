@@ -22,6 +22,7 @@ import {
   trackByMensalidadeId,
 } from '../../shared/utils/cobranca-lote';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
+import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
 
 @Component({
   selector: 'app-financeiro',
@@ -31,7 +32,6 @@ export class FinanceiroPage implements OnInit {
   mensalidades: Mensalidade[] = [];
   telefones = new Map<number, string>();
   nomesClientes = new Map<number, string>();
-  configuracao: Configuracao | null = null;
   loading = true;
   busca = '';
   filtro: StatusFinanceiro = 'TODOS';
@@ -54,9 +54,25 @@ export class FinanceiroPage implements OnInit {
     private toast: ToastService
   ) {}
 
+  private get configuracao(): Configuracao | null {
+    return this.configuracaoService.getSnapshot();
+  }
+
+  get diasAntecedencia(): number {
+    return resolverDiasAntecedencia(this.configuracao);
+  }
+
   ngOnInit(): void {
-    this.configuracaoService.carregar().subscribe({ next: (c) => (this.configuracao = c) });
+    if (!this.configuracaoService.getSnapshot()) {
+      this.configuracaoService.carregar().subscribe();
+    }
     this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar();
+    }
   }
 
   carregar(): void {
@@ -79,7 +95,9 @@ export class FinanceiroPage implements OnInit {
     let lista = [...this.mensalidades];
 
     if (this.filtro !== 'TODOS') {
-      lista = lista.filter((m) => statusFinanceiro(m.vencimento) === this.filtro);
+      lista = lista.filter(
+        (m) => statusFinanceiro(m.vencimento, this.diasAntecedencia) === this.filtro
+      );
     }
 
     if (this.busca.trim()) {
@@ -89,8 +107,8 @@ export class FinanceiroPage implements OnInit {
 
     const ordem = { PENDENTE: 0, REGULAR: 1, ATRASADO: 2 };
     lista.sort((a, b) => {
-      const sa = statusFinanceiro(a.vencimento);
-      const sb = statusFinanceiro(b.vencimento);
+      const sa = statusFinanceiro(a.vencimento, this.diasAntecedencia);
+      const sb = statusFinanceiro(b.vencimento, this.diasAntecedencia);
       if (ordem[sa] !== ordem[sb]) return ordem[sa] - ordem[sb];
       return new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime();
     });
@@ -111,13 +129,15 @@ export class FinanceiroPage implements OnInit {
     const lista =
       tipo === 'TODOS'
         ? this.mensalidades
-        : this.mensalidades.filter((m) => statusFinanceiro(m.vencimento) === tipo);
+        : this.mensalidades.filter(
+            (m) => statusFinanceiro(m.vencimento, this.diasAntecedencia) === tipo
+          );
     const valor = lista.reduce((t, m) => t + m.valor, 0);
     return { qtd: lista.length, valor: formatarValor(valor) };
   }
 
   status(m: Mensalidade): StatusFinanceiro {
-    return statusFinanceiro(m.vencimento);
+    return statusFinanceiro(m.vencimento, this.diasAntecedencia);
   }
 
   telefone(m: Mensalidade): string {
@@ -147,7 +167,7 @@ export class FinanceiroPage implements OnInit {
 
     this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
       next: (resultado) => {
-        oferecerMensagemRenovacao({
+        void oferecerMensagemRenovacao({
           telefone: this.telefone(m),
           nome: nomeClienteMensalidade(m, this.nomesClientes),
           referencia: m.referencia,
@@ -242,7 +262,7 @@ export class FinanceiroPage implements OnInit {
     }
 
     return this.mensalidades.filter(
-      (m) => statusFinanceiro(m.vencimento) === valor
+      (m) => statusFinanceiro(m.vencimento, this.diasAntecedencia) === valor
     ).length;
   }
 
@@ -323,8 +343,8 @@ export class FinanceiroPage implements OnInit {
     };
   }
 
-  cobrarSelecionados(): void {
-    cobrarMensalidadesEmLote(
+  async cobrarSelecionados(): Promise<void> {
+    await cobrarMensalidadesEmLote(
       this.mensalidades,
       this.selecionados,
       this.telefones,
@@ -333,13 +353,13 @@ export class FinanceiroPage implements OnInit {
     );
   }
 
-  cobrarAtrasados(): void {
+  async cobrarAtrasados(): Promise<void> {
     const atrasados = filtrarMensalidadesCobranca(
       this.filtradas,
       'ATRASADO'
     );
     this.selecionados = new Set(atrasados.map((m) => m.id));
-    this.cobrarSelecionados();
+    await this.cobrarSelecionados();
   }
 
   fmtValor = formatarValor;

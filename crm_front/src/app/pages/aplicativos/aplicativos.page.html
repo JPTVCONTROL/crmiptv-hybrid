@@ -3,12 +3,26 @@
   <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Aplicativo</button>
 </div>
 
+<div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
+  <input
+    type="search"
+    class="crm-input flex-1"
+    placeholder="Buscar aplicativo..."
+    [(ngModel)]="busca"
+  />
+  <select class="crm-input sm:max-w-[10rem]" [(ngModel)]="filtroAtivo">
+    <option value="TODOS">Todos</option>
+    <option value="ATIVO">Ativos</option>
+    <option value="INATIVO">Inativos</option>
+  </select>
+</div>
+
 <app-loading *ngIf="loading"></app-loading>
 <p *ngIf="error" class="text-red-400 mb-4">{{ error }}</p>
 
 <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
   <div
-    *ngFor="let app of aplicativos"
+    *ngFor="let app of aplicativosFiltrados"
     class="crm-card hover:border-violet-600 transition-colors flex flex-col cursor-pointer"
     [class.opacity-60]="!app.ativo"
     (click)="verClientes(app)"
@@ -37,10 +51,13 @@
         </div>
         <button
           type="button"
-          class="text-violet-400 hover:text-violet-300 text-sm mt-1 underline-offset-2 hover:underline"
+          class="crm-contador-clientes"
+          [class.crm-contador-clientes--ativo]="(app._count?.clientes ?? 0) > 0"
+          [class.crm-contador-clientes--vazio]="(app._count?.clientes ?? 0) === 0"
           (click)="verClientes(app, $event)"
         >
-          {{ app._count?.clientes ?? 0 }} clientes
+          <span class="font-semibold tabular-nums">{{ app._count?.clientes ?? 0 }}</span>
+          <span>{{ (app._count?.clientes ?? 0) === 1 ? 'cliente' : 'clientes' }}</span>
         </button>
       </div>
     </div>
