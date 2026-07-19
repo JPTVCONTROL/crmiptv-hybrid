@@ -61,3 +61,7 @@
 </div>
 
 <app-empty-state *ngIf="!loading && dispositivos.length === 0" message="Nenhum dispositivo cadastrado."></app-empty-state>
+<app-empty-state
+  *ngIf="!loading && dispositivos.length > 0 && dispositivosFiltrados.length === 0"
+  message="Nenhum dispositivo encontrado para os filtros."
+></app-empty-state>

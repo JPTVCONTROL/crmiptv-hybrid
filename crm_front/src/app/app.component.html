@@ -19,17 +19,20 @@
           </div>
 
           <nav class="menu-nav">
-            <a
-              *ngFor="let menu of menus"
-              [routerLink]="menu.rota"
-              routerLinkActive="menu-link-active"
-              [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
-              class="menu-link"
-              (click)="fecharMenu()"
-            >
-              <ion-icon [name]="menu.icon" aria-hidden="true"></ion-icon>
-              <span>{{ menu.nome }}</span>
-            </a>
+            <section *ngFor="let secao of menuSecoes" class="menu-section">
+              <p class="menu-section-title">{{ secao.titulo }}</p>
+              <a
+                *ngFor="let menu of secao.itens"
+                [routerLink]="menu.rota"
+                routerLinkActive="menu-link-active"
+                [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
+                class="menu-link"
+                (click)="fecharMenu()"
+              >
+                <ion-icon [name]="menu.icon" aria-hidden="true"></ion-icon>
+                <span>{{ menu.nome }}</span>
+              </a>
+            </section>
           </nav>
 
           <div class="menu-footer space-y-3">

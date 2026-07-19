@@ -6,10 +6,8 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { AuthService } from './core/services/auth.service';
 import { AlertasOperacionaisService } from './core/services/alertas-operacionais.service';
 import { SistemaService } from './core/services/sistema.service';
-import { ConfirmacaoService } from './core/services/confirmacao.service';
 import { ConfiguracaoService } from './core/services/configuracao.service';
 import { TemaService } from './core/services/tema.service';
-import { ToastService } from './core/services/toast.service';
 import { Usuario } from './core/models';
 
 interface MenuItem {
@@ -18,22 +16,46 @@ interface MenuItem {
   icon: string;
 }
 
+interface MenuSecao {
+  titulo: string;
+  itens: MenuItem[];
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  readonly menus: MenuItem[] = [
-    { nome: 'Dashboard', rota: '/dashboard', icon: 'grid-outline' },
-    { nome: 'Clientes', rota: '/clientes', icon: 'people-outline' },
-    { nome: 'Financeiro', rota: '/financeiro', icon: 'cash-outline' },
-    { nome: 'Cobrança Diária', rota: '/cobranca-diaria', icon: 'send-outline' },
-    { nome: 'Automações', rota: '/automacoes', icon: 'timer-outline' },
-    { nome: 'Vencimentos', rota: '/vencimentos', icon: 'calendar-outline' },
-    { nome: 'Catálogos', rota: '/catalogos', icon: 'library-outline' },
-    { nome: 'Relatórios', rota: '/relatorios', icon: 'bar-chart-outline' },
-    { nome: 'Configurações', rota: '/configuracoes', icon: 'settings-outline' },
+  readonly menuSecoes: MenuSecao[] = [
+    {
+      titulo: 'Visão geral',
+      itens: [{ nome: 'Dashboard', rota: '/dashboard', icon: 'grid-outline' }],
+    },
+    {
+      titulo: 'Clientes',
+      itens: [
+        { nome: 'Clientes', rota: '/clientes', icon: 'people-outline' },
+        { nome: 'Catálogos', rota: '/catalogos', icon: 'library-outline' },
+      ],
+    },
+    {
+      titulo: 'Cobrança',
+      itens: [
+        { nome: 'Financeiro', rota: '/financeiro', icon: 'cash-outline' },
+        { nome: 'Vencimentos', rota: '/vencimentos', icon: 'calendar-outline' },
+        { nome: 'Cobrança Diária', rota: '/cobranca-diaria', icon: 'send-outline' },
+        { nome: 'Automações', rota: '/automacoes', icon: 'timer-outline' },
+      ],
+    },
+    {
+      titulo: 'Análise',
+      itens: [{ nome: 'Relatórios', rota: '/relatorios', icon: 'bar-chart-outline' }],
+    },
+    {
+      titulo: 'Sistema',
+      itens: [{ nome: 'Configurações', rota: '/configuracoes', icon: 'settings-outline' }],
+    },
   ];
 
   isLoginRoute = false;
@@ -49,9 +71,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private alertasOperacionais: AlertasOperacionaisService,
     private sistemaService: SistemaService,
     private configuracao: ConfiguracaoService,
-    private confirmacao: ConfirmacaoService,
-    private tema: TemaService,
-    private toast: ToastService
+    private tema: TemaService
   ) {
     this.router.events
       .pipe(

@@ -71,3 +71,7 @@
 </div>
 
 <app-empty-state *ngIf="!loading && planos.length === 0"></app-empty-state>
+<app-empty-state
+  *ngIf="!loading && planos.length > 0 && planosFiltrados.length === 0"
+  message="Nenhum plano encontrado para os filtros."
+></app-empty-state>

@@ -216,16 +216,29 @@ export class ConfiguracoesPage implements OnInit {
   baixarBackup(): void {
     this.baixandoBackup = true;
     this.sistemaService.baixarBackup().subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const data = new Date().toISOString().slice(0, 10);
-        link.href = url;
-        link.download = `crm-jptv-backup-${data}.db`;
-        link.click();
-        URL.revokeObjectURL(url);
-        this.baixandoBackup = false;
-        void this.toast.success('Backup baixado com sucesso.');
+      next: async (blob) => {
+        try {
+          if (blob.type.includes('json') || blob.type.includes('text')) {
+            const texto = await blob.text();
+            const erro = JSON.parse(texto) as { message?: string };
+            throw new Error(erro.message ?? 'Erro ao baixar backup.');
+          }
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          const data = new Date().toISOString().slice(0, 10);
+          link.href = url;
+          link.download = `crm-jptv-backup-${data}.db`;
+          link.click();
+          URL.revokeObjectURL(url);
+          void this.toast.success('Backup baixado com sucesso.');
+        } catch (err) {
+          void this.toast.error(
+            err instanceof Error ? err.message : 'Erro ao baixar backup.'
+          );
+        } finally {
+          this.baixandoBackup = false;
+        }
       },
       error: (err) => {
         this.baixandoBackup = false;

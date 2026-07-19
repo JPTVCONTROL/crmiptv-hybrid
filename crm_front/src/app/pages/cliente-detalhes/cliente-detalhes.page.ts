@@ -67,7 +67,13 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.clienteId = Number(this.route.snapshot.paramMap.get('id'));
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isInteger(id) || id <= 0) {
+      void this.router.navigate(['/clientes']);
+      return;
+    }
+
+    this.clienteId = id;
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }

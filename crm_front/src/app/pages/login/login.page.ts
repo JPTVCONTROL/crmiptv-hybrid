@@ -52,8 +52,10 @@ export class LoginPage implements OnInit {
       next: () => {
         localStorage.setItem(EMAIL_LEMBRADO_KEY, email);
         this.carregando = false;
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        void this.router.navigateByUrl(returnUrl || '/dashboard');
+        const returnUrl = this.resolverReturnUrl(
+          this.route.snapshot.queryParamMap.get('returnUrl')
+        );
+        void this.router.navigateByUrl(returnUrl);
       },
       error: (err: Error) => {
         this.carregando = false;
@@ -63,5 +65,13 @@ export class LoginPage implements OnInit {
           : msg || 'Não foi possível entrar.';
       },
     });
+  }
+
+  private resolverReturnUrl(raw: string | null): string {
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//')) {
+      return '/dashboard';
+    }
+
+    return raw;
   }
 }

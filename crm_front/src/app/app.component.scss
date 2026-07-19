@@ -58,9 +58,31 @@ ion-menu.crm-menu ion-content.menu-content::part(scroll) {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.875rem;
   padding: 0.875rem 0.625rem 0.5rem;
   overflow-y: auto;
+}
+
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.menu-section + .menu-section {
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--crm-border-subtle);
+}
+
+.menu-section-title {
+  margin: 0;
+  padding: 0 0.875rem 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
 }
 
 .menu-link {

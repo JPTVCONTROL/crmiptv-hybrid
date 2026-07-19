@@ -11,6 +11,7 @@ import { Cliente, Mensalidade } from '../../core/models';
 import {
   calcularDias,
   clienteEstaAtivo,
+  dataIsoParaDateUtc,
   formatarData,
   formatarValor,
   statusCliente,
@@ -286,21 +287,21 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     if (!dataIso) return false;
 
     const [ano, mes] = this.periodo.split('-').map(Number);
-    const data = new Date(dataIso);
+    const data = dataIsoParaDateUtc(dataIso);
 
-    return data.getFullYear() === ano && data.getMonth() + 1 === mes;
+    return data.getUTCFullYear() === ano && data.getUTCMonth() + 1 === mes;
   }
 
   private estaNoPeriodoAnterior(dataIso?: string | null): boolean {
     if (!dataIso) return false;
 
     const [ano, mes] = this.periodo.split('-').map(Number);
-    const referencia = new Date(ano, mes - 2, 1);
-    const data = new Date(dataIso);
+    const referencia = new Date(Date.UTC(ano, mes - 2, 1, 12, 0, 0));
+    const data = dataIsoParaDateUtc(dataIso);
 
     return (
-      data.getFullYear() === referencia.getFullYear() &&
-      data.getMonth() === referencia.getMonth()
+      data.getUTCFullYear() === referencia.getUTCFullYear() &&
+      data.getUTCMonth() === referencia.getUTCMonth()
     );
   }
 

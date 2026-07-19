@@ -264,9 +264,10 @@ export class ClientesPage implements OnInit, OnDestroy {
 
     this.route.queryParamMap.subscribe((params) => {
       const status = params.get('status');
-      if (status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO') {
-        this.filtroStatus = status;
-      }
+      this.filtroStatus =
+        status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO'
+          ? status
+          : 'TODOS';
 
       this.filtroCadastro = resolverFiltroCadastro(params.get('cadastro'));
       this.filtroCadastroIncompleto = params.get('incompleto') === '1';

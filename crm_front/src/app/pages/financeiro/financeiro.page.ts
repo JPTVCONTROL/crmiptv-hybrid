@@ -76,14 +76,13 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
     this.route.queryParamMap.subscribe((params) => {
       const status = params.get('status');
-      if (
+      this.filtro =
         status === 'PENDENTE' ||
         status === 'REGULAR' ||
         status === 'ATRASADO'
-      ) {
-        this.filtro = status;
-        this.pagina = 1;
-      }
+          ? status
+          : 'TODOS';
+      this.pagina = 1;
     });
 
     this.carregar();

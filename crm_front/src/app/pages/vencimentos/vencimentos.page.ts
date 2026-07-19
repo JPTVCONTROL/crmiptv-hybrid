@@ -63,14 +63,13 @@ export class VencimentosPage implements OnInit, OnDestroy {
 
     this.route.queryParamMap.subscribe((params) => {
       const filtro = params.get('filtro');
-      if (
+      this.filtro =
         filtro === 'HOJE' ||
         filtro === 'PROXIMO' ||
         filtro === 'ATRASADO'
-      ) {
-        this.filtro = filtro;
-        this.pagina = 1;
-      }
+          ? filtro
+          : 'TODOS';
+      this.pagina = 1;
     });
 
     this.carregar();

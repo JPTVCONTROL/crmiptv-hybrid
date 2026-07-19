@@ -88,3 +88,7 @@
 </div>
 
 <app-empty-state *ngIf="!loading && aplicativos.length === 0"></app-empty-state>
+<app-empty-state
+  *ngIf="!loading && aplicativos.length > 0 && aplicativosFiltrados.length === 0"
+  message="Nenhum aplicativo encontrado para os filtros."
+></app-empty-state>
