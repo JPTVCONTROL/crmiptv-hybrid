@@ -49,6 +49,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'automacoes',
+        loadChildren: () =>
+          import('./pages/automacoes/automacoes.module').then(
+            (m) => m.AutomacoesPageModule
+          ),
+      },
+      {
         path: 'catalogos',
         loadChildren: () =>
           import('./pages/catalogos/catalogos.module').then(

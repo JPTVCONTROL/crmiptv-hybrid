@@ -1,0 +1,142 @@
+<app-page-header
+  title="Automações"
+  subtitle="Lembretes e cobranças automáticas — planejamento para uso futuro."
+></app-page-header>
+
+<app-loading *ngIf="loading"></app-loading>
+
+<div *ngIf="!loading" class="space-y-6 max-w-5xl">
+  <div class="crm-card border border-violet-500/20 bg-violet-500/5">
+    <div class="flex items-start gap-3">
+      <ion-icon name="information-circle-outline" class="text-violet-400 text-xl shrink-0 mt-0.5"></ion-icon>
+      <div class="space-y-2">
+        <p class="text-slate-300 text-sm">
+          Hoje o CRM envia mensagens de forma
+          <span class="text-white font-medium">manual</span>, abrindo o WhatsApp com o texto pronto.
+          Esta página reúne o fluxo atual e o que será automatizado depois.
+        </p>
+        <p class="text-slate-500 text-xs">
+          Antecedência atual de lembretes: {{ diasAntecedencia }} dias (ajustável em Configurações).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <section class="space-y-3">
+    <h2 class="text-white font-semibold text-lg">Fluxo atual</h2>
+    <p class="text-slate-500 text-sm">
+      Use estas telas enquanto as automações não estiverem ativas.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <article *ngFor="let fluxo of fluxosAtuais" class="crm-card space-y-3 !p-4">
+        <h3 class="text-white font-medium">{{ fluxo.titulo }}</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">{{ fluxo.descricao }}</p>
+        <a [routerLink]="fluxo.rota" class="crm-btn-ghost !py-1.5 !text-xs inline-block no-underline">
+          {{ fluxo.rotuloLink }}
+        </a>
+      </article>
+    </div>
+  </section>
+
+  <section class="space-y-3">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+      <div>
+        <h2 class="text-white font-semibold text-lg">Automações planejadas</h2>
+        <p class="text-slate-500 text-sm">
+          Funcionalidades previstas para lembretes e cobranças sem intervenção manual.
+        </p>
+      </div>
+      <span class="crm-badge-neutral self-start">Roadmap</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <article
+        *ngFor="let item of automacoesPlanejadas"
+        class="crm-card space-y-3 !p-4 opacity-90"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-3 min-w-0">
+            <div class="crm-empty-state-icon !w-10 !h-10 !mb-0 shrink-0">
+              <ion-icon [name]="item.icon" class="text-lg"></ion-icon>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-white font-medium">{{ item.titulo }}</h3>
+              <p class="text-slate-400 text-sm mt-1 leading-relaxed">{{ item.descricao }}</p>
+            </div>
+          </div>
+          <span [ngClass]="classesStatus(item.status)">{{ rotuloStatus(item.status) }}</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="crm-card space-y-5 max-w-3xl">
+    <div>
+      <h2 class="text-white font-semibold text-lg">Prévia do painel futuro</h2>
+      <p class="text-slate-500 text-sm mt-1">
+        Campos ilustrativos — ainda desabilitados até a implementação no backend.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Lembrete automático</label>
+        <div class="flex items-center gap-2">
+          <input
+            class="crm-input max-w-[5rem]"
+            type="number"
+            [value]="diasAntecedencia"
+            disabled
+          />
+          <span class="text-slate-500 text-sm">dias antes do vencimento</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Repetir cobrança de atrasados</label>
+        <div class="flex items-center gap-2">
+          <input class="crm-input max-w-[5rem]" type="number" value="3" disabled />
+          <span class="text-slate-500 text-sm">dias entre envios</span>
+        </div>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-slate-300 mb-2 text-sm">Horários de envio</label>
+        <div class="flex flex-wrap gap-2">
+          <span
+            *ngFor="let horario of previewHorarios"
+            class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-400 text-sm"
+          >
+            {{ horario }}
+          </span>
+          <span class="px-3 py-1.5 rounded-lg border border-dashed border-slate-700 text-slate-600 text-sm">
+            + horário
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-3 pt-2 border-t border-slate-800/80">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-slate-300 text-sm font-medium">Ativar lembretes automáticos</p>
+          <p class="text-slate-500 text-xs">Substitui envio manual na Cobrança Diária.</p>
+        </div>
+        <ion-toggle disabled aria-label="Ativar lembretes automáticos"></ion-toggle>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-slate-300 text-sm font-medium">Ativar cobrança de atrasados</p>
+          <p class="text-slate-500 text-xs">Usa a mensagem de cobrança das Configurações.</p>
+        </div>
+        <ion-toggle disabled aria-label="Ativar cobrança de atrasados"></ion-toggle>
+      </div>
+    </div>
+
+    <button type="button" class="crm-btn-primary opacity-50 cursor-not-allowed" disabled>
+      Salvar automações (em breve)
+    </button>
+  </section>
+</div>

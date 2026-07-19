@@ -29,6 +29,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { nome: 'Clientes', rota: '/clientes', icon: 'people-outline' },
     { nome: 'Financeiro', rota: '/financeiro', icon: 'cash-outline' },
     { nome: 'Cobrança Diária', rota: '/cobranca-diaria', icon: 'send-outline' },
+    { nome: 'Automações', rota: '/automacoes', icon: 'timer-outline' },
     { nome: 'Vencimentos', rota: '/vencimentos', icon: 'calendar-outline' },
     { nome: 'Catálogos', rota: '/catalogos', icon: 'library-outline' },
     { nome: 'Relatórios', rota: '/relatorios', icon: 'bar-chart-outline' },
