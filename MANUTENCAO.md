@@ -74,19 +74,33 @@ cd crm_back
 npm install
 ```
 
-Configure o arquivo `.env` (já existe um modelo):
+Configure o arquivo `.env`. Copie o modelo e ajuste os valores:
+
+```bash
+copy .env.example .env
+```
 
 ```env
 DATABASE_URL="file:./dev.db"
 PORT=3001
 NODE_ENV=development
+
+# Autenticação (admin único — usado no seed)
+JWT_SECRET="altere-esta-chave-em-producao"
+JWT_EXPIRES_IN="7d"
+ADMIN_EMAIL="admin@jptv.com.br"
+ADMIN_PASSWORD="admin123"
+ADMIN_NOME="Administrador"
 ```
 
-Crie o banco e gere o client Prisma:
+> **Produção:** use `JWT_SECRET` longo e aleatório e troque `ADMIN_PASSWORD` antes do primeiro deploy.
+
+Crie o banco, gere o client Prisma e crie o usuário admin:
 
 ```bash
 npm run db:push
 npm run db:generate
+npm run db:seed
 ```
 
 Inicie a API em modo desenvolvimento:
@@ -117,7 +131,7 @@ npm start
 
 O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 
-> **Importante:** o backend deve estar rodando antes de usar o frontend, pois todas as telas consomem a API em `http://localhost:3001/api`.
+> **Importante:** o backend deve estar rodando antes de usar o frontend. Ao abrir **http://localhost:4200**, você será redirecionado para **`/login`**. Use as credenciais definidas no `.env` do backend (padrão do seed: `admin@jptv.com.br` / `admin123`).
 
 ---
 
@@ -133,6 +147,7 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | `npm run db:generate` | Regenera Prisma Client após alterar schema |
 | `npm run db:push` | Sincroniza schema com SQLite (dev) |
 | `npm run db:migrate` | Cria migration versionada (recomendado em produção) |
+| `npm run db:seed` | Cria/atualiza admin e planos padrão JPTV |
 | `npm run db:studio` | Abre Prisma Studio (GUI do banco) |
 
 ### Frontend (`crm_front`)
@@ -155,6 +170,25 @@ Todas as respostas seguem o envelope:
 ```json
 { "success": true, "data": {}, "message": "..." }
 ```
+
+### Autenticação
+
+Rotas públicas: `GET /health` (fora de `/api`) e `POST /api/auth/login`.
+
+**Todas as demais rotas `/api/*` exigem header:**
+
+```
+Authorization: Bearer <token>
+```
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/auth/login` | Login com `{ "email", "senha" }` → retorna `{ token, usuario }` |
+| GET | `/auth/me` | Retorna usuário autenticado (requer token) |
+
+O token JWT expira conforme `JWT_EXPIRES_IN` no `.env` (padrão: `7d`).
+
+**Usuário admin:** criado pelo `npm run db:seed` a partir de `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_NOME`. Reexecutar o seed atualiza nome e senha do admin existente.
 
 ### Clientes (`/clientes`)
 
@@ -191,6 +225,14 @@ Todas as respostas seguem o envelope:
 
 CRUD completo. Nome é obrigatório na criação. Retorna contagem de clientes (`_count.clientes`).
 
+### Planos (`/planos`)
+
+CRUD completo. Campos: `nome`, `valor`, `diasValidade`, `ativo`. Planos podem ser vinculados ao cadastro de clientes.
+
+### Dispositivos (`/dispositivos`)
+
+CRUD do **catálogo** de aparelhos (nome, modelo, descrição). No cadastro do cliente, seleciona-se um item do catálogo por tela + MAC address (campo JSON `dispositivos` no cliente).
+
 ### Configurações (`/configuracoes`)
 
 | Método | Rota | Descrição |
@@ -206,15 +248,19 @@ Campos editáveis: dados da empresa, PIX, cor principal e templates de mensagens
 
 | Rota | Tela | Função |
 |------|------|--------|
-| `/dashboard` | Dashboard | KPIs, gráfico de faturamento, próximos vencimentos |
-| `/clientes` | Clientes | Listagem, busca, CRUD |
+| `/login` | Login | Autenticação (JWT) |
+| `/dashboard` | Dashboard | KPIs, gráfico de faturamento, cobrança em lote |
+| `/clientes` | Clientes | Listagem com filtros por status, busca, CRUD |
 | `/clientes/:id` | Detalhe | Perfil completo, mensalidades, WhatsApp, pagamento |
-| `/financeiro` | Financeiro | Cobranças pendentes com filtros e paginação |
-| `/vencimentos` | Vencimentos | Pendentes ordenados por data |
+| `/financeiro` | Financeiro | Cobranças pendentes com filtros, paginação e lote |
+| `/vencimentos` | Vencimentos | Pendentes ordenados por data, cobrança em lote |
 | `/aplicativos` | Aplicativos | Catálogo de apps IPTV |
-| `/dispositivos` | Dispositivos | Aparelhos cadastrados nos clientes |
+| `/planos` | Planos | Catálogo de planos (valor e validade) |
+| `/dispositivos` | Dispositivos | Catálogo de aparelhos para vincular aos clientes |
 | `/relatorios` | Relatórios | Resumo financeiro |
-| `/configuracoes` | Configurações | Empresa, PIX, mensagem WhatsApp |
+| `/configuracoes` | Configurações | Empresa, PIX, templates WhatsApp |
+
+Rotas internas (exceto `/login`) exigem sessão ativa. O botão **Sair** no menu encerra a sessão.
 
 ### Mobile-first
 
@@ -233,12 +279,15 @@ Paleta herdada do projeto React legado:
 
 Classes utilitárias em `src/theme/tailwind.css`: `.crm-input`, `.crm-card`, `.crm-btn-primary`, etc.
 
-### WhatsApp
+### WhatsApp (envio manual)
 
-Utilitário em `src/app/shared/utils/whatsapp.ts`:
+Utilitários em `src/app/shared/utils/whatsapp.ts` e `cobranca-lote.ts`:
 
-- Variáveis de template: `{nome}`, `{referencia}`, `{valor}`, `{vencimento}`, `{empresa}`, `{pix}`, `{tipoPix}`, `{favorecido}`
-- Formata telefone brasileiro com DDI `55`
+- Abre `wa.me` com mensagem pré-preenchida (não usa API oficial da Meta).
+- Variáveis de template: `{nome}`, `{referencia}`, `{valor}`, `{vencimento}`, `{expiraEm}`, `{pagoEm}`, `{empresa}`, `{pix}`, `{tipoPix}`, `{favorecido}`
+- Template customizado de **cobrança** só para clientes **atrasados**; pendente/regular usa lembrete amigável.
+- Cobrança em lote com confirmação cliente a cliente (Financeiro, Vencimentos, Dashboard).
+- Após pagamento, oferece envio de mensagem de **renovação**.
 
 ---
 
@@ -275,7 +324,7 @@ Em seguida execute `npm run db:push` apenas se o schema tiver divergido.
 
 ### Desenvolvimento
 
-- Backend: `.env` com `PORT=3001`
+- Backend: `.env` com `PORT=3001`, `JWT_SECRET` e credenciais do admin (ver `.env.example`)
 - Frontend: `src/environments/environment.ts` → `apiUrl: 'http://localhost:3001/api'`
 
 ### Produção
@@ -283,8 +332,9 @@ Em seguida execute `npm run db:push` apenas se o schema tiver divergido.
 **Backend:**
 
 1. Defina `NODE_ENV=production` no `.env`.
-2. Execute `npm run build && npm start`.
-3. Considere migrar de SQLite para PostgreSQL/MySQL em ambientes multi-usuário:
+2. Use `JWT_SECRET` forte e altere `ADMIN_PASSWORD`; execute `npm run db:seed`.
+3. Execute `npm run build && npm start`.
+4. Considere migrar de SQLite para PostgreSQL/MySQL em ambientes multi-usuário:
    - Altere `provider` e `url` em `schema.prisma`.
    - Atualize `DATABASE_URL`.
 
@@ -366,9 +416,11 @@ Exemplo em rede local: `apiUrl: 'http://192.168.1.100:3001/api'`
 
 ## 11. Solução de Problemas
 
-### Frontend não carrega dados
+### Frontend não carrega dados / redireciona para login
 
 - Verifique se o backend está em execução na porta 3001.
+- Faça login em `/login` com e-mail e senha do admin (seed).
+- Se aparecer "Token ausente" ou 401, clique em **Sair** e entre novamente.
 - Confirme CORS (já habilitado globalmente no backend).
 - Abra DevTools → Network e verifique erros de conexão.
 - Confirme `apiUrl` em `environment.ts`.
@@ -379,6 +431,18 @@ Exemplo em rede local: `apiUrl: 'http://192.168.1.100:3001/api'`
 cd crm_back
 npm run db:push
 npm run db:generate
+npm run db:seed
+```
+
+> Se `db:generate` falhar com **EPERM** no Windows, pare o processo do backend (`npm run dev`) e execute novamente.
+
+### Esqueci a senha do admin
+
+Atualize `ADMIN_PASSWORD` no `.env` do backend e execute:
+
+```bash
+cd crm_back
+npm run db:seed
 ```
 
 ### Porta 3001 ou 4200 em uso
@@ -400,12 +464,15 @@ Atualize `apiUrl` no frontend se a porta do backend mudar.
 
 ## 12. Roadmap / Melhorias Futuras
 
-Itens presentes no schema mas ainda não totalmente implementados na UI:
+Itens ainda não implementados ou parciais:
 
-- CRUD de **Planos** (`model Plano` no Prisma)
-- Autenticação de usuários (atualmente sistema single-admin)
+- Relatórios com filtro de período, gráfico e exportação CSV
+- Tela para **trocar senha** do admin (sem editar `.env`)
 - Aplicação dinâmica de `corPrincipal` no tema
-- Templates adicionais de mensagem (boas-vindas, bloqueio, recibo)
+- Unificação visual Financeiro × Vencimentos (padrão da tela Clientes)
+- Toasts Ionic no lugar de `alert()` nativo
+- WhatsApp automático via API oficial da Meta (hoje só envio manual `wa.me`)
+- Migrations Prisma versionadas para deploy em produção
 
 ---
 

@@ -29,6 +29,7 @@ libpeerconnection.log
 crm_back/dist/
 crm_back/.env
 crm_back/.env.*
+!crm_back/.env.example
 
 # Prisma / SQLite (banco local de desenvolvimento)
 crm_back/prisma/*.db
