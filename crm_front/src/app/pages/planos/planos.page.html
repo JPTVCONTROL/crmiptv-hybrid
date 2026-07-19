@@ -12,8 +12,9 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <div
         *ngFor="let plano of grupo.planos"
-        class="crm-card !p-3 hover:border-violet-600 transition-colors"
+        class="crm-card !p-3 hover:border-violet-600 transition-colors cursor-pointer"
         [class.opacity-60]="!plano.ativo"
+        (click)="verClientes(plano)"
       >
         <div class="flex items-start justify-between gap-2 mb-2">
           <div class="min-w-0">
@@ -36,7 +37,7 @@
           <p>{{ plano._count?.clientes ?? 0 }} cliente(s) vinculado(s)</p>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex gap-2" (click)="$event.stopPropagation()">
           <button class="crm-btn-ghost flex-1 !py-1.5 !text-xs" (click)="abrirModal(plano)">Editar</button>
           <button class="crm-btn-danger flex-1 !py-1.5 !text-xs" (click)="excluir(plano)">Excluir</button>
         </div>

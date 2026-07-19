@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { AplicativoService } from '../../../core/services/aplicativo.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Aplicativo } from '../../../core/models';
 
 @Component({
@@ -28,7 +29,8 @@ export class NovoAplicativoModalComponent implements OnInit {
 
   constructor(
     private modalCtrl: ModalController,
-    private aplicativoService: AplicativoService
+    private aplicativoService: AplicativoService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -67,13 +69,13 @@ export class NovoAplicativoModalComponent implements OnInit {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Selecione um arquivo de imagem (PNG, JPG, WEBP...).');
+      void this.toast.warning('Selecione um arquivo de imagem (PNG, JPG, WEBP...).');
       input.value = '';
       return;
     }
 
     if (file.size > 500_000) {
-      alert('Imagem muito grande. Use até 500 KB ou informe uma URL.');
+      void this.toast.warning('Imagem muito grande. Use até 500 KB ou informe uma URL.');
       input.value = '';
       return;
     }
@@ -98,7 +100,7 @@ export class NovoAplicativoModalComponent implements OnInit {
 
   salvar(): void {
     if (!this.form.nome.trim()) {
-      alert('Informe o nome do aplicativo.');
+      void this.toast.warning('Informe o nome do aplicativo.');
       return;
     }
 
@@ -114,7 +116,7 @@ export class NovoAplicativoModalComponent implements OnInit {
       },
       error: (err) => {
         this.salvando = false;
-        alert(err.message ?? 'Erro ao salvar aplicativo.');
+        void this.toast.error(err.message ?? 'Erro ao salvar aplicativo.');
       },
     });
   }

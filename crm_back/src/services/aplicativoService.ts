@@ -14,6 +14,11 @@ export class AplicativoService {
     return aplicativo;
   }
 
+  async listarClientes(id: number) {
+    await this.buscarPorId(id);
+    return aplicativoRepository.findClientesByAplicativoId(id);
+  }
+
   async criar(dados: CreateAplicativoDto) {
     if (!dados.nome?.trim()) {
       throw new ValidationError('O nome do aplicativo é obrigatório.');

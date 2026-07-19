@@ -35,6 +35,10 @@ export class AuthService {
     );
   }
 
+  alterarSenha(senhaAtual: string, novaSenha: string): Observable<void> {
+    return this.api.put<void>('/auth/senha', { senhaAtual, novaSenha });
+  }
+
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);

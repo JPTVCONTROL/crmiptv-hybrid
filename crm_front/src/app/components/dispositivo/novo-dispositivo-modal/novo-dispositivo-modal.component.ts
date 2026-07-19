@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { DispositivoService } from '../../../core/services/dispositivo.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Dispositivo } from '../../../core/models';
 
 @Component({
@@ -20,7 +21,8 @@ export class NovoDispositivoModalComponent implements OnInit {
 
   constructor(
     private modalCtrl: ModalController,
-    private dispositivoService: DispositivoService
+    private dispositivoService: DispositivoService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -40,7 +42,7 @@ export class NovoDispositivoModalComponent implements OnInit {
 
   salvar(): void {
     if (!this.form.nome.trim()) {
-      alert('Informe o nome do dispositivo.');
+      void this.toast.warning('Informe o nome do dispositivo.');
       return;
     }
 
@@ -56,7 +58,7 @@ export class NovoDispositivoModalComponent implements OnInit {
       },
       error: (err) => {
         this.salvando = false;
-        alert(err.message ?? 'Erro ao salvar dispositivo.');
+        void this.toast.error(err.message ?? 'Erro ao salvar dispositivo.');
       },
     });
   }

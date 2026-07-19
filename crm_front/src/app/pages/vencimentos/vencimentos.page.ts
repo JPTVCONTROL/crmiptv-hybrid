@@ -4,6 +4,7 @@ import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Configuracao, Mensalidade } from '../../core/models';
 import {
   formatarValor,
@@ -23,6 +24,8 @@ import {
 } from '../../shared/utils/cobranca-lote';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 
+export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
+
 @Component({
   selector: 'app-vencimentos',
   templateUrl: './vencimentos.page.html',
@@ -33,17 +36,32 @@ export class VencimentosPage implements OnInit {
   nomesClientes = new Map<number, string>();
   configuracao: Configuracao | null = null;
   loading = true;
+  busca = '';
+  filtro: FiltroVencimento = 'TODOS';
   selecionados = new Set<number>();
+
+  readonly opcoesFiltro: { valor: FiltroVencimento; rotulo: string }[] = [
+    { valor: 'TODOS', rotulo: 'Todos' },
+    { valor: 'HOJE', rotulo: 'Hoje' },
+    { valor: 'PROXIMO', rotulo: 'Próximos' },
+    { valor: 'ATRASADO', rotulo: 'Atrasados' },
+  ];
 
   constructor(
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
-    private pagamentoUi: PagamentoUiService
+    private pagamentoUi: PagamentoUiService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
     this.configuracaoService.carregar().subscribe({ next: (c) => (this.configuracao = c) });
+    this.carregar();
+  }
+
+  carregar(): void {
+    this.loading = true;
     forkJoin([
       this.mensalidadeService.listar(),
       this.clienteService.listar(),
@@ -58,6 +76,27 @@ export class VencimentosPage implements OnInit {
       },
       error: () => (this.loading = false),
     });
+  }
+
+  get mensalidadesFiltradas(): Mensalidade[] {
+    const termo = this.busca.toLowerCase().trim();
+
+    return this.mensalidades.filter((m) => {
+      const matchBusca =
+        !termo || m.cliente?.nome?.toLowerCase().includes(termo);
+
+      const matchFiltro =
+        this.filtro === 'TODOS' || this.categoriaVencimento(m) === this.filtro;
+
+      return matchBusca && matchFiltro;
+    });
+  }
+
+  categoriaVencimento(m: Mensalidade): FiltroVencimento {
+    const dias = calcularDias(m.vencimento);
+    if (dias < 0) return 'ATRASADO';
+    if (dias === 0) return 'HOJE';
+    return 'PROXIMO';
   }
 
   get totalPendente(): string {
@@ -78,6 +117,85 @@ export class VencimentosPage implements OnInit {
     if (dias < 0) return 'ATRASADO';
     if (dias === 0) return 'HOJE';
     return 'PRÓXIMO';
+  }
+
+  definirFiltro(valor: FiltroVencimento): void {
+    this.filtro = valor;
+  }
+
+  contagemFiltro(valor: FiltroVencimento): number {
+    if (valor === 'TODOS') {
+      return this.mensalidades.length;
+    }
+
+    return this.mensalidades.filter(
+      (m) => this.categoriaVencimento(m) === valor
+    ).length;
+  }
+
+  get temFiltrosAtivos(): boolean {
+    return this.busca.trim().length > 0 || this.filtro !== 'TODOS';
+  }
+
+  limparFiltros(): void {
+    this.busca = '';
+    this.filtro = 'TODOS';
+  }
+
+  classesChipStatus(filtro: FiltroVencimento): Record<string, boolean> {
+    const ativo = this.filtro === filtro;
+
+    if (!ativo) {
+      return {
+        'border-slate-700': true,
+        'bg-slate-800/50': true,
+        'text-slate-400': true,
+        'hover:border-slate-600': true,
+        'hover:text-slate-300': true,
+      };
+    }
+
+    if (filtro === 'TODOS') {
+      return {
+        'border-violet-500': true,
+        'bg-violet-600/15': true,
+        'text-violet-200': true,
+        'shadow-sm': true,
+        'shadow-violet-900/20': true,
+      };
+    }
+
+    if (filtro === 'PROXIMO') {
+      return {
+        'border-amber-500': true,
+        'bg-amber-600/15': true,
+        'text-amber-200': true,
+        'shadow-sm': true,
+        'shadow-amber-900/20': true,
+      };
+    }
+
+    return {
+      'border-red-500': true,
+      'bg-red-600/15': true,
+      'text-red-200': true,
+      'shadow-sm': true,
+      'shadow-red-900/20': true,
+    };
+  }
+
+  classesChipContagem(filtro: FiltroVencimento): Record<string, boolean> {
+    const ativo = this.filtro === filtro;
+
+    if (!ativo) {
+      return { 'bg-slate-700/80': true };
+    }
+
+    return {
+      'bg-violet-500/25': filtro === 'TODOS',
+      'bg-red-500/25': filtro === 'HOJE' || filtro === 'ATRASADO',
+      'bg-amber-500/25': filtro === 'PROXIMO',
+    };
   }
 
   telefone(m: Mensalidade): string {
@@ -115,9 +233,9 @@ export class VencimentosPage implements OnInit {
           empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
           templateRenovacao: this.configuracao?.mensagemRenovacao,
         });
-        this.ngOnInit();
+        this.carregar();
       },
-      error: (err) => alert(err.message),
+      error: (err) => void this.toast.error(err.message),
     });
   }
 
@@ -144,19 +262,19 @@ export class VencimentosPage implements OnInit {
       return;
     }
 
-    this.selecionados = new Set(this.mensalidades.map((m) => m.id));
+    this.selecionados = new Set(this.mensalidadesFiltradas.map((m) => m.id));
   }
 
   get todosSelecionados(): boolean {
     return (
-      this.mensalidades.length > 0 &&
-      this.mensalidades.every((m) => this.selecionados.has(m.id))
+      this.mensalidadesFiltradas.length > 0 &&
+      this.mensalidadesFiltradas.every((m) => this.selecionados.has(m.id))
     );
   }
 
   selecionarAtrasados(): void {
     this.selecionados = new Set(
-      this.mensalidades
+      this.mensalidadesFiltradas
         .filter((m) => calcularDias(m.vencimento) < 0)
         .map((m) => m.id)
     );

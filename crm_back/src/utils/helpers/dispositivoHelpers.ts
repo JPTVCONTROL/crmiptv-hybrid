@@ -26,13 +26,25 @@ export function contarClientesPorDispositivo(
   let total = 0;
 
   for (const cliente of clientes) {
-    const lista = parseDispositivosClienteJson(cliente.dispositivos);
-    if (lista.some((item) => Number(item.dispositivoId) === dispositivoId)) {
+    if (clienteUsaDispositivo(cliente.dispositivos, dispositivoId).usa) {
       total++;
     }
   }
 
   return total;
+}
+
+export function clienteUsaDispositivo(
+  dispositivosJson: string | null | undefined,
+  dispositivoId: number
+): { usa: boolean; macs: string[] } {
+  const lista = parseDispositivosClienteJson(dispositivosJson);
+  const macs = lista
+    .filter((item) => Number(item.dispositivoId) === dispositivoId)
+    .map((item) => item.macAddress?.trim())
+    .filter((mac): mac is string => !!mac);
+
+  return { usa: macs.length > 0, macs };
 }
 
 function normalizarDispositivoClienteJson(valor: unknown): DispositivoClienteJson {

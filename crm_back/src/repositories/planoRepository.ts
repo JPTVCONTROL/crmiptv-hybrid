@@ -45,6 +45,18 @@ export class PlanoRepository {
   delete(id: number) {
     return prisma.plano.delete({ where: { id } });
   }
+
+  findClientesByPlanoId(planoId: number) {
+    return prisma.cliente.findMany({
+      where: { planoId },
+      select: {
+        id: true,
+        nome: true,
+        telefone: true,
+      },
+      orderBy: { nome: 'asc' },
+    });
+  }
 }
 
 export const planoRepository = new PlanoRepository();

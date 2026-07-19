@@ -1,0 +1,54 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="bg-slate-900">
+    <ion-title class="text-white">Clientes — {{ titulo() }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-slate-950">
+  <div class="p-4 md:p-6 modal-form-body">
+    <app-loading *ngIf="loading"></app-loading>
+    <p *ngIf="erro" class="text-red-400">{{ erro }}</p>
+
+    <div *ngIf="!loading && !erro" class="space-y-3">
+      <p class="text-slate-400 text-sm">
+        {{ clientes.length }}
+        {{ clientes.length === 1 ? 'cliente usa' : 'clientes usam' }}
+        este dispositivo
+      </p>
+
+      <div
+        *ngFor="let cliente of clientes"
+        class="rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+      >
+        <div class="min-w-0">
+          <a
+            [routerLink]="['/clientes', cliente.id]"
+            class="text-white font-medium no-underline hover:text-violet-300 block truncate"
+            (click)="fechar()"
+          >
+            {{ cliente.nome }}
+          </a>
+          <p class="text-slate-400 text-sm mt-1">{{ cliente.telefone }}</p>
+          <p class="text-slate-500 text-xs mt-1">
+            MAC: {{ rotuloMacs(cliente.macs) }}
+          </p>
+        </div>
+        <a
+          [routerLink]="['/clientes', cliente.id]"
+          class="crm-btn-ghost no-underline shrink-0 self-start sm:self-auto"
+          (click)="fechar()"
+        >
+          Ver cliente
+        </a>
+      </div>
+
+      <app-empty-state
+        *ngIf="clientes.length === 0"
+        message="Nenhum cliente vinculado a este dispositivo."
+      ></app-empty-state>
+    </div>
+  </div>
+</ion-content>

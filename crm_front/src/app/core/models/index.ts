@@ -30,6 +30,19 @@ export interface Dispositivo {
   _count?: { clientes: number };
 }
 
+export interface ClienteDispositivoResumo {
+  id: number;
+  nome: string;
+  telefone: string;
+  macs: string[];
+}
+
+export interface ClienteAplicativoResumo {
+  id: number;
+  nome: string;
+  telefone: string;
+}
+
 export interface Plano {
   id: number;
   nome: string;

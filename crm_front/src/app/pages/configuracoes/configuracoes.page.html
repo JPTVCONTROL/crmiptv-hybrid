@@ -4,6 +4,29 @@
 
 <div *ngIf="!loading" class="crm-card space-y-8 max-w-4xl">
   <div>
+    <h2 class="text-white font-semibold text-lg mb-4">Conta</h2>
+    <p class="text-slate-500 text-sm mb-4">Altere a senha de acesso ao CRM.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Senha atual</label>
+        <input type="password" class="crm-input" [(ngModel)]="senhaAtual" autocomplete="current-password" />
+      </div>
+      <div></div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Nova senha</label>
+        <input type="password" class="crm-input" [(ngModel)]="novaSenha" autocomplete="new-password" />
+      </div>
+      <div>
+        <label class="block text-slate-300 mb-2 text-sm">Confirmar nova senha</label>
+        <input type="password" class="crm-input" [(ngModel)]="confirmarSenha" autocomplete="new-password" />
+      </div>
+    </div>
+    <button class="crm-btn-ghost mt-4" [disabled]="alterandoSenha" (click)="alterarSenha()">
+      {{ alterandoSenha ? 'Alterando...' : 'Alterar senha' }}
+    </button>
+  </div>
+
+  <div>
     <h2 class="text-white font-semibold text-lg mb-4">Empresa</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>

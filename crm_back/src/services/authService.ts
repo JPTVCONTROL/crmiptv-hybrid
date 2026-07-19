@@ -60,6 +60,33 @@ export class AuthService {
     };
   }
 
+  async alterarSenha(
+    id: number,
+    senhaAtual: string,
+    novaSenha: string
+  ): Promise<void> {
+    if (!senhaAtual || !novaSenha) {
+      throw new AuthError('Informe a senha atual e a nova senha.');
+    }
+
+    if (novaSenha.length < 6) {
+      throw new AuthError('A nova senha deve ter pelo menos 6 caracteres.');
+    }
+
+    const usuario = await usuarioRepository.findById(id);
+    if (!usuario) {
+      throw new AuthError('Usuário não encontrado.');
+    }
+
+    const senhaValida = await bcrypt.compare(senhaAtual, usuario.passwordHash);
+    if (!senhaValida) {
+      throw new AuthError('Senha atual incorreta.');
+    }
+
+    const passwordHash = await bcrypt.hash(novaSenha, 10);
+    await usuarioRepository.updatePassword(id, passwordHash);
+  }
+
   async obterPorId(id: number): Promise<AuthUsuario> {
     const usuario = await usuarioRepository.findById(id);
     if (!usuario) {

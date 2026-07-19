@@ -41,6 +41,18 @@ export class AplicativoRepository {
   delete(id: number) {
     return prisma.aplicativo.delete({ where: { id } });
   }
+
+  findClientesByAplicativoId(aplicativoId: number) {
+    return prisma.cliente.findMany({
+      where: { aplicativoId },
+      select: {
+        id: true,
+        nome: true,
+        telefone: true,
+      },
+      orderBy: { nome: 'asc' },
+    });
+  }
 }
 
 export const aplicativoRepository = new AplicativoRepository();

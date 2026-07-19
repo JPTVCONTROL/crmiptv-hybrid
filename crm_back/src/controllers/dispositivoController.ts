@@ -32,6 +32,20 @@ export class DispositivoController {
     }
   }
 
+  async listarClientes(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const clientes = await dispositivoService.listarClientes(id);
+      sendSuccess(res, clientes);
+    } catch (error) {
+      if (error instanceof DispositivoNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      sendError(res, 'Erro ao buscar clientes do dispositivo.');
+    }
+  }
+
   async criar(req: Request, res: Response): Promise<void> {
     try {
       const dispositivo = await dispositivoService.criar(req.body as CreateDispositivoDto);

@@ -14,6 +14,11 @@ export class DispositivoService {
     return dispositivo;
   }
 
+  async listarClientes(id: number) {
+    await this.buscarPorId(id);
+    return dispositivoRepository.findClientesByDispositivoId(id);
+  }
+
   async criar(dados: CreateDispositivoDto) {
     if (!dados.nome?.trim()) {
       throw new ValidationError('O nome do dispositivo é obrigatório.');

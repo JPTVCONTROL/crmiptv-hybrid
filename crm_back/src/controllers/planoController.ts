@@ -17,6 +17,20 @@ export class PlanoController {
     }
   }
 
+  async listarClientes(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const clientes = await planoService.listarClientes(id);
+      sendSuccess(res, clientes);
+    } catch (error) {
+      if (error instanceof PlanoNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      sendError(res, 'Erro ao listar clientes do plano.');
+    }
+  }
+
   async buscarPorId(req: Request, res: Response): Promise<void> {
     try {
       const id = Number(req.params.id);

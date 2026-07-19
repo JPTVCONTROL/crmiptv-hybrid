@@ -3,6 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { MenuController } from '@ionic/angular';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/services/auth.service';
+import { ToastService } from './core/services/toast.service';
 import { Usuario } from './core/models';
 
 interface MenuItem {
@@ -35,7 +36,8 @@ export class AppComponent implements OnInit {
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
-    private auth: AuthService
+    private auth: AuthService,
+    private toast: ToastService
   ) {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))

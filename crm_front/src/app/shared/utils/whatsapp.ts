@@ -1,3 +1,5 @@
+import { notificar } from './toast-notifier';
+
 export interface DadosMensagemWhatsApp {
   nome: string;
   referencia: string;
@@ -144,8 +146,9 @@ export function montarMensagemBloqueio(
 export function abrirWhatsAppCobranca(telefone: string, mensagem: string): void {
   const numero = formatarTelefoneWhatsApp(telefone);
   if (!numero) {
-    alert(
-      'Telefone inválido. Cadastre o número com DDD, por exemplo: (62) 99999-9999.'
+    notificar(
+      'Telefone inválido. Cadastre o número com DDD, por exemplo: (62) 99999-9999.',
+      'warning'
     );
     return;
   }
@@ -214,10 +217,11 @@ export function executarCobrancaEmLote(
   const ignorados = itens.length - validos.length;
 
   if (validos.length === 0) {
-    alert(
+    notificar(
       ignorados > 0
         ? 'Nenhum cliente selecionado possui telefone válido cadastrado.'
-        : 'Selecione ao menos um cliente para cobrar.'
+        : 'Selecione ao menos um cliente para cobrar.',
+      'warning'
     );
     return { abertos: 0, ignorados, cancelado: true };
   }
@@ -248,7 +252,7 @@ export function executarCobrancaEmLote(
     if (!confirm(rotulo)) {
       cancelado = true;
       if (abertos > 0) {
-        alert(`Cobrança interrompida. ${abertos} WhatsApp(s) aberto(s).`);
+        notificar(`Cobrança interrompida. ${abertos} WhatsApp(s) aberto(s).`, 'info');
       }
       return;
     }
@@ -262,7 +266,11 @@ export function executarCobrancaEmLote(
     }
 
     setTimeout(
-      () => alert(`Cobrança em lote concluída: ${abertos} WhatsApp(s) aberto(s).`),
+      () =>
+        notificar(
+          `Cobrança em lote concluída: ${abertos} WhatsApp(s) aberto(s).`,
+          'success'
+        ),
       300
     );
   };

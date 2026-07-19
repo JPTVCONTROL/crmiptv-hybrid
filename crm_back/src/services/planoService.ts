@@ -14,6 +14,11 @@ export class PlanoService {
     return plano;
   }
 
+  async listarClientes(id: number) {
+    await this.buscarPorId(id);
+    return planoRepository.findClientesByPlanoId(id);
+  }
+
   async criar(dados: CreatePlanoDto) {
     if (!dados.nome?.trim()) {
       throw new ValidationError('O nome do plano é obrigatório.');

@@ -4,6 +4,7 @@ import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Cliente, Configuracao, Mensalidade } from '../../core/models';
 import {
   calcularDias,
@@ -60,7 +61,8 @@ export class DashboardPage implements OnInit {
     private clienteService: ClienteService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
-    private pagamentoUi: PagamentoUiService
+    private pagamentoUi: PagamentoUiService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -210,7 +212,7 @@ export class DashboardPage implements OnInit {
   cobrar(cliente: Cliente): void {
     const dados = this.dadosCobranca(cliente);
     if (!dados) {
-      alert('Nenhuma cobrança pendente encontrada para este cliente.');
+      void this.toast.warning('Nenhuma cobrança pendente encontrada para este cliente.');
       return;
     }
 
@@ -303,7 +305,7 @@ export class DashboardPage implements OnInit {
       error: (err) => {
         this.pagando.delete(m.id);
         this.pagando = new Set(this.pagando);
-        alert(err.message ?? 'Erro ao registrar pagamento.');
+        void this.toast.error(err.message ?? 'Erro ao registrar pagamento.');
       },
     });
   }
@@ -311,7 +313,7 @@ export class DashboardPage implements OnInit {
   async pagarCliente(cliente: Cliente): Promise<void> {
     const mensalidade = this.mensalidadePendente(cliente);
     if (!mensalidade) {
-      alert('Nenhuma mensalidade pendente para registrar pagamento.');
+      void this.toast.warning('Nenhuma mensalidade pendente para registrar pagamento.');
       return;
     }
 
@@ -343,7 +345,7 @@ export class DashboardPage implements OnInit {
       error: (err) => {
         this.pagando.delete(mensalidade.id);
         this.pagando = new Set(this.pagando);
-        alert(err.message ?? 'Erro ao registrar pagamento.');
+        void this.toast.error(err.message ?? 'Erro ao registrar pagamento.');
       },
     });
   }

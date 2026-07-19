@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { ClienteService } from '../../core/services/cliente.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Cliente } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
 import { statusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
@@ -117,7 +118,8 @@ export class ClientesPage implements OnInit {
     private clienteService: ClienteService,
     private modalCtrl: ModalController,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -197,7 +199,7 @@ export class ClientesPage implements OnInit {
     if (!confirm(`Excluir o cliente ${cliente.nome}?`)) return;
     this.clienteService.excluir(cliente.id).subscribe({
       next: () => this.carregar(),
-      error: (err) => alert(err.message),
+      error: (err) => void this.toast.error(err.message),
     });
   }
 

@@ -4,6 +4,7 @@ import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Cliente, Configuracao, Mensalidade, StatusFinanceiro } from '../../core/models';
 import {
   formatarValor,
@@ -38,11 +39,19 @@ export class FinanceiroPage implements OnInit {
   readonly porPagina = 10;
   selecionados = new Set<number>();
 
+  readonly opcoesFiltro: { valor: StatusFinanceiro; rotulo: string }[] = [
+    { valor: 'TODOS', rotulo: 'Todos' },
+    { valor: 'PENDENTE', rotulo: 'Vencendo' },
+    { valor: 'REGULAR', rotulo: 'Regular' },
+    { valor: 'ATRASADO', rotulo: 'Atrasado' },
+  ];
+
   constructor(
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
-    private pagamentoUi: PagamentoUiService
+    private pagamentoUi: PagamentoUiService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -149,7 +158,7 @@ export class FinanceiroPage implements OnInit {
         });
         this.carregar();
       },
-      error: (err) => alert(err.message),
+      error: (err) => void this.toast.error(err.message),
     });
   }
 
@@ -220,6 +229,98 @@ export class FinanceiroPage implements OnInit {
 
   limparSelecao(): void {
     this.selecionados = new Set();
+  }
+
+  definirFiltro(valor: StatusFinanceiro): void {
+    this.filtro = valor;
+    this.pagina = 1;
+  }
+
+  contagemFiltro(valor: StatusFinanceiro): number {
+    if (valor === 'TODOS') {
+      return this.mensalidades.length;
+    }
+
+    return this.mensalidades.filter(
+      (m) => statusFinanceiro(m.vencimento) === valor
+    ).length;
+  }
+
+  get temFiltrosAtivos(): boolean {
+    return this.busca.trim().length > 0 || this.filtro !== 'TODOS';
+  }
+
+  limparFiltros(): void {
+    this.busca = '';
+    this.filtro = 'TODOS';
+    this.pagina = 1;
+  }
+
+  classesChipStatus(filtro: StatusFinanceiro): Record<string, boolean> {
+    const ativo = this.filtro === filtro;
+
+    if (!ativo) {
+      return {
+        'border-slate-700': true,
+        'bg-slate-800/50': true,
+        'text-slate-400': true,
+        'hover:border-slate-600': true,
+        'hover:text-slate-300': true,
+      };
+    }
+
+    if (filtro === 'TODOS') {
+      return {
+        'border-violet-500': true,
+        'bg-violet-600/15': true,
+        'text-violet-200': true,
+        'shadow-sm': true,
+        'shadow-violet-900/20': true,
+      };
+    }
+
+    if (filtro === 'PENDENTE') {
+      return {
+        'border-amber-500': true,
+        'bg-amber-600/15': true,
+        'text-amber-200': true,
+        'shadow-sm': true,
+        'shadow-amber-900/20': true,
+      };
+    }
+
+    if (filtro === 'REGULAR') {
+      return {
+        'border-green-500': true,
+        'bg-green-600/15': true,
+        'text-green-200': true,
+        'shadow-sm': true,
+        'shadow-green-900/20': true,
+      };
+    }
+
+    return {
+      'border-red-500': true,
+      'bg-red-600/15': true,
+      'text-red-200': true,
+      'shadow-sm': true,
+      'shadow-red-900/20': true,
+    };
+  }
+
+  classesChipContagem(filtro: StatusFinanceiro): Record<string, boolean> {
+    const ativo = this.filtro === filtro;
+
+    if (!ativo) {
+      return { 'bg-slate-700/80': true };
+    }
+
+    return {
+      'bg-violet-500/25': filtro === 'TODOS',
+      'bg-amber-500/25': filtro === 'PENDENTE',
+      'bg-green-500/25': filtro === 'REGULAR',
+      'bg-red-500/25': filtro === 'ATRASADO',
+    };
   }
 
   cobrarSelecionados(): void {

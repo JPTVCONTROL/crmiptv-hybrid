@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { DispositivoService } from '../../core/services/dispositivo.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Dispositivo } from '../../core/models';
 import { NovoDispositivoModalComponent } from '../../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
+import { DispositivoClientesModalComponent } from '../../components/dispositivo/dispositivo-clientes-modal/dispositivo-clientes-modal.component';
 import { rotuloDispositivo } from '../../shared/utils/dispositivos';
 
 @Component({
@@ -16,7 +18,8 @@ export class DispositivosPage implements OnInit {
 
   constructor(
     private dispositivoService: DispositivoService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -48,6 +51,17 @@ export class DispositivosPage implements OnInit {
     if (data) this.carregar();
   }
 
+  async verClientes(item: Dispositivo, event?: Event): Promise<void> {
+    event?.stopPropagation();
+
+    const modal = await this.modalCtrl.create({
+      component: DispositivoClientesModalComponent,
+      componentProps: { dispositivo: item },
+      cssClass: 'crm-modal',
+    });
+    await modal.present();
+  }
+
   excluir(item: Dispositivo): void {
     const qtd = item._count?.clientes ?? 0;
     const avisoClientes =
@@ -59,7 +73,7 @@ export class DispositivosPage implements OnInit {
 
     this.dispositivoService.excluir(item.id).subscribe({
       next: () => this.carregar(),
-      error: (err) => alert(err.message ?? 'Erro ao excluir dispositivo.'),
+      error: (err) => void this.toast.error(err.message ?? 'Erro ao excluir dispositivo.'),
     });
   }
 

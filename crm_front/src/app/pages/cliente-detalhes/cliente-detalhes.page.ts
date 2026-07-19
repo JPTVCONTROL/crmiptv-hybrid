@@ -5,6 +5,7 @@ import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { ToastService } from '../../core/services/toast.service';
 import { DispositivoService } from '../../core/services/dispositivo.service';
 import { Cliente, Configuracao, Dispositivo, Mensalidade } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
@@ -36,7 +37,8 @@ export class ClienteDetalhesPage implements OnInit {
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -123,7 +125,7 @@ export class ClienteDetalhesPage implements OnInit {
         });
         this.carregar(this.cliente!.id);
       },
-      error: (err) => alert(err.message),
+      error: (err) => void this.toast.error(err.message),
     });
   }
 
@@ -142,7 +144,7 @@ export class ClienteDetalhesPage implements OnInit {
     if (!this.cliente || !confirm('Excluir este cliente?')) return;
     this.clienteService.excluir(this.cliente.id).subscribe({
       next: () => this.router.navigate(['/clientes']),
-      error: (err) => alert(err.message),
+      error: (err) => void this.toast.error(err.message),
     });
   }
 

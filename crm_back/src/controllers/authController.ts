@@ -21,6 +21,33 @@ export class AuthController {
     }
   }
 
+  async alterarSenha(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.usuario) {
+        sendError(res, 'Não autenticado.', 401);
+        return;
+      }
+
+      const { senhaAtual, novaSenha } = req.body as {
+        senhaAtual?: string;
+        novaSenha?: string;
+      };
+
+      await authService.alterarSenha(
+        req.usuario.id,
+        senhaAtual ?? '',
+        novaSenha ?? ''
+      );
+      sendSuccess(res, null, 'Senha alterada com sucesso.');
+    } catch (error) {
+      if (error instanceof AuthError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      sendError(res, 'Erro ao alterar senha.');
+    }
+  }
+
   async me(req: Request, res: Response): Promise<void> {
     try {
       if (!req.usuario) {

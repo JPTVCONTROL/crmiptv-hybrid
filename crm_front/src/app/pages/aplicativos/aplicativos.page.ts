@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { AplicativoService } from '../../core/services/aplicativo.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Aplicativo } from '../../core/models';
 import { NovoAplicativoModalComponent } from '../../components/aplicativo/novo-aplicativo-modal/novo-aplicativo-modal.component';
+import { AplicativoClientesModalComponent } from '../../components/aplicativo/aplicativo-clientes-modal/aplicativo-clientes-modal.component';
 
 @Component({
   selector: 'app-aplicativos',
@@ -16,7 +18,8 @@ export class AplicativosPage implements OnInit {
 
   constructor(
     private aplicativoService: AplicativoService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -49,6 +52,17 @@ export class AplicativosPage implements OnInit {
     if (data) this.carregar();
   }
 
+  async verClientes(app: Aplicativo, event?: Event): Promise<void> {
+    event?.stopPropagation();
+
+    const modal = await this.modalCtrl.create({
+      component: AplicativoClientesModalComponent,
+      componentProps: { aplicativo: app },
+      cssClass: 'crm-modal',
+    });
+    await modal.present();
+  }
+
   excluir(app: Aplicativo): void {
     const qtd = app._count?.clientes ?? 0;
     const avisoClientes =
@@ -60,7 +74,7 @@ export class AplicativosPage implements OnInit {
 
     this.aplicativoService.excluir(app.id).subscribe({
       next: () => this.carregar(),
-      error: (err) => alert(err.message ?? 'Erro ao excluir aplicativo.'),
+      error: (err) => void this.toast.error(err.message ?? 'Erro ao excluir aplicativo.'),
     });
   }
 

@@ -7,5 +7,10 @@ const router = Router();
 
 router.post('/login', asyncHandler((req, res) => authController.login(req, res)));
 router.get('/me', authenticate, asyncHandler((req, res) => authController.me(req, res)));
+router.put(
+  '/senha',
+  authenticate,
+  asyncHandler((req, res) => authController.alterarSenha(req, res))
+);
 
 export default router;

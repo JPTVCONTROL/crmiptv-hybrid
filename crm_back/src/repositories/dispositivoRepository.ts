@@ -1,6 +1,6 @@
 import prisma from '../config/database.js';
 import type { CreateDispositivoDto, UpdateDispositivoDto } from '../models/index.js';
-import { contarClientesPorDispositivo } from '../utils/helpers/dispositivoHelpers.js';
+import { contarClientesPorDispositivo, clienteUsaDispositivo } from '../utils/helpers/dispositivoHelpers.js';
 
 export class DispositivoRepository {
   async findAll() {
@@ -56,6 +56,38 @@ export class DispositivoRepository {
 
   delete(id: number) {
     return prisma.dispositivo.delete({ where: { id } });
+  }
+
+  async findClientesByDispositivoId(dispositivoId: number) {
+    const clientes = await prisma.cliente.findMany({
+      select: {
+        id: true,
+        nome: true,
+        telefone: true,
+        dispositivos: true,
+      },
+      orderBy: { nome: 'asc' },
+    });
+
+    return clientes
+      .map((cliente) => {
+        const { usa, macs } = clienteUsaDispositivo(
+          cliente.dispositivos,
+          dispositivoId
+        );
+
+        if (!usa) {
+          return null;
+        }
+
+        return {
+          id: cliente.id,
+          nome: cliente.nome,
+          telefone: cliente.telefone,
+          macs,
+        };
+      })
+      .filter((cliente): cliente is NonNullable<typeof cliente> => cliente !== null);
   }
 }
 

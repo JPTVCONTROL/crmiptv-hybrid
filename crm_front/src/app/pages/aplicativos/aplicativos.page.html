@@ -9,8 +9,9 @@
 <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
   <div
     *ngFor="let app of aplicativos"
-    class="crm-card hover:border-violet-600 transition-colors flex flex-col"
+    class="crm-card hover:border-violet-600 transition-colors flex flex-col cursor-pointer"
     [class.opacity-60]="!app.ativo"
+    (click)="verClientes(app)"
   >
     <div class="flex items-start gap-4 mb-3">
       <div class="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
@@ -34,7 +35,13 @@
             {{ app.ativo ? 'Ativo' : 'Inativo' }}
           </span>
         </div>
-        <p class="text-slate-400 text-sm mt-1">{{ app._count?.clientes ?? 0 }} clientes</p>
+        <button
+          type="button"
+          class="text-violet-400 hover:text-violet-300 text-sm mt-1 underline-offset-2 hover:underline"
+          (click)="verClientes(app, $event)"
+        >
+          {{ app._count?.clientes ?? 0 }} clientes
+        </button>
       </div>
     </div>
 
@@ -42,9 +49,9 @@
       {{ app.descricao || 'Sem descrição' }}
     </p>
 
-    <div class="flex gap-2 mt-auto">
-      <button class="crm-btn-ghost flex-1" (click)="abrirModal(app)">Editar</button>
-      <button class="crm-btn-danger flex-1" (click)="excluir(app)">Excluir</button>
+    <div class="flex gap-2 mt-auto" (click)="$event.stopPropagation()">
+      <button type="button" class="crm-btn-ghost flex-1" (click)="abrirModal(app)">Editar</button>
+      <button type="button" class="crm-btn-danger flex-1" (click)="excluir(app)">Excluir</button>
     </div>
   </div>
 </div>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { Dispositivo, CreateDispositivoDto } from '../models';
+import { Dispositivo, CreateDispositivoDto, ClienteDispositivoResumo } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class DispositivoService {
@@ -21,5 +21,9 @@ export class DispositivoService {
 
   excluir(id: number): Observable<void> {
     return this.api.delete(`/dispositivos/${id}`);
+  }
+
+  listarClientes(id: number): Observable<ClienteDispositivoResumo[]> {
+    return this.api.get<ClienteDispositivoResumo[]>(`/dispositivos/${id}/clientes`);
   }
 }

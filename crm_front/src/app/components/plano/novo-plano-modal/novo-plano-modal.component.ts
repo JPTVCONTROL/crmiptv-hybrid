@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { PlanoService } from '../../../core/services/plano.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Plano } from '../../../core/models';
 
 @Component({
@@ -20,7 +21,8 @@ export class NovoPlanoModalComponent implements OnInit {
 
   constructor(
     private modalCtrl: ModalController,
-    private planoService: PlanoService
+    private planoService: PlanoService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -40,15 +42,15 @@ export class NovoPlanoModalComponent implements OnInit {
 
   salvar(): void {
     if (!this.form.nome.trim()) {
-      alert('Informe o nome do plano.');
+      void this.toast.warning('Informe o nome do plano.');
       return;
     }
     if (!this.form.valor || this.form.valor <= 0) {
-      alert('Informe um valor válido.');
+      void this.toast.warning('Informe um valor válido.');
       return;
     }
     if (!this.form.diasValidade || this.form.diasValidade <= 0) {
-      alert('Informe os dias de validade.');
+      void this.toast.warning('Informe os dias de validade.');
       return;
     }
 
@@ -64,7 +66,7 @@ export class NovoPlanoModalComponent implements OnInit {
       },
       error: (err) => {
         this.salvando = false;
-        alert(err.message ?? 'Erro ao salvar plano.');
+        void this.toast.error(err.message ?? 'Erro ao salvar plano.');
       },
     });
   }

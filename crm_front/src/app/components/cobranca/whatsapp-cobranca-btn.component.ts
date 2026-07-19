@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { ToastService } from '../../core/services/toast.service';
 import {
   abrirWhatsAppCobranca,
   telefoneValidoParaWhatsApp,
@@ -24,6 +25,8 @@ export class WhatsappCobrancaBtnComponent {
   @Input() disabled = false;
   @Output() erro = new EventEmitter<string>();
 
+  constructor(private toast: ToastService) {}
+
   get desabilitado(): boolean {
     return this.disabled || !telefoneValidoParaWhatsApp(this.telefone);
   }
@@ -35,14 +38,14 @@ export class WhatsappCobrancaBtnComponent {
     if (!telefoneValidoParaWhatsApp(telefoneAtual)) {
       const msg =
         'Telefone inválido para WhatsApp. Cadastre o número com DDD, por exemplo: (62) 99999-9999.';
-      alert(msg);
+      void this.toast.warning(msg);
       this.erro.emit(msg);
       return;
     }
 
     if (!mensagemAtual.trim()) {
       const msg = 'Não foi possível montar a mensagem do WhatsApp.';
-      alert(msg);
+      void this.toast.warning(msg);
       this.erro.emit(msg);
       return;
     }

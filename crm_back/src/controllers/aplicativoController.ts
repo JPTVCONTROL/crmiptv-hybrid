@@ -31,6 +31,20 @@ export class AplicativoController {
     }
   }
 
+  async listarClientes(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const clientes = await aplicativoService.listarClientes(id);
+      sendSuccess(res, clientes);
+    } catch (error) {
+      if (error instanceof AplicativoNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      sendError(res, 'Erro ao buscar clientes do aplicativo.');
+    }
+  }
+
   async criar(req: Request, res: Response): Promise<void> {
     try {
       const aplicativo = await aplicativoService.criar(req.body as CreateAplicativoDto);

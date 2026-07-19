@@ -4,6 +4,7 @@ import { ClienteService } from '../../../core/services/cliente.service';
 import { AplicativoService } from '../../../core/services/aplicativo.service';
 import { DispositivoService } from '../../../core/services/dispositivo.service';
 import { PlanoService } from '../../../core/services/plano.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Cliente, Aplicativo, Dispositivo, Plano } from '../../../core/models';
 import { aplicarMascaraTelefone } from '../../../shared/utils/formatters';
 import {
@@ -61,7 +62,8 @@ export class NovoClienteModalComponent implements OnInit {
     private clienteService: ClienteService,
     private aplicativoService: AplicativoService,
     private dispositivoService: DispositivoService,
-    private planoService: PlanoService
+    private planoService: PlanoService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -192,18 +194,18 @@ export class NovoClienteModalComponent implements OnInit {
     this.telefoneTocado = true;
 
     if (!this.form.nome.trim()) {
-      alert('Preencha o nome do cliente.');
+      void this.toast.warning('Preencha o nome do cliente.');
       return;
     }
 
     if (!telefoneValidoParaWhatsApp(this.form.telefone)) {
-      alert(
+      void this.toast.warning(
         'Informe um telefone válido com DDD, por exemplo: (62) 99999-9999.'
       );
       return;
     }
     if (!this.form.valorMensal || this.form.valorMensal <= 0) {
-      alert('Informe o valor mensal.');
+      void this.toast.warning('Informe o valor mensal.');
       return;
     }
 
@@ -227,7 +229,7 @@ export class NovoClienteModalComponent implements OnInit {
       },
       error: (err) => {
         this.salvando = false;
-        alert(err.message ?? 'Erro ao salvar cliente.');
+        void this.toast.error(err.message ?? 'Erro ao salvar cliente.');
       },
     });
   }
