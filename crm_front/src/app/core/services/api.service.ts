@@ -88,9 +88,11 @@ export class ApiService {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     const message =
-      error.error?.message ??
-      error.message ??
-      'Erro ao comunicar com o servidor';
+      error.status === 0
+        ? 'Servidor indisponível. Na raiz do projeto, execute: npm run dev (API na porta 3001).'
+        : (error.error?.message ??
+          error.message ??
+          'Erro ao comunicar com o servidor');
     return throwError(() => new Error(message));
   }
 }

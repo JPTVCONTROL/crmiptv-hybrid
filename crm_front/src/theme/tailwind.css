@@ -294,6 +294,22 @@
     @apply text-slate-500 text-xs mt-2 mb-0;
   }
 
+  .crm-api-offline-banner {
+    @apply mx-4 md:mx-6 lg:mx-8 mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3;
+  }
+
+  .crm-api-offline-banner-title {
+    @apply m-0 text-sm font-semibold text-amber-200;
+  }
+
+  .crm-api-offline-banner-text {
+    @apply mt-1 mb-0 text-xs text-amber-100/80 leading-relaxed;
+  }
+
+  .crm-api-offline-banner--login {
+    @apply mx-4 mt-4 max-w-md;
+  }
+
   .crm-filter-chip {
     @apply inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors;
   }

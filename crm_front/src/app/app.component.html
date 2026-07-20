@@ -7,13 +7,13 @@
       class="crm-menu"
     >
       <ion-content class="menu-content" [scrollY]="false">
-        <div class="menu-shell flex flex-col h-full min-h-full">
-          <header class="menu-header shrink-0 px-4 pt-5 pb-4 border-b border-slate-800/80">
-            <div class="flex flex-col items-center gap-2.5">
+        <div class="menu-shell">
+          <header class="menu-header shrink-0 px-4 pt-4 pb-3 border-b border-slate-800/80">
+            <div class="flex flex-col items-center gap-2">
               <img
                 src="assets/logo-crm-jptv.png"
                 alt="CRM JPTV"
-                class="menu-logo block w-full max-w-[9.5rem] h-auto mx-auto"
+                class="menu-logo block w-full max-w-[8.25rem] h-auto mx-auto"
               />
               <p class="menu-subtitle m-0 text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 Sistema de Gestão IPTV
@@ -21,8 +21,8 @@
             </div>
           </header>
 
-          <nav class="menu-nav flex-1 overflow-y-auto px-3 py-3.5 flex flex-col gap-4" aria-label="Menu principal">
-            <section *ngFor="let secao of menuSecoes" class="flex flex-col gap-1.5">
+          <nav class="menu-nav flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-3" aria-label="Menu principal">
+            <section *ngFor="let secao of menuSecoes" class="flex flex-col gap-1">
               <p class="menu-section-title m-0 px-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-slate-600">
                 {{ secao.titulo }}
               </p>
@@ -32,7 +32,7 @@
                     [routerLink]="menu.rota"
                     routerLinkActive="menu-link-active"
                     [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
-                    class="menu-link flex items-center gap-2.5 w-full min-h-[2.625rem] px-2 py-1.5 rounded-xl text-slate-300 text-[0.8125rem] font-medium no-underline"
+                    class="menu-link flex items-center gap-2.5 w-full min-h-[2.375rem] px-2 py-1 rounded-xl text-slate-300 text-[0.8125rem] font-medium no-underline"
                     (click)="fecharMenu()"
                   >
                     <span class="menu-link-icon inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-[0.625rem]" aria-hidden="true">
@@ -52,8 +52,8 @@
             </section>
           </nav>
 
-          <footer class="menu-footer shrink-0 mt-auto flex flex-col gap-2 px-3 py-3 border-t border-slate-800/80">
-            <div *ngIf="usuario" class="flex items-center gap-2.5 px-2 py-2.5 rounded-xl border border-slate-800/80 bg-slate-900/55">
+          <footer class="menu-footer shrink-0 flex flex-col gap-1.5 px-3 py-2.5 border-t border-slate-800/80">
+            <div *ngIf="usuario" class="flex items-center gap-2.5 px-2 py-2 rounded-xl border border-slate-800/80 bg-slate-900/55">
               <span class="menu-user-avatar inline-flex items-center justify-center shrink-0 w-9 h-9 rounded-full text-xs font-bold text-white" aria-hidden="true">
                 {{ iniciaisUsuario }}
               </span>
@@ -63,7 +63,7 @@
               </div>
             </div>
 
-            <button type="button" class="menu-link menu-link-logout flex items-center gap-2.5 w-full min-h-[2.625rem] px-2 py-1.5 rounded-xl text-slate-300 text-[0.8125rem] font-medium border-0 bg-transparent cursor-pointer" (click)="sair()">
+            <button type="button" class="menu-link menu-link-logout flex items-center gap-2.5 w-full min-h-[2.375rem] px-2 py-1 rounded-xl text-slate-300 text-[0.8125rem] font-medium border-0 bg-transparent cursor-pointer" (click)="sair()">
               <span class="menu-link-icon menu-link-icon--logout inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-[0.625rem]" aria-hidden="true">
                 <ion-icon name="log-out-outline" class="w-[1.125rem] h-[1.125rem]"></ion-icon>
               </span>
@@ -100,6 +100,34 @@
             refreshingText="Atualizando..."
           ></ion-refresher-content>
         </ion-refresher>
+
+        <div
+          *ngIf="!apiOnline"
+          class="crm-api-offline-banner"
+          [class.crm-api-offline-banner--login]="isLoginRoute"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div>
+            <p class="crm-api-offline-banner-title">API offline</p>
+            <p class="crm-api-offline-banner-text">
+              O backend não responde em
+              <span class="font-mono text-amber-100/90">http://localhost:3001</span>.
+              Na raiz do projeto, execute
+              <span class="font-mono text-amber-100/90">npm run dev</span>
+              ou
+              <span class="font-mono text-amber-100/90">npm run dev:back</span>.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="crm-btn-ghost shrink-0 !border-amber-500/30 !text-amber-100"
+            (click)="verificarApi()"
+          >
+            Verificar novamente
+          </button>
+        </div>
+
         <div [class]="isLoginRoute ? 'login-shell' : 'app-content-shell p-4 md:p-6 lg:p-8'">
           <router-outlet></router-outlet>
         </div>

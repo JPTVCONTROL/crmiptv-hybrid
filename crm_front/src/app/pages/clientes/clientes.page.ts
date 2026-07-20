@@ -32,6 +32,11 @@ import {
   classesFilterChipContagem,
   VarianteFilterChip,
 } from '../../shared/utils/filter-chip.util';
+import {
+  limparFiltrosClientesPersistidos,
+  persistirFiltrosClientes,
+  restaurarFiltrosClientes,
+} from '../../shared/utils/clientes-filtros-persist.util';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
 export type FiltroCobrancaCliente = 'TODOS' | 'COM_COBRANCA' | 'SEM_COBRANCA';
@@ -107,11 +112,13 @@ export class ClientesPage implements OnInit, OnDestroy {
   definirFiltroCobranca(filtro: FiltroCobrancaCliente): void {
     this.filtroCobranca = filtro;
     this.pagina = 1;
+    this.persistirFiltros();
   }
 
   alternarFiltroCadastroIncompleto(): void {
     this.filtroCadastroIncompleto = !this.filtroCadastroIncompleto;
     this.pagina = 1;
+    this.persistirFiltros();
   }
 
   contagemCobranca(filtro: FiltroCobrancaCliente): number {
@@ -157,6 +164,7 @@ export class ClientesPage implements OnInit, OnDestroy {
   definirFiltroStatus(filtro: FiltroStatusCliente): void {
     this.filtroStatus = filtro;
     this.pagina = 1;
+    this.persistirFiltros();
   }
 
   contagemStatus(filtro: FiltroStatusCliente): number {
@@ -194,11 +202,40 @@ export class ClientesPage implements OnInit, OnDestroy {
     this.filtroCobranca = 'TODOS';
     this.filtroCadastroIncompleto = false;
     this.pagina = 1;
+    limparFiltrosClientesPersistidos();
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { cadastro: null, status: null, incompleto: null },
       queryParamsHandling: 'merge',
     });
+  }
+
+  aoAlterarBusca(): void {
+    this.pagina = 1;
+    this.persistirFiltros();
+  }
+
+  aoAlterarFiltroCatalogo(): void {
+    this.pagina = 1;
+    this.persistirFiltros();
+  }
+
+  irPaginaAnterior(): void {
+    if (this.pagina <= 1) {
+      return;
+    }
+
+    this.pagina -= 1;
+    this.persistirFiltros();
+  }
+
+  irPaginaProxima(): void {
+    if (this.pagina >= this.totalPaginas) {
+      return;
+    }
+
+    this.pagina += 1;
+    this.persistirFiltros();
   }
 
   classesChipStatus(filtro: FiltroStatusCliente): string {
@@ -254,15 +291,26 @@ export class ClientesPage implements OnInit, OnDestroy {
     });
 
     this.route.queryParamMap.subscribe((params) => {
-      const status = params.get('status');
-      this.filtroStatus =
-        status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO'
-          ? status
-          : 'TODOS';
+      const temParamsUrl =
+        params.has('status') ||
+        params.has('cadastro') ||
+        params.has('incompleto');
 
-      this.filtroCadastro = resolverFiltroCadastro(params.get('cadastro'));
-      this.filtroCadastroIncompleto = params.get('incompleto') === '1';
-      this.pagina = 1;
+      if (temParamsUrl) {
+        const status = params.get('status');
+        this.filtroStatus =
+          status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO'
+            ? status
+            : 'TODOS';
+
+        this.filtroCadastro = resolverFiltroCadastro(params.get('cadastro'));
+        this.filtroCadastroIncompleto = params.get('incompleto') === '1';
+        this.pagina = 1;
+      } else {
+        this.aplicarFiltrosPersistidos();
+      }
+
+      this.persistirFiltros();
     });
     this.carregar();
     vincularSincronizacaoPagina(
@@ -280,9 +328,14 @@ export class ClientesPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.persistirFiltros();
     this.pullRefresh.limpar();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  ionViewWillLeave(): void {
+    this.persistirFiltros();
   }
 
   ionViewWillEnter(): void {
@@ -371,6 +424,44 @@ export class ClientesPage implements OnInit, OnDestroy {
     }
 
     this.pagina = 1;
+    this.persistirFiltros();
+  }
+
+  private aplicarFiltrosPersistidos(): void {
+    const salvo = restaurarFiltrosClientes();
+    if (!salvo) {
+      return;
+    }
+
+    this.busca = salvo.busca;
+    this.filtroStatus = salvo.filtroStatus;
+    this.filtroAplicativoId = salvo.filtroAplicativoId;
+    this.filtroPlanoId = salvo.filtroPlanoId;
+    this.filtroCadastro = salvo.filtroCadastro;
+    this.filtroCobranca = salvo.filtroCobranca;
+    this.filtroCadastroIncompleto = salvo.filtroCadastroIncompleto;
+    this.pagina = salvo.pagina;
+    this.ordenacaoColuna = salvo.ordenacaoColuna;
+    this.ordenacaoDirecao = salvo.ordenacaoDirecao;
+    this.modoOrdenacaoAplicativo = salvo.modoOrdenacaoAplicativo;
+    this.modoOrdenacaoStatus = salvo.modoOrdenacaoStatus;
+  }
+
+  private persistirFiltros(): void {
+    persistirFiltrosClientes({
+      busca: this.busca,
+      filtroStatus: this.filtroStatus,
+      filtroAplicativoId: this.filtroAplicativoId,
+      filtroPlanoId: this.filtroPlanoId,
+      filtroCadastro: this.filtroCadastro,
+      filtroCobranca: this.filtroCobranca,
+      filtroCadastroIncompleto: this.filtroCadastroIncompleto,
+      pagina: this.pagina,
+      ordenacaoColuna: this.ordenacaoColuna,
+      ordenacaoDirecao: this.ordenacaoDirecao,
+      modoOrdenacaoAplicativo: this.modoOrdenacaoAplicativo,
+      modoOrdenacaoStatus: this.modoOrdenacaoStatus,
+    });
   }
 
   rotuloModoOrdenacao(coluna: ColunaOrdenacaoCliente): string {

@@ -163,7 +163,7 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 
 | Comando | Descrição |
 |---------|-----------|
-| `npm run dev` | Sobe backend (3001) + frontend (4200) juntos |
+| `npm run dev` | Libera portas 4200/3001 e sobe backend + frontend juntos |
 | `npm run dev:back` | Apenas a API |
 | `npm run dev:front` | Apenas o CRM |
 | `npm run build` | Build de backend e frontend |
@@ -294,6 +294,8 @@ CRUD do **catálogo** de aparelhos (nome, modelo, descrição). No cadastro do c
 
 Campos editáveis: dados da empresa, PIX, cor principal, dias de antecedência do lembrete, templates de mensagens e backup do banco.
 
+A tela está organizada em **quatro abas**: Conta (senha), Empresa (dados + PIX), Mensagens (templates + dias de antecedência) e Sistema (cor, backup, sync). A aba ativa é restaurada ao voltar à página (mesma sessão do navegador).
+
 ---
 
 ## 6. Frontend — Telas e Navegação
@@ -302,7 +304,7 @@ Campos editáveis: dados da empresa, PIX, cor principal, dias de antecedência d
 |------|------|--------|
 | `/login` | Login | Autenticação (JWT) |
 | `/dashboard` | Dashboard | KPIs, gráfico de faturamento, links para Cobrança Diária |
-| `/clientes` | Clientes | Listagem com filtros por status, busca, CRUD |
+| `/clientes` | Clientes | Listagem com filtros (persistidos na sessão), busca por nome/telefone, CRUD |
 | `/clientes/:id` | Detalhe | Perfil completo, mensalidades, WhatsApp, pagamento |
 | `/financeiro` | Financeiro | Cobranças pendentes, paginação, pagamentos e lote |
 | `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp: atrasados + lembretes (até N dias) |
@@ -311,9 +313,22 @@ Campos editáveis: dados da empresa, PIX, cor principal, dias de antecedência d
 | `/planos` | Planos | Catálogo de planos (valor e validade) |
 | `/dispositivos` | Dispositivos | Catálogo de aparelhos para vincular aos clientes |
 | `/relatorios` | Relatórios | Resumo financeiro |
-| `/configuracoes` | Configurações | Empresa, PIX, templates WhatsApp |
+| `/configuracoes` | Configurações | Abas: Conta, Empresa, Mensagens, Sistema (aba ativa lembrada na sessão) |
 
 Rotas internas (exceto `/login`) exigem sessão ativa. O botão **Sair** no menu encerra a sessão.
+
+### Banner API offline
+
+Quando `http://localhost:3001/health` não responde, um aviso amarelo aparece no topo (login e telas internas) orientando a executar `npm run dev` ou `npm run dev:back`. O serviço `ApiHealthService` verifica a API a cada 25 segundos.
+
+### Persistência na sessão do navegador
+
+| Tela | O que é lembrado |
+|------|------------------|
+| **Configurações** | Última aba aberta (Conta, Empresa, Mensagens, Sistema) |
+| **Clientes** | Busca, filtros, ordenação e página atual |
+
+Links do dashboard com query params (`?status=`, `?cadastro=`, `?incompleto=`) **têm prioridade** sobre os filtros salvos em Clientes.
 
 ### Mobile-first
 

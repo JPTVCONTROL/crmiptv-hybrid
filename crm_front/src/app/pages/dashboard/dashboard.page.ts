@@ -18,6 +18,7 @@ import { rotuloUltimoContato } from '../../shared/utils/contato';
 import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { ToastService } from '../../core/services/toast.service';
+import { ApiHealthService } from '../../core/services/api-health.service';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 import {
   classesAlertaOperacional,
@@ -93,7 +94,8 @@ export class DashboardPage implements OnInit, OnDestroy {
     private sync: DadosSyncService,
     private toast: ToastService,
     private router: Router,
-    private pullRefresh: PullRefreshService
+    private pullRefresh: PullRefreshService,
+    private apiHealth: ApiHealthService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -163,6 +165,14 @@ export class DashboardPage implements OnInit, OnDestroy {
     return ordenarAlertasOperacionais(this.alertas).slice(0, 6);
   }
 
+  get erroHint(): string {
+    if (!this.apiHealth.estaOnline()) {
+      return 'Confirme se o backend está ativo em http://localhost:3001 (npm run dev na raiz do projeto).';
+    }
+
+    return 'A API está online, mas o resumo falhou. Clique em Tentar novamente ou confira o terminal do backend (crm_back).';
+  }
+
   get proximosVencimentosVisiveis(): ProximoVencimentoResumo[] {
     return this.proximosVencimentos.slice(0, this.limiteLista);
   }
@@ -213,6 +223,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       this.atualizando = true;
     }
     this.erroCarregamento = '';
+    this.apiHealth.verificar();
 
     this.dashboardService.obterResumo().subscribe({
       next: (resumo) => {

@@ -15,8 +15,20 @@ import {
 } from '../../shared/utils/mensagens-padrao';
 import { DIAS_ANTECEDENCIA_LEMBRETE_PADRAO } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  lerSessionJson,
+  salvarSessionJson,
+} from '../../shared/utils/session-persist.util';
 
 type AbaConfiguracao = 'conta' | 'empresa' | 'mensagens' | 'sistema';
+
+const CHAVE_ABA_CONFIG = 'crm.config.abaAtiva';
+const ABAS_VALIDAS = new Set<AbaConfiguracao>([
+  'conta',
+  'empresa',
+  'mensagens',
+  'sistema',
+]);
 
 @Component({
   selector: 'app-configuracoes',
@@ -165,6 +177,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.restaurarAba();
     this.carregarConfig();
     vincularSincronizacaoPagina(
       this.sync,
@@ -236,6 +249,14 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
 
   definirAba(aba: AbaConfiguracao): void {
     this.abaAtiva = aba;
+    salvarSessionJson(CHAVE_ABA_CONFIG, aba);
+  }
+
+  private restaurarAba(): void {
+    const salva = lerSessionJson<string>(CHAVE_ABA_CONFIG);
+    if (salva && ABAS_VALIDAS.has(salva as AbaConfiguracao)) {
+      this.abaAtiva = salva as AbaConfiguracao;
+    }
   }
 
   classesAba(aba: AbaConfiguracao): string {

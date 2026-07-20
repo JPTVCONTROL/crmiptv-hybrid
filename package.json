@@ -4,6 +4,7 @@
   "private": true,
   "description": "CRM JPTV — API + frontend",
   "scripts": {
+    "predev": "npx --yes kill-port 4200 3001",
     "dev": "concurrently -k -n back,front -c blue,green \"npm run dev --prefix crm_back\" \"npm run start --prefix crm_front\"",
     "dev:back": "npm run dev --prefix crm_back",
     "dev:front": "npm run start --prefix crm_front",

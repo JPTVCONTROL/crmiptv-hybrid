@@ -12,6 +12,7 @@ import { SistemaService } from './core/services/sistema.service';
 import { ConfiguracaoService } from './core/services/configuracao.service';
 import { TemaService } from './core/services/tema.service';
 import { PullRefreshService } from './core/services/pull-refresh.service';
+import { ApiHealthService } from './core/services/api-health.service';
 import { AlertaOperacional, Usuario } from './core/models';
 
 interface MenuItem {
@@ -66,6 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
   usuario: Usuario | null = null;
   alertas: AlertaOperacional[] = [];
   totalPendencias = 0;
+  apiOnline = true;
 
   private readonly destroy$ = new Subject<void>();
   private sincronizacaoInicialFeita = false;
@@ -78,7 +80,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private sistemaService: SistemaService,
     private configuracao: ConfiguracaoService,
     private tema: TemaService,
-    private pullRefresh: PullRefreshService
+    private pullRefresh: PullRefreshService,
+    private apiHealth: ApiHealthService
   ) {
     this.router.events
       .pipe(
@@ -92,6 +95,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.apiHealth.iniciar();
+    this.apiHealth.online$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((online) => {
+        this.apiOnline = online;
+      });
+
     this.isLoginRoute = this.router.url.startsWith('/login');
     this.usuario = this.auth.getUsuario();
 
@@ -201,7 +211,12 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onPullRefresh(event: RefresherCustomEvent): void {
+    this.apiHealth.verificar();
     this.pullRefresh.executar(() => event.target.complete());
+  }
+
+  verificarApi(): void {
+    this.apiHealth.verificar();
   }
 
   sair(): void {

@@ -14,7 +14,7 @@
 <app-error-banner
   *ngIf="!loading && erroCarregamento"
   [message]="erroCarregamento"
-  hint="Confirme se o backend está ativo em http://localhost:3001"
+  [hint]="erroHint"
   (retry)="carregar()"
 ></app-error-banner>
 

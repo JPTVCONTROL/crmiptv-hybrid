@@ -113,7 +113,7 @@
         class="crm-input !pl-11"
         placeholder="Buscar por nome ou telefone..."
         [(ngModel)]="busca"
-        (ngModelChange)="pagina = 1"
+        (ngModelChange)="aoAlterarBusca()"
         autocomplete="off"
       />
     </div>
@@ -124,7 +124,7 @@
         <select
           class="crm-input"
           [(ngModel)]="filtroAplicativoId"
-          (ngModelChange)="pagina = 1"
+          (ngModelChange)="aoAlterarFiltroCatalogo()"
         >
           <option [ngValue]="null">Todos</option>
           <option *ngFor="let app of opcoesAplicativos" [ngValue]="app.id">{{ app.nome }}</option>
@@ -135,7 +135,7 @@
         <select
           class="crm-input"
           [(ngModel)]="filtroPlanoId"
-          (ngModelChange)="pagina = 1"
+          (ngModelChange)="aoAlterarFiltroCatalogo()"
         >
           <option [ngValue]="null">Todos</option>
           <option *ngFor="let plano of opcoesPlanos" [ngValue]="plano.id">{{ plano.nome }}</option>
@@ -475,7 +475,7 @@
 </div>
 
 <div *ngIf="!loading && clientesFiltrados.length > porPagina" class="flex gap-2 justify-center mt-4">
-  <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="pagina = pagina - 1">Anterior</button>
+  <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="irPaginaAnterior()">Anterior</button>
   <span class="text-slate-400 self-center">{{ pagina }} / {{ totalPaginas }}</span>
-  <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="pagina = pagina + 1">Próxima</button>
+  <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="irPaginaProxima()">Próxima</button>
 </div>
