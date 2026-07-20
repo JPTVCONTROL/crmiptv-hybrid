@@ -76,7 +76,17 @@
         class="hidden"
         (change)="onArquivoCsvSelecionado($event)"
       />
-      <button type="button" class="crm-btn-primary shrink-0" (click)="novoCliente()">
+        <button
+          type="button"
+          class="crm-density-toggle shrink-0"
+          [class.crm-density-toggle--active]="tabelaCompacta"
+          (click)="alternarDensidadeTabela()"
+          title="Alternar densidade da tabela"
+        >
+          <ion-icon [name]="tabelaCompacta ? 'expand-outline' : 'contract-outline'"></ion-icon>
+          {{ tabelaCompacta ? 'Confortável' : 'Compacto' }}
+        </button>
+        <button type="button" class="crm-btn-primary shrink-0" (click)="novoCliente()">
         + Novo Cliente
       </button>
     </div>
@@ -205,7 +215,7 @@
   </div>
 </div>
 
-<app-loading *ngIf="loading"></app-loading>
+<app-loading *ngIf="loading" variant="table"></app-loading>
 
 <div *ngIf="!loading" class="md:hidden space-y-3">
   <div class="flex flex-wrap items-center gap-2">
@@ -267,15 +277,12 @@
         <h3 class="crm-mobile-card-title">{{ c.nome }}</h3>
         <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
       </div>
-      <span
-        [ngClass]="{
-          'crm-badge-ativo': status(c) === 'ATIVO',
-          'crm-badge-atrasado': status(c) === 'ATRASADO',
-          'crm-badge-inativo': status(c) === 'INATIVO'
-        }"
-      >
-        {{ status(c) }}
-      </span>
+      <app-status-badge
+        class="shrink-0"
+        [tipo]="tipoBadge(c)"
+        [label]="status(c)"
+        [dot]="true"
+      ></app-status-badge>
     </div>
 
     <div class="space-y-2">
@@ -291,9 +298,11 @@
 
     <div class="flex flex-wrap gap-1.5">
       <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia">Cortesia</span>
-      <span *ngIf="!participaCobrancas(c) && !ehCortesia(c)" class="crm-badge-sem-cobranca">
-        Sem cobrança
-      </span>
+      <app-status-badge
+        *ngIf="!participaCobrancas(c) && !ehCortesia(c)"
+        tipo="SEM_COBRANCA"
+        label="Sem cobrança"
+      ></app-status-badge>
       <span
         *ngFor="let pendencia of pendenciasCliente(c)"
         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border"
@@ -332,8 +341,8 @@
   </div>
 </div>
 
-<div *ngIf="!loading" class="crm-card overflow-x-auto hidden md:block">
-  <table class="crm-table min-w-[920px]">
+<div *ngIf="!loading" class="crm-card hidden md:block overflow-x-auto">
+  <table class="min-w-[920px]" [ngClass]="classesTabela">
     <thead>
       <tr class="text-slate-400 border-b border-slate-800">
         <th class="text-left py-3 px-2">
@@ -403,13 +412,13 @@
       >
         <td class="py-3 px-2 text-white">
           <div class="font-medium">{{ c.nome }}</div>
-          <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia mt-1">Cortesia</span>
-          <span
+          <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia mt-1 inline-flex">Cortesia</span>
+          <app-status-badge
             *ngIf="!participaCobrancas(c) && !ehCortesia(c)"
-            class="crm-badge-sem-cobranca mt-1"
-          >
-            Sem cobrança
-          </span>
+            class="mt-1 inline-flex"
+            tipo="SEM_COBRANCA"
+            label="Sem cobrança"
+          ></app-status-badge>
           <p
             *ngIf="pendenciasCliente(c).length > 0 && filtroCadastro"
             class="text-amber-300/90 text-[11px] mt-1 md:hidden"
@@ -423,15 +432,7 @@
           {{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}
         </td>
         <td class="py-3 px-2">
-          <span
-            [ngClass]="{
-              'crm-badge-ativo': status(c) === 'ATIVO',
-              'crm-badge-atrasado': status(c) === 'ATRASADO',
-              'crm-badge-inativo': status(c) === 'INATIVO'
-            }"
-          >
-            {{ status(c) }}
-          </span>
+          <app-status-badge [tipo]="tipoBadge(c)" [label]="status(c)" [dot]="true"></app-status-badge>
         </td>
         <td class="py-3 px-2 align-top">
           <div *ngIf="pendenciasCliente(c).length > 0" class="flex flex-wrap gap-1.5 max-w-[320px]">

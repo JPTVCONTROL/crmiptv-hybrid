@@ -194,7 +194,34 @@
   }
 
   .crm-table {
-    @apply w-full text-sm;
+    @apply w-full text-sm border-separate border-spacing-0;
+  }
+
+  .crm-table-wrap {
+    @apply overflow-x-auto;
+  }
+
+  .crm-table-scroll {
+    @apply overflow-x-auto overflow-y-auto;
+    max-height: min(70vh, 42rem);
+  }
+
+  .crm-table-scroll .crm-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 1px 0 var(--crm-border-subtle);
+  }
+
+  .crm-table--compact th,
+  .crm-table--compact td {
+    @apply py-2 px-2;
+  }
+
+  .crm-table--compact tbody tr:hover {
+    background: rgba(30, 41, 59, 0.28);
   }
 
   .crm-table thead tr {
@@ -251,7 +278,7 @@
   }
 
   .crm-badge-ativo {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25;
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25;
   }
 
   .crm-badge-atrasado {
@@ -280,6 +307,25 @@
 
   .crm-badge-sem-cobranca {
     @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200;
+  }
+
+  .crm-badge-dot {
+    @apply w-1.5 h-1.5 rounded-full shrink-0;
+    background: currentColor;
+    opacity: 0.85;
+  }
+
+  .crm-badge-ativo .crm-badge-dot {
+    box-shadow: 0 0 6px rgba(52, 211, 153, 0.55);
+  }
+
+  .crm-badge-atrasado .crm-badge-dot,
+  .crm-badge-pendente .crm-badge-dot {
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.45);
+  }
+
+  .crm-badge-inativo .crm-badge-dot {
+    box-shadow: 0 0 6px rgba(248, 113, 113, 0.45);
   }
 
   .crm-info-banner {
@@ -554,7 +600,55 @@
   }
 
   .crm-loading {
-    @apply flex flex-col items-center justify-center gap-3 py-12 text-slate-400;
+    @apply flex flex-col items-center justify-center gap-3 py-8 text-slate-400;
+  }
+
+  .crm-loading--inline {
+    @apply py-12;
+  }
+
+  .crm-skeleton-page {
+    @apply animate-pulse;
+  }
+
+  .crm-skeleton {
+    @apply rounded-xl;
+    background: linear-gradient(
+      90deg,
+      rgba(30, 41, 59, 0.55) 0%,
+      rgba(51, 65, 85, 0.45) 50%,
+      rgba(30, 41, 59, 0.55) 100%
+    );
+    background-size: 200% 100%;
+    animation: crm-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .crm-skeleton-line {
+    @apply rounded-lg;
+  }
+
+  .crm-skeleton-card {
+    border: 1px solid var(--crm-border-subtle);
+  }
+
+  .crm-skeleton-block {
+    @apply rounded-2xl;
+    border: 1px solid var(--crm-border-subtle);
+  }
+
+  .crm-skeleton-hero {
+    @apply rounded-2xl;
+    border: 1px solid var(--crm-primary-border);
+  }
+
+  @keyframes crm-shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+
+    100% {
+      background-position: -100% 0;
+    }
   }
 
   .crm-loading-spinner {
@@ -571,7 +665,7 @@
   }
 
   .crm-empty-state-icon {
-    @apply flex items-center justify-center w-12 h-12 rounded-2xl mb-1;
+    @apply flex items-center justify-center w-14 h-14 rounded-2xl mb-1;
     background: linear-gradient(
       145deg,
       var(--crm-primary-soft) 0%,
@@ -579,15 +673,114 @@
     );
     border: 1px solid var(--crm-border-subtle);
     color: var(--crm-primary-icon);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .crm-empty-state-icon ion-icon {
+    @apply text-2xl;
+  }
+
+  .crm-empty-state-title {
+    @apply text-slate-200 text-sm font-semibold m-0;
   }
 
   .crm-empty-state-message {
-    @apply text-slate-400 text-sm max-w-sm;
+    @apply text-slate-500 text-sm max-w-sm m-0 leading-relaxed;
   }
 
   .crm-auth-shell {
     @apply relative min-h-[calc(100vh-2rem)] flex items-center justify-center py-8 px-4;
+  }
+
+  .crm-auth-shell--split {
+    @apply lg:grid lg:grid-cols-2 lg:gap-12 lg:max-w-6xl lg:mx-auto lg:items-center lg:min-h-[calc(100vh-3rem)] lg:px-8;
+  }
+
+  .crm-auth-brand {
+    @apply flex-col justify-center gap-6 p-8 rounded-3xl relative overflow-hidden;
+    background: linear-gradient(
+      145deg,
+      var(--crm-primary-soft) 0%,
+      rgba(15, 23, 42, 0.92) 45%,
+      rgba(2, 6, 23, 0.98) 100%
+    );
+    border: 1px solid var(--crm-primary-border);
+    box-shadow: var(--crm-shadow-lg);
+    min-height: 28rem;
+  }
+
+  .crm-auth-brand-logo {
+    @apply w-full max-w-[12rem] h-auto;
+    filter: drop-shadow(0 12px 28px rgba(124, 58, 237, 0.35));
+  }
+
+  .crm-auth-brand-title {
+    @apply text-white text-2xl font-bold m-0 tracking-tight;
+  }
+
+  .crm-auth-brand-text {
+    @apply text-slate-400 text-sm m-0 leading-relaxed max-w-md;
+  }
+
+  .crm-auth-brand-list {
+    @apply list-none m-0 p-0 flex flex-col gap-3;
+  }
+
+  .crm-auth-brand-list li {
+    @apply flex items-center gap-2.5 text-slate-300 text-sm;
+  }
+
+  .crm-auth-brand-list ion-icon {
+    @apply text-violet-400 text-lg shrink-0;
+  }
+
+  .crm-auth-form-wrap {
+    @apply w-full max-w-md mx-auto space-y-6 relative z-[1];
+  }
+
+  .crm-cliente-hero {
+    @apply rounded-2xl p-5 md:p-6 relative overflow-hidden;
+    background: linear-gradient(
+      135deg,
+      var(--crm-primary-soft) 0%,
+      rgba(15, 23, 42, 0.95) 42%,
+      rgba(2, 6, 23, 0.98) 100%
+    );
+    border: 1px solid var(--crm-primary-border);
+    box-shadow: var(--crm-shadow-md);
+  }
+
+  .crm-cliente-hero-avatar {
+    @apply inline-flex items-center justify-center shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-2xl text-lg md:text-xl font-bold text-white;
+    background: linear-gradient(
+      135deg,
+      var(--crm-primary) 0%,
+      color-mix(in srgb, var(--crm-primary) 75%, #312e81 25%) 100%
+    );
+    box-shadow: 0 8px 24px var(--crm-primary-glow);
+  }
+
+  .crm-cliente-hero-name {
+    @apply text-white text-xl md:text-2xl font-bold m-0 tracking-tight;
+  }
+
+  .crm-cliente-hero-meta {
+    @apply text-slate-400 text-sm m-0;
+  }
+
+  .crm-density-toggle {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer;
+    border-color: var(--crm-border-subtle);
+    background: rgba(15, 23, 42, 0.55);
+    color: #94a3b8;
+  }
+
+  .crm-density-toggle--active {
+    border-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft);
+    color: var(--crm-primary-text);
   }
 
   .crm-auth-shell::before {

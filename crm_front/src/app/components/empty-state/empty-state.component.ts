@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-empty-state',
@@ -26,11 +26,31 @@ import { Component, Input } from '@angular/core';
           />
         </svg>
       </div>
-      <p class="crm-empty-state-message">{{ message }}</p>
+      <p class="crm-empty-state-title">{{ displayTitle }}</p>
+      <p *ngIf="displayHint" class="crm-empty-state-message">{{ displayHint }}</p>
+      <button
+        *ngIf="actionLabel"
+        type="button"
+        class="crm-btn-primary mt-2"
+        (click)="action.emit()"
+      >
+        {{ actionLabel }}
+      </button>
     </div>
   `,
 })
 export class EmptyStateComponent {
-  @Input() message = 'Nenhum registro encontrado.';
+  @Input() title = '';
+  @Input() message = '';
   @Input() iconName?: string;
+  @Input() actionLabel?: string;
+  @Output() action = new EventEmitter<void>();
+
+  get displayTitle(): string {
+    return this.title || this.message || 'Nenhum registro encontrado';
+  }
+
+  get displayHint(): string {
+    return this.title && this.message ? this.message : '';
+  }
 }

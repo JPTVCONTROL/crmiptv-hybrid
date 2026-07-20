@@ -31,6 +31,7 @@ import { montarMensagemRecibo, oferecerMensagemRenovacao } from '../../shared/ut
 import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import { StatusBadgeTipo } from '../../components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-cliente-detalhes',
@@ -423,6 +424,23 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
 
   status(): StatusCliente {
     return calcularStatusCliente(this.cliente?.expiraEm);
+  }
+
+  get tipoStatusBadge(): StatusBadgeTipo {
+    return this.status();
+  }
+
+  get iniciaisCliente(): string {
+    if (!this.cliente?.nome) {
+      return '?';
+    }
+
+    const partes = this.cliente.nome.trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 1) {
+      return partes[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
   }
 
   rotuloValidadePlano = rotuloValidadePlano;

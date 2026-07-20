@@ -1,52 +1,78 @@
-<app-loading *ngIf="loading"></app-loading>
+<app-loading *ngIf="loading" variant="detail"></app-loading>
 
 <div *ngIf="!loading && cliente" class="space-y-6">
+  <section class="crm-cliente-hero">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+      <div class="flex items-start gap-4 min-w-0">
+        <span class="crm-cliente-hero-avatar" aria-hidden="true">{{ iniciaisCliente }}</span>
+        <div class="min-w-0">
+          <h1 class="crm-cliente-hero-name truncate">{{ cliente.nome }}</h1>
+          <p class="crm-cliente-hero-meta mt-1">
+            {{ cliente.telefone }}
+            <span class="text-slate-600 mx-1">·</span>
+            {{ cliente.expiraEm ? 'Vence ' + fmtData(cliente.expiraEm) : 'Sem vencimento' }}
+          </p>
+          <div class="flex flex-wrap items-center gap-2 mt-3">
+            <app-status-badge [tipo]="tipoStatusBadge" [label]="status()" [dot]="true"></app-status-badge>
+            <app-status-badge *ngIf="ehCortesia" tipo="CORTESIA" label="Cortesia"></app-status-badge>
+            <app-status-badge
+              *ngIf="!participaCobrancas && !ehCortesia"
+              tipo="SEM_COBRANCA"
+              label="Sem cobrança"
+            ></app-status-badge>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <button
+          type="button"
+          class="crm-btn-ghost"
+          [ngClass]="{
+            '!border-violet-500/40': ehCortesia,
+            '!text-violet-200': ehCortesia
+          }"
+          [disabled]="alternandoCortesia"
+          (click)="alternarCortesia()"
+        >
+          {{
+            alternandoCortesia
+              ? 'Salvando...'
+              : ehCortesia
+                ? 'Remover cortesia'
+                : 'Marcar cortesia'
+          }}
+        </button>
+        <button
+          type="button"
+          class="crm-btn-ghost"
+          [ngClass]="{
+            '!border-amber-500/40': !incluirNasCobrancas && !ehCortesia,
+            '!text-amber-200': !incluirNasCobrancas && !ehCortesia
+          }"
+          [disabled]="alternandoCobrancas || ehCortesia"
+          (click)="alternarInclusaoCobrancas()"
+        >
+          {{
+            alternandoCobrancas
+              ? 'Salvando...'
+              : incluirNasCobrancas
+                ? 'Não incluir nas cobranças'
+                : 'Incluir'
+          }}
+        </button>
+        <button class="crm-btn-ghost" (click)="editar()">Editar</button>
+        <button class="crm-btn-danger" (click)="excluir()">Excluir</button>
+      </div>
+    </div>
+  </section>
+
   <app-page-header
-    [title]="cliente.nome"
-    subtitle="Detalhes do cliente IPTV"
+    title="Detalhes"
+    subtitle="Credenciais, dispositivos, plano e mensalidades"
     rotaVoltar="/clientes"
     [breadcrumbs]="[{ label: 'Clientes', rota: '/clientes' }, { label: cliente.nome }]"
   >
-    <div class="flex flex-wrap gap-2 justify-end">
-      <button
-        type="button"
-        class="crm-btn-ghost"
-        [ngClass]="{
-          '!border-violet-500/40': ehCortesia,
-          '!text-violet-200': ehCortesia
-        }"
-        [disabled]="alternandoCortesia"
-        (click)="alternarCortesia()"
-      >
-        {{
-          alternandoCortesia
-            ? 'Salvando...'
-            : ehCortesia
-              ? 'Remover cortesia'
-              : 'Marcar cortesia'
-        }}
-      </button>
-      <button
-        type="button"
-        class="crm-btn-ghost"
-        [ngClass]="{
-          '!border-amber-500/40': !incluirNasCobrancas && !ehCortesia,
-          '!text-amber-200': !incluirNasCobrancas && !ehCortesia
-        }"
-        [disabled]="alternandoCobrancas || ehCortesia"
-        (click)="alternarInclusaoCobrancas()"
-      >
-        {{
-          alternandoCobrancas
-            ? 'Salvando...'
-            : incluirNasCobrancas
-              ? 'Não incluir nas cobranças'
-              : 'Incluir'
-        }}
-      </button>
-      <button class="crm-btn-ghost" (click)="editar()">Editar</button>
-      <button class="crm-btn-danger" (click)="excluir()">Excluir</button>
-    </div>
   </app-page-header>
 
   <div
@@ -75,15 +101,7 @@
       <p class="text-slate-300"><span class="text-slate-500">Telefone:</span> {{ cliente.telefone }}</p>
       <p class="text-slate-300 flex items-center gap-2">
         <span class="text-slate-500">Status:</span>
-        <span
-          [ngClass]="{
-            'crm-badge-ativo': status() === 'ATIVO',
-            'crm-badge-atrasado': status() === 'ATRASADO',
-            'crm-badge-inativo': status() === 'INATIVO'
-          }"
-        >
-          {{ status() }}
-        </span>
+        <app-status-badge [tipo]="tipoStatusBadge" [label]="status()" [dot]="true"></app-status-badge>
       </p>
       <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span> {{ ehCortesia ? 'Cortesia' : fmtValor(cliente.valorMensal) }}</p>
       <p *ngIf="cliente.observacao?.trim()" class="text-slate-300 whitespace-pre-wrap">
@@ -201,13 +219,11 @@
             <h3 class="crm-mobile-card-title">{{ m.referencia }}</h3>
             <p class="crm-mobile-card-subtitle">{{ fmtValor(m.valor) }}</p>
           </div>
-          <span
+          <app-status-badge
             class="shrink-0"
-            [class.crm-badge-pago]="m.status === 'PAGO'"
-            [class.crm-badge-pendente]="m.status === 'PENDENTE'"
-          >
-            {{ m.status }}
-          </span>
+            [tipo]="m.status === 'PAGO' ? 'PAGO' : 'PENDENTE'"
+            [label]="m.status"
+          ></app-status-badge>
         </div>
 
         <div class="crm-mobile-card-row">
@@ -239,7 +255,7 @@
       </article>
     </div>
 
-    <div class="overflow-x-auto hidden md:block">
+    <div class="crm-table-scroll hidden md:block">
       <table class="crm-table min-w-[500px]">
         <thead>
           <tr class="text-slate-400 border-b border-slate-800">
@@ -256,12 +272,10 @@
             <td class="py-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
             <td class="py-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
             <td class="py-2">
-              <span
-                [class.crm-badge-pago]="m.status === 'PAGO'"
-                [class.crm-badge-pendente]="m.status === 'PENDENTE'"
-              >
-                {{ m.status }}
-              </span>
+              <app-status-badge
+                [tipo]="m.status === 'PAGO' ? 'PAGO' : 'PENDENTE'"
+                [label]="m.status"
+              ></app-status-badge>
             </td>
             <td class="py-2 text-right space-x-1">
               <app-whatsapp-cobranca-btn
@@ -291,7 +305,8 @@
 
     <app-empty-state
       *ngIf="!cliente.mensalidades?.length"
-      message="Nenhuma mensalidade registrada para este cliente."
+      title="Nenhuma mensalidade registrada"
+      message="As cobranças e pagamentos deste cliente aparecerão aqui."
       iconName="calendar-outline"
     ></app-empty-state>
   </div>

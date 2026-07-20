@@ -1,12 +1,39 @@
-<div class="crm-bar-chart" [style.min-height.px]="height" role="img" [attr.aria-label]="'Gráfico de faturamento com ' + data.length + ' meses'">
+<div
+  class="crm-bar-chart"
+  [style.min-height.px]="height"
+  role="img"
+  [attr.aria-label]="'Gráfico de faturamento com ' + data.length + ' meses'"
+>
   <div *ngIf="barras.length === 0" class="crm-bar-chart-empty">
     Nenhum dado para exibir.
   </div>
 
-  <div *ngFor="let item of barras" class="crm-bar-chart-col">
+  <div
+    *ngFor="let item of barras"
+    class="crm-bar-chart-col"
+    [class.crm-bar-chart-col--active]="indiceAtivo === item.indice"
+    [class.crm-bar-chart-col--destaque]="item.destaque"
+    (mouseenter)="destacar(item.indice)"
+    (mouseleave)="destacar(null)"
+    (focusin)="destacar(item.indice)"
+    (focusout)="destacar(null)"
+    tabindex="0"
+  >
+    <div
+      *ngIf="indiceAtivo === item.indice"
+      class="crm-bar-chart-tooltip"
+      role="tooltip"
+    >
+      <span class="crm-bar-chart-tooltip-mes">{{ item.mes }}</span>
+      <strong>{{ formatarValor(item.total) }}</strong>
+    </div>
     <span class="crm-bar-chart-value">{{ formatarValor(item.total) }}</span>
     <div class="crm-bar-chart-track">
-      <div class="crm-bar-chart-bar" [style.height.%]="item.altura"></div>
+      <div
+        class="crm-bar-chart-bar"
+        [style.height.%]="item.altura"
+        [class.crm-bar-chart-bar--destaque]="item.destaque"
+      ></div>
     </div>
     <span class="crm-bar-chart-label">{{ item.mes }}</span>
   </div>

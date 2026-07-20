@@ -9,7 +9,7 @@
 
 <ion-content class="bg-slate-950">
   <div class="p-4 md:p-6 modal-form-body">
-    <app-loading *ngIf="loading"></app-loading>
+    <app-loading *ngIf="loading" variant="spinner"></app-loading>
     <p *ngIf="erro" class="text-red-400">{{ erro }}</p>
 
     <div *ngIf="!loading && !erro" class="space-y-3">

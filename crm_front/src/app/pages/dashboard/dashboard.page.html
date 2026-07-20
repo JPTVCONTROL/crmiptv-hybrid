@@ -9,7 +9,7 @@
   </button>
 </app-page-header>
 
-<app-loading *ngIf="loading"></app-loading>
+<app-loading *ngIf="loading" variant="page"></app-loading>
 
 <app-error-banner
   *ngIf="!loading && erroCarregamento"
@@ -370,14 +370,12 @@
             <p class="crm-mobile-card-title">{{ c.nome }}</p>
             <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
           </div>
-          <span
-            [ngClass]="{
-              'crm-badge-atrasado': c.status === 'ATRASADO',
-              'crm-badge-inativo': c.status === 'INATIVO'
-            }"
-          >
-            {{ c.status }}
-          </span>
+          <app-status-badge
+            class="shrink-0"
+            [tipo]="c.status"
+            [label]="c.status"
+            [dot]="true"
+          ></app-status-badge>
         </div>
         <div class="crm-mobile-card-row">
           <span class="crm-mobile-card-label">Situação</span>
@@ -444,14 +442,11 @@
               </span>
             </td>
             <td class="py-2.5 px-2">
-              <span
-                [ngClass]="{
-                  'crm-badge-atrasado': c.status === 'ATRASADO',
-                  'crm-badge-inativo': c.status === 'INATIVO'
-                }"
-              >
-                {{ c.status }}
-              </span>
+              <app-status-badge
+                [tipo]="c.status"
+                [label]="c.status"
+                [dot]="true"
+              ></app-status-badge>
             </td>
             <td class="py-2.5 px-2 text-right whitespace-nowrap">
               <div class="inline-flex flex-wrap justify-end gap-1">

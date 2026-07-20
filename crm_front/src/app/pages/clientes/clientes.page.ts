@@ -25,6 +25,10 @@ import {
 } from '../../shared/utils/cliente-cadastro-audit';
 import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import { StatusBadgeTipo } from '../../components/status-badge/status-badge.component';
+import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+
+const CHAVE_DENSIDADE_CLIENTES = 'crm.clientes.tabelaCompacta';
 import { exportarClientesCsv } from '../../shared/utils/cliente-export';
 import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 import {
@@ -92,6 +96,7 @@ export class ClientesPage implements OnInit, OnDestroy {
   opcoesAplicativos: OpcaoFiltroCatalogo[] = [];
   opcoesPlanos: OpcaoFiltroCatalogo[] = [];
   aplicativos: Aplicativo[] = [];
+  tabelaCompacta = false;
 
   readonly opcoesFiltroStatus: { valor: FiltroStatusCliente; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -283,6 +288,9 @@ export class ClientesPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.tabelaCompacta =
+      lerSessionJson<boolean>(CHAVE_DENSIDADE_CLIENTES) === true;
+
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
@@ -720,6 +728,19 @@ export class ClientesPage implements OnInit, OnDestroy {
 
   status(cliente: Cliente): StatusCliente {
     return statusCliente(cliente.expiraEm);
+  }
+
+  tipoBadge(cliente: Cliente): StatusBadgeTipo {
+    return this.status(cliente);
+  }
+
+  alternarDensidadeTabela(): void {
+    this.tabelaCompacta = !this.tabelaCompacta;
+    salvarSessionJson(CHAVE_DENSIDADE_CLIENTES, this.tabelaCompacta);
+  }
+
+  get classesTabela(): string {
+    return this.tabelaCompacta ? 'crm-table crm-table--compact' : 'crm-table';
   }
 
   pendenciasCliente(cliente: Cliente): TipoPendenciaCadastro[] {

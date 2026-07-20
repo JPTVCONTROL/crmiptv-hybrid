@@ -17,15 +17,26 @@ export class FaturamentoChartComponent implements OnChanges {
   @Input() data: DadoFaturamento[] = [];
   @Input() height = 280;
 
-  barras: Array<DadoFaturamento & { altura: number }> = [];
+  barras: Array<
+    DadoFaturamento & { altura: number; indice: number; destaque: boolean }
+  > = [];
   valorMaximo = 0;
+  indiceAtivo: number | null = null;
 
   ngOnChanges(): void {
     this.valorMaximo = Math.max(...this.data.map((item) => item.total), 0);
-    this.barras = this.data.map((item) => ({
+    const ultimoIndice = this.data.length - 1;
+    this.barras = this.data.map((item, indice) => ({
       ...item,
+      indice,
+      destaque: indice === ultimoIndice,
       altura: this.valorMaximo > 0 ? (item.total / this.valorMaximo) * 100 : 0,
     }));
+    this.indiceAtivo = null;
+  }
+
+  destacar(indice: number | null): void {
+    this.indiceAtivo = indice;
   }
 
   formatarValor(valor: number): string {
