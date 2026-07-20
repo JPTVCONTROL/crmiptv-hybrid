@@ -79,14 +79,26 @@
         <span *ngIf="temFiltrosAtivos"> encontrada(s)</span>
         <span *ngIf="temFiltrosAtivos"> · {{ mensalidades.length }} no total</span>
       </p>
-      <button
-        *ngIf="temFiltrosAtivos"
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start sm:self-auto"
-        (click)="limparFiltros()"
-      >
-        Limpar filtros
-      </button>
+      <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+        <button
+          *ngIf="temFiltrosAtivos"
+          type="button"
+          class="crm-btn-ghost !py-1.5 !text-xs"
+          (click)="limparFiltros()"
+        >
+          Limpar filtros
+        </button>
+        <button
+          type="button"
+          class="crm-density-toggle hidden md:inline-flex !py-1.5 !text-xs shrink-0"
+          [class.crm-density-toggle--active]="tabelaCompacta"
+          (click)="alternarDensidadeTabela()"
+          title="Alternar densidade da tabela"
+        >
+          <ion-icon [name]="tabelaCompacta ? 'expand-outline' : 'contract-outline'"></ion-icon>
+          {{ tabelaCompacta ? 'Confortável' : 'Compacto' }}
+        </button>
+      </div>
     </div>
   </div>
 
@@ -184,7 +196,7 @@
   </div>
 
   <div class="crm-card hidden md:block overflow-x-auto">
-    <table class="crm-table min-w-[760px]">
+    <table class="min-w-[760px]" [ngClass]="classesTabela">
       <thead>
         <tr class="text-slate-400 border-b border-slate-800">
           <th class="text-left py-3 px-2 w-10">

@@ -14,17 +14,6 @@
       <button type="button" class="crm-btn-ghost" (click)="voltarParaLista()">
         ← Voltar
       </button>
-      <button
-        type="button"
-        class="crm-btn-ghost"
-        [disabled]="qtdPublicoElegivel === 0"
-        (click)="exportarCampanha()"
-      >
-        Exportar CSV
-      </button>
-      <button type="button" class="crm-btn-primary" (click)="editarCampanhaAtual()">
-        Editar campanha
-      </button>
     </ng-container>
   </div>
 </app-page-header>
@@ -33,13 +22,15 @@
 
 <!-- Lista de campanhas -->
 <div *ngIf="!loading && emModoLista" class="space-y-6">
-  <p class="text-slate-500 text-sm -mt-2">
-    Suas campanhas salvas aparecem abaixo. Clique em uma para enviar ou acompanhar os envios.
-  </p>
+  <div class="crm-info-banner">
+    <p>
+      Campanhas WhatsApp manuais com fila assistida. Clique em uma campanha para enviar ou acompanhar os registros de envio.
+    </p>
+  </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card title="Campanhas" [value]="campanhas.length.toString()" color="#8B5CF6"></app-stat-card>
-    <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#38BDF8"></app-stat-card>
+    <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#64748B"></app-stat-card>
     <app-stat-card
       title="Total enviados"
       [value]="totalEnviosTodasCampanhas.toString()"
@@ -122,16 +113,18 @@
 
 <!-- Detalhe / nova campanha -->
 <div *ngIf="!loading && emModoCampanha" class="space-y-6">
-  <p class="text-slate-500 text-sm -mt-2">
-    O link <code class="text-violet-300">wa.me</code> envia só texto. Na fila, use
-    <strong class="text-slate-300">Marcar enviado</strong> para registrar cada cliente.
-  </p>
+  <div class="crm-info-banner">
+    <p>
+      O link <code class="text-violet-300">wa.me</code> envia só texto. Na fila, use
+      <strong class="text-slate-300">Marcar enviado</strong> para registrar cada cliente.
+    </p>
+  </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card title="Enviados" [value]="totalEnviados.toString()" color="#22C55E"></app-stat-card>
     <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" color="#F59E0B"></app-stat-card>
-    <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" color="#38BDF8"></app-stat-card>
-    <app-stat-card title="Elegíveis" [value]="qtdPublicoElegivel.toString()" color="#8B5CF6"></app-stat-card>
+    <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" color="#8B5CF6"></app-stat-card>
+    <app-stat-card title="Elegíveis" [value]="qtdPublicoElegivel.toString()" color="#64748B"></app-stat-card>
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
@@ -175,16 +168,29 @@
 
     <section class="xl:col-span-3 crm-card !p-0 overflow-hidden flex flex-col min-h-[28rem]">
       <div class="p-4 md:p-5 border-b border-slate-800/80 space-y-4">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div>
-            <p class="crm-section-label mb-1">Destinatários</p>
-            <p class="text-slate-400 text-sm">{{ resumoPublicoElegivel }}</p>
-            <p class="text-slate-500 text-xs mt-1">
-              {{ linhasFiltradas.length }} exibido(s) na tabela
-              <span *ngIf="qtdSelecionados > 0"> · {{ qtdSelecionados }} selecionado(s)</span>
-            </p>
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div class="min-w-0 space-y-2">
+            <p class="crm-section-label mb-0">Destinatários</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="crm-badge-neutral tabular-nums">{{ qtdPublicoElegivel }} elegíveis</span>
+              <span class="crm-badge-neutral tabular-nums">{{ qtdPublicoComTelefone }} com WhatsApp</span>
+              <span class="crm-badge-pendente tabular-nums">{{ qtdPublicoSelecionaveis }} pendentes de envio</span>
+              <span *ngIf="qtdSelecionados > 0" class="crm-badge-pago tabular-nums">
+                {{ qtdSelecionados }} selecionado(s)
+              </span>
+            </div>
           </div>
           <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+            <button
+              type="button"
+              class="crm-density-toggle hidden md:inline-flex shrink-0"
+              [class.crm-density-toggle--active]="tabelaCompacta"
+              (click)="alternarDensidadeTabela()"
+              title="Alternar densidade da tabela"
+            >
+              <ion-icon [name]="tabelaCompacta ? 'expand-outline' : 'contract-outline'"></ion-icon>
+              {{ tabelaCompacta ? 'Confortável' : 'Compacto' }}
+            </button>
             <button
               type="button"
               class="crm-btn-ghost"
@@ -204,119 +210,142 @@
           </div>
         </div>
 
-        <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 md:p-4 space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p class="text-slate-300 text-sm font-medium">Público da campanha</p>
-            <p class="text-slate-500 text-xs">
-              Cortesia excluída por padrão · Vencendo = próximos {{ diasAntecedencia }} dias
-            </p>
+        <div class="rounded-xl border border-slate-800 overflow-hidden">
+          <div class="p-3 md:p-4 space-y-3 border-b border-slate-800/80 bg-slate-900/20">
+            <div>
+              <p class="text-white text-sm font-medium">Quem entra no público</p>
+              <p class="text-slate-500 text-xs mt-0.5">
+                Define o universo de clientes da campanha · cortesia fora por padrão · vencendo =
+                próximos {{ diasAntecedencia }} dias
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                *ngFor="let op of opcoesSegmentoPublico"
+                type="button"
+                [class]="classesChipPublico(op.valor)"
+                (click)="definirSegmentoPublico(op.valor)"
+              >
+                <span>{{ op.rotulo }}</span>
+                <span [class]="classesChipContagemPublico(op.valor)">{{
+                  contagemSegmentoPublico(op.valor)
+                }}</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 items-center pt-1">
+              <div class="space-y-1.5">
+                <label class="text-slate-500 text-xs font-medium" for="market-filtro-plano">
+                  Plano
+                </label>
+                <select
+                  id="market-filtro-plano"
+                  class="crm-input !py-2 !text-sm w-full"
+                  [(ngModel)]="filtroPlanoId"
+                  (ngModelChange)="onPublicoChange()"
+                >
+                  <option [ngValue]="null">Todos os planos</option>
+                  <option *ngFor="let plano of planos" [ngValue]="plano.id">
+                    {{ plano.nome }}
+                  </option>
+                </select>
+              </div>
+
+              <label
+                class="flex items-center justify-between sm:justify-end gap-3 sm:pt-5 cursor-pointer select-none"
+              >
+                <span class="text-slate-400 text-sm">Incluir cortesia</span>
+                <input
+                  type="checkbox"
+                  class="crm-checkbox"
+                  [(ngModel)]="incluirCortesia"
+                  (ngModelChange)="onPublicoChange()"
+                />
+              </label>
+            </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              *ngFor="let op of opcoesSegmentoPublico"
-              type="button"
-              [class]="classesChipPublico(op.valor)"
-              (click)="definirSegmentoPublico(op.valor)"
-            >
-              <span>{{ op.rotulo }}</span>
-              <span class="text-xs opacity-80 tabular-nums">{{
-                contagemSegmentoPublico(op.valor)
-              }}</span>
-            </button>
-          </div>
+          <div class="p-3 md:p-4 space-y-3 border-b border-slate-800/80">
+            <div>
+              <p class="text-white text-sm font-medium">Busca e status na tabela</p>
+              <p class="text-slate-500 text-xs mt-0.5">
+                Refina a lista exibida · {{ linhasFiltradas.length }} linha(s) visível(is)
+              </p>
+            </div>
 
-          <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
-            <label class="text-slate-400 text-sm shrink-0" for="market-filtro-plano">
-              Plano
-            </label>
-            <select
-              id="market-filtro-plano"
-              class="crm-input !py-2 !text-sm sm:max-w-xs"
-              [(ngModel)]="filtroPlanoId"
-              (ngModelChange)="onPublicoChange()"
-            >
-              <option [ngValue]="null">Todos os planos</option>
-              <option *ngFor="let plano of planos" [ngValue]="plano.id">
-                {{ plano.nome }}
-              </option>
-            </select>
-
-            <label
-              class="inline-flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none"
-            >
+            <div class="relative">
+              <ion-icon
+                name="search-outline"
+                class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"
+                aria-hidden="true"
+              ></ion-icon>
               <input
-                type="checkbox"
-                class="crm-checkbox"
-                [(ngModel)]="incluirCortesia"
-                (ngModelChange)="onPublicoChange()"
+                type="search"
+                class="crm-input !pl-11"
+                [(ngModel)]="busca"
+                (ngModelChange)="onBuscaChange()"
+                placeholder="Buscar por nome ou telefone..."
+                autocomplete="off"
               />
-              Incluir cortesia
-            </label>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="text-slate-500 text-xs font-medium">Status do envio</p>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  *ngFor="let op of opcoesFiltro"
+                  type="button"
+                  [class]="classesChipFiltro(op.valor)"
+                  (click)="definirFiltro(op.valor)"
+                >
+                  <span>{{ op.rotulo }}</span>
+                  <span [class]="classesChipContagemFiltro(op.valor)">{{
+                    contagemFiltro(op.valor)
+                  }}</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="relative">
-          <ion-icon
-            name="search-outline"
-            class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"
-            aria-hidden="true"
-          ></ion-icon>
-          <input
-            type="search"
-            class="crm-input !pl-11"
-            [(ngModel)]="busca"
-            (ngModelChange)="onBuscaChange()"
-            placeholder="Buscar por nome ou telefone..."
-            autocomplete="off"
-          />
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            *ngFor="let op of opcoesFiltro"
-            type="button"
-            [class]="classesChipFiltro(op.valor)"
-            (click)="definirFiltro(op.valor)"
+          <div
+            class="p-3 md:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-950/40"
           >
-            <span>{{ op.rotulo }}</span>
-            <span class="text-xs opacity-80 tabular-nums">{{ contagemFiltro(op.valor) }}</span>
-          </button>
-
-          <span class="hidden sm:block w-px h-5 bg-slate-700 mx-1" aria-hidden="true"></span>
-
-          <button
-            type="button"
-            class="crm-btn-ghost !py-1.5 !text-xs"
-            [disabled]="qtdPublicoSelecionaveis === 0"
-            (click)="selecionarElegiveisWhatsApp()"
-          >
-            Elegíveis WhatsApp
-          </button>
-          <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarPendentes()">
-            Pendentes
-          </button>
-          <button
-            type="button"
-            class="crm-btn-ghost !py-1.5 !text-xs"
-            [disabled]="qtdFiltradosSelecionaveis === 0"
-            (click)="alternarSelecionarTodosFiltrados($event)"
-          >
-            {{ todosFiltradosSelecionados ? 'Desmarcar filtrados' : 'Marcar filtrados' }}
-          </button>
-          <button
-            type="button"
-            class="crm-btn-ghost !py-1.5 !text-xs"
-            [disabled]="qtdSelecionados === 0"
-            (click)="limparSelecao()"
-          >
-            Limpar
-          </button>
+            <p class="text-slate-500 text-xs">
+              Marque quem entrará na fila de WhatsApp
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="crm-btn-ghost !py-1.5 !text-xs"
+                [disabled]="qtdPublicoSelecionaveis === 0"
+                (click)="selecionarElegiveisWhatsApp()"
+              >
+                Selecionar elegíveis
+              </button>
+              <button
+                type="button"
+                class="crm-btn-ghost !py-1.5 !text-xs"
+                [disabled]="qtdFiltradosSelecionaveis === 0"
+                (click)="alternarSelecionarTodosFiltrados($event)"
+              >
+                {{ todosFiltradosSelecionados ? 'Desmarcar visíveis' : 'Marcar visíveis' }}
+              </button>
+              <button
+                type="button"
+                class="crm-btn-ghost !py-1.5 !text-xs"
+                [disabled]="qtdSelecionados === 0"
+                (click)="limparSelecao()"
+              >
+                Limpar seleção
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="hidden md:block crm-table-scroll flex-1">
-        <table class="crm-table crm-table--compact w-full">
+        <table class="w-full" [ngClass]="classesTabela">
           <thead>
             <tr>
               <th class="w-11 pl-4">
@@ -357,19 +386,11 @@
               <td>
                 <p class="text-white font-medium">{{ linha.nome }}</p>
                 <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
-                  <span class="text-slate-500 text-xs">{{ rotuloStatusPublico(linha.status) }}</span>
-                  <span
-                    *ngIf="linha.planoNome"
-                    class="text-slate-500 text-xs"
-                  >
-                    · {{ linha.planoNome }}
-                  </span>
-                  <span
-                    *ngIf="linha.cortesia"
-                    class="text-xs font-medium px-1.5 py-0.5 rounded-full border text-amber-300 border-amber-500/40 bg-amber-500/10"
-                  >
-                    Cortesia
-                  </span>
+                  <span [class]="classeBadgeStatusPublico(linha.status)">{{
+                    rotuloStatusPublico(linha.status)
+                  }}</span>
+                  <span *ngIf="linha.planoNome" class="text-slate-500 text-xs">{{ linha.planoNome }}</span>
+                  <span *ngIf="linha.cortesia" class="crm-badge-cortesia">Cortesia</span>
                   <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs">
                     Telefone inválido
                   </p>
@@ -378,18 +399,10 @@
               <td class="text-slate-400">{{ linha.telefone }}</td>
               <td class="pr-4" (click)="$event.stopPropagation()">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span
-                    *ngIf="linha.enviado"
-                    class="text-xs font-medium px-2 py-0.5 rounded-full border text-green-300 border-green-500/40 bg-green-500/10"
-                  >
+                  <span *ngIf="linha.enviado" class="crm-badge-pago">
                     Enviado · {{ formatarDataEnvio(linha.enviadoEm) }}
                   </span>
-                  <span
-                    *ngIf="!linha.enviado"
-                    class="text-xs font-medium px-2 py-0.5 rounded-full border text-slate-400 border-slate-600 bg-slate-800/60"
-                  >
-                    Pendente
-                  </span>
+                  <span *ngIf="!linha.enviado" class="crm-badge-neutral">Pendente</span>
                   <button
                     *ngIf="podeReenviar(linha)"
                     type="button"
@@ -405,51 +418,65 @@
           </tbody>
         </table>
 
-        <div *ngIf="linhasFiltradas.length === 0" class="text-center text-slate-500 py-12 px-4">
-          Nenhum cliente encontrado com os filtros atuais.
-        </div>
+        <app-empty-state
+          *ngIf="linhasFiltradas.length === 0"
+          title="Nenhum cliente neste filtro"
+          message="Ajuste o público, a busca ou o status de envio."
+          iconName="people-outline"
+        ></app-empty-state>
       </div>
 
-      <div class="md:hidden divide-y divide-slate-800/80 flex-1 overflow-y-auto">
+      <div class="md:hidden crm-mobile-list flex-1 overflow-y-auto">
         <article
           *ngFor="let linha of linhasFiltradas; trackBy: trackByLinhaId"
-          class="p-4 space-y-2"
+          class="crm-mobile-card"
           [class.cursor-pointer]="podeSelecionar(linha)"
-          [ngClass]="{ 'bg-violet-500/10': estaSelecionado(linha.id) }"
+          [ngClass]="{ 'ring-1 ring-violet-500/40': estaSelecionado(linha.id) }"
           [class.opacity-50]="!linha.telefoneValido"
           (click)="alternarSelecaoLinha(linha)"
         >
-          <label class="flex items-start gap-3 cursor-pointer" (click)="$event.stopPropagation()">
-            <input
-              type="checkbox"
-              class="crm-checkbox mt-0.5 shrink-0"
-              [checked]="estaSelecionado(linha.id)"
-              [disabled]="!podeSelecionar(linha)"
-              (click)="alternarSelecaoClick(linha.id, $event)"
-            />
-            <div class="min-w-0 flex-1">
-              <p class="text-white font-medium">{{ linha.nome }}</p>
-              <p class="text-slate-400 text-sm">{{ linha.telefone }}</p>
-              <p class="text-slate-500 text-xs mt-0.5">
-                {{ rotuloStatusPublico(linha.status) }}
-                <span *ngIf="linha.planoNome"> · {{ linha.planoNome }}</span>
-                <span *ngIf="linha.cortesia"> · Cortesia</span>
-              </p>
+          <div class="crm-mobile-card-header">
+            <label class="flex items-start gap-3 min-w-0 flex-1 cursor-pointer" (click)="$event.stopPropagation()">
+              <input
+                type="checkbox"
+                class="crm-checkbox mt-0.5 shrink-0"
+                [checked]="estaSelecionado(linha.id)"
+                [disabled]="!podeSelecionar(linha)"
+                (click)="alternarSelecaoClick(linha.id, $event)"
+              />
+              <div class="min-w-0">
+                <p class="crm-mobile-card-title">{{ linha.nome }}</p>
+                <p class="crm-mobile-card-subtitle">{{ linha.telefone }}</p>
+              </div>
+            </label>
+            <span *ngIf="linha.enviado" class="crm-badge-pago shrink-0">Enviado</span>
+            <span *ngIf="!linha.enviado" class="crm-badge-neutral shrink-0">Pendente</span>
+          </div>
+
+          <div class="space-y-2">
+            <div class="crm-mobile-card-row">
+              <span class="crm-mobile-card-label">Status</span>
+              <span [class]="classeBadgeStatusPublico(linha.status)">{{
+                rotuloStatusPublico(linha.status)
+              }}</span>
             </div>
-          </label>
-          <div class="pl-7 flex items-center gap-2 flex-wrap" (click)="$event.stopPropagation()">
-            <span
-              *ngIf="linha.enviado"
-              class="text-xs font-medium px-2 py-0.5 rounded-full border text-green-300 border-green-500/40 bg-green-500/10"
-            >
-              Enviado · {{ formatarDataEnvio(linha.enviadoEm) }}
-            </span>
-            <span
-              *ngIf="!linha.enviado"
-              class="text-xs font-medium px-2 py-0.5 rounded-full border text-slate-400 border-slate-600 bg-slate-800/60"
-            >
-              Pendente
-            </span>
+            <div *ngIf="linha.planoNome" class="crm-mobile-card-row">
+              <span class="crm-mobile-card-label">Plano</span>
+              <span class="crm-mobile-card-value">{{ linha.planoNome }}</span>
+            </div>
+            <div *ngIf="linha.enviado" class="crm-mobile-card-row">
+              <span class="crm-mobile-card-label">Enviado em</span>
+              <span class="crm-mobile-card-value">{{ formatarDataEnvio(linha.enviadoEm) }}</span>
+            </div>
+          </div>
+
+          <div
+            *ngIf="linha.cortesia || !linha.telefoneValido || podeReenviar(linha)"
+            class="crm-mobile-card-actions flex-wrap !justify-start"
+            (click)="$event.stopPropagation()"
+          >
+            <span *ngIf="linha.cortesia" class="crm-badge-cortesia">Cortesia</span>
+            <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs">Telefone inválido</p>
             <button
               *ngIf="podeReenviar(linha)"
               type="button"
@@ -462,9 +489,12 @@
           </div>
         </article>
 
-        <div *ngIf="linhasFiltradas.length === 0" class="text-center text-slate-500 py-12 px-4">
-          Nenhum cliente encontrado.
-        </div>
+        <app-empty-state
+          *ngIf="linhasFiltradas.length === 0"
+          title="Nenhum cliente neste filtro"
+          message="Ajuste o público, a busca ou o status de envio."
+          iconName="people-outline"
+        ></app-empty-state>
       </div>
     </section>
   </div>

@@ -38,6 +38,9 @@ import {
   classesFilterChipContagem,
   VarianteFilterChip,
 } from '../../shared/utils/filter-chip.util';
+import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+
+const CHAVE_DENSIDADE_FINANCEIRO = 'crm.financeiro.tabelaCompacta';
 
 @Component({
   selector: 'app-financeiro',
@@ -56,6 +59,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
   readonly porPagina = 10;
   selecionados = new Set<number>();
   pagandoLote = false;
+  tabelaCompacta = false;
 
   readonly opcoesFiltro: { valor: StatusFinanceiro; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -85,6 +89,9 @@ export class FinanceiroPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.tabelaCompacta =
+      lerSessionJson<boolean>(CHAVE_DENSIDADE_FINANCEIRO) === true;
+
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
@@ -459,6 +466,15 @@ export class FinanceiroPage implements OnInit, OnDestroy {
       ATRASADO: 'red',
     };
     return classesFilterChipContagem(ativo, variantes[filtro]);
+  }
+
+  alternarDensidadeTabela(): void {
+    this.tabelaCompacta = !this.tabelaCompacta;
+    salvarSessionJson(CHAVE_DENSIDADE_FINANCEIRO, this.tabelaCompacta);
+  }
+
+  get classesTabela(): string {
+    return this.tabelaCompacta ? 'crm-table crm-table--compact' : 'crm-table';
   }
 
   fmtValor = formatarValor;

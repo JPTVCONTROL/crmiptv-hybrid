@@ -309,6 +309,18 @@
     @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200;
   }
 
+  .crm-badge-promocao {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/25;
+  }
+
+  .crm-badge-comemorativa {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-sky-500/15 text-sky-200 ring-1 ring-sky-500/25;
+  }
+
+  .crm-badge-campanha {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-violet-500/15 text-violet-200 ring-1 ring-violet-500/25;
+  }
+
   .crm-badge-dot {
     @apply w-1.5 h-1.5 rounded-full shrink-0;
     background: currentColor;

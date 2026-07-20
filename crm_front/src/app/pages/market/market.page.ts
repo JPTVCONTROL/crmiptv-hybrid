@@ -34,6 +34,14 @@ import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { confirmarUsuario } from '../../shared/utils/confirm-notifier';
 import { CampanhaFormModalComponent } from '../../components/campanha/campanha-form-modal.component';
 import { exportarCampanhaCsv } from '../../shared/utils/campanha-export';
+import {
+  classesFilterChip,
+  classesFilterChipContagem,
+  VarianteFilterChip,
+} from '../../shared/utils/filter-chip.util';
+import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+
+const CHAVE_DENSIDADE_MARKET = 'crm.market.tabelaCompacta';
 
 export interface ClienteCampanhaLinha {
   id: number;
@@ -89,6 +97,7 @@ export class MarketPage implements OnInit, OnDestroy {
   busca = '';
   buscaCampanhas = '';
   visualizacao: 'lista' | 'campanha' = 'lista';
+  tabelaCompacta = true;
 
   readonly rotuloTipoCampanha = rotuloTipoCampanha;
   readonly trackByCampanhaId = (_: number, c: Campanha) => c.id;
@@ -122,6 +131,9 @@ export class MarketPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.tabelaCompacta =
+      lerSessionJson<boolean>(CHAVE_DENSIDADE_MARKET) !== false;
+
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
@@ -164,11 +176,6 @@ export class MarketPage implements OnInit, OnDestroy {
 
   get qtdPublicoSelecionaveis(): number {
     return this.montarLinhas().filter((l) => this.podeSelecionar(l)).length;
-  }
-
-  get resumoPublicoElegivel(): string {
-    const pendentesEnvio = this.qtdPublicoSelecionaveis;
-    return `${this.qtdPublicoElegivel} elegível(is) · ${this.qtdPublicoComTelefone} com WhatsApp · ${pendentesEnvio} pendente(s) de envio`;
   }
 
   private get filtroPublicoAtual(): FiltroPublicoCampanha {
@@ -263,12 +270,25 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   classesChipPublico(segmento: SegmentoPublicoCampanha): string {
-    const base =
-      'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors';
-    if (this.segmentoPublico !== segmento) {
-      return `${base} border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300`;
-    }
-    return `${base} border-sky-500/40 bg-sky-500/10 text-sky-200`;
+    const variantes: Record<SegmentoPublicoCampanha, VarianteFilterChip> = {
+      TODOS: 'violet',
+      ATIVOS: 'emerald',
+      VENCENDO: 'amber',
+      ATRASADOS: 'red',
+      INATIVOS: 'red',
+    };
+    return classesFilterChip(this.segmentoPublico === segmento, variantes[segmento]);
+  }
+
+  classesChipContagemPublico(segmento: SegmentoPublicoCampanha): string {
+    const variantes: Record<SegmentoPublicoCampanha, VarianteFilterChip> = {
+      TODOS: 'violet',
+      ATIVOS: 'emerald',
+      VENCENDO: 'amber',
+      ATRASADOS: 'red',
+      INATIVOS: 'red',
+    };
+    return classesFilterChipContagem(this.segmentoPublico === segmento, variantes[segmento]);
   }
 
   definirSegmentoPublico(segmento: SegmentoPublicoCampanha): void {
@@ -282,12 +302,43 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   classesChipFiltro(filtro: FiltroEnvioCampanha): string {
-    const base =
-      'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors';
-    if (this.filtroEnvio !== filtro) {
-      return `${base} border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300`;
+    const variantes: Record<FiltroEnvioCampanha, VarianteFilterChip> = {
+      TODOS: 'violet',
+      PENDENTES: 'amber',
+      ENVIADOS: 'emerald',
+    };
+    return classesFilterChip(this.filtroEnvio === filtro, variantes[filtro]);
+  }
+
+  classesChipContagemFiltro(filtro: FiltroEnvioCampanha): string {
+    const variantes: Record<FiltroEnvioCampanha, VarianteFilterChip> = {
+      TODOS: 'violet',
+      PENDENTES: 'amber',
+      ENVIADOS: 'emerald',
+    };
+    return classesFilterChipContagem(this.filtroEnvio === filtro, variantes[filtro]);
+  }
+
+  classeBadgeStatusPublico(status: StatusCliente): string {
+    switch (status) {
+      case 'ATIVO':
+        return 'crm-badge-ativo';
+      case 'ATRASADO':
+        return 'crm-badge-atrasado';
+      case 'INATIVO':
+        return 'crm-badge-inativo';
+      default:
+        return 'crm-badge-neutral';
     }
-    return `${base} border-violet-500/40 bg-violet-500/10 text-violet-200`;
+  }
+
+  alternarDensidadeTabela(): void {
+    this.tabelaCompacta = !this.tabelaCompacta;
+    salvarSessionJson(CHAVE_DENSIDADE_MARKET, this.tabelaCompacta);
+  }
+
+  get classesTabela(): string {
+    return this.tabelaCompacta ? 'crm-table crm-table--compact' : 'crm-table';
   }
 
   definirFiltro(filtro: FiltroEnvioCampanha): void {
@@ -401,12 +452,6 @@ export class MarketPage implements OnInit, OnDestroy {
     }
   }
 
-  selecionarPendentes(): void {
-    this.selecionadosIds = this.montarLinhas()
-      .filter((l) => this.podeSelecionar(l))
-      .map((l) => l.id);
-  }
-
   selecionarElegiveisWhatsApp(): void {
     this.selecionadosIds = this.montarLinhas()
       .filter((l) => this.podeSelecionar(l) && l.telefoneValido)
@@ -460,14 +505,13 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   classesTipoCampanha(tipo: TipoCampanha): string {
-    const base = 'text-xs font-medium px-2 py-0.5 rounded-full border';
     switch (tipo) {
       case 'PROMOCAO':
-        return `${base} text-amber-300 border-amber-500/40 bg-amber-500/10`;
+        return 'crm-badge-promocao';
       case 'DATA_COMEMORATIVA':
-        return `${base} text-sky-300 border-sky-500/40 bg-sky-500/10`;
+        return 'crm-badge-comemorativa';
       default:
-        return `${base} text-violet-300 border-violet-500/40 bg-violet-500/10`;
+        return 'crm-badge-campanha';
     }
   }
 

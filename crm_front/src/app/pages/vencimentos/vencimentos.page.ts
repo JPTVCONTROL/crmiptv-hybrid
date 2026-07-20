@@ -23,6 +23,9 @@ import {
   classesFilterChipContagem,
   VarianteFilterChip,
 } from '../../shared/utils/filter-chip.util';
+import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+
+const CHAVE_DENSIDADE_VENCIMENTOS = 'crm.vencimentos.tabelaCompacta';
 
 export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
 
@@ -38,6 +41,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
   filtro: FiltroVencimento = 'TODOS';
   pagina = 1;
   readonly porPagina = 10;
+  tabelaCompacta = false;
 
   readonly opcoesFiltro: { valor: FiltroVencimento; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -63,6 +67,9 @@ export class VencimentosPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.tabelaCompacta =
+      lerSessionJson<boolean>(CHAVE_DENSIDADE_VENCIMENTOS) === true;
+
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
@@ -231,6 +238,15 @@ export class VencimentosPage implements OnInit, OnDestroy {
       ATRASADO: 'red',
     };
     return classesFilterChipContagem(ativo, variantes[filtro]);
+  }
+
+  alternarDensidadeTabela(): void {
+    this.tabelaCompacta = !this.tabelaCompacta;
+    salvarSessionJson(CHAVE_DENSIDADE_VENCIMENTOS, this.tabelaCompacta);
+  }
+
+  get classesTabela(): string {
+    return this.tabelaCompacta ? 'crm-table crm-table--compact' : 'crm-table';
   }
 
   exportarCsv(): void {
