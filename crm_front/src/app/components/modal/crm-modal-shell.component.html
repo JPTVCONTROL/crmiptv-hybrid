@@ -1,0 +1,8 @@
+<div class="crm-modal-shell">
+  <div class="crm-modal-body">
+    <ng-content></ng-content>
+  </div>
+  <div *ngIf="comRodape" class="crm-modal-footer">
+    <ng-content select="[modalActions]"></ng-content>
+  </div>
+</div>

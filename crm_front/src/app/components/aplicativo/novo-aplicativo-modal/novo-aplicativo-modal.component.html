@@ -1,155 +1,148 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="bg-slate-900">
-    <ion-title class="text-white">{{ aplicativo ? 'Editar Aplicativo' : 'Novo Aplicativo' }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
-    </ion-buttons>
-  </ion-toolbar>
+<ion-header class="ion-no-border crm-modal-header">
+  <app-crm-modal-toolbar
+    [titulo]="aplicativo ? 'Editar aplicativo' : 'Novo aplicativo'"
+    subtitulo="Logo, links de download e mensagem padrão para WhatsApp"
+    (voltar)="fechar()"
+  ></app-crm-modal-toolbar>
 </ion-header>
 
-<ion-content class="bg-slate-950">
-  <div class="modal-form-shell">
-    <div class="p-4 md:p-6 space-y-4 modal-form-body">
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
-      <input class="crm-input" [(ngModel)]="form.nome" />
-    </div>
-
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Logo</label>
-      <div class="flex flex-col sm:flex-row gap-4 items-start">
-        <div
-          class="w-20 h-20 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0"
-        >
-          <img
-            *ngIf="logoPreview && !logoErro"
-            [src]="logoPreview"
-            [alt]="form.nome || 'Logo'"
-            class="w-full h-full object-cover"
-            (error)="onLogoErro()"
-          />
-          <span *ngIf="!logoPreview || logoErro" class="text-2xl">📱</span>
+<ion-content class="crm-modal-content">
+  <app-crm-modal-shell>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="space-y-5">
+        <div>
+          <label class="crm-label">Nome *</label>
+          <input class="crm-input mt-1" [(ngModel)]="form.nome" />
         </div>
 
-        <div class="flex-1 space-y-2 w-full">
-          <input
-            class="crm-input"
-            [(ngModel)]="form.logo"
-            (ngModelChange)="onLogoUrlChange()"
-            placeholder="URL da imagem ou envie um arquivo abaixo"
-          />
-          <div class="flex flex-wrap gap-2">
-            <label class="crm-btn-ghost cursor-pointer inline-block">
-              Enviar imagem
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
-                class="hidden"
-                (change)="onLogoArquivo($event)"
-              />
+        <div>
+          <label class="crm-label">Descrição</label>
+          <textarea class="crm-input mt-1 min-h-[90px]" [(ngModel)]="form.descricao"></textarea>
+        </div>
+
+        <div>
+          <h3 class="text-white font-semibold mb-2 text-sm">Itens no cadastro do cliente</h3>
+          <div class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+            <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+              <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.requerMac" />
+              MAC Address
             </label>
-            <button
-              *ngIf="logoPreview"
-              type="button"
-              class="crm-btn-ghost"
-              (click)="removerLogo()"
-            >
-              Remover logo
-            </button>
+            <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+              <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.requerDeviceKey" />
+              Device Key
+            </label>
+            <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+              <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.requerCodigo" />
+              Código
+            </label>
           </div>
-          <p *ngIf="logoErro" class="text-red-400 text-xs">
-            Não foi possível carregar a imagem. Verifique a URL ou envie outro arquivo.
-          </p>
-          <p class="text-slate-500 text-xs">PNG, JPG ou WEBP até 500 KB.</p>
+        </div>
+
+        <label class="flex items-center gap-2 text-slate-300 text-sm">
+          <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.ativo" />
+          Aplicativo ativo
+        </label>
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <label class="crm-label">Logo</label>
+          <div class="flex flex-col sm:flex-row gap-4 items-start mt-1">
+            <div
+              class="w-20 h-20 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0"
+            >
+              <img
+                *ngIf="logoPreview && !logoErro"
+                [src]="logoPreview"
+                [alt]="form.nome || 'Logo'"
+                class="w-full h-full object-cover"
+                (error)="onLogoErro()"
+              />
+              <span *ngIf="!logoPreview || logoErro" class="text-2xl">📱</span>
+            </div>
+
+            <div class="flex-1 space-y-2 w-full">
+              <input
+                class="crm-input"
+                [(ngModel)]="form.logo"
+                (ngModelChange)="onLogoUrlChange()"
+                placeholder="URL da imagem ou envie um arquivo"
+              />
+              <div class="flex flex-wrap gap-2">
+                <label class="crm-btn-ghost cursor-pointer inline-block">
+                  Enviar imagem
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                    class="hidden"
+                    (change)="onLogoArquivo($event)"
+                  />
+                </label>
+                <button
+                  *ngIf="logoPreview"
+                  type="button"
+                  class="crm-btn-ghost"
+                  (click)="removerLogo()"
+                >
+                  Remover logo
+                </button>
+              </div>
+              <p *ngIf="logoErro" class="text-red-400 text-xs">
+                Não foi possível carregar a imagem. Verifique a URL ou envie outro arquivo.
+              </p>
+              <p class="text-slate-500 text-xs">PNG, JPG ou WEBP até 500 KB.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-white font-semibold mb-2 text-sm">Links de download</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 mb-1.5 text-xs">Android</label>
+              <input class="crm-input" [(ngModel)]="form.android" placeholder="Play Store ou APK" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1.5 text-xs">Android TV</label>
+              <input class="crm-input" [(ngModel)]="form.androidTv" placeholder="Link Android TV" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1.5 text-xs">iOS / iPhone</label>
+              <input class="crm-input" [(ngModel)]="form.ios" placeholder="App Store" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1.5 text-xs">Windows</label>
+              <input class="crm-input" [(ngModel)]="form.windows" placeholder="Instalador ou Microsoft Store" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1.5 text-xs">macOS</label>
+              <input class="crm-input" [(ngModel)]="form.mac" placeholder="Mac App Store ou DMG" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1.5 text-xs">Tutorial</label>
+              <input class="crm-input" [(ngModel)]="form.tutorial" placeholder="Vídeo ou guia" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <div>
-      <label class="block text-slate-300 mb-2 text-sm">Descrição</label>
-      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.descricao"></textarea>
-    </div>
-
-    <div>
-      <h3 class="text-white font-semibold mb-2 text-sm">Itens necessários no cadastro</h3>
-      <p class="text-slate-500 text-xs mb-3">
-        Marque o que o operador precisa preencher para clientes deste aplicativo.
-      </p>
-      <div class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
-        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
-          <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.requerMac" />
-          MAC Address
-        </label>
-        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
-          <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.requerDeviceKey" />
-          Device Key
-        </label>
-        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
-          <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.requerCodigo" />
-          Código
-        </label>
-      </div>
-    </div>
-
-    <div>
-      <h3 class="text-white font-semibold mb-2 text-sm">Links de download</h3>
-      <p class="text-slate-500 text-xs mb-3">
-        URLs das lojas ou arquivos de instalação. Use variáveis como
-        <span class="text-slate-400">{{ '{' }}android{{ '}' }}</span>,
-        <span class="text-slate-400">{{ '{' }}linksLoja{{ '}' }}</span> na mensagem padrão.
-      </p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-slate-400 mb-1.5 text-xs">Android</label>
-          <input class="crm-input" [(ngModel)]="form.android" placeholder="Play Store ou APK" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1.5 text-xs">Android TV</label>
-          <input class="crm-input" [(ngModel)]="form.androidTv" placeholder="Link Android TV" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1.5 text-xs">iOS / iPhone</label>
-          <input class="crm-input" [(ngModel)]="form.ios" placeholder="App Store" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1.5 text-xs">Windows</label>
-          <input class="crm-input" [(ngModel)]="form.windows" placeholder="Instalador ou Microsoft Store" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1.5 text-xs">macOS</label>
-          <input class="crm-input" [(ngModel)]="form.mac" placeholder="Mac App Store ou DMG" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1.5 text-xs">Tutorial</label>
-          <input class="crm-input" [(ngModel)]="form.tutorial" placeholder="Vídeo ou guia de instalação" />
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Mensagem padrão</label>
+      <label class="crm-label">Mensagem padrão (WhatsApp)</label>
       <textarea
-        class="crm-input min-h-[80px]"
+        class="crm-input mt-1 min-h-[120px]"
         [(ngModel)]="form.mensagem"
-        placeholder="Texto enviado ao cliente com orientações do app (WhatsApp). Variáveis: nome, app, android, ios, linksLoja, tutorial..."
+        placeholder="Variáveis: nome, app, android, ios, linksLoja, tutorial..."
       ></textarea>
     </div>
-
-    <label class="flex items-center gap-2 text-slate-300 text-sm">
-      <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.ativo" />
-      Aplicativo ativo
-    </label>
-    </div>
-
-    <div class="modal-form-footer">
-      <button
-        type="button"
-        class="crm-btn-primary w-full"
-        [disabled]="salvando"
-        (click)="salvar()"
-      >
-        {{ salvando ? 'Salvando...' : (aplicativo ? 'Salvar alterações' : 'Salvar Aplicativo') }}
-      </button>
-    </div>
   </div>
+
+  <div modalActions class="crm-modal-actions">
+    <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">Cancelar</button>
+    <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+      {{ salvando ? 'Salvando...' : (aplicativo ? 'Salvar alterações' : 'Salvar aplicativo') }}
+    </button>
+  </div>
+  </app-crm-modal-shell>
 </ion-content>

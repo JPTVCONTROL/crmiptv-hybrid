@@ -9,6 +9,7 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { AlertasSinoModule } from './components/alertas-sino/alertas-sino.module';
+import { ComponentsModule } from './components/components.module';
 
 @NgModule({
   declarations: [AppComponent],
@@ -19,6 +20,7 @@ import { AlertasSinoModule } from './components/alertas-sino/alertas-sino.module
     IonicModule.forRoot({ mode: 'md' }),
     AppRoutingModule,
     AlertasSinoModule,
+    ComponentsModule,
   ],
   providers: [
     {

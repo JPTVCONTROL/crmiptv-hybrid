@@ -49,6 +49,11 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'market',
+        loadChildren: () =>
+          import('./pages/market/market.module').then((m) => m.MarketPageModule),
+      },
+      {
         path: 'automacoes',
         loadChildren: () =>
           import('./pages/automacoes/automacoes.module').then(

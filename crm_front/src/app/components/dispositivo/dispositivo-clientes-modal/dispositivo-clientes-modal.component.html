@@ -1,14 +1,13 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="bg-slate-900">
-    <ion-title class="text-white">Clientes — {{ titulo() }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
-    </ion-buttons>
-  </ion-toolbar>
+<ion-header class="ion-no-border crm-modal-header">
+  <app-crm-modal-toolbar
+    [titulo]="'Clientes — ' + titulo()"
+    subtitulo="Quem utiliza este dispositivo"
+    (voltar)="fechar()"
+  ></app-crm-modal-toolbar>
 </ion-header>
 
-<ion-content class="bg-slate-950">
-  <div class="p-4 md:p-6 modal-form-body">
+<ion-content class="crm-modal-content">
+  <app-crm-modal-shell [comRodape]="false">
     <app-loading *ngIf="loading" variant="spinner"></app-loading>
     <p *ngIf="erro" class="text-red-400">{{ erro }}</p>
 
@@ -50,5 +49,5 @@
         message="Nenhum cliente vinculado a este dispositivo."
       ></app-empty-state>
     </div>
-  </div>
+  </app-crm-modal-shell>
 </ion-content>

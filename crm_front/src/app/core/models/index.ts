@@ -280,3 +280,27 @@ export interface LoginResponse {
   token: string;
   usuario: Usuario;
 }
+
+export type TipoCampanha = 'AVISO' | 'PROMOCAO' | 'DATA_COMEMORATIVA';
+
+export interface CampanhaEnvioResumo {
+  clienteId: number;
+  enviadoEm: string;
+}
+
+export interface Campanha {
+  id: number;
+  titulo: string;
+  tipo: TipoCampanha;
+  mensagem: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { envios: number };
+  envios?: CampanhaEnvioResumo[];
+}
+
+export interface CreateCampanhaDto {
+  titulo: string;
+  tipo: TipoCampanha;
+  mensagem: string;
+}

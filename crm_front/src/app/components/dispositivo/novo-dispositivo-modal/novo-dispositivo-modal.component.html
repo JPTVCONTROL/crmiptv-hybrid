@@ -1,36 +1,40 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="bg-slate-900">
-    <ion-title class="text-white">{{ dispositivo ? 'Editar Dispositivo' : 'Novo Dispositivo' }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="fechar()" class="text-slate-400">Fechar</ion-button>
-    </ion-buttons>
-  </ion-toolbar>
+<ion-header class="ion-no-border crm-modal-header">
+  <app-crm-modal-toolbar
+    [titulo]="dispositivo ? 'Editar dispositivo' : 'Novo dispositivo'"
+    subtitulo="Cadastre o tipo de aparelho usado pelos clientes"
+    (voltar)="fechar()"
+  ></app-crm-modal-toolbar>
 </ion-header>
 
-<ion-content class="bg-slate-950">
-  <div class="p-4 md:p-6 space-y-4 modal-form-body">
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
-      <input class="crm-input" [(ngModel)]="form.nome" placeholder="Fire Stick, Smart TV, TV Box..." />
+<ion-content class="crm-modal-content">
+  <app-crm-modal-shell>
+    <div class="space-y-5 max-w-2xl">
+      <div>
+        <label class="crm-label">Nome *</label>
+        <input class="crm-input mt-1" [(ngModel)]="form.nome" placeholder="Fire Stick, Smart TV, TV Box..." />
+      </div>
+
+      <div>
+        <label class="crm-label">Modelo</label>
+        <input class="crm-input mt-1" [(ngModel)]="form.modelo" placeholder="4K, Lite, A32..." />
+      </div>
+
+      <div>
+        <label class="crm-label">Descrição</label>
+        <textarea class="crm-input mt-1 min-h-[100px]" [(ngModel)]="form.descricao"></textarea>
+      </div>
+
+      <label class="flex items-center gap-2 text-slate-300 text-sm">
+        <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.ativo" />
+        Dispositivo ativo
+      </label>
     </div>
 
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Modelo</label>
-      <input class="crm-input" [(ngModel)]="form.modelo" placeholder="4K, Lite, A32..." />
+    <div modalActions class="crm-modal-actions">
+      <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">Cancelar</button>
+      <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : (dispositivo ? 'Salvar alterações' : 'Salvar dispositivo') }}
+      </button>
     </div>
-
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Descrição</label>
-      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.descricao"></textarea>
-    </div>
-
-    <label class="flex items-center gap-2 text-slate-300 text-sm">
-      <input type="checkbox" class="rounded border-slate-600" [(ngModel)]="form.ativo" />
-      Dispositivo ativo
-    </label>
-
-    <button class="crm-btn-primary w-full" [disabled]="salvando" (click)="salvar()">
-      {{ salvando ? 'Salvando...' : (dispositivo ? 'Salvar alterações' : 'Salvar Dispositivo') }}
-    </button>
-  </div>
+  </app-crm-modal-shell>
 </ion-content>

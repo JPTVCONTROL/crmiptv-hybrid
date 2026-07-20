@@ -1,0 +1,372 @@
+<app-page-header
+  [title]="emModoLista ? 'Market' : tituloModoCampanha"
+  [subtitle]="emModoLista ? 'Campanhas WhatsApp manuais · fila assistida · registro de envios' : subtituloModoCampanha"
+  [exibirVoltar]="emModoLista ? 'auto' : false"
+>
+  <div class="flex flex-wrap items-center gap-2 shrink-0">
+    <ng-container *ngIf="emModoLista">
+      <button type="button" class="crm-btn-primary" (click)="iniciarNovaCampanha()">
+        Nova campanha
+      </button>
+    </ng-container>
+
+    <ng-container *ngIf="emModoCampanha">
+      <button type="button" class="crm-btn-ghost" (click)="voltarParaLista()">
+        ← Voltar
+      </button>
+      <button type="button" class="crm-btn-primary" (click)="editarCampanhaAtual()">
+        Editar campanha
+      </button>
+    </ng-container>
+  </div>
+</app-page-header>
+
+<app-loading *ngIf="loading" variant="table"></app-loading>
+
+<!-- Lista de campanhas -->
+<div *ngIf="!loading && emModoLista" class="space-y-6">
+  <p class="text-slate-500 text-sm -mt-2">
+    Suas campanhas salvas aparecem abaixo. Clique em uma para enviar ou acompanhar os envios.
+  </p>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <app-stat-card title="Campanhas" [value]="campanhas.length.toString()" color="#8B5CF6"></app-stat-card>
+    <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#38BDF8"></app-stat-card>
+    <app-stat-card
+      title="Total enviados"
+      [value]="totalEnviosTodasCampanhas.toString()"
+      color="#22C55E"
+    ></app-stat-card>
+    <app-stat-card
+      title="Última campanha"
+      [value]="campanhas.length > 0 ? formatarDataCampanha(campanhas[0].createdAt) : '—'"
+      color="#F59E0B"
+    ></app-stat-card>
+  </div>
+
+  <div class="crm-card !p-4 md:!p-5 space-y-4">
+    <div class="relative">
+      <ion-icon
+        name="search-outline"
+        class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"
+        aria-hidden="true"
+      ></ion-icon>
+      <input
+        type="search"
+        class="crm-input !pl-11"
+        [(ngModel)]="buscaCampanhas"
+        placeholder="Buscar campanha por título, tipo ou mensagem..."
+        autocomplete="off"
+      />
+    </div>
+
+    <div *ngIf="campanhasFiltradas.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <button
+        *ngFor="let c of campanhasFiltradas; trackBy: trackByCampanhaId"
+        type="button"
+        class="crm-card text-left !p-4 md:!p-5 space-y-3 transition-colors hover:border-violet-500/40 hover:bg-violet-500/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+        (click)="abrirCampanha(c.id)"
+      >
+        <div class="flex items-start justify-between gap-2">
+          <span [class]="classesTipoCampanha(c.tipo)">{{ rotuloTipoCampanha(c.tipo) }}</span>
+          <span class="text-slate-500 text-xs shrink-0">{{ formatarDataCampanha(c.createdAt) }}</span>
+        </div>
+
+        <div>
+          <h3 class="text-white font-semibold text-base leading-snug line-clamp-2">{{ c.titulo }}</h3>
+          <p class="text-slate-400 text-sm mt-2 line-clamp-3 leading-relaxed">{{ c.mensagem }}</p>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">Progresso de envio</span>
+            <span class="text-slate-300 font-medium tabular-nums">{{ resumoEnviosCampanha(c) }}</span>
+          </div>
+          <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div
+              class="h-full rounded-full bg-violet-500 transition-all"
+              [style.width.%]="percentualEnviosCampanha(c)"
+            ></div>
+          </div>
+        </div>
+
+        <p class="text-violet-400 text-xs font-medium pt-1">Abrir campanha →</p>
+      </button>
+    </div>
+
+    <app-empty-state
+      *ngIf="campanhas.length === 0"
+      title="Nenhuma campanha ainda"
+      message="Crie sua primeira campanha para enviar mensagens manualmente pelo WhatsApp."
+      iconName="megaphone-outline"
+      actionLabel="Criar primeira campanha"
+      (action)="iniciarNovaCampanha()"
+    ></app-empty-state>
+
+    <app-empty-state
+      *ngIf="campanhas.length > 0 && campanhasFiltradas.length === 0"
+      title="Nenhuma campanha encontrada"
+      message="Tente outro termo na busca."
+      iconName="search-outline"
+    ></app-empty-state>
+  </div>
+</div>
+
+<!-- Detalhe / nova campanha -->
+<div *ngIf="!loading && emModoCampanha" class="space-y-6">
+  <p class="text-slate-500 text-sm -mt-2">
+    O link <code class="text-violet-300">wa.me</code> envia só texto. Na fila, use
+    <strong class="text-slate-300">Marcar enviado</strong> para registrar cada cliente.
+  </p>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <app-stat-card title="Enviados" [value]="totalEnviados.toString()" color="#22C55E"></app-stat-card>
+    <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" color="#F59E0B"></app-stat-card>
+    <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" color="#38BDF8"></app-stat-card>
+    <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#8B5CF6"></app-stat-card>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
+    <section class="xl:col-span-2">
+      <div class="crm-card space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <p class="crm-section-label mb-0">Campanha</p>
+          <span [class]="classesTipoCampanha(formTipo)">{{ rotuloTipoCampanha(formTipo) }}</span>
+        </div>
+
+        <div>
+          <h2 class="text-white font-semibold text-lg leading-snug">{{ formTitulo }}</h2>
+          <p
+            *ngIf="campanhaSelecionada?.createdAt"
+            class="text-slate-500 text-xs mt-1"
+          >
+            Criada em {{ formatarDataCampanha(campanhaSelecionada?.createdAt) }}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+          <p class="text-slate-500 text-xs font-medium uppercase tracking-wide">Mensagem</p>
+          <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-40 overflow-y-auto">{{ formMensagem }}</pre>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 pt-1">
+          <button type="button" class="crm-btn-primary flex-1" (click)="editarCampanhaAtual()">
+            Editar campanha
+          </button>
+          <button
+            type="button"
+            class="crm-btn-danger flex-1"
+            [disabled]="excluindo"
+            (click)="excluirCampanha()"
+          >
+            {{ excluindo ? 'Excluindo...' : 'Excluir' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="xl:col-span-3 crm-card !p-0 overflow-hidden flex flex-col min-h-[28rem]">
+      <div class="p-4 md:p-5 border-b border-slate-800/80 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <p class="crm-section-label mb-1">Destinatários</p>
+            <p class="text-slate-400 text-sm">
+              {{ linhasFiltradas.length }} exibido(s)
+              <span *ngIf="qtdSelecionados > 0"> · {{ qtdSelecionados }} selecionado(s)</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            class="crm-btn-success shrink-0"
+            [disabled]="!podeIniciarEnvio"
+            (click)="iniciarEnvio()"
+          >
+            {{ enviando ? 'Abrindo fila...' : 'Iniciar fila (' + qtdSelecionados + ')' }}
+          </button>
+        </div>
+
+        <div class="relative">
+          <ion-icon
+            name="search-outline"
+            class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"
+            aria-hidden="true"
+          ></ion-icon>
+          <input
+            type="search"
+            class="crm-input !pl-11"
+            [(ngModel)]="busca"
+            (ngModelChange)="onBuscaChange()"
+            placeholder="Buscar por nome ou telefone..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            *ngFor="let op of opcoesFiltro"
+            type="button"
+            [class]="classesChipFiltro(op.valor)"
+            (click)="definirFiltro(op.valor)"
+          >
+            <span>{{ op.rotulo }}</span>
+            <span class="text-xs opacity-80 tabular-nums">{{ contagemFiltro(op.valor) }}</span>
+          </button>
+
+          <span class="hidden sm:block w-px h-5 bg-slate-700 mx-1" aria-hidden="true"></span>
+
+          <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarPendentes()">
+            Pendentes
+          </button>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs"
+            [disabled]="qtdFiltradosSelecionaveis === 0"
+            (click)="alternarSelecionarTodosFiltrados($event)"
+          >
+            {{ todosFiltradosSelecionados ? 'Desmarcar filtrados' : 'Marcar filtrados' }}
+          </button>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs"
+            [disabled]="qtdSelecionados === 0"
+            (click)="limparSelecao()"
+          >
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <div class="hidden md:block crm-table-scroll flex-1">
+        <table class="crm-table crm-table--compact w-full">
+          <thead>
+            <tr>
+              <th class="w-11 pl-4">
+                <input
+                  type="checkbox"
+                  class="crm-checkbox"
+                  [checked]="todosFiltradosSelecionados"
+                  [indeterminate]="algumFiltradoSelecionado && !todosFiltradosSelecionados"
+                  [disabled]="qtdFiltradosSelecionaveis === 0"
+                  (click)="alternarSelecionarTodosFiltrados($event)"
+                  aria-label="Selecionar todos os filtrados"
+                />
+              </th>
+              <th>Cliente</th>
+              <th>Telefone</th>
+              <th class="pr-4">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let linha of linhasFiltradas; trackBy: trackByLinhaId"
+              class="select-none"
+              [class.cursor-pointer]="podeSelecionar(linha)"
+              [ngClass]="{ 'bg-violet-500/10': estaSelecionado(linha.id) }"
+              [class.opacity-50]="!linha.telefoneValido"
+              (click)="alternarSelecaoLinha(linha)"
+            >
+              <td class="pl-4" (click)="$event.stopPropagation()">
+                <input
+                  type="checkbox"
+                  class="crm-checkbox"
+                  [checked]="estaSelecionado(linha.id)"
+                  [disabled]="!podeSelecionar(linha)"
+                  (click)="alternarSelecaoClick(linha.id, $event)"
+                  [attr.aria-label]="'Selecionar ' + linha.nome"
+                />
+              </td>
+              <td>
+                <p class="text-white font-medium">{{ linha.nome }}</p>
+                <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs mt-0.5">
+                  Telefone inválido
+                </p>
+              </td>
+              <td class="text-slate-400">{{ linha.telefone }}</td>
+              <td class="pr-4" (click)="$event.stopPropagation()">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span
+                    *ngIf="linha.enviado"
+                    class="text-xs font-medium px-2 py-0.5 rounded-full border text-green-300 border-green-500/40 bg-green-500/10"
+                  >
+                    Enviado · {{ formatarDataEnvio(linha.enviadoEm) }}
+                  </span>
+                  <span
+                    *ngIf="!linha.enviado"
+                    class="text-xs font-medium px-2 py-0.5 rounded-full border text-slate-400 border-slate-600 bg-slate-800/60"
+                  >
+                    Pendente
+                  </span>
+                  <button
+                    *ngIf="podeReenviar(linha)"
+                    type="button"
+                    class="crm-btn-ghost !py-1 !px-2 !text-xs shrink-0"
+                    [disabled]="reenviandoId === linha.id"
+                    (click)="reenviarCliente(linha, $event)"
+                  >
+                    {{ reenviandoId === linha.id ? 'Reenviando...' : 'Reenviar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="linhasFiltradas.length === 0" class="text-center text-slate-500 py-12 px-4">
+          Nenhum cliente encontrado com os filtros atuais.
+        </div>
+      </div>
+
+      <div class="md:hidden divide-y divide-slate-800/80 flex-1 overflow-y-auto">
+        <article
+          *ngFor="let linha of linhasFiltradas; trackBy: trackByLinhaId"
+          class="p-4 space-y-2"
+          [class.cursor-pointer]="podeSelecionar(linha)"
+          [ngClass]="{ 'bg-violet-500/10': estaSelecionado(linha.id) }"
+          [class.opacity-50]="!linha.telefoneValido"
+          (click)="alternarSelecaoLinha(linha)"
+        >
+          <label class="flex items-start gap-3 cursor-pointer" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              class="crm-checkbox mt-0.5 shrink-0"
+              [checked]="estaSelecionado(linha.id)"
+              [disabled]="!podeSelecionar(linha)"
+              (click)="alternarSelecaoClick(linha.id, $event)"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium">{{ linha.nome }}</p>
+              <p class="text-slate-400 text-sm">{{ linha.telefone }}</p>
+            </div>
+          </label>
+          <div class="pl-7 flex items-center gap-2 flex-wrap" (click)="$event.stopPropagation()">
+            <span
+              *ngIf="linha.enviado"
+              class="text-xs font-medium px-2 py-0.5 rounded-full border text-green-300 border-green-500/40 bg-green-500/10"
+            >
+              Enviado · {{ formatarDataEnvio(linha.enviadoEm) }}
+            </span>
+            <span
+              *ngIf="!linha.enviado"
+              class="text-xs font-medium px-2 py-0.5 rounded-full border text-slate-400 border-slate-600 bg-slate-800/60"
+            >
+              Pendente
+            </span>
+            <button
+              *ngIf="podeReenviar(linha)"
+              type="button"
+              class="crm-btn-ghost !py-1 !px-2 !text-xs"
+              [disabled]="reenviandoId === linha.id"
+              (click)="reenviarCliente(linha, $event)"
+            >
+              {{ reenviandoId === linha.id ? 'Reenviando...' : 'Reenviar' }}
+            </button>
+          </div>
+        </article>
+
+        <div *ngIf="linhasFiltradas.length === 0" class="text-center text-slate-500 py-12 px-4">
+          Nenhum cliente encontrado.
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

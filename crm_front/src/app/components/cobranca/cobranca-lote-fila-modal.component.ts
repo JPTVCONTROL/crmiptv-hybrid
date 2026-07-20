@@ -1,5 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ModalController } from '@ionic/angular';
+import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
   abrirWhatsAppCobranca,
@@ -12,39 +13,38 @@ import {
   selector: 'app-cobranca-lote-fila-modal',
   templateUrl: './cobranca-lote-fila-modal.component.html',
 })
-export class CobrancaLoteFilaModalComponent implements OnInit {
+export class CobrancaLoteFilaModalComponent {
   @Input() itens: CobrancaLoteItem[] = [];
   @Input() ignorados = 0;
   @Input() titulo = 'Envio em lote';
   @Input() rotuloAbrir = 'Abrir WhatsApp';
+  @Input() modoManual = false;
+  @Input() rotuloMarcar = 'Marcar enviado e próximo';
 
   indice = 0;
   abertos = 0;
   readonly idsEnviados: number[] = [];
   cancelado = false;
   mostrarMensagem = false;
+  registrando = false;
 
   constructor(
     private modalCtrl: ModalController,
-    private toast: ToastService
+    private toast: ToastService,
+    private filaService: CobrancaLoteFilaService
   ) {}
-
-  ngOnInit(): void {
-    if (this.itens.length === 0) {
-      void this.fechar();
-    }
-  }
 
   get atual(): CobrancaLoteItem | null {
     return this.itens[this.indice] ?? null;
   }
 
   get progresso(): string {
+    if (this.itens.length === 0) return '0 / 0';
     return `${Math.min(this.indice + 1, this.itens.length)} / ${this.itens.length}`;
   }
 
   get concluido(): boolean {
-    return this.indice >= this.itens.length;
+    return this.itens.length === 0 || this.indice >= this.itens.length;
   }
 
   get urlAtual(): string | null {
@@ -58,9 +58,36 @@ export class CobrancaLoteFilaModalComponent implements OnInit {
     if (!item) return;
 
     abrirWhatsAppCobranca(item.telefone, item.mensagem);
+
+    if (this.modoManual) {
+      this.abertos++;
+      return;
+    }
+
     this.abertos++;
     this.idsEnviados.push(item.id);
     this.avancar();
+  }
+
+  async marcarEnviado(): Promise<void> {
+    const item = this.atual;
+    if (!item || this.registrando) return;
+
+    this.registrando = true;
+    try {
+      const registrar = this.filaService.obterMarcadorEnvioAtual();
+      if (registrar) {
+        await registrar(item.id);
+      }
+      if (!this.idsEnviados.includes(item.id)) {
+        this.idsEnviados.push(item.id);
+      }
+      this.avancar();
+    } catch {
+      void this.toast.error('Não foi possível registrar o envio.');
+    } finally {
+      this.registrando = false;
+    }
   }
 
   pular(): void {

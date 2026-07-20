@@ -9,6 +9,9 @@ import { NovoDispositivoModalComponent } from '../components/dispositivo/novo-di
 import { DispositivoClientesModalComponent } from '../components/dispositivo/dispositivo-clientes-modal/dispositivo-clientes-modal.component';
 import { WhatsappCobrancaBtnComponent } from '../components/cobranca/whatsapp-cobranca-btn.component';
 import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-lote-fila-modal.component';
+import { CampanhaFormModalComponent } from '../components/campanha/campanha-form-modal.component';
+import { CrmModalShellComponent } from '../components/modal/crm-modal-shell.component';
+import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +24,9 @@ import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-
     DispositivoClientesModalComponent,
     WhatsappCobrancaBtnComponent,
     CobrancaLoteFilaModalComponent,
+    CampanhaFormModalComponent,
+    CrmModalShellComponent,
+    CrmModalToolbarComponent,
   ],
   imports: [SharedModule],
   exports: [
@@ -33,6 +39,9 @@ import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-
     DispositivoClientesModalComponent,
     WhatsappCobrancaBtnComponent,
     CobrancaLoteFilaModalComponent,
+    CampanhaFormModalComponent,
+    CrmModalShellComponent,
+    CrmModalToolbarComponent,
   ],
 })
 export class ComponentsModule {}

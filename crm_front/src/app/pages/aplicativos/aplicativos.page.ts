@@ -88,7 +88,7 @@ export class AplicativosPage implements OnInit, OnDestroy {
     const modal = await this.modalCtrl.create({
       component: NovoAplicativoModalComponent,
       componentProps: { aplicativo: aplicativo ?? null },
-      cssClass: 'crm-modal',
+      cssClass: 'crm-modal crm-modal-lg',
     });
     await modal.present();
     const { data } = await modal.onDidDismiss();
@@ -101,7 +101,7 @@ export class AplicativosPage implements OnInit, OnDestroy {
     const modal = await this.modalCtrl.create({
       component: AplicativoClientesModalComponent,
       componentProps: { aplicativo: app },
-      cssClass: 'crm-modal',
+      cssClass: 'crm-modal crm-modal-lg',
     });
     await modal.present();
   }

@@ -137,3 +137,29 @@ export const AUTOMACAO_CAMPOS_PERMITIDOS = [
   'templateCobrancaNome',
   'templateLinguagem',
 ] as const;
+
+export type TipoCampanha = 'AVISO' | 'PROMOCAO' | 'DATA_COMEMORATIVA';
+
+export interface CreateCampanhaDto {
+  titulo: string;
+  tipo: TipoCampanha;
+  mensagem: string;
+}
+
+export type UpdateCampanhaDto = Partial<CreateCampanhaDto>;
+
+export type CampanhaEnvioResumo = {
+  clienteId: number;
+  enviadoEm: Date;
+};
+
+export type CampanhaWithEnvios = {
+  id: number;
+  titulo: string;
+  tipo: string;
+  mensagem: string;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: { envios: number };
+  envios?: CampanhaEnvioResumo[];
+};

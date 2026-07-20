@@ -1,0 +1,12 @@
+<ion-toolbar class="crm-modal-toolbar">
+  <ion-buttons slot="start">
+    <button type="button" class="crm-modal-back" (click)="voltar.emit()">
+      <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
+      Voltar
+    </button>
+  </ion-buttons>
+  <ion-title class="crm-modal-title-wrap">
+    <span class="crm-modal-title">{{ titulo }}</span>
+    <span *ngIf="subtitulo" class="crm-modal-subtitle">{{ subtitulo }}</span>
+  </ion-title>
+</ion-toolbar>

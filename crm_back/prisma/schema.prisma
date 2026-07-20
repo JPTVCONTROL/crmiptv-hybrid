@@ -43,9 +43,33 @@ model Cliente {
   observacao   String?
   createdAt    DateTime @default(now())
   mensalidades Mensalidade[]
+  campanhaEnvios CampanhaEnvio[]
 
   @@index([expiraEm])
   @@index([planoId])
+}
+
+model Campanha {
+  id        Int             @id @default(autoincrement())
+  titulo    String
+  tipo      String          @default("AVISO")
+  mensagem  String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  envios    CampanhaEnvio[]
+}
+
+model CampanhaEnvio {
+  id         Int      @id @default(autoincrement())
+  campanhaId Int
+  campanha   Campanha @relation(fields: [campanhaId], references: [id], onDelete: Cascade)
+  clienteId  Int
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  enviadoEm  DateTime @default(now())
+
+  @@unique([campanhaId, clienteId])
+  @@index([campanhaId])
+  @@index([clienteId])
 }
 
 model Mensalidade {
