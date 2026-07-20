@@ -4,6 +4,7 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  ViewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -21,6 +22,10 @@ import {
 })
 export class AlertasSinoComponent implements OnInit, OnDestroy {
   aberto = false;
+  private botaoAbriuPainel = false;
+
+  @ViewChild('painelAlertas') painelRef?: ElementRef<HTMLElement>;
+  @ViewChild('botaoAlertas') botaoRef?: ElementRef<HTMLButtonElement>;
   estado: EstadoAlertasOperacionais = {
     alertas: [],
     totalPendencias: 0,
@@ -70,12 +75,72 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
     );
   }
 
+  get rotuloBadge(): string {
+    if (this.badge <= 0) {
+      return '';
+    }
+
+    return `${this.badge} pendência${this.badge === 1 ? '' : 's'}`;
+  }
+
   alternarPainel(): void {
     this.aberto = !this.aberto;
+
+    if (this.aberto) {
+      this.botaoAbriuPainel = true;
+      queueMicrotask(() => this.focarPrimeiroItem());
+    }
   }
 
   fecharPainel(): void {
     this.aberto = false;
+    this.botaoRef?.nativeElement.focus();
+  }
+
+  private focarPrimeiroItem(): void {
+    const painel = this.painelRef?.nativeElement;
+    if (!painel) return;
+
+    const focavel = painel.querySelector<HTMLElement>(
+      'button, [href], [tabindex]:not([tabindex="-1"])'
+    );
+    focavel?.focus();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.aberto) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.fecharPainel();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const painel = this.painelRef?.nativeElement;
+    if (!painel) return;
+
+    const focaveis = Array.from(
+      painel.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => el.offsetParent !== null);
+
+    if (focaveis.length === 0) return;
+
+    const primeiro = focaveis[0];
+    const ultimo = focaveis[focaveis.length - 1];
+    const ativo = document.activeElement as HTMLElement | null;
+
+    if (event.shiftKey && ativo === primeiro) {
+      event.preventDefault();
+      ultimo.focus();
+    } else if (!event.shiftKey && ativo === ultimo) {
+      event.preventDefault();
+      primeiro.focus();
+    }
   }
 
   abrirAlerta(alerta: AlertaOperacional): void {
@@ -161,6 +226,11 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.aberto) return;
+
+    if (this.botaoAbriuPainel) {
+      this.botaoAbriuPainel = false;
+      return;
+    }
 
     const alvo = event.target as Node | null;
     if (alvo && !this.elementRef.nativeElement.contains(alvo)) {

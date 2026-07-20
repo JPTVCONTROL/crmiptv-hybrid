@@ -7,41 +7,71 @@
       class="crm-menu"
     >
       <ion-content class="menu-content" [scrollY]="false">
-        <div class="menu-shell">
-          <div class="menu-header">
-            <img
-              src="assets/logo-crm-jptv.png"
-              alt="CRM JPTV"
-              class="menu-logo"
-            />
-            <p class="menu-subtitle">Sistema de Gestão IPTV</p>
-            <p *ngIf="usuario" class="menu-user">{{ usuario.nome }}</p>
-          </div>
+        <div class="menu-shell flex flex-col h-full min-h-full">
+          <header class="menu-header shrink-0 px-4 pt-5 pb-4 border-b border-slate-800/80">
+            <div class="flex flex-col items-center gap-2.5">
+              <img
+                src="assets/logo-crm-jptv.png"
+                alt="CRM JPTV"
+                class="menu-logo block w-full max-w-[9.5rem] h-auto mx-auto"
+              />
+              <p class="menu-subtitle m-0 text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Sistema de Gestão IPTV
+              </p>
+            </div>
+          </header>
 
-          <nav class="menu-nav">
-            <section *ngFor="let secao of menuSecoes" class="menu-section">
-              <p class="menu-section-title">{{ secao.titulo }}</p>
-              <a
-                *ngFor="let menu of secao.itens"
-                [routerLink]="menu.rota"
-                routerLinkActive="menu-link-active"
-                [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
-                class="menu-link"
-                (click)="fecharMenu()"
-              >
-                <ion-icon [name]="menu.icon" aria-hidden="true"></ion-icon>
-                <span>{{ menu.nome }}</span>
-              </a>
+          <nav class="menu-nav flex-1 overflow-y-auto px-3 py-3.5 flex flex-col gap-4" aria-label="Menu principal">
+            <section *ngFor="let secao of menuSecoes" class="flex flex-col gap-1.5">
+              <p class="menu-section-title m-0 px-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                {{ secao.titulo }}
+              </p>
+              <ul class="list-none m-0 p-0 flex flex-col gap-0.5">
+                <li *ngFor="let menu of secao.itens">
+                  <a
+                    [routerLink]="menu.rota"
+                    routerLinkActive="menu-link-active"
+                    [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
+                    class="menu-link flex items-center gap-2.5 w-full min-h-[2.625rem] px-2 py-1.5 rounded-xl text-slate-300 text-[0.8125rem] font-medium no-underline"
+                    (click)="fecharMenu()"
+                  >
+                    <span class="menu-link-icon inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-[0.625rem]" aria-hidden="true">
+                      <ion-icon [name]="menu.icon" class="w-[1.125rem] h-[1.125rem]"></ion-icon>
+                    </span>
+                    <span class="flex-1 min-w-0 truncate">{{ menu.nome }}</span>
+                    <span
+                      *ngIf="badgeMenu(menu.rota) > 0"
+                      class="menu-link-badge shrink-0 min-w-5 px-1.5 py-0.5 rounded-full text-[0.625rem] font-bold leading-4 text-center"
+                      [attr.aria-label]="badgeMenu(menu.rota) + ' pendência(s)'"
+                    >
+                      {{ badgeMenu(menu.rota) > 99 ? '99+' : badgeMenu(menu.rota) }}
+                    </span>
+                  </a>
+                </li>
+              </ul>
             </section>
           </nav>
 
-          <div class="menu-footer space-y-3">
-            <button type="button" class="menu-link menu-link-logout w-full" (click)="sair()">
-              <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
-              <span>Sair</span>
+          <footer class="menu-footer shrink-0 mt-auto flex flex-col gap-2 px-3 py-3 border-t border-slate-800/80">
+            <div *ngIf="usuario" class="flex items-center gap-2.5 px-2 py-2.5 rounded-xl border border-slate-800/80 bg-slate-900/55">
+              <span class="menu-user-avatar inline-flex items-center justify-center shrink-0 w-9 h-9 rounded-full text-xs font-bold text-white" aria-hidden="true">
+                {{ iniciaisUsuario }}
+              </span>
+              <div class="flex-1 min-w-0">
+                <p class="m-0 text-[0.8125rem] font-semibold text-slate-100 truncate">{{ usuario.nome }}</p>
+                <p class="mt-0.5 mb-0 text-[0.6875rem] text-slate-500 truncate">{{ usuario.email }}</p>
+              </div>
+            </div>
+
+            <button type="button" class="menu-link menu-link-logout flex items-center gap-2.5 w-full min-h-[2.625rem] px-2 py-1.5 rounded-xl text-slate-300 text-[0.8125rem] font-medium border-0 bg-transparent cursor-pointer" (click)="sair()">
+              <span class="menu-link-icon menu-link-icon--logout inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-[0.625rem]" aria-hidden="true">
+                <ion-icon name="log-out-outline" class="w-[1.125rem] h-[1.125rem]"></ion-icon>
+              </span>
+              <span class="flex-1 text-left">Sair</span>
             </button>
-            <p>CRM JPTV v1.0</p>
-          </div>
+
+            <p class="m-0 pt-0.5 text-[0.625rem] text-center text-slate-600">CRM JPTV v1.0</p>
+          </footer>
         </div>
       </ion-content>
     </ion-menu>
@@ -62,6 +92,14 @@
       </ion-header>
 
       <ion-content class="bg-slate-950">
+        <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
+          <ion-refresher-content
+            pullingIcon="chevron-down-circle-outline"
+            pullingText="Puxe para atualizar"
+            refreshingSpinner="crescent"
+            refreshingText="Atualizando..."
+          ></ion-refresher-content>
+        </ion-refresher>
         <div [class]="isLoginRoute ? 'login-shell' : 'app-content-shell p-4 md:p-6 lg:p-8'">
           <router-outlet></router-outlet>
         </div>

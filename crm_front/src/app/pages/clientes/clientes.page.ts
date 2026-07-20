@@ -23,6 +23,7 @@ import {
   severidadePendencia,
   TipoPendenciaCadastro,
 } from '../../shared/utils/cliente-cadastro-audit';
+import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { exportarClientesCsv } from '../../shared/utils/cliente-export';
 import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
@@ -251,7 +252,8 @@ export class ClientesPage implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private toast: ToastService,
     private confirmacao: ConfirmacaoService,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private pullRefresh: PullRefreshService
   ) {}
 
   ngOnInit(): void {
@@ -285,9 +287,11 @@ export class ClientesPage implements OnInit, OnDestroy {
         });
       }
     );
+    this.pullRefresh.registrar((concluir) => this.carregar(true, concluir));
   }
 
   ngOnDestroy(): void {
+    this.pullRefresh.limpar();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -371,7 +375,7 @@ export class ClientesPage implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(this.clientesFiltrados.length / this.porPagina));
   }
 
-  carregar(silencioso = false): void {
+  carregar(silencioso = false, aoConcluir?: () => void): void {
     if (!silencioso) {
       this.loading = true;
     }
@@ -381,9 +385,17 @@ export class ClientesPage implements OnInit, OnDestroy {
         this.clientes = data;
         this.atualizarOpcoesCatalogo(data);
         this.loading = false;
+        aoConcluir?.();
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        aoConcluir?.();
+      },
     });
+  }
+
+  trackByClienteId(_index: number, cliente: Cliente): number {
+    return cliente.id;
   }
 
   private atualizarOpcoesCatalogo(clientes: Cliente[]): void {

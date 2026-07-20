@@ -206,9 +206,11 @@ export interface DashboardResumo {
     ativos: number;
     atrasados: number;
     inativos: number;
+    cortesia: number;
     cadastrosIncompletos: number;
   };
   financeiro: {
+    recebidoHoje: number;
     recebidoMes: number;
     aReceberEsteMes: number;
     qtdEsteMes: number;
@@ -249,6 +251,9 @@ export interface DashboardResumo {
   alertas: AlertaOperacional[];
   metricas: {
     mrr: number;
+    arr: number;
+    arrMesesRestantes: number;
+    arrAno: number;
     ticketMedio: number;
     conexoes: number;
     novosClientes30d: number;

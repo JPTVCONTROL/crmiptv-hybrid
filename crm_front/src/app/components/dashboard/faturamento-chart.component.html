@@ -1,0 +1,13 @@
+<div class="crm-bar-chart" [style.min-height.px]="height" role="img" [attr.aria-label]="'Gráfico de faturamento com ' + data.length + ' meses'">
+  <div *ngIf="barras.length === 0" class="crm-bar-chart-empty">
+    Nenhum dado para exibir.
+  </div>
+
+  <div *ngFor="let item of barras" class="crm-bar-chart-col">
+    <span class="crm-bar-chart-value">{{ formatarValor(item.total) }}</span>
+    <div class="crm-bar-chart-track">
+      <div class="crm-bar-chart-bar" [style.height.%]="item.altura"></div>
+    </div>
+    <span class="crm-bar-chart-label">{{ item.mes }}</span>
+  </div>
+</div>

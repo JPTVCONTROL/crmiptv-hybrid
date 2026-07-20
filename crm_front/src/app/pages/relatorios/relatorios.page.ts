@@ -6,7 +6,7 @@ import { DispositivoService } from '../../core/services/dispositivo.service';
 import { PlanoService } from '../../core/services/plano.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
-import { DadosSyncService } from '../../core/services/dados-sync.service';
+import { RelatorioService, RelatorioResumoApi } from '../../core/services/relatorio.service';
 import { Cliente, Mensalidade } from '../../core/models';
 import {
   calcularDias,
@@ -23,7 +23,18 @@ import {
   montarDistribuicaoPlanos,
   totalDistribuicao,
 } from '../../shared/utils/relatorio-catalogos';
+import {
+  ModoRelatorio,
+  calcularProjecaoProximoAno,
+  calcularResumoAnual,
+  calcularResumoMensal,
+  faturamentoPorMesNoAno,
+  formatarVariacaoPercentual,
+  mensalidadeEhCobravel,
+} from '../../shared/utils/relatorio-financeiro.util';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 
 interface PagamentoRelatorio {
   id: number;
@@ -53,23 +64,38 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   clientes: Cliente[] = [];
   mensalidades: Mensalidade[] = [];
+  private resumoApi: RelatorioResumoApi | null = null;
 
+  modo: ModoRelatorio = 'MENSAL';
   periodo = this.periodoAtual();
+  ano = new Date().getFullYear();
 
   clientesAtivos = 0;
   clientesAtrasados = 0;
   clientesInativos = 0;
+
   recebidoPeriodo = '';
-  recebidoMesAnterior = '';
+  recebidoComparativo = '';
   variacaoRecebido = '';
   variacaoRecebidoPositiva = true;
   qtdPagamentosPeriodo = 0;
+  mediaMensalAnual = '';
+  melhorMesAnual = '';
+
   totalPendente = '';
   totalAtrasado = '';
   qtdPendentes = 0;
   qtdAtrasadas = 0;
   taxaInadimplencia = '0%';
   ticketMedio = '';
+
+  faturamentoMensal: DadoFaturamento[] = [];
+  faturamentoProjecao: DadoFaturamento[] = [];
+  projecaoAno = 0;
+  projecaoMrr = '';
+  projecaoTotal = '';
+  projecaoClientesPagantes = 0;
+
   ultimosPagamentos: PagamentoRelatorio[] = [];
   todasCobrancasAtrasadas: CobrancaAtrasadaRelatorio[] = [];
   distribuicaoPlanos: DadoCatalogoDistribuicao[] = [];
@@ -86,7 +112,8 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     private planoService: PlanoService,
     private dispositivoService: DispositivoService,
     private toast: ToastService,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private relatorioService: RelatorioService
   ) {}
 
   ngOnInit(): void {
@@ -121,10 +148,15 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       this.aplicativoService.listar(),
       this.planoService.listar(),
       this.dispositivoService.listar(),
+      this.relatorioService.obterResumo(
+        this.modo === 'MENSAL' ? this.periodo : undefined,
+        this.modo === 'ANUAL' ? this.ano : Number(this.periodo.split('-')[0])
+      ),
     ]).subscribe({
-      next: ([clientes, mensalidades, aplicativos, planos, dispositivos]) => {
+      next: ([clientes, mensalidades, aplicativos, planos, dispositivos, resumoApi]) => {
         this.clientes = clientes;
         this.mensalidades = mensalidades;
+        this.resumoApi = resumoApi;
         this.distribuicaoPlanos = montarDistribuicaoPlanos(clientes, planos);
         this.distribuicaoAplicativos = montarDistribuicaoAplicativos(
           clientes,
@@ -154,13 +186,77 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   }
 
   get rotuloPeriodo(): string {
+    if (this.modo === 'ANUAL') {
+      return String(this.ano);
+    }
+
     const [ano, mes] = this.periodo.split('-').map(Number);
     const data = new Date(ano, mes - 1, 1);
     return data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   }
 
+  get subtituloPagina(): string {
+    if (this.modo === 'ANUAL') {
+      return `Consolidado de ${this.ano} e projeção para ${this.projecaoAno}.`;
+    }
+
+    return `Análise de ${this.rotuloPeriodo} e projeção para ${this.projecaoAno}.`;
+  }
+
+  get rotuloComparativo(): string {
+    return this.modo === 'ANUAL' ? 'Vs. ano anterior' : 'Vs. mês anterior';
+  }
+
+  get anosDisponiveis(): number[] {
+    const atual = new Date().getFullYear();
+    const anos = new Set<number>();
+
+    for (const mensalidade of this.mensalidades) {
+      if (mensalidade.status === 'PAGO' && mensalidade.pagoEm) {
+        anos.add(dataIsoParaDateUtc(mensalidade.pagoEm).getUTCFullYear());
+      }
+    }
+
+    anos.add(atual);
+    anos.add(atual + 1);
+
+    return Array.from(anos).sort((a, b) => b - a);
+  }
+
+  definirModo(modo: ModoRelatorio): void {
+    if (this.modo === modo) {
+      return;
+    }
+
+    this.modo = modo;
+
+    if (modo === 'ANUAL') {
+      const [ano] = this.periodo.split('-').map(Number);
+      this.ano = ano;
+    } else {
+      this.periodo = `${this.ano}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    this.atualizarResumoApi();
+  }
+
   recalcular(): void {
-    this.calcular();
+    this.atualizarResumoApi();
+  }
+
+  private atualizarResumoApi(): void {
+    this.relatorioService
+      .obterResumo(
+        this.modo === 'MENSAL' ? this.periodo : undefined,
+        this.modo === 'ANUAL' ? this.ano : Number(this.periodo.split('-')[0])
+      )
+      .subscribe({
+        next: (resumoApi) => {
+          this.resumoApi = resumoApi;
+          this.calcular();
+        },
+        error: () => this.calcular(),
+      });
   }
 
   exportarCsv(): void {
@@ -181,15 +277,27 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       ),
     ];
 
-    const blob = new Blob(['\uFEFF' + linhas.join('\n')], {
-      type: 'text/csv;charset=utf-8;',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `pagamentos-${this.periodo}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const nomeArquivo =
+      this.modo === 'ANUAL'
+        ? `pagamentos-${this.ano}.csv`
+        : `pagamentos-${this.periodo}.csv`;
+
+    this.baixarCsv(linhas, nomeArquivo);
+  }
+
+  exportarCsvAnual(): void {
+    if (this.modo !== 'ANUAL') {
+      return;
+    }
+
+    const linhas = [
+      ['Mês', 'Faturamento'].join(';'),
+      ...this.faturamentoMensal.map((item) =>
+        [item.mes, item.total.toFixed(2).replace('.', ',')].join(';')
+      ),
+    ];
+
+    this.baixarCsv(linhas, `faturamento-mensal-${this.ano}.csv`);
   }
 
   exportarCsvInadimplentes(): void {
@@ -211,20 +319,24 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       ),
     ];
 
+    this.baixarCsv(linhas, `inadimplentes-${this.periodoAtual()}.csv`);
+  }
+
+  private periodoAtual(): string {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private baixarCsv(linhas: string[], nomeArquivo: string): void {
     const blob = new Blob(['\uFEFF' + linhas.join('\n')], {
       type: 'text/csv;charset=utf-8;',
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `inadimplentes-${this.periodo}.csv`;
+    link.download = nomeArquivo;
     link.click();
     URL.revokeObjectURL(url);
-  }
-
-  private periodoAtual(): string {
-    const hoje = new Date();
-    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
   }
 
   private calcular(): void {
@@ -238,37 +350,18 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       (c) => statusCliente(c.expiraEm) === 'INATIVO'
     ).length;
 
-    const pendentes = this.mensalidades.filter((m) => m.status === 'PENDENTE');
-    const pagosPeriodo = this.mensalidades.filter(
-      (m) => m.status === 'PAGO' && this.estaNoPeriodo(m.pagoEm)
-    );
-    const pagosMesAnterior = this.mensalidades.filter(
-      (m) => m.status === 'PAGO' && this.estaNoPeriodoAnterior(m.pagoEm)
+    const pendentes = this.mensalidades.filter(
+      (m) => m.status === 'PENDENTE' && mensalidadeEhCobravel(m)
     );
 
     const pendenteValor = pendentes.reduce((t, m) => t + m.valor, 0);
     const atrasadas = pendentes.filter((m) => calcularDias(m.vencimento) < 0);
     const atrasadoValor = atrasadas.reduce((t, m) => t + m.valor, 0);
-    const recebidoValor = pagosPeriodo.reduce((t, m) => t + m.valor, 0);
-    const recebidoAnteriorValor = pagosMesAnterior.reduce((t, m) => t + m.valor, 0);
 
     this.totalPendente = formatarValor(pendenteValor);
     this.totalAtrasado = formatarValor(atrasadoValor);
-    this.recebidoPeriodo = formatarValor(recebidoValor);
-    this.recebidoMesAnterior = formatarValor(recebidoAnteriorValor);
-    this.qtdPagamentosPeriodo = pagosPeriodo.length;
     this.qtdPendentes = pendentes.length;
     this.qtdAtrasadas = atrasadas.length;
-
-    if (recebidoAnteriorValor <= 0) {
-      this.variacaoRecebido = recebidoValor > 0 ? '+100%' : '0%';
-      this.variacaoRecebidoPositiva = recebidoValor >= recebidoAnteriorValor;
-    } else {
-      const variacao =
-        ((recebidoValor - recebidoAnteriorValor) / recebidoAnteriorValor) * 100;
-      this.variacaoRecebidoPositiva = variacao >= 0;
-      this.variacaoRecebido = `${variacao >= 0 ? '+' : ''}${variacao.toFixed(1)}%`;
-    }
 
     const taxa = pendentes.length
       ? ((atrasadas.length / pendentes.length) * 100).toFixed(1)
@@ -279,8 +372,105 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       ? formatarValor(pendenteValor / pendentes.length)
       : formatarValor(0);
 
-    this.ultimosPagamentos = this.montarPagamentosPeriodo(pagosPeriodo);
     this.todasCobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes);
+
+    if (this.resumoApi?.projecaoProximoAno) {
+      const projecao = this.resumoApi.projecaoProximoAno;
+      this.projecaoAno = projecao.ano;
+      this.projecaoMrr = formatarValor(projecao.mrr);
+      this.projecaoTotal = formatarValor(projecao.totalEsperado);
+      this.projecaoClientesPagantes = projecao.clientesPagantes;
+      this.faturamentoProjecao = projecao.faturamentoMensal;
+    } else {
+      const projecao = calcularProjecaoProximoAno(this.clientes);
+      this.projecaoAno = projecao.ano;
+      this.projecaoMrr = formatarValor(projecao.mrr);
+      this.projecaoTotal = formatarValor(projecao.totalEsperado);
+      this.projecaoClientesPagantes = projecao.clientesPagantes;
+      this.faturamentoProjecao = projecao.faturamentoMensal;
+    }
+
+    if (this.modo === 'ANUAL') {
+      this.calcularModoAnual();
+    } else {
+      this.calcularModoMensal();
+    }
+  }
+
+  private calcularModoMensal(): void {
+    const resumoApi = this.resumoApi?.resumoMensal;
+    const [ano] = this.periodo.split('-').map(Number);
+
+    if (resumoApi) {
+      this.recebidoPeriodo = formatarValor(resumoApi.recebido);
+      this.recebidoComparativo = formatarValor(resumoApi.recebidoMesAnterior);
+      this.qtdPagamentosPeriodo = resumoApi.qtdPagamentos;
+      this.variacaoRecebidoPositiva = resumoApi.variacaoPercentual >= 0;
+      this.variacaoRecebido = formatarVariacaoPercentual(resumoApi.variacaoPercentual);
+    } else {
+      const resumo = calcularResumoMensal(this.mensalidades, this.periodo);
+      this.recebidoPeriodo = formatarValor(resumo.recebido);
+      this.recebidoComparativo = formatarValor(resumo.recebidoMesAnterior);
+      this.qtdPagamentosPeriodo = resumo.qtdPagamentos;
+      this.variacaoRecebidoPositiva = resumo.variacaoPercentual >= 0;
+      this.variacaoRecebido = formatarVariacaoPercentual(resumo.variacaoPercentual);
+    }
+
+    this.mediaMensalAnual = '';
+    this.melhorMesAnual = '';
+    this.faturamentoMensal =
+      this.resumoApi?.resumoAnual.faturamentoMensal ??
+      faturamentoPorMesNoAno(this.mensalidades, ano);
+
+    const pagosPeriodo = this.mensalidades.filter(
+      (m) => m.status === 'PAGO' && this.estaNoPeriodo(m.pagoEm)
+    );
+    this.ultimosPagamentos = this.montarPagamentosPeriodo(pagosPeriodo);
+  }
+
+  private calcularModoAnual(): void {
+    const resumoApi = this.resumoApi?.resumoAnual;
+
+    if (resumoApi) {
+      this.recebidoPeriodo = formatarValor(resumoApi.recebido);
+      this.recebidoComparativo = formatarValor(resumoApi.recebidoAnoAnterior);
+      this.variacaoRecebidoPositiva = resumoApi.variacaoPercentual >= 0;
+      this.variacaoRecebido = formatarVariacaoPercentual(resumoApi.variacaoPercentual);
+      this.mediaMensalAnual = formatarValor(resumoApi.mediaMensal);
+      this.faturamentoMensal = resumoApi.faturamentoMensal;
+
+      const melhor = [...resumoApi.faturamentoMensal].sort((a, b) => b.total - a.total)[0];
+      this.melhorMesAnual = melhor
+        ? `${melhor.mes} · ${formatarValor(melhor.total)}`
+        : '—';
+
+      this.qtdPagamentosPeriodo = this.mensalidades.filter(
+        (m) =>
+          m.status === 'PAGO' &&
+          m.pagoEm &&
+          dataIsoParaDateUtc(m.pagoEm).getUTCFullYear() === this.ano
+      ).length;
+    } else {
+      const resumo = calcularResumoAnual(this.mensalidades, this.ano);
+      this.recebidoPeriodo = formatarValor(resumo.recebido);
+      this.recebidoComparativo = formatarValor(resumo.recebidoAnoAnterior);
+      this.qtdPagamentosPeriodo = resumo.qtdPagamentos;
+      this.variacaoRecebidoPositiva = resumo.variacaoPercentual >= 0;
+      this.variacaoRecebido = formatarVariacaoPercentual(resumo.variacaoPercentual);
+      this.mediaMensalAnual = formatarValor(resumo.mediaMensal);
+      this.melhorMesAnual = resumo.melhorMes
+        ? `${resumo.melhorMes.mes} · ${formatarValor(resumo.melhorMes.total)}`
+        : '—';
+      this.faturamentoMensal = resumo.faturamentoMensal;
+    }
+
+    const pagosAno = this.mensalidades.filter(
+      (m) =>
+        m.status === 'PAGO' &&
+        m.pagoEm &&
+        dataIsoParaDateUtc(m.pagoEm).getUTCFullYear() === this.ano
+    );
+    this.ultimosPagamentos = this.montarPagamentosPeriodo(pagosAno);
   }
 
   private estaNoPeriodo(dataIso?: string | null): boolean {
@@ -290,19 +480,6 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     const data = dataIsoParaDateUtc(dataIso);
 
     return data.getUTCFullYear() === ano && data.getUTCMonth() + 1 === mes;
-  }
-
-  private estaNoPeriodoAnterior(dataIso?: string | null): boolean {
-    if (!dataIso) return false;
-
-    const [ano, mes] = this.periodo.split('-').map(Number);
-    const referencia = new Date(Date.UTC(ano, mes - 2, 1, 12, 0, 0));
-    const data = dataIsoParaDateUtc(dataIso);
-
-    return (
-      data.getUTCFullYear() === referencia.getUTCFullYear() &&
-      data.getUTCMonth() === referencia.getUTCMonth()
-    );
   }
 
   private montarPagamentosPeriodo(pagos: Mensalidade[]): PagamentoRelatorio[] {

@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
-import { Configuracao, DashboardResumo } from '../../core/models';
+import { AlertaOperacional, Configuracao, DashboardResumo } from '../../core/models';
 import {
   calcularDias,
   formatarData,
@@ -14,9 +15,15 @@ import {
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
 import { rotuloUltimoContato } from '../../shared/utils/contato';
+import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { ToastService } from '../../core/services/toast.service';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
+import {
+  classesAlertaOperacional,
+  iconeAlertaOperacional,
+  ordenarAlertasOperacionais,
+} from '../../shared/utils/alertas-operacionais.util';
 
 type ProximoVencimentoResumo = DashboardResumo['proximosVencimentos'][number];
 type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
@@ -27,23 +34,26 @@ type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
 })
 export class DashboardPage implements OnInit, OnDestroy {
   loading = true;
+  atualizando = false;
   erroCarregamento = '';
   resumo: DashboardResumo | null = null;
   private readonly destroy$ = new Subject<void>();
+  readonly limiteLista = 5;
 
   totalClientes = 0;
   qtdAtivos = 0;
   qtdAtrasados = 0;
   qtdInativos = 0;
+  qtdCortesia = 0;
+  recebidoHoje = '';
   recebidoMes = '';
   aReceberEsteMes = '';
   qtdEsteMes = 0;
-  aReceberProximosMeses = '';
-  qtdProximosMeses = 0;
   vencemHoje = 0;
   faturamentoMensal: DadoFaturamento[] = [];
   proximosVencimentos: ProximoVencimentoResumo[] = [];
   clientesAtencao: ClienteAtencaoResumo[] = [];
+  alertas: AlertaOperacional[] = [];
 
   cobrancaNaoContactados = 0;
   cobrancaContactadosHoje = 0;
@@ -53,6 +63,8 @@ export class DashboardPage implements OnInit, OnDestroy {
   pagandoMensalidadeId: number | null = null;
 
   mrr = '';
+  arr = '';
+  arrRotulo = '';
   ticketMedio = '';
   conexoes = 0;
   novosClientes30d = 0;
@@ -70,6 +82,24 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   subtituloPagina = '';
 
+  iconeAlerta = iconeAlertaOperacional;
+  classesAlerta = classesAlertaOperacional;
+
+  constructor(
+    private dashboardService: DashboardService,
+    private configuracaoService: ConfiguracaoService,
+    private mensalidadeService: MensalidadeService,
+    private pagamentoUi: PagamentoUiService,
+    private sync: DadosSyncService,
+    private toast: ToastService,
+    private router: Router,
+    private pullRefresh: PullRefreshService
+  ) {}
+
+  private get configuracao(): Configuracao | null {
+    return this.configuracaoService.getSnapshot();
+  }
+
   get diasAntecedencia(): number {
     return resolverDiasAntecedencia(this.configuracao);
   }
@@ -83,25 +113,70 @@ export class DashboardPage implements OnInit, OnDestroy {
     return Math.min(100, Math.round((recebido / total) * 100));
   }
 
+  get percentualAtivos(): string {
+    if (this.totalClientes <= 0) {
+      return '0%';
+    }
+
+    return `${Math.round((this.qtdAtivos / this.totalClientes) * 100)}%`;
+  }
+
+  get rotinaPercentual(): number {
+    if (this.cobrancaTotalElegiveis <= 0) {
+      return this.cobrancaRotinaFeita ? 100 : 0;
+    }
+    return Math.min(
+      100,
+      Math.round(
+        (this.cobrancaContactadosHoje / this.cobrancaTotalElegiveis) * 100
+      )
+    );
+  }
+
+  get variacaoFaturamentoRotulo(): string {
+    if (this.faturamentoMensal.length < 2) {
+      return 'Sem histórico anterior';
+    }
+
+    const atual = this.faturamentoMensal[this.faturamentoMensal.length - 1]?.total ?? 0;
+    const anterior =
+      this.faturamentoMensal[this.faturamentoMensal.length - 2]?.total ?? 0;
+
+    if (anterior <= 0) {
+      return atual > 0 ? 'Primeiro mês com receita' : 'Sem receita no período';
+    }
+
+    const variacao = Math.round(((atual - anterior) / anterior) * 100);
+    const sinal = variacao > 0 ? '+' : '';
+    return `${sinal}${variacao}% vs. mês anterior`;
+  }
+
+  get variacaoFaturamentoPositiva(): boolean {
+    if (this.faturamentoMensal.length < 2) return true;
+    const atual = this.faturamentoMensal[this.faturamentoMensal.length - 1]?.total ?? 0;
+    const anterior =
+      this.faturamentoMensal[this.faturamentoMensal.length - 2]?.total ?? 0;
+    return atual >= anterior;
+  }
+
+  get alertasVisiveis(): AlertaOperacional[] {
+    return ordenarAlertasOperacionais(this.alertas).slice(0, 6);
+  }
+
+  get proximosVencimentosVisiveis(): ProximoVencimentoResumo[] {
+    return this.proximosVencimentos.slice(0, this.limiteLista);
+  }
+
+  get clientesAtencaoVisiveis(): ClienteAtencaoResumo[] {
+    return this.clientesAtencao.slice(0, this.limiteLista);
+  }
+
   get qtdAtencaoAtrasados(): number {
     return this.clientesAtencao.filter((c) => c.status === 'ATRASADO').length;
   }
 
   get qtdAtencaoInativos(): number {
     return this.clientesAtencao.filter((c) => c.status === 'INATIVO').length;
-  }
-
-  constructor(
-    private dashboardService: DashboardService,
-    private configuracaoService: ConfiguracaoService,
-    private mensalidadeService: MensalidadeService,
-    private pagamentoUi: PagamentoUiService,
-    private sync: DadosSyncService,
-    private toast: ToastService
-  ) {}
-
-  private get configuracao(): Configuracao | null {
-    return this.configuracaoService.getSnapshot();
   }
 
   ngOnInit(): void {
@@ -116,9 +191,11 @@ export class DashboardPage implements OnInit, OnDestroy {
       ['clientes', 'mensalidades', 'dashboard'],
       () => this.carregar(true)
     );
+    this.pullRefresh.registrar((concluir) => this.carregar(true, concluir));
   }
 
   ngOnDestroy(): void {
+    this.pullRefresh.limpar();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -129,9 +206,11 @@ export class DashboardPage implements OnInit, OnDestroy {
     }
   }
 
-  carregar(silencioso = false): void {
-    if (!silencioso) {
+  carregar(silencioso = false, aoConcluir?: () => void): void {
+    if (!silencioso && !this.resumo) {
       this.loading = true;
+    } else if (silencioso || this.resumo) {
+      this.atualizando = true;
     }
     this.erroCarregamento = '';
 
@@ -140,17 +219,27 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.resumo = resumo;
         this.aplicarResumo(resumo);
         this.loading = false;
+        this.atualizando = false;
+        aoConcluir?.();
       },
       error: (err: Error) => {
         this.loading = false;
+        this.atualizando = false;
         this.erroCarregamento =
           err.message?.trim() ||
           'Não foi possível carregar o resumo. Verifique se a API está rodando.';
         if (!silencioso) {
           void this.toast.error(this.erroCarregamento);
         }
+        aoConcluir?.();
       },
     });
+  }
+
+  abrirAlerta(alerta: AlertaOperacional): void {
+    if (alerta.rota) {
+      void this.router.navigateByUrl(alerta.rota);
+    }
   }
 
   private aplicarResumo(resumo: DashboardResumo): void {
@@ -158,17 +247,16 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.qtdAtivos = resumo.clientes.ativos;
     this.qtdAtrasados = resumo.clientes.atrasados;
     this.qtdInativos = resumo.clientes.inativos;
+    this.qtdCortesia = resumo.clientes.cortesia ?? 0;
+    this.recebidoHoje = formatarValor(resumo.financeiro.recebidoHoje ?? 0);
     this.recebidoMes = formatarValor(resumo.financeiro.recebidoMes);
     this.aReceberEsteMes = formatarValor(resumo.financeiro.aReceberEsteMes);
     this.qtdEsteMes = resumo.financeiro.qtdEsteMes;
-    this.aReceberProximosMeses = formatarValor(
-      resumo.financeiro.aReceberProximosMeses
-    );
-    this.qtdProximosMeses = resumo.financeiro.qtdProximosMeses;
     this.vencemHoje = resumo.financeiro.vencemHoje;
     this.faturamentoMensal = resumo.faturamentoMensal;
     this.proximosVencimentos = resumo.proximosVencimentos;
     this.clientesAtencao = resumo.clientesAtencao;
+    this.alertas = resumo.alertas ?? [];
 
     this.cobrancaNaoContactados = resumo.cobrancaDiaria.naoContactados;
     this.cobrancaContactadosHoje = resumo.cobrancaDiaria.contactadosHoje;
@@ -178,6 +266,11 @@ export class DashboardPage implements OnInit, OnDestroy {
 
     const m = resumo.metricas;
     this.mrr = formatarValor(m.mrr);
+    const mesesRestantes =
+      m.arrMesesRestantes ?? 12 - new Date().getMonth();
+    const anoArr = m.arrAno ?? new Date().getFullYear();
+    this.arr = formatarValor(m.arr ?? m.mrr * mesesRestantes);
+    this.arrRotulo = `Até dez/${anoArr} · ${mesesRestantes} mes(es)`;
     this.ticketMedio = formatarValor(m.ticketMedio);
     this.conexoes = m.conexoes;
     this.novosClientes30d = m.novosClientes30d;

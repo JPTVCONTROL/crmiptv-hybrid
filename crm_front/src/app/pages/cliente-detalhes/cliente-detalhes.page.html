@@ -1,7 +1,12 @@
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading && cliente" class="space-y-6">
-  <app-page-header [title]="cliente.nome" subtitle="Detalhes do cliente IPTV">
+  <app-page-header
+    [title]="cliente.nome"
+    subtitle="Detalhes do cliente IPTV"
+    rotaVoltar="/clientes"
+    [breadcrumbs]="[{ label: 'Clientes', rota: '/clientes' }, { label: cliente.nome }]"
+  >
     <div class="flex flex-wrap gap-2 justify-end">
       <button
         type="button"

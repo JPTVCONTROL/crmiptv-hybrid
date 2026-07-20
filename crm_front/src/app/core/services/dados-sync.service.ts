@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 
-export type DominioSync = 'clientes' | 'mensalidades' | 'dashboard' | 'catalogos';
+export type DominioSync =
+  | 'clientes'
+  | 'mensalidades'
+  | 'dashboard'
+  | 'catalogos'
+  | 'configuracoes';
 
 export interface MudancaSync {
   dominios: DominioSync[];
@@ -27,7 +32,7 @@ export class DadosSyncService {
   }
 
   notificarConfiguracao(): void {
-    this.emit(['dashboard']);
+    this.emit(['dashboard', 'configuracoes']);
   }
 
   notificarCatalogos(): void {
@@ -35,7 +40,13 @@ export class DadosSyncService {
   }
 
   notificarTudo(): void {
-    this.emit(['clientes', 'mensalidades', 'dashboard', 'catalogos']);
+    this.emit([
+      'clientes',
+      'mensalidades',
+      'dashboard',
+      'catalogos',
+      'configuracoes',
+    ]);
   }
 
   private emit(dominios: DominioSync[]): void {

@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { AppError } from '../errors.js';
 import { sendError } from '../utils/helpers/response.js';
 
 export function errorHandler(
@@ -7,6 +8,11 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  if (err instanceof AppError) {
+    sendError(res, err.message, err.statusCode);
+    return;
+  }
+
   console.error(err);
   sendError(res, 'Erro interno do servidor.', 500);
 }

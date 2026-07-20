@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AutomacaoService } from '../../core/services/automacao.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import {
   AutomacaoConfig,
   AutomacaoPainel,
@@ -7,6 +10,7 @@ import {
   ResultadoExecucaoAutomacao,
 } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 interface PassoChecklist {
   id: string;
@@ -24,10 +28,11 @@ interface ModeloMeta {
   selector: 'app-automacoes',
   templateUrl: './automacoes.page.html',
 })
-export class AutomacoesPage implements OnInit {
+export class AutomacoesPage implements OnInit, OnDestroy {
   loading = true;
   salvando = false;
   executando = false;
+  private readonly destroy$ = new Subject<void>();
 
   painel: AutomacaoPainel | null = null;
   form: AutomacaoConfig = this.formPadrao();
@@ -76,11 +81,23 @@ export class AutomacoesPage implements OnInit {
 
   constructor(
     private automacaoService: AutomacaoService,
-    private toast: ToastService
+    private toast: ToastService,
+    private sync: DadosSyncService
   ) {}
 
   ngOnInit(): void {
     this.carregar();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'mensalidades', 'configuracoes'],
+      () => this.carregar(true)
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get diasAntecedencia(): number {
@@ -154,8 +171,10 @@ export class AutomacoesPage implements OnInit {
     return this.passosChecklist.filter((p) => p.concluido).length;
   }
 
-  carregar(): void {
-    this.loading = true;
+  carregar(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
     this.automacaoService.obterPainel().subscribe({
       next: (painel) => {
         this.painel = painel;

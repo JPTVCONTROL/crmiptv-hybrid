@@ -1,23 +1,5 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  Input,
-  OnChanges,
-  OnDestroy,
-  ViewChild,
-} from '@angular/core';
-import * as React from 'react';
-import { createRoot, Root } from 'react-dom/client';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { CommonModule } from '@angular/common';
+import { Component, Input, OnChanges } from '@angular/core';
 
 export interface DadoFaturamento {
   mes: string;
@@ -26,108 +8,31 @@ export interface DadoFaturamento {
 
 @Component({
   selector: 'app-faturamento-chart',
-  template: `<div #chartHost class="w-full" [style.height.px]="height"></div>`,
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './faturamento-chart.component.html',
+  styleUrls: ['./faturamento-chart.component.scss'],
 })
-export class FaturamentoChartComponent
-  implements AfterViewInit, OnChanges, OnDestroy
-{
-  @ViewChild('chartHost', { static: true })
-  chartHost!: ElementRef<HTMLDivElement>;
-
+export class FaturamentoChartComponent implements OnChanges {
   @Input() data: DadoFaturamento[] = [];
   @Input() height = 280;
 
-  private root?: Root;
-
-  ngAfterViewInit(): void {
-    this.renderChart();
-  }
+  barras: Array<DadoFaturamento & { altura: number }> = [];
+  valorMaximo = 0;
 
   ngOnChanges(): void {
-    if (this.root) {
-      this.renderChart();
-    }
+    this.valorMaximo = Math.max(...this.data.map((item) => item.total), 0);
+    this.barras = this.data.map((item) => ({
+      ...item,
+      altura: this.valorMaximo > 0 ? (item.total / this.valorMaximo) * 100 : 0,
+    }));
   }
 
-  ngOnDestroy(): void {
-    this.root?.unmount();
-    this.root = undefined;
-  }
-
-  private renderChart(): void {
-    if (!this.chartHost?.nativeElement) {
-      return;
-    }
-
-    if (!this.root) {
-      this.root = createRoot(this.chartHost.nativeElement);
-    }
-
-    const primary =
-      getComputedStyle(document.documentElement)
-        .getPropertyValue('--crm-primary')
-        .trim() || '#7c3aed';
-
-    const barChart = React.createElement(
-      BarChart,
-      { data: this.data, margin: { top: 8, right: 8, left: 0, bottom: 0 } },
-      React.createElement(CartesianGrid, {
-        strokeDasharray: '3 3',
-        stroke: '#334155',
-        vertical: false,
-      }),
-      React.createElement(XAxis, {
-        dataKey: 'mes',
-        tick: { fill: '#94a3b8', fontSize: 12 },
-        axisLine: { stroke: '#334155' },
-        tickLine: false,
-      }),
-      React.createElement(YAxis, {
-        tick: { fill: '#94a3b8', fontSize: 12 },
-        axisLine: false,
-        tickLine: false,
-        tickFormatter: (valor: number) =>
-          valor.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-            maximumFractionDigits: 0,
-          }),
-      }),
-      React.createElement(Tooltip, {
-        cursor: { fill: 'rgba(148, 163, 184, 0.08)' },
-        contentStyle: {
-          backgroundColor: '#0f172a',
-          border: '1px solid rgba(148, 163, 184, 0.2)',
-          borderRadius: '12px',
-          color: '#f8fafc',
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
-        },
-        formatter: (value) => {
-          const valor = Number(value ?? 0);
-
-          return [
-            valor.toLocaleString('pt-BR', {
-              style: 'currency',
-              currency: 'BRL',
-            }),
-            'Faturamento',
-          ];
-        },
-      }),
-      React.createElement(Bar, {
-        dataKey: 'total',
-        fill: primary,
-        radius: [8, 8, 0, 0],
-        maxBarSize: 48,
-      })
-    );
-
-    const chart = React.createElement(ResponsiveContainer, {
-      width: '100%',
-      height: this.height,
-      children: barChart,
+  formatarValor(valor: number): string {
+    return valor.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
     });
-
-    this.root.render(chart);
   }
 }

@@ -10,6 +10,12 @@ export class ClienteRepository {
     });
   }
 
+  findTelefonesResumo() {
+    return prisma.cliente.findMany({
+      select: { id: true, nome: true, telefone: true },
+    });
+  }
+
   findById(id: number) {
     return prisma.cliente.findUnique({
       where: { id },

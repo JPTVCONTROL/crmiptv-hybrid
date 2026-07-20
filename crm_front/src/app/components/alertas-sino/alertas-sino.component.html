@@ -1,17 +1,34 @@
 <div class="alertas-sino">
   <button
+    #botaoAlertas
     type="button"
     class="alertas-sino-btn"
     [class.alertas-sino-btn-ativo]="aberto"
     [attr.aria-expanded]="aberto"
+    aria-haspopup="dialog"
+    aria-controls="alertas-sino-painel"
     aria-label="Alertas operacionais"
     (click)="alternarPainel()"
   >
     <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
-    <span *ngIf="badge > 0" class="alertas-sino-badge">{{ badge > 99 ? '99+' : badge }}</span>
+    <span
+      *ngIf="badge > 0"
+      class="alertas-sino-badge"
+      [attr.aria-label]="rotuloBadge"
+    >
+      {{ badge > 99 ? '99+' : badge }}
+    </span>
   </button>
 
-  <div *ngIf="aberto" class="alertas-sino-painel" role="dialog" aria-label="Lista de alertas">
+  <div
+    *ngIf="aberto"
+    #painelAlertas
+    id="alertas-sino-painel"
+    class="alertas-sino-painel"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Lista de alertas"
+  >
     <div class="alertas-sino-header">
       <div>
         <p class="alertas-sino-titulo">Alertas</p>

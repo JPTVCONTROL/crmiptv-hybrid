@@ -42,6 +42,8 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   selecionados = new Set<number>();
   enviando = false;
   filtroGrupo: FiltroGrupoCobranca = 'TODOS';
+  readonly limitePorSecao = 30;
+  private secoesExpandidas = new Set<TipoCobrancaDiaria>();
 
   constructor(
     private route: ActivatedRoute,
@@ -184,7 +186,22 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     if (this.filtroGrupo !== 'TODOS' && this.filtroGrupo !== tipo) {
       return [];
     }
-    return this.itensPorTipo(tipo);
+    const lista = this.itensPorTipo(tipo);
+    if (this.secoesExpandidas.has(tipo)) {
+      return lista;
+    }
+    return lista.slice(0, this.limitePorSecao);
+  }
+
+  temMaisItens(tipo: TipoCobrancaDiaria): boolean {
+    return (
+      !this.secoesExpandidas.has(tipo) &&
+      this.itensPorTipo(tipo).length > this.limitePorSecao
+    );
+  }
+
+  expandirSecao(tipo: TipoCobrancaDiaria): void {
+    this.secoesExpandidas.add(tipo);
   }
 
   definirFiltroGrupo(filtro: FiltroGrupoCobranca): void {

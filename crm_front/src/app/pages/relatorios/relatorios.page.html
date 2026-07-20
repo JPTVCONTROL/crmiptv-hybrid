@@ -1,14 +1,50 @@
 <div class="space-y-6">
   <app-page-header
     title="Relatórios"
-    [subtitle]="'Análise histórica de ' + rotuloPeriodo + '.'"
+    [subtitle]="subtituloPagina"
   >
+    <div class="flex rounded-lg border border-slate-700 p-0.5 bg-slate-900/60">
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+        [class.bg-violet-600]="modo === 'MENSAL'"
+        [class.text-white]="modo === 'MENSAL'"
+        [class.text-slate-400]="modo !== 'MENSAL'"
+        (click)="definirModo('MENSAL')"
+      >
+        Mensal
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+        [class.bg-violet-600]="modo === 'ANUAL'"
+        [class.text-white]="modo === 'ANUAL'"
+        [class.text-slate-400]="modo !== 'ANUAL'"
+        (click)="definirModo('ANUAL')"
+      >
+        Anual
+      </button>
+    </div>
+
     <input
+      *ngIf="modo === 'MENSAL'"
       type="month"
       class="crm-input !py-2 !w-auto min-w-[10.5rem]"
       [(ngModel)]="periodo"
       (ngModelChange)="recalcular()"
     />
+
+    <select
+      *ngIf="modo === 'ANUAL'"
+      class="crm-input !py-2 !w-auto min-w-[6.5rem]"
+      [(ngModel)]="ano"
+      (ngModelChange)="recalcular()"
+    >
+      <option *ngFor="let item of anosDisponiveis" [ngValue]="item">
+        {{ item }}
+      </option>
+    </select>
+
     <button
       type="button"
       class="crm-btn-ghost"
@@ -25,6 +61,15 @@
     >
       Exportar pagamentos
     </button>
+    <button
+      *ngIf="modo === 'ANUAL'"
+      type="button"
+      class="crm-btn-ghost"
+      [disabled]="faturamentoMensal.length === 0"
+      (click)="exportarCsvAnual()"
+    >
+      Exportar faturamento
+    </button>
     <a routerLink="/dashboard" class="crm-btn-ghost no-underline">Dashboard</a>
   </app-page-header>
 
@@ -37,30 +82,100 @@
       </h2>
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <app-stat-card
-          title="Recebido no período"
+          [title]="modo === 'ANUAL' ? 'Recebido no ano' : 'Recebido no período'"
           [value]="recebidoPeriodo"
           color="#22C55E"
           [subtitle]="qtdPagamentosPeriodo + ' pagamento(s)'"
         ></app-stat-card>
         <app-stat-card
-          title="Vs. mês anterior"
+          [title]="rotuloComparativo"
           [value]="variacaoRecebido"
           [color]="variacaoRecebidoPositiva ? '#22C55E' : '#EF4444'"
-          [subtitle]="recebidoMesAnterior"
+          [subtitle]="recebidoComparativo"
         ></app-stat-card>
         <app-stat-card
+          *ngIf="modo === 'ANUAL'"
+          title="Média mensal"
+          [value]="mediaMensalAnual"
+          color="#3B82F6"
+          [subtitle]="melhorMesAnual ? 'Melhor: ' + melhorMesAnual : 'Sem receita no ano'"
+        ></app-stat-card>
+        <app-stat-card
+          *ngIf="modo === 'MENSAL'"
           title="A receber (atual)"
           [value]="totalPendente"
           color="#F59E0B"
           [subtitle]="qtdPendentes + ' cobrança(s)'"
         ></app-stat-card>
         <app-stat-card
+          *ngIf="modo === 'MENSAL'"
           title="Ticket médio pendente"
           [value]="ticketMedio"
           color="#A855F7"
           [subtitle]="'Inadimplência ' + taxaInadimplencia"
         ></app-stat-card>
+        <app-stat-card
+          *ngIf="modo === 'ANUAL'"
+          title="A receber (atual)"
+          [value]="totalPendente"
+          color="#F59E0B"
+          [subtitle]="qtdPendentes + ' cobrança(s)'"
+        ></app-stat-card>
+        <app-stat-card
+          *ngIf="modo === 'ANUAL'"
+          title="Inadimplência"
+          [value]="taxaInadimplencia"
+          color="#EF4444"
+          [subtitle]="totalAtrasado + ' atrasado(s)'"
+        ></app-stat-card>
       </div>
+    </section>
+
+    <section class="crm-card">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-white font-semibold">
+            Faturamento {{ modo === 'ANUAL' ? 'anual' : 'do ano' }}
+          </h2>
+          <p class="text-slate-500 text-xs mt-0.5">
+            Recebimentos confirmados mês a mês
+            <span *ngIf="modo === 'MENSAL'"> · mês selecionado em {{ rotuloPeriodo }}</span>
+          </p>
+        </div>
+      </div>
+      <app-faturamento-chart [data]="faturamentoMensal" [height]="280"></app-faturamento-chart>
+    </section>
+
+    <section class="crm-card border border-violet-500/20 bg-violet-950/10">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+        <div>
+          <p class="text-violet-300 text-xs font-semibold uppercase tracking-wider mb-1">
+            Projeção
+          </p>
+          <h2 class="text-white font-semibold">
+            Faturamento esperado — {{ projecaoAno }}
+          </h2>
+          <p class="text-slate-400 text-xs mt-1 max-w-xl">
+            Estimativa com base no MRR atual de clientes ativos pagantes (cortesia excluída),
+            assumindo renovação mensal estável durante os 12 meses.
+          </p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
+          <div class="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
+            <p class="text-slate-500 text-[10px] uppercase tracking-wide">MRR atual</p>
+            <p class="text-white font-semibold text-sm">{{ projecaoMrr }}</p>
+          </div>
+          <div class="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
+            <p class="text-slate-500 text-[10px] uppercase tracking-wide">Clientes pagantes</p>
+            <p class="text-white font-semibold text-sm">{{ projecaoClientesPagantes }}</p>
+          </div>
+          <div class="rounded-lg bg-violet-900/30 border border-violet-500/30 px-3 py-2 col-span-2 sm:col-span-1">
+            <p class="text-violet-300 text-[10px] uppercase tracking-wide">Total esperado</p>
+            <p class="text-violet-200 font-semibold text-sm">{{ projecaoTotal }}</p>
+          </div>
+        </div>
+      </div>
+      <app-faturamento-chart [data]="faturamentoProjecao" [height]="220"></app-faturamento-chart>
     </section>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -192,7 +307,9 @@
     <section class="crm-card">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-white font-semibold">Pagamentos do período</h2>
+          <h2 class="text-white font-semibold">
+            {{ modo === 'ANUAL' ? 'Pagamentos do ano' : 'Pagamentos do período' }}
+          </h2>
           <p class="text-slate-500 text-xs mt-0.5">
             {{ ultimosPagamentos.length }}
             {{ ultimosPagamentos.length === 1 ? 'registro' : 'registros' }}
@@ -257,7 +374,9 @@
 
       <app-empty-state
         *ngIf="ultimosPagamentos.length === 0"
-        message="Nenhum pagamento registrado neste período."
+        [message]="modo === 'ANUAL'
+          ? 'Nenhum pagamento registrado neste ano.'
+          : 'Nenhum pagamento registrado neste período.'"
       ></app-empty-state>
     </section>
   </div>

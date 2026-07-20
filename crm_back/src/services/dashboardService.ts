@@ -47,9 +47,11 @@ export interface DashboardResumo {
     ativos: number;
     atrasados: number;
     inativos: number;
+    cortesia: number;
     cadastrosIncompletos: number;
   };
   financeiro: {
+    recebidoHoje: number;
     recebidoMes: number;
     aReceberEsteMes: number;
     qtdEsteMes: number;
@@ -90,6 +92,9 @@ export interface DashboardResumo {
   alertas: AlertaOperacional[];
   metricas: {
     mrr: number;
+    arr: number;
+    arrMesesRestantes: number;
+    arrAno: number;
     ticketMedio: number;
     conexoes: number;
     novosClientes30d: number;
@@ -193,11 +198,24 @@ export class DashboardService {
       inativos: clientes.filter(
         (c) => calcularStatusCliente(c.expiraEm) === 'INATIVO'
       ).length,
+      cortesia: clientes.filter((c) => c.cortesia).length,
       cadastrosIncompletos: contarCadastrosIncompletos(
         clientes,
         aplicativosRequisitos
       ),
     };
+
+    const recebidoHoje = pagos
+      .filter((m) => {
+        if (!m.pagoEm) return false;
+        const pago = new Date(m.pagoEm);
+        return (
+          pago.getFullYear() === hoje.getFullYear() &&
+          pago.getMonth() === hoje.getMonth() &&
+          pago.getDate() === hoje.getDate()
+        );
+      })
+      .reduce((total, m) => total + m.valor, 0);
 
     const recebidoMes = pagos
       .filter((m) => {
@@ -514,6 +532,9 @@ export class DashboardService {
       (total, cliente) => total + (cliente.valorMensal > 0 ? cliente.valorMensal : 0),
       0
     );
+    const arrAno = hoje.getFullYear();
+    const arrMesesRestantes = 12 - hoje.getMonth();
+    const arr = Math.round(mrr * arrMesesRestantes * 100) / 100;
     const ticketMedio =
       clientesAtivosLista.length > 0 ? mrr / clientesAtivosLista.length : 0;
     const conexoes = clientesAtivosLista.reduce(
@@ -592,6 +613,7 @@ export class DashboardService {
     return {
       clientes: clientesResumo,
       financeiro: {
+        recebidoHoje,
         recebidoMes,
         aReceberEsteMes,
         qtdEsteMes,
@@ -613,6 +635,9 @@ export class DashboardService {
       alertas,
       metricas: {
         mrr,
+        arr,
+        arrMesesRestantes,
+        arrAno,
         ticketMedio,
         conexoes,
         novosClientes30d,

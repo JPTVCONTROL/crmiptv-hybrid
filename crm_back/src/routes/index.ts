@@ -9,6 +9,7 @@ import sistemaRoutes from './sistemaRoutes.js';
 import authRoutes from './authRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
 import automacaoRoutes from './automacaoRoutes.js';
+import relatorioRoutes from './relatorioRoutes.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -25,6 +26,7 @@ router.use('/planos', planoRoutes);
 router.use('/configuracoes', configuracaoRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/automacoes', automacaoRoutes);
+router.use('/relatorios', relatorioRoutes);
 router.use('/sistema', sistemaRoutes);
 
 export default router;

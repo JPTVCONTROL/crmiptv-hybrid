@@ -1,14 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { MenuController } from '@ionic/angular';
+import { MenuController, RefresherCustomEvent } from '@ionic/angular';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { AuthService } from './core/services/auth.service';
-import { AlertasOperacionaisService } from './core/services/alertas-operacionais.service';
+import {
+  AlertasOperacionaisService,
+  EstadoAlertasOperacionais,
+} from './core/services/alertas-operacionais.service';
 import { SistemaService } from './core/services/sistema.service';
 import { ConfiguracaoService } from './core/services/configuracao.service';
 import { TemaService } from './core/services/tema.service';
-import { Usuario } from './core/models';
+import { PullRefreshService } from './core/services/pull-refresh.service';
+import { AlertaOperacional, Usuario } from './core/models';
 
 interface MenuItem {
   nome: string;
@@ -60,6 +64,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   isLoginRoute = false;
   usuario: Usuario | null = null;
+  alertas: AlertaOperacional[] = [];
+  totalPendencias = 0;
 
   private readonly destroy$ = new Subject<void>();
   private sincronizacaoInicialFeita = false;
@@ -71,7 +77,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private alertasOperacionais: AlertasOperacionaisService,
     private sistemaService: SistemaService,
     private configuracao: ConfiguracaoService,
-    private tema: TemaService
+    private tema: TemaService,
+    private pullRefresh: PullRefreshService
   ) {
     this.router.events
       .pipe(
@@ -87,6 +94,10 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isLoginRoute = this.router.url.startsWith('/login');
     this.usuario = this.auth.getUsuario();
+
+    this.alertasOperacionais.estado$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((estado) => this.aplicarEstadoAlertas(estado));
 
     this.auth.usuario$
       .pipe(takeUntil(this.destroy$))
@@ -120,6 +131,31 @@ export class AppComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  get iniciaisUsuario(): string {
+    if (!this.usuario?.nome) {
+      return '?';
+    }
+
+    const partes = this.usuario.nome.trim().split(/\s+/).filter(Boolean);
+
+    if (partes.length === 1) {
+      return partes[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
+  }
+
+  badgeMenu(rota: string): number {
+    return this.alertas
+      .filter(
+        (alerta) =>
+          alerta.tipo !== 'ROTINA_CONCLUIDA' &&
+          alerta.quantidade > 0 &&
+          this.rotaAlertaCombina(alerta.rota, rota)
+      )
+      .reduce((total, alerta) => total + alerta.quantidade, 0);
+  }
+
   private sincronizarDadosIniciais(): void {
     if (this.sincronizacaoInicialFeita || this.isLoginRoute) {
       return;
@@ -143,8 +179,29 @@ export class AppComponent implements OnInit, OnDestroy {
     this.alertasOperacionais.atualizar().subscribe();
   }
 
+  private aplicarEstadoAlertas(estado: EstadoAlertasOperacionais): void {
+    this.alertas = estado.alertas;
+    this.totalPendencias = estado.totalPendencias;
+  }
+
+  private rotaAlertaCombina(
+    rotaAlerta: string | undefined,
+    rotaMenu: string
+  ): boolean {
+    if (!rotaAlerta) {
+      return false;
+    }
+
+    const baseAlerta = rotaAlerta.split('?')[0];
+    return baseAlerta === rotaMenu;
+  }
+
   fecharMenu(): void {
     void this.menuCtrl.close();
+  }
+
+  onPullRefresh(event: RefresherCustomEvent): void {
+    this.pullRefresh.executar(() => event.target.complete());
   }
 
   sair(): void {

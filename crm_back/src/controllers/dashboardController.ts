@@ -7,7 +7,8 @@ export class DashboardController {
     try {
       const resumo = await dashboardService.obterResumo();
       sendSuccess(res, resumo);
-    } catch {
+    } catch (error) {
+      console.error('Erro ao carregar resumo do dashboard:', error);
       sendError(res, 'Erro ao carregar resumo do dashboard');
     }
   }

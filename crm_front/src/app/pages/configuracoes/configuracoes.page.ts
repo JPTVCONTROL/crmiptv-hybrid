@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
 import { SistemaService } from '../../core/services/sistema.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { AuthService } from '../../core/services/auth.service';
+import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TemaService } from '../../core/services/tema.service';
 import { Configuracao } from '../../core/models';
@@ -12,13 +14,15 @@ import {
   resolverTextoMensagem,
 } from '../../shared/utils/mensagens-padrao';
 import { DIAS_ANTECEDENCIA_LEMBRETE_PADRAO } from '../../shared/utils/cobranca-diaria';
+import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-configuracoes',
   templateUrl: './configuracoes.page.html',
 })
-export class ConfiguracoesPage implements OnInit {
+export class ConfiguracoesPage implements OnInit, OnDestroy {
   loading = true;
+  private readonly destroy$ = new Subject<void>();
   salvando = false;
   baixandoBackup = false;
   sincronizandoCobrancas = false;
@@ -126,10 +130,29 @@ export class ConfiguracoesPage implements OnInit {
     private sistemaService: SistemaService,
     private authService: AuthService,
     private tema: TemaService,
-    private toast: ToastService
+    private toast: ToastService,
+    private sync: DadosSyncService
   ) {}
 
   ngOnInit(): void {
+    this.carregarConfig();
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['configuracoes'],
+      () => this.carregarConfig(true)
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private carregarConfig(silencioso = false): void {
+    if (!silencioso) {
+      this.loading = true;
+    }
     this.configuracaoService.carregar().subscribe({
       next: (dados) => {
         this.form = {

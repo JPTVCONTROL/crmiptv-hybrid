@@ -43,6 +43,9 @@ model Cliente {
   observacao   String?
   createdAt    DateTime @default(now())
   mensalidades Mensalidade[]
+
+  @@index([expiraEm])
+  @@index([planoId])
 }
 
 model Mensalidade {
@@ -57,6 +60,11 @@ model Mensalidade {
   ultimoContatoEm DateTime?
   createdAt  DateTime @default(now())
   enviosAutomaticos EnvioAutomatico[]
+
+  @@index([clienteId])
+  @@index([status])
+  @@index([vencimento])
+  @@index([pagoEm])
 }
 
 model AutomacaoConfig {

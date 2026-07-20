@@ -1,0 +1,18 @@
+<div class="crm-dist-chart" [style.min-height.px]="height" role="img" [attr.aria-label]="'Distribuição por ' + unidade">
+  <p *ngIf="itens.length === 0" class="crm-dist-chart-empty">Nenhum dado para exibir.</p>
+
+  <div *ngFor="let item of itens" class="crm-dist-chart-row">
+    <div class="crm-dist-chart-header">
+      <span class="crm-dist-chart-dot" [style.background-color]="item.cor"></span>
+      <span class="crm-dist-chart-nome">{{ item.nome }}</span>
+      <span class="crm-dist-chart-qtd">{{ item.quantidade }} ({{ item.percentual }}%)</span>
+    </div>
+    <div class="crm-dist-chart-track">
+      <div
+        class="crm-dist-chart-fill"
+        [style.width.%]="item.percentual"
+        [style.background-color]="item.cor"
+      ></div>
+    </div>
+  </div>
+</div>

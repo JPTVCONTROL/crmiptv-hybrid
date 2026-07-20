@@ -246,6 +246,15 @@
           </tbody>
         </table>
       </div>
+
+      <button
+        *ngIf="temMaisItens('ATRASADO')"
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs w-full"
+        (click)="expandirSecao('ATRASADO')"
+      >
+        Ver mais atrasados ({{ itensPorTipo('ATRASADO').length - limitePorSecao }})
+      </button>
     </section>
 
     <section *ngIf="itensVisiveisPorTipo('A_VENCER').length > 0" class="space-y-3">
@@ -383,6 +392,15 @@
           </tbody>
         </table>
       </div>
+
+      <button
+        *ngIf="temMaisItens('A_VENCER')"
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs w-full"
+        (click)="expandirSecao('A_VENCER')"
+      >
+        Ver mais lembretes ({{ itensPorTipo('A_VENCER').length - limitePorSecao }})
+      </button>
     </section>
   </ng-container>
 </div>

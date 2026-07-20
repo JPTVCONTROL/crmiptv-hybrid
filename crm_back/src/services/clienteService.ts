@@ -219,7 +219,7 @@ export class ClienteService {
       return;
     }
 
-    const clientes = await clienteRepository.findAll();
+    const clientes = await clienteRepository.findTelefonesResumo();
     const duplicado = clientes.find((cliente) => {
       if (ignorarClienteId && cliente.id === ignorarClienteId) {
         return false;

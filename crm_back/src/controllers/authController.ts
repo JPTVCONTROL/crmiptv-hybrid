@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import { authService, AuthError } from '../services/authService.js';
+import { AppError } from '../errors.js';
+import { resetRateLimitLogin } from '../middlewares/rateLimitMiddleware.js';
 import { sendSuccess, sendError } from '../utils/helpers/response.js';
 
 export class AuthController {
@@ -11,8 +13,13 @@ export class AuthController {
       };
 
       const resultado = await authService.login(email ?? '', senha ?? '');
+      resetRateLimitLogin(req);
       sendSuccess(res, resultado, 'Login realizado com sucesso.');
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(res, error.message, error.statusCode);
+        return;
+      }
       if (error instanceof AuthError) {
         sendError(res, error.message, 401);
         return;
