@@ -18,6 +18,21 @@ export interface DadosMensagemCobranca {
   favorecido?: string | null;
 }
 
+export function resolverValorMensalidade(mensalidade: {
+  valor: number;
+  cliente: { valorMensal: number };
+}): number {
+  if (mensalidade.valor > 0) {
+    return mensalidade.valor;
+  }
+
+  if (mensalidade.cliente.valorMensal > 0) {
+    return mensalidade.cliente.valorMensal;
+  }
+
+  return mensalidade.valor;
+}
+
 function formatarValor(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -49,6 +64,7 @@ function substituirVariaveis(template: string, dados: DadosMensagemCobranca): st
     '{pix}': dados.pix?.trim() ?? '',
     '{tipoPix}': dados.tipoPix?.trim() ?? '',
     '{favorecido}': dados.favorecido?.trim() ?? '',
+    '{linhaPix}': montarLinhaPix(dados),
   };
 
   return Object.entries(mapa).reduce(
@@ -57,29 +73,49 @@ function substituirVariaveis(template: string, dados: DadosMensagemCobranca): st
   );
 }
 
+function garantirPixNaMensagem(
+  mensagem: string,
+  dados: DadosMensagemCobranca
+): string {
+  const pix = dados.pix?.trim();
+  if (!pix || mensagem.includes(pix)) {
+    return mensagem;
+  }
+
+  const bloco = montarLinhaPix(dados);
+  const assinatura = `— ${dados.empresa}`;
+  const indiceAssinatura = mensagem.lastIndexOf(assinatura);
+
+  if (indiceAssinatura >= 0) {
+    return (
+      mensagem.slice(0, indiceAssinatura).trimEnd() +
+      bloco +
+      '\n\n' +
+      mensagem.slice(indiceAssinatura)
+    );
+  }
+
+  return `${mensagem.trimEnd()}${bloco}`;
+}
+
 export function montarMensagemCobrancaAutomacao(
   dados: DadosMensagemCobranca,
   configuracao: Configuracao | null
 ): string {
-  const linhaPix = montarLinhaPix(dados);
-
   if (dados.atrasado) {
     const template = resolverTextoMensagem(
       configuracao?.mensagemCobranca,
       MENSAGEM_COBRANCA_PADRAO
     );
-    return substituirVariaveis(template, dados);
+    return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
   }
 
-  const templateLembrete = resolverTextoMensagem(
+  const template = resolverTextoMensagem(
     configuracao?.mensagemLembrete,
-    MENSAGEM_COBRANCA_LEMBRETE_PADRAO.replace(
-      '\n\n— {empresa}',
-      `${linhaPix}\n\n— {empresa}`
-    )
+    MENSAGEM_COBRANCA_LEMBRETE_PADRAO
   );
 
-  return substituirVariaveis(templateLembrete, dados);
+  return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
 }
 
 /** Parâmetros na ordem esperada pelos templates Utility aprovados na Meta. */

@@ -4,6 +4,7 @@ import {
   montarMensagemCobrancaMensalidade,
   nomeClienteMensalidade,
 } from './cobranca-lote';
+import { resolverValorMensalidade } from './formatters';
 import { telefoneValidoParaWhatsApp } from './whatsapp';
 
 /** Valor padrão quando não há configuração salva. */
@@ -115,7 +116,7 @@ export function montarItensCobrancaDiaria(
       clienteId: m.clienteId,
       nome: nomeClienteMensalidade(m, nomes) || 'Cliente',
       referencia: m.referencia,
-      valor: m.valor,
+      valor: resolverValorMensalidade(m),
       vencimento: m.vencimento,
       dias,
       tipo,

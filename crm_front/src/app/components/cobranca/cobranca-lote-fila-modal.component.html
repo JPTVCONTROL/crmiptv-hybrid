@@ -1,0 +1,70 @@
+<div class="crm-modal-shell max-w-lg w-full mx-auto">
+  <div class="flex items-start justify-between gap-3 mb-4">
+    <div>
+      <h2 class="text-white font-semibold text-lg">{{ titulo }}</h2>
+      <p class="text-slate-400 text-sm mt-1">
+        Fila assistida · {{ progresso }} cliente(s)
+      </p>
+    </div>
+    <button
+      type="button"
+      class="crm-btn-ghost !py-1 !px-2"
+      (click)="encerrar()"
+      aria-label="Fechar"
+    >
+      ✕
+    </button>
+  </div>
+
+  <p
+    *ngIf="ignorados > 0"
+    class="text-amber-300/90 text-xs border border-amber-500/20 bg-amber-500/5 rounded-xl px-3 py-2 mb-4"
+  >
+    {{ ignorados }} cliente(s) ignorado(s) por telefone inválido ou ausente.
+  </p>
+
+  <div *ngIf="!concluido && atual" class="space-y-4">
+    <div class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
+      <p class="text-white font-medium">{{ atual.nome }}</p>
+      <p class="text-slate-400 text-sm">{{ atual.telefone }}</p>
+    </div>
+
+    <p class="text-slate-500 text-xs leading-relaxed">
+      Clique em <strong class="text-slate-300">{{ rotuloAbrir }}</strong> para abrir o chat
+      (o navegador não bloqueia quando o clique é seu). Envie a mensagem no WhatsApp e volte
+      aqui para o próximo cliente.
+    </p>
+
+    <button
+      type="button"
+      class="crm-btn-ghost !py-1.5 !text-xs"
+      (click)="mostrarMensagem = !mostrarMensagem"
+    >
+      {{ mostrarMensagem ? 'Ocultar mensagem' : 'Ver mensagem' }}
+    </button>
+
+    <pre
+      *ngIf="mostrarMensagem"
+      class="text-slate-400 text-xs whitespace-pre-wrap font-mono leading-relaxed border border-slate-800 rounded-xl p-3 max-h-40 overflow-y-auto"
+    >{{ atual.mensagem }}</pre>
+
+    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+      <button type="button" class="crm-btn-success flex-1" (click)="abrir()">
+        {{ rotuloAbrir }}
+      </button>
+      <button type="button" class="crm-btn-ghost flex-1" (click)="pular()">
+        Pular
+      </button>
+    </div>
+
+    <button type="button" class="crm-btn-ghost w-full !text-xs" (click)="copiarLink()">
+      Copiar link wa.me (se a aba não abrir)
+    </button>
+  </div>
+
+  <div *ngIf="concluido" class="space-y-4 text-center py-4">
+    <ion-icon name="checkmark-circle-outline" class="text-5xl text-green-400"></ion-icon>
+    <p class="text-white font-medium">Fila concluída</p>
+    <p class="text-slate-400 text-sm">{{ abertos }} WhatsApp(s) aberto(s).</p>
+  </div>
+</div>

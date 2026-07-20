@@ -8,6 +8,7 @@ import { NovoPlanoModalComponent } from '../components/plano/novo-plano-modal/no
 import { NovoDispositivoModalComponent } from '../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
 import { DispositivoClientesModalComponent } from '../components/dispositivo/dispositivo-clientes-modal/dispositivo-clientes-modal.component';
 import { WhatsappCobrancaBtnComponent } from '../components/cobranca/whatsapp-cobranca-btn.component';
+import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-lote-fila-modal.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +20,7 @@ import { WhatsappCobrancaBtnComponent } from '../components/cobranca/whatsapp-co
     NovoDispositivoModalComponent,
     DispositivoClientesModalComponent,
     WhatsappCobrancaBtnComponent,
+    CobrancaLoteFilaModalComponent,
   ],
   imports: [SharedModule],
   exports: [
@@ -30,6 +32,7 @@ import { WhatsappCobrancaBtnComponent } from '../components/cobranca/whatsapp-co
     NovoDispositivoModalComponent,
     DispositivoClientesModalComponent,
     WhatsappCobrancaBtnComponent,
+    CobrancaLoteFilaModalComponent,
   ],
 })
 export class ComponentsModule {}

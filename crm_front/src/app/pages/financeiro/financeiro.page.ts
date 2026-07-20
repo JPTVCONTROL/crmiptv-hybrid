@@ -22,8 +22,8 @@ import {
   nomeClienteMensalidade,
   trackByMensalidadeId,
 } from '../../shared/utils/cobranca-lote';
+import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import {
-  executarRenovacaoEmLote,
   montarItensRenovacaoLote,
   oferecerMensagemRenovacao,
 } from '../../shared/utils/whatsapp';
@@ -72,7 +72,8 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     private pagamentoUi: PagamentoUiService,
     private toast: ToastService,
     private modalCtrl: ModalController,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private cobrancaLoteFila: CobrancaLoteFilaService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -304,7 +305,10 @@ export class FinanceiroPage implements OnInit, OnDestroy {
           );
 
           if (itensRenovacao.length > 0) {
-            await executarRenovacaoEmLote(itensRenovacao);
+            await this.cobrancaLoteFila.executar(itensRenovacao, {
+              titulo: 'Mensagens de renovação',
+              rotuloAbrir: 'Abrir WhatsApp',
+            });
           }
         },
         error: (err) => {

@@ -7,6 +7,7 @@ import {
 } from './whatsapp';
 import {
   resolverTelefoneCliente,
+  resolverValorMensalidade,
   statusFinanceiro,
 } from './formatters';
 import { StatusFinanceiro } from '../../core/models';
@@ -44,7 +45,7 @@ export function montarMensagemCobrancaMensalidade(
     {
       nome,
       referencia: mensalidade.referencia,
-      valor: mensalidade.valor,
+      valor: resolverValorMensalidade(mensalidade),
       vencimento: mensalidade.vencimento,
       empresa: cfg?.nomeEmpresa ?? 'JPTV',
       atrasado: atrasadoFinal,
@@ -72,7 +73,7 @@ export function montarMensagemBloqueioMensalidade(
     {
       nome,
       referencia: mensalidade.referencia,
-      valor: mensalidade.valor,
+      valor: resolverValorMensalidade(mensalidade),
       vencimento: mensalidade.vencimento,
       empresa: cfg?.nomeEmpresa ?? 'JPTV',
       pix: cfg?.chavePix ?? undefined,

@@ -78,6 +78,7 @@ function substituirVariaveis(
     '{pix}': pix,
     '{tipoPix}': tipoPix,
     '{favorecido}': favorecido,
+    '{linhaPix}': montarLinhaPix(dados),
   };
 
   return Object.entries(mapa).reduce(
@@ -86,32 +87,48 @@ function substituirVariaveis(
   );
 }
 
+function garantirPixNaMensagem(
+  mensagem: string,
+  dados: DadosMensagemWhatsApp
+): string {
+  const pix = dados.pix?.trim();
+  if (!pix || mensagem.includes(pix)) {
+    return mensagem;
+  }
+
+  const bloco = montarLinhaPix(dados);
+  const assinatura = `— ${dados.empresa}`;
+  const indiceAssinatura = mensagem.lastIndexOf(assinatura);
+
+  if (indiceAssinatura >= 0) {
+    return (
+      mensagem.slice(0, indiceAssinatura).replace(/\s+$/, '') +
+      bloco +
+      '\n\n' +
+      mensagem.slice(indiceAssinatura)
+    );
+  }
+
+  return `${mensagem.replace(/\s+$/, '')}${bloco}`;
+}
+
 export function montarMensagemCobranca(
   dados: DadosMensagemCobranca,
   templateAtrasado?: string | null,
   templateLembrete?: string | null
 ): string {
-  const linhaPix = montarLinhaPix(dados);
-
   if (dados.atrasado) {
-    if (templateAtrasado?.trim()) {
-      return substituirVariaveis(templateAtrasado.trim(), dados);
-    }
-
-    return substituirVariaveis(MENSAGEM_COBRANCA_PADRAO, dados);
+    const template = templateAtrasado?.trim()
+      ? templateAtrasado.trim()
+      : MENSAGEM_COBRANCA_PADRAO;
+    return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
   }
 
-  if (templateLembrete?.trim()) {
-    return substituirVariaveis(templateLembrete.trim(), dados);
-  }
+  const template = templateLembrete?.trim()
+    ? templateLembrete.trim()
+    : MENSAGEM_COBRANCA_LEMBRETE_PADRAO;
 
-  return substituirVariaveis(
-    MENSAGEM_COBRANCA_LEMBRETE_PADRAO.replace(
-      '\n\n— {empresa}',
-      `${linhaPix}\n\n— {empresa}`
-    ),
-    dados
-  );
+  return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
 }
 
 export function montarMensagemRenovacao(
@@ -147,16 +164,24 @@ export function montarMensagemBloqueio(
   return substituirVariaveis(MENSAGEM_BLOQUEIO_PADRAO, dados);
 }
 
-export function abrirWhatsAppCobranca(telefone: string, mensagem: string): void {
+export function urlWhatsAppCobranca(
+  telefone: string,
+  mensagem: string
+): string | null {
   const numero = formatarTelefoneWhatsApp(telefone);
-  if (!numero) {
+  if (!numero) return null;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+}
+
+export function abrirWhatsAppCobranca(telefone: string, mensagem: string): void {
+  const url = urlWhatsAppCobranca(telefone, mensagem);
+  if (!url) {
     notificar(
       'Telefone inválido. Cadastre o número com DDD, por exemplo: (62) 99999-9999.',
       'warning'
     );
     return;
   }
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
@@ -376,6 +401,10 @@ export async function executarCobrancaEmLote(
   itens: CobrancaLoteItem[],
   onContato?: (id: number) => void | Promise<void>
 ): Promise<ResultadoCobrancaLote> {
+  /**
+   * Modo legado com vários confirms — o navegador costuma bloquear window.open
+   * após o primeiro. Prefira CobrancaLoteFilaService (fila assistida).
+   */
   const validos = itens.filter((item) =>
     telefoneValidoParaWhatsApp(item.telefone)
   );

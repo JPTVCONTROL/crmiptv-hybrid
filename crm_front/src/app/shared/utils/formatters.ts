@@ -145,3 +145,28 @@ export function resolverTelefoneCliente(
 ): string {
   return mensalidade.cliente?.telefone ?? mapa.get(mensalidade.clienteId) ?? '';
 }
+
+/** Valor exibido em cobranças/lembretes: mensalidade → valor mensal do cliente → plano. */
+export function resolverValorMensalidade(mensalidade: {
+  valor: number;
+  cliente?: {
+    valorMensal?: number;
+    plano?: { valor?: number } | null;
+  } | null;
+}): number {
+  if (mensalidade.valor > 0) {
+    return mensalidade.valor;
+  }
+
+  const valorCliente = mensalidade.cliente?.valorMensal ?? 0;
+  if (valorCliente > 0) {
+    return valorCliente;
+  }
+
+  const valorPlano = mensalidade.cliente?.plano?.valor ?? 0;
+  if (valorPlano > 0) {
+    return valorPlano;
+  }
+
+  return mensalidade.valor;
+}

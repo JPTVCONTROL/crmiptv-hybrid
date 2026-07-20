@@ -166,6 +166,8 @@
         </div>
         <p class="text-slate-500 text-xs mb-1">
           Enviada para clientes com vencimento em dia ou pendente (não atrasados).
+          Inclua <code class="text-violet-300">{{ '{valor}' }}</code> e
+          <code class="text-violet-300">{{ '{linhaPix}' }}</code> para mostrar valor e dados de pagamento.
         </p>
         <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
         <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
@@ -184,6 +186,8 @@
         </div>
         <p class="text-slate-500 text-xs mb-1">
           Usada para clientes atrasados.
+          Inclua <code class="text-violet-300">{{ '{valor}' }}</code> e
+          <code class="text-violet-300">{{ '{linhaPix}' }}</code> para mostrar valor e PIX.
         </p>
         <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
         <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>

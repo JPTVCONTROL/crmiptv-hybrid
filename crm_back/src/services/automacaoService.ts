@@ -12,6 +12,7 @@ import { contatoRegistradoHoje } from '../utils/helpers/contatoHelpers.js';
 import {
   montarMensagemCobrancaAutomacao,
   parametrosTemplateWhatsApp,
+  resolverValorMensalidade,
 } from '../utils/helpers/mensagemWhatsAppHelpers.js';
 import {
   enviarTemplateWhatsApp,
@@ -199,11 +200,12 @@ export class AutomacaoService {
       }
 
       const cliente = mensalidade.cliente;
+      const valorCobranca = resolverValorMensalidade(mensalidade);
       const preview = montarMensagemCobrancaAutomacao(
         {
           nome: cliente.nome,
           referencia: mensalidade.referencia,
-          valor: mensalidade.valor,
+          valor: valorCobranca,
           vencimento: mensalidade.vencimento,
           empresa: configuracao.nomeEmpresa,
           atrasado: tipo === 'COBRANCA',
@@ -218,7 +220,7 @@ export class AutomacaoService {
         const parametros = parametrosTemplateWhatsApp({
           nome: cliente.nome,
           referencia: mensalidade.referencia,
-          valor: mensalidade.valor,
+          valor: valorCobranca,
           vencimento: mensalidade.vencimento,
           empresa: configuracao.nomeEmpresa,
           atrasado: tipo === 'COBRANCA',

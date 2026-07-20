@@ -126,6 +126,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     '{pix}',
     '{tipoPix}',
     '{favorecido}',
+    '{linhaPix}',
   ];
 
   readonly variaveisCobranca = [
@@ -137,6 +138,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     '{pix}',
     '{tipoPix}',
     '{favorecido}',
+    '{linhaPix}',
   ];
 
   readonly variaveisRenovacao = [

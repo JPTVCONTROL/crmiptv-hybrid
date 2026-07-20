@@ -22,7 +22,7 @@ import {
   TipoCobrancaDiaria,
   trackByItemCobrancaDiaria,
 } from '../../shared/utils/cobranca-diaria';
-import { executarCobrancaEmLote } from '../../shared/utils/whatsapp';
+import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import {
   contatoRegistradoHoje,
   rotuloUltimoContato,
@@ -58,7 +58,8 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     private configuracaoService: ConfiguracaoService,
     private automacaoService: AutomacaoService,
     private toast: ToastService,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private cobrancaLoteFila: CobrancaLoteFilaService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -414,13 +415,14 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
     this.enviando = true;
 
-    const resultado = await executarCobrancaEmLote(
+    const resultado = await this.cobrancaLoteFila.executar(
       selecionados.map((item) => ({
         id: item.mensalidadeId,
         nome: item.nome,
         telefone: item.telefone,
         mensagem: item.mensagem,
-      }))
+      })),
+      { titulo: 'Cobrança diária', rotuloAbrir: 'Abrir WhatsApp' }
     );
 
     if (resultado.idsEnviados.length > 0) {
