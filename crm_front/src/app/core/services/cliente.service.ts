@@ -40,6 +40,12 @@ export class ClienteService {
       .pipe(tap(() => this.sync.notificarClientes()));
   }
 
+  definirCortesia(id: number, cortesia: boolean): Observable<Cliente> {
+    return this.api
+      .put<Cliente>(`/clientes/${id}/cortesia`, { cortesia })
+      .pipe(tap(() => this.sync.notificarClientes()));
+  }
+
   excluir(id: number): Observable<void> {
     return this.api
       .delete(`/clientes/${id}`)

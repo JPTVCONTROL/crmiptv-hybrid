@@ -1,11 +1,17 @@
 <app-page-header title="Financeiro" subtitle="Quitação de cobranças pendentes e pagamentos em lote."></app-page-header>
 
-<div *ngIf="!loading" class="crm-card border border-violet-500/20 bg-violet-500/5 mb-6">
+<div *ngIf="!loading" class="crm-card border border-violet-500/20 bg-violet-500/5 mb-6 space-y-2">
   <p class="text-slate-300 text-sm">
     Cobrança WhatsApp (individual ou em lote):
     <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
     Consulta por data:
     <a routerLink="/vencimentos" class="text-violet-400 hover:underline font-medium">Vencimentos</a>.
+  </p>
+  <p class="text-slate-500 text-xs">
+    Status da cobrança pendente:
+    <strong class="text-slate-400">Vencendo</strong> (próximos {{ diasAntecedencia }} dias),
+    <strong class="text-slate-400">Longe do vencimento</strong> (além disso),
+    <strong class="text-slate-400">Atrasado</strong> (data passou). Não indica se já foi pago — use <strong class="text-slate-400">Pagar</strong>.
   </p>
 </div>
 
@@ -16,17 +22,17 @@
     <div class="crm-card">
       <p class="text-slate-400 text-sm">Vencendo ({{ diasAntecedencia }} dias)</p>
       <p class="text-amber-400 text-xl font-bold">{{ resumo('PENDENTE').valor }}</p>
-      <p class="text-slate-500 text-xs">{{ resumo('PENDENTE').qtd }} cobranças</p>
+      <p class="text-slate-500 text-xs">{{ resumo('PENDENTE').qtd }} cobrança(s) · vence em até {{ diasAntecedencia }} dias</p>
     </div>
     <div class="crm-card">
-      <p class="text-slate-400 text-sm">Regular</p>
+      <p class="text-slate-400 text-sm">Longe do vencimento</p>
       <p class="text-green-400 text-xl font-bold">{{ resumo('REGULAR').valor }}</p>
-      <p class="text-slate-500 text-xs">{{ resumo('REGULAR').qtd }} cobranças</p>
+      <p class="text-slate-500 text-xs">{{ resumo('REGULAR').qtd }} cobrança(s) · vence após {{ diasAntecedencia }} dias</p>
     </div>
     <div class="crm-card">
       <p class="text-slate-400 text-sm">Atrasado</p>
       <p class="text-red-400 text-xl font-bold">{{ resumo('ATRASADO').valor }}</p>
-      <p class="text-slate-500 text-xs">{{ resumo('ATRASADO').qtd }} cobranças</p>
+      <p class="text-slate-500 text-xs">{{ resumo('ATRASADO').qtd }} cobrança(s) · data já passou</p>
     </div>
   </div>
 
@@ -118,7 +124,7 @@
           <h3 class="crm-mobile-card-title">{{ m.cliente?.nome }}</h3>
           <p class="crm-mobile-card-subtitle">{{ m.referencia }}</p>
         </div>
-        <span [ngClass]="classesStatusFinanceiro(m)">{{ status(m) }}</span>
+        <span [ngClass]="classesStatusFinanceiro(m)">{{ rotuloStatus(m) }}</span>
       </div>
 
       <div class="space-y-2">
@@ -190,7 +196,7 @@
           <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
           <td class="py-3 px-2">
-            <span [ngClass]="classesStatusFinanceiro(m)">{{ status(m) }}</span>
+            <span [ngClass]="classesStatusFinanceiro(m)">{{ rotuloStatus(m) }}</span>
           </td>
           <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
             <button class="crm-btn-ghost !py-1.5 !text-xs" (click)="editarCliente(m)">Editar</button>

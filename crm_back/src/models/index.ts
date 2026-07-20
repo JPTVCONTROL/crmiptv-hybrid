@@ -51,6 +51,7 @@ export interface CreateClienteDto {
   vencimento: number;
   valorMensal: number;
   incluirCobrancas?: boolean;
+  cortesia?: boolean;
   observacao?: string | null;
 }
 
@@ -115,4 +116,24 @@ export const CONFIGURACAO_CAMPOS_PERMITIDOS = [
   'mensagemRenovacao',
   'mensagemBloqueio',
   'mensagemRecibo',
+] as const;
+
+export interface UpdateAutomacaoConfigDto {
+  lembretesAtivos?: boolean;
+  cobrancaAtrasadosAtiva?: boolean;
+  horariosEnvio?: string;
+  intervaloAtrasadosDias?: number;
+  templateLembreteNome?: string;
+  templateCobrancaNome?: string;
+  templateLinguagem?: string;
+}
+
+export const AUTOMACAO_CAMPOS_PERMITIDOS = [
+  'lembretesAtivos',
+  'cobrancaAtrasadosAtiva',
+  'horariosEnvio',
+  'intervaloAtrasadosDias',
+  'templateLembreteNome',
+  'templateCobrancaNome',
+  'templateLinguagem',
 ] as const;

@@ -306,9 +306,19 @@ Utilitários em `src/app/shared/utils/whatsapp.ts` e `cobranca-lote.ts`:
 
 - Abre `wa.me` com mensagem pré-preenchida (não usa API oficial da Meta).
 - Variáveis de template: `{nome}`, `{referencia}`, `{valor}`, `{vencimento}`, `{expiraEm}`, `{pagoEm}`, `{empresa}`, `{pix}`, `{tipoPix}`, `{favorecido}`
-- Template customizado de **cobrança** só para clientes **atrasados**; pendente/regular usa lembrete amigável.
+- Template customizado de **cobrança** só para clientes **atrasados**; pendente/vencendo usa lembrete amigável.
 - Cobrança em lote com confirmação cliente a cliente (Financeiro, Vencimentos, Dashboard).
 - Após pagamento, oferece envio de mensagem de **renovação**.
+
+### Status no Financeiro (cobrança pendente)
+
+| Status interno | Rótulo na tela | Significado |
+|----------------|----------------|-------------|
+| `PENDENTE` | **Vencendo** | Vence nos próximos N dias (`diasAntecedenciaLembrete` em Configurações) |
+| `REGULAR` | **Longe do vencimento** | Vencimento além da janela de lembrete — **não** significa “já pagou” |
+| `ATRASADO` | **Atrasado** | Data de vencimento já passou |
+
+Função: `statusFinanceiro()` / `rotuloStatusFinanceiro()` em `formatters.ts`.
 
 ---
 
@@ -484,6 +494,23 @@ Alterações no tablet ou no PC vão para o **mesmo SQLite** no servidor. Ao rea
 
 Para acesso fora de casa: VPS, domínio, HTTPS e `apiUrl` com `https://seudominio.com/api`.
 
+### Automações WhatsApp (Meta Cloud API)
+
+1. Crie app em [Meta for Developers](https://developers.facebook.com/) e configure WhatsApp Cloud API.
+2. Aprove templates **Utility** `crm_lembrete` e `crm_cobranca` com 5 variáveis no corpo (nome, referência, valor, vencimento, PIX).
+3. Em `crm_back/.env`:
+
+```env
+WHATSAPP_PHONE_NUMBER_ID="..."
+WHATSAPP_ACCESS_TOKEN="..."
+WHATSAPP_WEBHOOK_VERIFY_TOKEN="crm-jptv-webhook"
+AUTOMACAO_SCHEDULER="true"
+```
+
+4. Exponha o webhook com túnel HTTPS (ex.: Cloudflare Tunnel) apontando para `http://localhost:3001/api/webhook/whatsapp`.
+5. No CRM: **Automações** → teste com **Executar agora** (não exige toggles ligados). Depois ative lembretes/cobrança, horários e **Salvar** para o agendador.
+6. Mantenha o PC ligado com `npm run dev` nos horários de envio.
+
 ---
 
 ## 10. Manutenção do Código
@@ -529,7 +556,7 @@ Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layou
 | 1 | Login | Entrar com admin do seed | Dashboard carrega sem 401 |
 | 2 | Novo cliente | Cadastrar com plano e app | Mensalidade criada; onboarding opcional |
 | 3 | Cadastro incompleto | Dashboard → alerta → filtro | Lista só clientes com pendência |
-| 4 | Pagamento | Financeiro → Pagar | Status REGULAR; recibo WhatsApp opcional |
+| 4 | Pagamento | Financeiro → Pagar | Cobrança some da lista; recibo WhatsApp opcional |
 | 5 | Sem cobrança | Cliente com `incluirCobrancas` off | Badge “Sem cobrança”; fora da cobrança diária |
 | 6 | CSV | Importar modelo + exportar | Contagem bate; duplicados rejeitados |
 | 7 | Cobrança diária | Registrar contato | Seleção mantida após reload |
@@ -588,6 +615,16 @@ ng serve --port 4300
 
 Atualize `apiUrl` no frontend se a porta do backend mudar.
 
+### Automações WhatsApp não enviam
+
+- Confirme `WHATSAPP_PHONE_NUMBER_ID` e `WHATSAPP_ACCESS_TOKEN` em `crm_back/.env`.
+- Reinicie o backend após alterar o `.env`.
+- Templates Meta aprovados como **Utility** com nomes `crm_lembrete` e `crm_cobranca` (ou os configurados em Automações).
+- Cada template precisa de **5 variáveis** no corpo (nome, referência, valor, vencimento, PIX).
+- Webhook Meta: `https://SEU-TUNNEL/api/webhook/whatsapp` com verify token do `.env`.
+- PC ligado nos horários configurados; agendador interno ativo (`AUTOMACAO_SCHEDULER=true`).
+- Teste manual: Automações → **Executar agora**.
+
 ### Build Angular falha após upgrade de dependências
 
 - Angular fixado em **17.3.x** — não atualize para 18+ sem revisar breaking changes do Ionic.
@@ -601,7 +638,6 @@ Itens ainda não implementados ou parciais:
 
 - **PostgreSQL** em produção com migrations Prisma versionadas (`db:migrate`)
 - **Multi-usuário** com perfis/permissões (hoje apenas um admin JWT)
-- WhatsApp automático via API oficial da Meta (hoje só envio manual `wa.me`)
 
 ---
 

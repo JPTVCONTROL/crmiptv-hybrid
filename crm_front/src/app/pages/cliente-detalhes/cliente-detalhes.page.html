@@ -7,10 +7,28 @@
         type="button"
         class="crm-btn-ghost"
         [ngClass]="{
-          '!border-amber-500/40': !incluirNasCobrancas,
-          '!text-amber-200': !incluirNasCobrancas
+          '!border-violet-500/40': ehCortesia,
+          '!text-violet-200': ehCortesia
         }"
-        [disabled]="alternandoCobrancas"
+        [disabled]="alternandoCortesia"
+        (click)="alternarCortesia()"
+      >
+        {{
+          alternandoCortesia
+            ? 'Salvando...'
+            : ehCortesia
+              ? 'Remover cortesia'
+              : 'Marcar cortesia'
+        }}
+      </button>
+      <button
+        type="button"
+        class="crm-btn-ghost"
+        [ngClass]="{
+          '!border-amber-500/40': !incluirNasCobrancas && !ehCortesia,
+          '!text-amber-200': !incluirNasCobrancas && !ehCortesia
+        }"
+        [disabled]="alternandoCobrancas || ehCortesia"
         (click)="alternarInclusaoCobrancas()"
       >
         {{
@@ -27,7 +45,17 @@
   </app-page-header>
 
   <div
-    *ngIf="!incluirNasCobrancas"
+    *ngIf="ehCortesia"
+    class="crm-card border border-violet-500/25 bg-violet-500/5"
+  >
+    <p class="text-violet-200 text-sm">
+      Cliente <span class="font-medium">cortesia</span>: aparece em Vencimentos, mas sem cobrança,
+      lembretes ou pagamento. Use <span class="font-medium">Renovar cortesia</span> para estender a validade.
+    </p>
+  </div>
+
+  <div
+    *ngIf="!participaCobrancas && !ehCortesia"
     class="crm-card border border-amber-500/25 bg-amber-500/5"
   >
     <p class="text-amber-200 text-sm">
@@ -52,7 +80,7 @@
           {{ status() }}
         </span>
       </p>
-      <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span> {{ fmtValor(cliente.valorMensal) }}</p>
+      <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span> {{ ehCortesia ? 'Cortesia' : fmtValor(cliente.valorMensal) }}</p>
       <p *ngIf="cliente.observacao?.trim()" class="text-slate-300 whitespace-pre-wrap">
         <span class="text-slate-500">Observação:</span> {{ cliente.observacao }}
       </p>
@@ -134,19 +162,26 @@
       <p class="text-slate-300"><span class="text-slate-500">Vencimento (dia):</span> {{ cliente.vencimento }}</p>
       <div *ngIf="mensalidadePendente() as pendente" class="flex flex-wrap gap-2 pt-2">
         <app-whatsapp-cobranca-btn
-          *ngIf="incluirNasCobrancas"
+          *ngIf="participaCobrancas"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemWhatsApp(pendente)"
           [mensalidadeId]="pendente.id"
         ></app-whatsapp-cobranca-btn>
         <app-whatsapp-cobranca-btn
-          *ngIf="incluirNasCobrancas && mensalidadeAtrasada(pendente)"
+          *ngIf="participaCobrancas && mensalidadeAtrasada(pendente)"
           label="Bloqueio"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemBloqueio(pendente)"
           [mensalidadeId]="pendente.id"
         ></app-whatsapp-cobranca-btn>
-        <button class="crm-btn-success" (click)="pagar(pendente)">Marcar como Pago</button>
+        <button
+          *ngIf="ehCortesia"
+          class="crm-btn-primary"
+          (click)="renovarCortesia(pendente)"
+        >
+          Renovar cortesia
+        </button>
+        <button *ngIf="!ehCortesia" class="crm-btn-success" (click)="pagar(pendente)">Marcar como Pago</button>
       </div>
     </div>
   </div>
@@ -177,13 +212,13 @@
 
         <div class="crm-mobile-card-actions flex-wrap">
           <app-whatsapp-cobranca-btn
-            *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas"
+            *ngIf="m.status === 'PENDENTE' && participaCobrancas"
             [telefone]="cliente.telefone"
             [mensagem]="mensagemWhatsApp(m)"
             [mensalidadeId]="m.id"
           ></app-whatsapp-cobranca-btn>
           <app-whatsapp-cobranca-btn
-            *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas && mensalidadeAtrasada(m)"
+            *ngIf="m.status === 'PENDENTE' && participaCobrancas && mensalidadeAtrasada(m)"
             label="Bloqueio"
             [telefone]="cliente.telefone"
             [mensagem]="mensagemBloqueio(m)"
@@ -220,13 +255,13 @@
             </td>
             <td class="py-2 text-right space-x-1">
               <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas"
+                *ngIf="m.status === 'PENDENTE' && participaCobrancas"
                 [telefone]="cliente.telefone"
                 [mensagem]="mensagemWhatsApp(m)"
                 [mensalidadeId]="m.id"
               ></app-whatsapp-cobranca-btn>
               <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PENDENTE' && incluirNasCobrancas && mensalidadeAtrasada(m)"
+                *ngIf="m.status === 'PENDENTE' && participaCobrancas && mensalidadeAtrasada(m)"
                 label="Bloqueio"
                 [telefone]="cliente.telefone"
                 [mensagem]="mensagemBloqueio(m)"

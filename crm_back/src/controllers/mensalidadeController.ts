@@ -45,6 +45,28 @@ export class MensalidadeController {
     }
   }
 
+  async renovarCortesia(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const resultado = await mensalidadeService.renovarCortesia(id);
+      sendSuccess(
+        res,
+        resultado,
+        'Cortesia renovada com sucesso.'
+      );
+    } catch (error) {
+      if (error instanceof MensalidadeNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      sendError(res, 'Erro ao renovar cortesia');
+    }
+  }
+
   async registrarContato(req: Request, res: Response): Promise<void> {
     try {
       const id = Number(req.params.id);

@@ -60,8 +60,13 @@ export class LoginPage implements OnInit {
       error: (err: Error) => {
         this.carregando = false;
         const msg = err.message || '';
-        this.erro = msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
-          ? 'Servidor indisponível. Verifique se a API está rodando.'
+        const indisponivel =
+          msg.toLowerCase().includes('failed to fetch') ||
+          msg.toLowerCase().includes('network') ||
+          msg.toLowerCase().includes('unknown error') ||
+          msg.toLowerCase().includes('http failure');
+        this.erro = indisponivel
+          ? 'Servidor indisponível. Em outro terminal: cd crm_back → npm run dev. Teste http://localhost:3001/health no navegador.'
           : msg || 'Não foi possível entrar.';
       },
     });

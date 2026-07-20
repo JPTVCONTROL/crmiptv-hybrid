@@ -15,6 +15,10 @@ router.put(
   '/:id/incluir-cobrancas',
   asyncHandler((req, res) => clienteController.definirInclusaoCobrancas(req, res))
 );
+router.put(
+  '/:id/cortesia',
+  asyncHandler((req, res) => clienteController.definirCortesia(req, res))
+);
 router.put('/:id', asyncHandler((req, res) => clienteController.atualizar(req, res)));
 router.delete('/:id', asyncHandler((req, res) => clienteController.excluir(req, res)));
 

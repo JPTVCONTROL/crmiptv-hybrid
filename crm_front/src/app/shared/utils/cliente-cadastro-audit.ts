@@ -149,7 +149,7 @@ export function pendenciasCadastroDoCliente(
     pendencias.push('SEM_PLANO');
   }
 
-  if (!cliente.valorMensal || cliente.valorMensal <= 0) {
+  if (!cliente.cortesia && (!cliente.valorMensal || cliente.valorMensal <= 0)) {
     pendencias.push('SEM_VALOR');
   }
 
@@ -235,7 +235,7 @@ export function clienteCadastroIncompleto(
   cliente: Cliente,
   aplicativos?: AplicativoRequisitosCadastro[]
 ): boolean {
-  if (!cliente.expiraEm || cliente.valorMensal <= 0) {
+  if (!cliente.expiraEm || (!cliente.cortesia && cliente.valorMensal <= 0)) {
     return true;
   }
 

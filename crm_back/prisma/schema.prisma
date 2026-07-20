@@ -37,6 +37,7 @@ model Cliente {
   vencimento   Int
   valorMensal  Float    @default(0)
   incluirCobrancas Boolean @default(true)
+  cortesia         Boolean @default(false)
   /// Status derivado de expiraEm na API — não atualizar manualmente no banco
   status       String   @default("ATIVO")
   observacao   String?
@@ -55,6 +56,39 @@ model Mensalidade {
   pagoEm     DateTime?
   ultimoContatoEm DateTime?
   createdAt  DateTime @default(now())
+  enviosAutomaticos EnvioAutomatico[]
+}
+
+model AutomacaoConfig {
+  id                     Int       @id @default(autoincrement())
+  lembretesAtivos        Boolean   @default(false)
+  cobrancaAtrasadosAtiva Boolean   @default(false)
+  horariosEnvio          String    @default("09:00,18:00")
+  intervaloAtrasadosDias Int       @default(3)
+  templateLembreteNome   String    @default("crm_lembrete")
+  templateCobrancaNome   String    @default("crm_cobranca")
+  templateLinguagem      String    @default("pt_BR")
+  ultimaExecucaoEm       DateTime?
+  ultimoHorarioExecutado String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}
+
+model EnvioAutomatico {
+  id              Int          @id @default(autoincrement())
+  mensalidadeId   Int?
+  mensalidade     Mensalidade? @relation(fields: [mensalidadeId], references: [id], onDelete: SetNull)
+  clienteId       Int
+  tipo            String
+  telefone        String
+  status          String
+  mensagemPreview String?
+  metaMessageId   String?
+  erro            String?
+  enviadoEm       DateTime     @default(now())
+
+  @@index([mensalidadeId, tipo, enviadoEm])
+  @@index([clienteId])
 }
 
 model Aplicativo {

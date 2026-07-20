@@ -25,7 +25,7 @@ import {
 } from '../../shared/utils/cliente-cadastro-audit';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { exportarClientesCsv } from '../../shared/utils/cliente-export';
-import { clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
+import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
 export type FiltroCobrancaCliente = 'TODOS' | 'COM_COBRANCA' | 'SEM_COBRANCA';
@@ -506,6 +506,7 @@ export class ClientesPage implements OnInit, OnDestroy {
   fmtData = formatarData;
 
   participaCobrancas = clienteParticipaCobrancas;
+  ehCortesia = clienteEhCortesia;
 
   abrirImportacaoCsv(input: HTMLInputElement): void {
     if (this.importando) {

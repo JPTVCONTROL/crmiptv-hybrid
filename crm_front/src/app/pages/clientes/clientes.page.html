@@ -211,7 +211,13 @@
 
     <div class="flex flex-wrap gap-1.5">
       <span
-        *ngIf="!participaCobrancas(c)"
+        *ngIf="ehCortesia(c)"
+        class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold border border-violet-500/40 bg-violet-500/10 text-violet-200"
+      >
+        Cortesia
+      </span>
+      <span
+        *ngIf="!participaCobrancas(c) && !ehCortesia(c)"
         class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200"
       >
         Sem cobrança
@@ -277,7 +283,13 @@
         <td class="py-3 px-2 text-white">
           <div class="font-medium">{{ c.nome }}</div>
           <span
-            *ngIf="!participaCobrancas(c)"
+            *ngIf="ehCortesia(c)"
+            class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-violet-500/40 bg-violet-500/10 text-violet-200"
+          >
+            Cortesia
+          </span>
+          <span
+            *ngIf="!participaCobrancas(c) && !ehCortesia(c)"
             class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200"
           >
             Sem cobrança

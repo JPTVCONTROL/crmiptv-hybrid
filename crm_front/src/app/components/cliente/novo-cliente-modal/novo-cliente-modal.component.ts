@@ -57,6 +57,7 @@ export class NovoClienteModalComponent implements OnInit {
     vencimento: 10,
     valorMensal: 0,
     incluirCobrancas: true,
+    cortesia: false,
     observacao: '',
   };
 
@@ -104,6 +105,7 @@ export class NovoClienteModalComponent implements OnInit {
         vencimento: this.cliente.vencimento,
         valorMensal: this.cliente.valorMensal,
         incluirCobrancas: this.cliente.incluirCobrancas !== false,
+        cortesia: this.cliente.cortesia === true,
         observacao: this.cliente.observacao ?? '',
       };
     } else {
@@ -186,11 +188,19 @@ export class NovoClienteModalComponent implements OnInit {
     }
   }
 
+  onCortesiaChange(): void {
+    if (this.form.cortesia) {
+      this.form.valorMensal = 0;
+    }
+  }
+
   onPlanoChange(): void {
     const plano = this.planos.find((p) => p.id === this.form.planoId);
     if (!plano) return;
 
-    this.form.valorMensal = plano.valor;
+    if (!this.form.cortesia) {
+      this.form.valorMensal = plano.valor;
+    }
     this.qtdTelas = telasDoPlano(plano.nome);
     this.onQtdTelasChange();
 
@@ -237,7 +247,7 @@ export class NovoClienteModalComponent implements OnInit {
       );
       return;
     }
-    if (!this.form.valorMensal || this.form.valorMensal <= 0) {
+    if (!this.form.cortesia && (!this.form.valorMensal || this.form.valorMensal <= 0)) {
       void this.toast.warning('Informe o valor mensal.');
       return;
     }

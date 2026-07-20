@@ -20,6 +20,46 @@ export class MensalidadeService {
     return resultado;
   }
 
+  async renovarCortesia(id: number) {
+    const mensalidade = await mensalidadeRepository.findById(id);
+
+    if (!mensalidade) {
+      throw new MensalidadeNotFoundError();
+    }
+
+    if (!mensalidade.cliente.cortesia) {
+      throw new ValidationError(
+        'Renovação cortesia só está disponível para clientes marcados como cortesia.'
+      );
+    }
+
+    if (mensalidade.status === 'PAGO') {
+      throw new ValidationError('Esta mensalidade já foi renovada.');
+    }
+
+    const plano = mensalidade.cliente.plano ?? null;
+    const renovacaoEm = new Date();
+    const novoVencimento = calcularNovoVencimento(
+      new Date(mensalidade.vencimento),
+      renovacaoEm,
+      plano
+    );
+    const referencia = formatReferencia(novoVencimento);
+
+    await mensalidadeRepository.registrarPagamento(
+      id,
+      mensalidade.clienteId,
+      novoVencimento,
+      referencia,
+      0,
+      renovacaoEm
+    );
+
+    return {
+      novoVencimento: novoVencimento.toISOString(),
+    };
+  }
+
   async registrarPagamentos(ids: number[], pagoEm?: string) {
     const unicos = [...new Set(ids.filter((id) => Number.isInteger(id) && id > 0))];
 
@@ -99,6 +139,12 @@ export class MensalidadeService {
 
     if (mensalidade.status === 'PAGO') {
       throw new ValidationError('Esta mensalidade já foi paga.');
+    }
+
+    if (mensalidade.cliente.cortesia) {
+      throw new ValidationError(
+        'Cliente cortesia: use a renovação cortesia em vez de registrar pagamento.'
+      );
     }
 
     const plano = mensalidade.cliente.plano ?? null;

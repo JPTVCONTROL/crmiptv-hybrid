@@ -15,6 +15,7 @@ export interface ClienteParaAuditoriaCadastro {
   telefone: string;
   planoId: number | null;
   valorMensal: number;
+  cortesia?: boolean;
   expiraEm: Date | null;
   servidor: string | null;
   usuario: string | null;
@@ -99,7 +100,7 @@ export function pendenciasCadastroDoCliente(
     pendencias.push('SEM_PLANO');
   }
 
-  if (!cliente.valorMensal || cliente.valorMensal <= 0) {
+  if (!cliente.cortesia && (!cliente.valorMensal || cliente.valorMensal <= 0)) {
     pendencias.push('SEM_VALOR');
   }
 

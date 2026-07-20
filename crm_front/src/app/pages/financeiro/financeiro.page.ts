@@ -14,6 +14,7 @@ import {
   formatarValor,
   formatarData,
   statusFinanceiro,
+  rotuloStatusFinanceiro,
   criarMapaTelefones,
   resolverTelefoneCliente,
 } from '../../shared/utils/formatters';
@@ -22,7 +23,7 @@ import {
   trackByMensalidadeId,
 } from '../../shared/utils/cobranca-lote';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
-import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
+import { resolverDiasAntecedencia, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
 @Component({
@@ -46,7 +47,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
   readonly opcoesFiltro: { valor: StatusFinanceiro; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
     { valor: 'PENDENTE', rotulo: 'Vencendo' },
-    { valor: 'REGULAR', rotulo: 'Regular' },
+    { valor: 'REGULAR', rotulo: 'Longe do vencimento' },
     { valor: 'ATRASADO', rotulo: 'Atrasado' },
   ];
 
@@ -115,7 +116,9 @@ export class FinanceiroPage implements OnInit, OnDestroy {
       this.clienteService.listar(),
     ]).subscribe({
       next: ([mensalidades, clientes]) => {
-        this.mensalidades = mensalidades.filter((m) => m.status !== 'PAGO');
+        this.mensalidades = mensalidades.filter(
+          (m) => m.status !== 'PAGO' && !clienteEhCortesia(m.cliente)
+        );
         this.telefones = criarMapaTelefones(clientes);
         this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
         this.clientesPorId = new Map(clientes.map((c) => [c.id, c]));
@@ -178,6 +181,10 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
   status(m: Mensalidade): StatusFinanceiro {
     return statusFinanceiro(m.vencimento, this.diasAntecedencia);
+  }
+
+  rotuloStatus(m: Mensalidade): string {
+    return rotuloStatusFinanceiro(this.status(m));
   }
 
   classesStatusFinanceiro(m: Mensalidade): Record<string, boolean> {

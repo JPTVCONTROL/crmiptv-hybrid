@@ -95,6 +95,35 @@ export class ClienteController {
     }
   }
 
+  async definirCortesia(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const cortesia = req.body?.cortesia;
+
+      if (typeof cortesia !== 'boolean') {
+        sendError(res, 'Informe se o cliente é cortesia.', 400);
+        return;
+      }
+
+      const cliente = await clienteService.definirCortesia(id, cortesia);
+
+      sendSuccess(
+        res,
+        cliente,
+        cortesia
+          ? 'Cliente marcado como cortesia.'
+          : 'Cliente removido da cortesia.'
+      );
+    } catch (error) {
+      if (error instanceof ClienteNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      console.error('Erro ao alterar cortesia:', error);
+      sendError(res, 'Erro ao alterar cortesia.');
+    }
+  }
+
   async excluir(req: Request, res: Response): Promise<void> {
     try {
       const id = Number(req.params.id);

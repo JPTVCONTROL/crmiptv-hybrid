@@ -35,6 +35,12 @@ export class MensalidadeService {
       .pipe(tap(() => this.sync.notificarMensalidades()));
   }
 
+  renovarCortesia(id: number): Observable<{ novoVencimento: string }> {
+    return this.api
+      .put<{ novoVencimento: string }>(`/mensalidades/${id}/renovar-cortesia`, {})
+      .pipe(tap(() => this.sync.notificarMensalidades()));
+  }
+
   registrarPagamentos(
     ids: number[],
     pagoEm?: string

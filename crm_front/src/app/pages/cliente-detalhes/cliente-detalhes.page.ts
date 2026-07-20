@@ -28,7 +28,7 @@ import {
   resolverAplicativoDaTela,
 } from '../../shared/utils/onboarding';
 import { montarMensagemRecibo, oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
-import { clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
+import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
@@ -44,6 +44,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   aplicativosCatalogo: Aplicativo[] = [];
   loading = true;
   alternandoCobrancas = false;
+  alternandoCortesia = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -133,7 +134,69 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   }
 
   get incluirNasCobrancas(): boolean {
+    return this.cliente?.incluirCobrancas !== false;
+  }
+
+  get participaCobrancas(): boolean {
     return clienteParticipaCobrancas(this.cliente);
+  }
+
+  get ehCortesia(): boolean {
+    return clienteEhCortesia(this.cliente);
+  }
+
+  async alternarCortesia(): Promise<void> {
+    if (!this.cliente || this.alternandoCortesia) {
+      return;
+    }
+
+    const cortesia = !this.ehCortesia;
+    const confirmado = await this.confirmacao.confirmar({
+      header: cortesia ? 'Marcar como cortesia' : 'Remover cortesia',
+      message: cortesia
+        ? 'Este cliente continuará em Vencimentos, mas não receberá cobranças nem lembretes automáticos.'
+        : 'Este cliente voltará ao fluxo normal de cobrança (se estiver incluído nas cobranças).',
+      confirmText: cortesia ? 'Marcar cortesia' : 'Remover cortesia',
+    });
+
+    if (!confirmado) {
+      return;
+    }
+
+    this.alternandoCortesia = true;
+    this.clienteService.definirCortesia(this.cliente.id, cortesia).subscribe({
+      next: (cliente) => {
+        this.cliente = cliente;
+        this.alternandoCortesia = false;
+        void this.toast.success(
+          cortesia ? 'Cliente marcado como cortesia.' : 'Cortesia removida.'
+        );
+      },
+      error: (err) => {
+        this.alternandoCortesia = false;
+        void this.toast.error(err.message);
+      },
+    });
+  }
+
+  async renovarCortesia(m: Mensalidade): Promise<void> {
+    if (!this.cliente) return;
+
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Renovar cortesia',
+      message: 'Estender a validade do plano sem gerar cobrança?',
+      confirmText: 'Renovar',
+    });
+
+    if (!confirmado) return;
+
+    this.mensalidadeService.renovarCortesia(m.id).subscribe({
+      next: () => {
+        void this.toast.success('Cortesia renovada.');
+        this.carregar(this.cliente!.id);
+      },
+      error: (err) => void this.toast.error(err.message),
+    });
   }
 
   async alternarInclusaoCobrancas(): Promise<void> {

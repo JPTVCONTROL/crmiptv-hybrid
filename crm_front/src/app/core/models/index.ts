@@ -88,6 +88,7 @@ export interface Cliente {
   vencimento: number;
   valorMensal: number;
   incluirCobrancas?: boolean;
+  cortesia?: boolean;
   status: string;
   observacao?: string | null;
   mensalidades?: Mensalidade[];
@@ -117,6 +118,58 @@ export interface Configuracao {
   mensagemRenovacao?: string | null;
   mensagemBloqueio?: string | null;
   mensagemRecibo?: string | null;
+}
+
+export interface AutomacaoConfig {
+  id?: number;
+  lembretesAtivos: boolean;
+  cobrancaAtrasadosAtiva: boolean;
+  horariosEnvio: string;
+  intervaloAtrasadosDias: number;
+  templateLembreteNome: string;
+  templateCobrancaNome: string;
+  templateLinguagem: string;
+  ultimaExecucaoEm?: string | null;
+  ultimoHorarioExecutado?: string | null;
+}
+
+export interface EnvioAutomatico {
+  id: number;
+  mensalidadeId?: number | null;
+  clienteId: number;
+  clienteNome: string;
+  tipo: 'LEMBRETE' | 'COBRANCA';
+  telefone: string;
+  status: 'ENVIADO' | 'FALHA' | 'PENDENTE';
+  erro?: string | null;
+  mensagemPreview?: string | null;
+  enviadoEm: string;
+}
+
+export interface AutomacaoPainel {
+  config: AutomacaoConfig;
+  whatsappConfigurado: boolean;
+  pixConfigurado: boolean;
+  nomeEmpresa: string;
+  envioComSucesso: boolean;
+  diasAntecedencia: number;
+  horarios: string[];
+  simulacao: { lembretes: number; cobrancas: number };
+  envios: EnvioAutomatico[];
+}
+
+export interface ResultadoExecucaoAutomacao {
+  horario: string;
+  enviados: number;
+  falhas: number;
+  ignorados: number;
+  detalhes: Array<{
+    mensalidadeId: number;
+    clienteNome: string;
+    tipo: 'LEMBRETE' | 'COBRANCA';
+    status: 'ENVIADO' | 'FALHA' | 'IGNORADO';
+    erro?: string;
+  }>;
 }
 
 export type CreateClienteDto = Omit<Cliente, 'id' | 'aplicativo' | 'mensalidades' | 'status'>;
@@ -194,6 +247,22 @@ export interface DashboardResumo {
     rotinaFeita: boolean;
   };
   alertas: AlertaOperacional[];
+  metricas: {
+    mrr: number;
+    ticketMedio: number;
+    conexoes: number;
+    novosClientes30d: number;
+    variacaoNovosClientes: number;
+    vencendoQtd: number;
+    vencendoValor: number;
+    cobrancaAtrasadaQtd: number;
+    cobrancaAtrasadaValor: number;
+    retencaoPercentual: number;
+    churnPercentual: number;
+    inadimplenciaPercentual: number;
+    permanenciaMediaMeses: number;
+    ltvEstimado: number;
+  };
 }
 
 export interface Usuario {

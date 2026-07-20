@@ -68,38 +68,82 @@
   </section>
 
   <section>
-    <h2 class="crm-section-label">Clientes</h2>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <a routerLink="/clientes" class="crm-stat-card-link">
-        <app-stat-card title="Total" [value]="totalClientes.toString()" color="#E2E8F0" subtitle="cadastrados"></app-stat-card>
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 class="crm-section-label !mb-0">Visão geral · últimos 30 dias</h2>
+      <a routerLink="/relatorios" class="text-violet-400 text-xs hover:underline no-underline">
+        Relatórios completos
       </a>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <a routerLink="/clientes" [queryParams]="{ status: 'ATIVO' }" class="crm-stat-card-link">
-        <app-stat-card title="Ativos" [value]="qtdAtivos.toString()" color="#22C55E" subtitle="em dia"></app-stat-card>
+        <app-stat-card
+          title="Clientes ativos"
+          [value]="qtdAtivos.toString()"
+          color="#22C55E"
+          [subtitle]="totalClientes + ' no total · ' + conexoes + ' conexões'"
+        ></app-stat-card>
+      </a>
+      <a routerLink="/clientes" class="crm-stat-card-link">
+        <app-stat-card
+          title="Novos clientes"
+          [value]="'+' + novosClientes30d"
+          [color]="variacaoNovosPositiva ? '#22C55E' : '#EF4444'"
+          [subtitle]="variacaoNovosRotulo"
+        ></app-stat-card>
+      </a>
+      <a routerLink="/vencimentos" class="crm-stat-card-link">
+        <app-stat-card
+          [title]="'Vencendo · ' + diasAntecedencia + ' dias'"
+          [value]="vencendoQtd.toString()"
+          color="#F59E0B"
+          [subtitle]="vencendoValor + ' em risco'"
+        ></app-stat-card>
       </a>
       <a routerLink="/clientes" [queryParams]="{ status: 'ATRASADO' }" class="crm-stat-card-link">
-        <app-stat-card title="Atrasados" [value]="qtdAtrasados.toString()" color="#F59E0B" subtitle="até 7 dias"></app-stat-card>
-      </a>
-      <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="crm-stat-card-link">
-        <app-stat-card title="Inativos" [value]="qtdInativos.toString()" color="#EF4444" subtitle="+7 dias"></app-stat-card>
-      </a>
-      <a
-        *ngIf="cadastrosIncompletos > 0"
-        routerLink="/clientes"
-        [queryParams]="{ incompleto: 1 }"
-        class="crm-stat-card-link col-span-2 lg:col-span-4"
-      >
         <app-stat-card
-          title="Cadastro incompleto"
-          [value]="cadastrosIncompletos.toString()"
-          color="#F59E0B"
-          subtitle="falta plano, valor, vencimento ou credenciais"
+          title="Retenção (plano)"
+          [value]="retencaoPercentual"
+          color="#38BDF8"
+          [subtitle]="'churn ' + churnPercentual + ' · inativos'"
         ></app-stat-card>
       </a>
     </div>
   </section>
 
   <section>
-    <h2 class="crm-section-label">Financeiro</h2>
+    <h2 class="crm-section-label">Receita recorrente</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <app-stat-card
+        title="MRR estimado"
+        [value]="mrr"
+        color="#A855F7"
+        subtitle="soma mensalidades ativos"
+      ></app-stat-card>
+      <app-stat-card
+        title="Ticket médio"
+        [value]="ticketMedio"
+        color="#E2E8F0"
+        subtitle="por cliente ativo"
+      ></app-stat-card>
+      <app-stat-card
+        title="Valor do cliente (LTV)"
+        [value]="ltvEstimado"
+        color="#22C55E"
+        [subtitle]="'permanência média: ' + permanenciaMediaMeses"
+      ></app-stat-card>
+      <a routerLink="/financeiro" [queryParams]="{ status: 'ATRASADO' }" class="crm-stat-card-link">
+        <app-stat-card
+          title="Cobrança atrasada"
+          [value]="cobrancaAtrasadaQtd.toString()"
+          color="#EF4444"
+          [subtitle]="cobrancaAtrasadaValor + ' · inad. ' + inadimplenciaPercentual"
+        ></app-stat-card>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="crm-section-label">Financeiro do mês</h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <app-stat-card
         title="Vencem hoje"
@@ -119,16 +163,28 @@
         title="Recebido no mês"
         [value]="recebidoMes"
         color="#22C55E"
+        [subtitle]="'meta ' + metaMesPercentual + '%'"
       ></app-stat-card>
-      <a routerLink="/vencimentos" class="crm-stat-card-link">
+      <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="crm-stat-card-link">
         <app-stat-card
-          title="A receber nos próximos meses"
-          [value]="aReceberProximosMeses"
-          color="#38BDF8"
-          [subtitle]="qtdProximosMeses + ' cobrança(s)'"
+          title="Inativos"
+          [value]="qtdInativos.toString()"
+          color="#EF4444"
+          subtitle="+7 dias sem renovar"
         ></app-stat-card>
       </a>
     </div>
+  </section>
+
+  <section *ngIf="cadastrosIncompletos > 0">
+    <a routerLink="/clientes" [queryParams]="{ incompleto: 1 }" class="crm-stat-card-link block">
+      <app-stat-card
+        title="Cadastro incompleto"
+        [value]="cadastrosIncompletos.toString()"
+        color="#F59E0B"
+        subtitle="falta plano, valor, vencimento ou credenciais"
+      ></app-stat-card>
+    </a>
   </section>
 
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">

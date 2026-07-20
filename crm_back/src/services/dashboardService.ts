@@ -88,6 +88,22 @@ export interface DashboardResumo {
     rotinaFeita: boolean;
   };
   alertas: AlertaOperacional[];
+  metricas: {
+    mrr: number;
+    ticketMedio: number;
+    conexoes: number;
+    novosClientes30d: number;
+    variacaoNovosClientes: number;
+    vencendoQtd: number;
+    vencendoValor: number;
+    cobrancaAtrasadaQtd: number;
+    cobrancaAtrasadaValor: number;
+    retencaoPercentual: number;
+    churnPercentual: number;
+    inadimplenciaPercentual: number;
+    permanenciaMediaMeses: number;
+    ltvEstimado: number;
+  };
 }
 
 const MESES = [
@@ -117,12 +133,15 @@ export class DashboardService {
           valorMensal: true,
           expiraEm: true,
           incluirCobrancas: true,
+          cortesia: true,
           servidor: true,
           usuario: true,
           senha: true,
           aplicativoId: true,
           dispositivos: true,
           macAddress: true,
+          qtdTelas: true,
+          createdAt: true,
         },
       }),
       prisma.mensalidade.findMany({
@@ -134,6 +153,7 @@ export class DashboardService {
               telefone: true,
               expiraEm: true,
               incluirCobrancas: true,
+              cortesia: true,
             },
           },
         },
@@ -486,6 +506,89 @@ export class DashboardService {
       });
     }
 
+    const clientesAtivosLista = clientes.filter(
+      (c) =>
+        calcularStatusCliente(c.expiraEm) === 'ATIVO' && !c.cortesia
+    );
+    const mrr = clientesAtivosLista.reduce(
+      (total, cliente) => total + (cliente.valorMensal > 0 ? cliente.valorMensal : 0),
+      0
+    );
+    const ticketMedio =
+      clientesAtivosLista.length > 0 ? mrr / clientesAtivosLista.length : 0;
+    const conexoes = clientesAtivosLista.reduce(
+      (total, cliente) => total + (cliente.qtdTelas > 0 ? cliente.qtdTelas : 1),
+      0
+    );
+
+    const trintaDiasAtras = new Date(hoje);
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+    const sessentaDiasAtras = new Date(hoje);
+    sessentaDiasAtras.setDate(sessentaDiasAtras.getDate() - 60);
+
+    const novosClientes30d = clientes.filter(
+      (cliente) => cliente.createdAt >= trintaDiasAtras
+    ).length;
+    const novosPeriodoAnterior = clientes.filter(
+      (cliente) =>
+        cliente.createdAt >= sessentaDiasAtras &&
+        cliente.createdAt < trintaDiasAtras
+    ).length;
+    const variacaoNovosClientes =
+      novosPeriodoAnterior === 0
+        ? novosClientes30d > 0
+          ? 100
+          : 0
+        : Math.round(
+            ((novosClientes30d - novosPeriodoAnterior) / novosPeriodoAnterior) *
+              100
+          );
+
+    const vencendoLista = pendentesCobranca.filter((m) => {
+      const dias = calcularDiasVencimento(m.vencimento);
+      return dias >= 0 && dias <= diasAntecedencia;
+    });
+    const vencendoQtd = vencendoLista.length;
+    const vencendoValor = vencendoLista.reduce((total, m) => total + m.valor, 0);
+
+    const cobrancaAtrasadaLista = pendentesCobranca.filter(
+      (m) => calcularDiasVencimento(m.vencimento) < 0
+    );
+    const cobrancaAtrasadaQtd = cobrancaAtrasadaLista.length;
+    const cobrancaAtrasadaValor = cobrancaAtrasadaLista.reduce(
+      (total, m) => total + m.valor,
+      0
+    );
+
+    const totalPendenteValor = pendentesCobranca.reduce(
+      (total, m) => total + m.valor,
+      0
+    );
+    const inadimplenciaPercentual =
+      totalPendenteValor > 0
+        ? Math.round((cobrancaAtrasadaValor / totalPendenteValor) * 1000) / 10
+        : 0;
+
+    const retencaoPercentual =
+      clientes.length > 0
+        ? Math.round((clientesResumo.ativos / clientes.length) * 1000) / 10
+        : 0;
+    const churnPercentual =
+      clientes.length > 0
+        ? Math.round((clientesResumo.inativos / clientes.length) * 1000) / 10
+        : 0;
+
+    const permanenciaMediaMeses =
+      clientesAtivosLista.length > 0
+        ? clientesAtivosLista.reduce((total, cliente) => {
+            const meses =
+              (hoje.getTime() - cliente.createdAt.getTime()) /
+              (1000 * 60 * 60 * 24 * 30.44);
+            return total + Math.max(0, meses);
+          }, 0) / clientesAtivosLista.length
+        : 0;
+    const ltvEstimado = ticketMedio * permanenciaMediaMeses;
+
     return {
       clientes: clientesResumo,
       financeiro: {
@@ -508,6 +611,22 @@ export class DashboardService {
         rotinaFeita,
       },
       alertas,
+      metricas: {
+        mrr,
+        ticketMedio,
+        conexoes,
+        novosClientes30d,
+        variacaoNovosClientes,
+        vencendoQtd,
+        vencendoValor,
+        cobrancaAtrasadaQtd,
+        cobrancaAtrasadaValor,
+        retencaoPercentual,
+        churnPercentual,
+        inadimplenciaPercentual,
+        permanenciaMediaMeses: Math.round(permanenciaMediaMeses * 10) / 10,
+        ltvEstimado: Math.round(ltvEstimado * 100) / 100,
+      },
     };
   }
 }

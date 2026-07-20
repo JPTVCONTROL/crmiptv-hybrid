@@ -7,6 +7,7 @@ import {
   formatarData,
   statusCliente,
   statusFinanceiro,
+  rotuloStatusFinanceiro,
 } from './formatters.ts';
 
 describe('aplicarMascaraTelefone', () => {
@@ -68,5 +69,11 @@ describe('statusFinanceiro', () => {
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
     assert.equal(statusFinanceiro(amanha.toISOString(), 5), 'PENDENTE');
+  });
+
+  it('rotuloStatusFinanceiro traduz REGULAR para texto amigável', () => {
+    assert.equal(rotuloStatusFinanceiro('REGULAR'), 'Longe do vencimento');
+    assert.equal(rotuloStatusFinanceiro('PENDENTE'), 'Vencendo');
+    assert.equal(rotuloStatusFinanceiro('ATRASADO'), 'Atrasado');
   });
 });

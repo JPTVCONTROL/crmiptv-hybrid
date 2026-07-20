@@ -15,6 +15,7 @@ import { trackByMensalidadeId } from '../../shared/utils/cobranca-lote';
 import {
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
+  clienteEhCortesia,
 } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
@@ -144,7 +145,9 @@ export class VencimentosPage implements OnInit, OnDestroy {
   }
 
   get totalPendente(): string {
-    const v = this.mensalidades.reduce((t, m) => t + m.valor, 0);
+    const v = this.mensalidades
+      .filter((m) => !clienteEhCortesia(m.cliente))
+      .reduce((t, m) => t + m.valor, 0);
     return formatarValor(v);
   }
 
@@ -289,4 +292,5 @@ export class VencimentosPage implements OnInit, OnDestroy {
   fmtValor = formatarValor;
   fmtData = formatarData;
   trackByMensalidade = trackByMensalidadeId;
+  ehCortesia = clienteEhCortesia;
 }

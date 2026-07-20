@@ -44,6 +44,7 @@ export class ClienteRepository {
           data.incluirCobrancas !== undefined
             ? Boolean(data.incluirCobrancas)
             : true,
+        cortesia: data.cortesia !== undefined ? Boolean(data.cortesia) : false,
         observacao: data.observacao,
       },
       include: { aplicativo: true, plano: true },
@@ -92,6 +93,8 @@ export class ClienteRepository {
           data.incluirCobrancas !== undefined
             ? Boolean(data.incluirCobrancas)
             : undefined,
+        cortesia:
+          data.cortesia !== undefined ? Boolean(data.cortesia) : undefined,
         observacao: data.observacao,
       },
       include: {
@@ -106,6 +109,18 @@ export class ClienteRepository {
     return prisma.cliente.update({
       where: { id },
       data: { incluirCobrancas },
+      include: {
+        aplicativo: true,
+        plano: true,
+        mensalidades: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+  }
+
+  updateCortesia(id: number, cortesia: boolean) {
+    return prisma.cliente.update({
+      where: { id },
+      data: { cortesia },
       include: {
         aplicativo: true,
         plano: true,

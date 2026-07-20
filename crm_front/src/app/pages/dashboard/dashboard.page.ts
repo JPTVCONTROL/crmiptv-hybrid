@@ -52,6 +52,22 @@ export class DashboardPage implements OnInit, OnDestroy {
   cadastrosIncompletos = 0;
   pagandoMensalidadeId: number | null = null;
 
+  mrr = '';
+  ticketMedio = '';
+  conexoes = 0;
+  novosClientes30d = 0;
+  variacaoNovosRotulo = '';
+  variacaoNovosPositiva = true;
+  vencendoQtd = 0;
+  vencendoValor = '';
+  cobrancaAtrasadaQtd = 0;
+  cobrancaAtrasadaValor = '';
+  retencaoPercentual = '';
+  churnPercentual = '';
+  inadimplenciaPercentual = '';
+  ltvEstimado = '';
+  permanenciaMediaMeses = '';
+
   subtituloPagina = '';
 
   get diasAntecedencia(): number {
@@ -159,6 +175,24 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.cobrancaTotalElegiveis = resumo.cobrancaDiaria.totalElegiveis;
     this.cobrancaRotinaFeita = resumo.cobrancaDiaria.rotinaFeita;
     this.cadastrosIncompletos = resumo.clientes.cadastrosIncompletos;
+
+    const m = resumo.metricas;
+    this.mrr = formatarValor(m.mrr);
+    this.ticketMedio = formatarValor(m.ticketMedio);
+    this.conexoes = m.conexoes;
+    this.novosClientes30d = m.novosClientes30d;
+    this.variacaoNovosPositiva = m.variacaoNovosClientes >= 0;
+    const sinalNovos = m.variacaoNovosClientes > 0 ? '+' : '';
+    this.variacaoNovosRotulo = `${sinalNovos}${m.variacaoNovosClientes}% vs. 30d ant.`;
+    this.vencendoQtd = m.vencendoQtd;
+    this.vencendoValor = formatarValor(m.vencendoValor);
+    this.cobrancaAtrasadaQtd = m.cobrancaAtrasadaQtd;
+    this.cobrancaAtrasadaValor = formatarValor(m.cobrancaAtrasadaValor);
+    this.retencaoPercentual = `${m.retencaoPercentual}%`;
+    this.churnPercentual = `${m.churnPercentual}%`;
+    this.inadimplenciaPercentual = `${m.inadimplenciaPercentual}%`;
+    this.ltvEstimado = formatarValor(m.ltvEstimado);
+    this.permanenciaMediaMeses = `${m.permanenciaMediaMeses} meses`;
   }
 
   async quitarCliente(cliente: ClienteAtencaoResumo): Promise<void> {

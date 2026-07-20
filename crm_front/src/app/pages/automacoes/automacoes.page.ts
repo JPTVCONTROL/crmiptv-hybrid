@@ -1,23 +1,23 @@
 import { Component, OnInit } from '@angular/core';
-import { ConfiguracaoService } from '../../core/services/configuracao.service';
-import { Configuracao } from '../../core/models';
-import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
+import { AutomacaoService } from '../../core/services/automacao.service';
+import {
+  AutomacaoConfig,
+  AutomacaoPainel,
+  EnvioAutomatico,
+  ResultadoExecucaoAutomacao,
+} from '../../core/models';
+import { ToastService } from '../../core/services/toast.service';
 
-export type StatusAutomacao = 'manual' | 'planejado';
-
-export interface AutomacaoItem {
+interface PassoChecklist {
   id: string;
   titulo: string;
   descricao: string;
-  icon: string;
-  status: StatusAutomacao;
+  concluido: boolean;
 }
 
-export interface FluxoAtual {
-  titulo: string;
-  descricao: string;
-  rota: string;
-  rotuloLink: string;
+interface ModeloMeta {
+  nome: string;
+  corpo: string;
 }
 
 @Component({
@@ -26,112 +26,232 @@ export interface FluxoAtual {
 })
 export class AutomacoesPage implements OnInit {
   loading = true;
+  salvando = false;
+  executando = false;
 
-  readonly fluxosAtuais: FluxoAtual[] = [
+  painel: AutomacaoPainel | null = null;
+  form: AutomacaoConfig = this.formPadrao();
+  horariosTexto = '09:00,18:00';
+  ultimoResultado: ResultadoExecucaoAutomacao | null = null;
+
+  readonly fluxosAtuais = [
     {
       titulo: 'Cobrança Diária',
-      descricao: 'Envio manual em lote de lembretes e cobranças via WhatsApp.',
+      descricao: 'Envio manual em lote quando quiser revisar antes.',
       rota: '/cobranca-diaria',
       rotuloLink: 'Abrir Cobrança Diária',
     },
     {
-      titulo: 'Mensagens e antecedência',
-      descricao: 'Templates de lembrete/cobrança e dias de antecedência.',
+      titulo: 'Configurações',
+      descricao: 'PIX, empresa e dias de antecedência dos lembretes.',
       rota: '/configuracoes',
       rotuloLink: 'Abrir Configurações',
     },
-    {
-      titulo: 'Vencimentos',
-      descricao: 'Consulta de mensalidades pendentes por data.',
-      rota: '/vencimentos',
-      rotuloLink: 'Abrir Vencimentos',
-    },
   ];
 
-  readonly automacoesPlanejadas: AutomacaoItem[] = [
-    {
-      id: 'lembrete-antecipado',
-      titulo: 'Lembrete antes do vencimento',
-      descricao:
-        'Enviar automaticamente a mensagem de lembrete para clientes que vencem nos próximos dias.',
-      icon: 'notifications-outline',
-      status: 'planejado',
-    },
-    {
-      id: 'cobranca-vencimento',
-      titulo: 'Cobrança no dia do vencimento',
-      descricao:
-        'Disparar lembrete ou cobrança no dia exato do vencimento, conforme o status do cliente.',
-      icon: 'calendar-outline',
-      status: 'planejado',
-    },
-    {
-      id: 'cobranca-atrasados',
-      titulo: 'Cobrança recorrente de atrasados',
-      descricao:
-        'Repetir cobrança para inadimplentes em intervalos configuráveis (ex.: a cada 3 dias).',
-      icon: 'repeat-outline',
-      status: 'planejado',
-    },
-    {
-      id: 'horario-envio',
-      titulo: 'Agendamento por horário',
-      descricao:
-        'Definir horários fixos de envio (ex.: 09:00 e 18:00) em vez de execução manual.',
-      icon: 'time-outline',
-      status: 'planejado',
-    },
-    {
-      id: 'whatsapp-api',
-      titulo: 'WhatsApp API (envio direto)',
-      descricao:
-        'Integração com API oficial ou provedor para enviar sem abrir o navegador.',
-      icon: 'logo-whatsapp',
-      status: 'planejado',
-    },
-    {
-      id: 'historico-envios',
-      titulo: 'Histórico de envios automáticos',
-      descricao:
-        'Registrar quem recebeu, quando e qual mensagem foi enviada.',
-      icon: 'list-outline',
-      status: 'planejado',
-    },
-  ];
+  get modelosMeta(): ModeloMeta[] {
+    const empresa = this.painel?.nomeEmpresa?.trim() || 'Sua empresa';
+    return [
+      {
+        nome: 'crm_lembrete',
+        corpo: `Olá {{1}}! Passando para lembrar da mensalidade {{2}}, no valor de {{3}}, com vencimento em {{4}}.
 
-  readonly previewHorarios = ['09:00', '14:00', '18:00'];
+{{5}}
 
-  constructor(private configuracaoService: ConfiguracaoService) {}
+— ${empresa}`,
+      },
+      {
+        nome: 'crm_cobranca',
+        corpo: `Olá {{1}}! Sua mensalidade referente a {{2}}, no valor de {{3}}, venceu em {{4}}. Por favor, regularize seu pagamento.
 
-  ngOnInit(): void {
-    if (!this.configuracaoService.getSnapshot()) {
-      this.configuracaoService.carregar().subscribe({
-        next: () => (this.loading = false),
-        error: () => (this.loading = false),
-      });
-      return;
-    }
+{{5}}
 
-    this.loading = false;
+— ${empresa}`,
+      },
+    ];
   }
 
-  private get configuracao(): Configuracao | null {
-    return this.configuracaoService.getSnapshot();
+  readonly linkGerenciadorMeta =
+    'https://business.facebook.com/wa/manage/message-templates/';
+
+  constructor(
+    private automacaoService: AutomacaoService,
+    private toast: ToastService
+  ) {}
+
+  ngOnInit(): void {
+    this.carregar();
   }
 
   get diasAntecedencia(): number {
-    return resolverDiasAntecedencia(this.configuracao);
+    return this.painel?.diasAntecedencia ?? 5;
   }
 
-  rotuloStatus(status: StatusAutomacao): string {
-    return status === 'manual' ? 'Manual hoje' : 'Em breve';
+  get whatsappConfigurado(): boolean {
+    return this.painel?.whatsappConfigurado ?? false;
   }
 
-  classesStatus(status: StatusAutomacao): Record<string, boolean> {
-    if (status === 'manual') {
-      return { 'crm-badge-ativo': true };
+  get envios(): EnvioAutomatico[] {
+    return this.painel?.envios ?? [];
+  }
+
+  get simulacaoLeitura(): string {
+    if (!this.painel) return '—';
+    const { lembretes, cobrancas } = this.painel.simulacao;
+    return `${lembretes} lembrete(s) · ${cobrancas} cobrança(s) elegíveis agora`;
+  }
+
+  get simulacaoTotal(): number {
+    if (!this.painel?.simulacao) return 0;
+    return this.painel.simulacao.lembretes + this.painel.simulacao.cobrancas;
+  }
+
+  get templatesProntos(): boolean {
+    return this.painel?.envioComSucesso ?? false;
+  }
+
+  get aguardandoTemplatesMeta(): boolean {
+    return this.whatsappConfigurado && !this.templatesProntos;
+  }
+
+  get automacoesAtivas(): boolean {
+    return this.form.lembretesAtivos || this.form.cobrancaAtrasadosAtiva;
+  }
+
+  get passosChecklist(): PassoChecklist[] {
+    return [
+      {
+        id: 'env',
+        titulo: 'Credenciais no backend',
+        descricao: 'WHATSAPP_PHONE_NUMBER_ID e WHATSAPP_ACCESS_TOKEN no crm_back/.env.',
+        concluido: this.whatsappConfigurado,
+      },
+      {
+        id: 'pix',
+        titulo: 'PIX e empresa no CRM',
+        descricao: 'Configurações → dados da empresa e chave PIX (5ª variável do template).',
+        concluido: this.painel?.pixConfigurado ?? false,
+      },
+      {
+        id: 'templates',
+        titulo: 'Templates Meta aprovados',
+        descricao: this.aguardandoTemplatesMeta
+          ? 'crm_lembrete e crm_cobranca em análise — aguarde status Ativo no Gerenciador do WhatsApp.'
+          : 'crm_lembrete e crm_cobranca (Utility, pt_BR) com status Ativo.',
+        concluido: this.templatesProntos,
+      },
+      {
+        id: 'teste',
+        titulo: 'Números de teste na Meta',
+        descricao:
+          'App não publicado: cadastre destinatários em Meta → WhatsApp → Teste (ex.: seu celular).',
+        concluido: this.templatesProntos,
+      },
+    ];
+  }
+
+  get passosConcluidos(): number {
+    return this.passosChecklist.filter((p) => p.concluido).length;
+  }
+
+  carregar(): void {
+    this.loading = true;
+    this.automacaoService.obterPainel().subscribe({
+      next: (painel) => {
+        this.painel = painel;
+        this.form = { ...painel.config };
+        this.horariosTexto = painel.horarios.join(', ');
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        void this.toast.error('Erro ao carregar automações.');
+      },
+    });
+  }
+
+  salvar(): void {
+    this.salvando = true;
+    const payload: Partial<AutomacaoConfig> = {
+      ...this.form,
+      horariosEnvio: this.horariosTexto,
+    };
+
+    this.automacaoService.salvar(payload).subscribe({
+      next: (config) => {
+        this.form = { ...config };
+        this.salvando = false;
+        void this.toast.success('Automações salvas.');
+        this.carregar();
+      },
+      error: (err: Error) => {
+        this.salvando = false;
+        void this.toast.error(err.message ?? 'Erro ao salvar.');
+      },
+    });
+  }
+
+  executarAgora(): void {
+    this.executando = true;
+    this.ultimoResultado = null;
+    this.automacaoService.executar().subscribe({
+      next: (resultado) => {
+        this.executando = false;
+        this.ultimoResultado = resultado;
+        void this.toast.success(
+          `Rotina concluída: ${resultado.enviados} enviado(s), ${resultado.falhas} falha(s), ${resultado.ignorados} ignorado(s).`
+        );
+        this.carregar();
+      },
+      error: (err: Error) => {
+        this.executando = false;
+        void this.toast.error(err.message ?? 'Erro ao executar.');
+      },
+    });
+  }
+
+  async copiarTexto(texto: string, rotulo: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(texto);
+      void this.toast.success(`${rotulo} copiado.`);
+    } catch {
+      void this.toast.error('Não foi possível copiar.');
     }
+  }
 
+  rotuloStatusEnvio(status: string): string {
+    if (status === 'ENVIADO') return 'Enviado';
+    if (status === 'FALHA') return 'Falha';
+    if (status === 'PENDENTE') return 'Pendente';
+    return status;
+  }
+
+  rotuloTipoEnvio(tipo: string): string {
+    if (tipo === 'LEMBRETE') return 'Lembrete';
+    if (tipo === 'COBRANCA') return 'Cobrança';
+    return tipo;
+  }
+
+  classesStatusEnvio(status: string): Record<string, boolean> {
+    if (status === 'ENVIADO') return { 'crm-badge-ativo': true };
+    if (status === 'FALHA') return { 'crm-badge-inativo': true };
     return { 'crm-badge-neutral': true };
+  }
+
+  fmtDataHora(iso?: string | null): string {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('pt-BR');
+  }
+
+  private formPadrao(): AutomacaoConfig {
+    return {
+      lembretesAtivos: false,
+      cobrancaAtrasadosAtiva: false,
+      horariosEnvio: '09:00,18:00',
+      intervaloAtrasadosDias: 3,
+      templateLembreteNome: 'crm_lembrete',
+      templateCobrancaNome: 'crm_cobranca',
+      templateLinguagem: 'pt_BR',
+    };
   }
 }

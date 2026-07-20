@@ -109,6 +109,24 @@ export function statusFinanceiro(
   return 'REGULAR';
 }
 
+/** Rótulo amigável do status de cobrança no Financeiro (não confundir com pagamento quitado). */
+export function rotuloStatusFinanceiro(
+  status: 'ATRASADO' | 'PENDENTE' | 'REGULAR' | 'TODOS'
+): string {
+  switch (status) {
+    case 'ATRASADO':
+      return 'Atrasado';
+    case 'PENDENTE':
+      return 'Vencendo';
+    case 'REGULAR':
+      return 'Longe do vencimento';
+    case 'TODOS':
+      return 'Todos';
+    default:
+      return status;
+  }
+}
+
 export function criarMapaTelefones(
   clientes: { id: number; telefone?: string }[]
 ): Map<number, string> {

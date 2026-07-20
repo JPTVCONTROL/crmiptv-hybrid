@@ -29,20 +29,29 @@ export class ClienteService {
   }
 
   async criar(dados: CreateClienteDto) {
-    if (!dados.valorMensal || Number(dados.valorMensal) <= 0) {
+    const cortesia = Boolean(dados.cortesia);
+
+    if (
+      !cortesia &&
+      (!dados.valorMensal || Number(dados.valorMensal) <= 0)
+    ) {
       throw new ValidationError('Informe o valor mensal do cliente.');
     }
 
     await this.assertTelefoneUnico(dados.telefone);
 
-    const cliente = await clienteRepository.create(dados);
+    const cliente = await clienteRepository.create({
+      ...dados,
+      cortesia,
+      valorMensal: cortesia ? 0 : Number(dados.valorMensal),
+    });
 
     if (dados.expiraEm) {
       const dataVencimento = parseExpiraEm(dados.expiraEm);
       await mensalidadeRepository.create({
         clienteId: cliente.id,
         referencia: formatReferencia(dataVencimento),
-        valor: Number(dados.valorMensal),
+        valor: cortesia ? 0 : Number(dados.valorMensal),
         vencimento: dataVencimento,
         status: 'PENDENTE',
       });
@@ -62,7 +71,33 @@ export class ClienteService {
 
     await this.sincronizarMensalidadesPendentes(id, dados, cliente);
 
+    if (dados.cortesia !== undefined) {
+      await this.sincronizarValorMensalidadeCortesia(id, Boolean(cliente.cortesia));
+    }
+
     return aplicarStatusCliente(cliente);
+  }
+
+  private async sincronizarValorMensalidadeCortesia(
+    clienteId: number,
+    cortesia: boolean
+  ): Promise<void> {
+    const cliente = await clienteRepository.findById(clienteId);
+    if (!cliente) {
+      return;
+    }
+
+    const valor = cortesia
+      ? 0
+      : cliente.valorMensal > 0
+        ? cliente.valorMensal
+        : cliente.plano?.valor ?? 0;
+
+    if (valor > 0 || cortesia) {
+      await mensalidadeRepository.sincronizarPendentesDoCliente(clienteId, {
+        valor,
+      });
+    }
   }
 
   private async sincronizarMensalidadesPendentes(
@@ -75,17 +110,19 @@ export class ClienteService {
 
     if (expiraInformado) {
       const vencimento = parseExpiraEm(dados.expiraEm!);
-      const valor = Number(dados.valorMensal ?? cliente.valorMensal);
+      const cortesia = Boolean(dados.cortesia ?? cliente.cortesia);
+      const valorBase = Number(dados.valorMensal ?? cliente.valorMensal);
+      const valor = cortesia ? 0 : valorBase;
 
       const resultado = await mensalidadeRepository.sincronizarPendentesDoCliente(
         clienteId,
         {
           vencimento,
-          valor: valorInformado ? valor : undefined,
+          valor: valorInformado || cortesia ? valor : undefined,
         }
       );
 
-      if (resultado.count === 0 && valor > 0) {
+      if (resultado.count === 0 && (valor > 0 || cortesia)) {
         await mensalidadeRepository.create({
           clienteId,
           referencia: formatReferencia(vencimento),
@@ -99,8 +136,10 @@ export class ClienteService {
     }
 
     if (valorInformado) {
+      const cortesia = Boolean(dados.cortesia ?? cliente.cortesia);
+      const valor = cortesia ? 0 : Number(dados.valorMensal);
       await mensalidadeRepository.sincronizarPendentesDoCliente(clienteId, {
-        valor: Number(dados.valorMensal),
+        valor,
       });
     }
   }
@@ -116,6 +155,13 @@ export class ClienteService {
       id,
       incluirCobrancas
     );
+    return aplicarStatusCliente(cliente);
+  }
+
+  async definirCortesia(id: number, cortesia: boolean) {
+    await this.buscarPorId(id);
+    const cliente = await clienteRepository.updateCortesia(id, cortesia);
+    await this.sincronizarValorMensalidadeCortesia(id, cortesia);
     return aplicarStatusCliente(cliente);
   }
 
@@ -195,7 +241,7 @@ export class ClienteService {
     let mensalidadesAlinhadas = 0;
 
     for (const cliente of clientes) {
-      if (!cliente.expiraEm || cliente.valorMensal <= 0) {
+      if (cliente.cortesia || !cliente.expiraEm || cliente.valorMensal <= 0) {
         continue;
       }
 

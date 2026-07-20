@@ -29,8 +29,17 @@ export function elegivelCobrancaDiaria(
   return dias < 0 || (dias >= 0 && dias <= diasAntecedencia);
 }
 
-export function clienteParticipaCobrancas(
-  cliente: { incluirCobrancas?: boolean | null }
+export function clienteEhCortesia(
+  cliente?: { cortesia?: boolean | null } | null
 ): boolean {
-  return cliente.incluirCobrancas !== false;
+  return cliente?.cortesia === true;
+}
+
+export function clienteParticipaCobrancas(
+  cliente?: { incluirCobrancas?: boolean | null; cortesia?: boolean | null } | null
+): boolean {
+  if (clienteEhCortesia(cliente)) {
+    return false;
+  }
+  return cliente?.incluirCobrancas !== false;
 }

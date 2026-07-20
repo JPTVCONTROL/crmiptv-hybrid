@@ -14,6 +14,10 @@ router.put(
   asyncHandler((req, res) => mensalidadeController.registrarContatos(req, res))
 );
 router.put('/:id/pagar', asyncHandler((req, res) => mensalidadeController.registrarPagamento(req, res)));
+router.put(
+  '/:id/renovar-cortesia',
+  asyncHandler((req, res) => mensalidadeController.renovarCortesia(req, res))
+);
 router.put('/:id/contato', asyncHandler((req, res) => mensalidadeController.registrarContato(req, res)));
 
 export default router;

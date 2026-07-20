@@ -103,7 +103,15 @@
           <a [routerLink]="['/clientes', m.clienteId]" class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate">
             {{ m.cliente?.nome }}
           </a>
-          <p class="crm-mobile-card-subtitle">{{ m.referencia }}</p>
+          <p class="crm-mobile-card-subtitle">
+            {{ m.referencia }}
+            <span
+              *ngIf="ehCortesia(m.cliente)"
+              class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-violet-500/40 bg-violet-500/10 text-violet-200"
+            >
+              Cortesia
+            </span>
+          </p>
         </div>
         <span [ngClass]="classesStatusVencimento(m)">{{ statusLabel(m) }}</span>
       </div>
@@ -111,7 +119,9 @@
       <div class="space-y-2">
         <div class="crm-mobile-card-row">
           <span class="crm-mobile-card-label">Valor</span>
-          <span class="crm-mobile-card-value font-medium">{{ fmtValor(m.valor) }}</span>
+          <span class="crm-mobile-card-value font-medium">
+            {{ ehCortesia(m.cliente) ? 'Cortesia' : fmtValor(m.valor) }}
+          </span>
         </div>
         <div class="crm-mobile-card-row">
           <span class="crm-mobile-card-label">Vencimento</span>
@@ -126,8 +136,19 @@
         >
           Ver cliente
         </a>
-        <a routerLink="/financeiro" class="crm-btn-primary flex-1 !py-1.5 !text-xs no-underline text-center">
+        <a
+          *ngIf="!ehCortesia(m.cliente)"
+          routerLink="/financeiro"
+          class="crm-btn-primary flex-1 !py-1.5 !text-xs no-underline text-center"
+        >
           Quitar
+        </a>
+        <a
+          *ngIf="ehCortesia(m.cliente)"
+          [routerLink]="['/clientes', m.clienteId]"
+          class="crm-btn-primary flex-1 !py-1.5 !text-xs no-underline text-center"
+        >
+          Renovar
         </a>
       </div>
     </article>
@@ -151,9 +172,17 @@
         <tr *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="border-b border-slate-800/50">
           <td class="py-3 px-2">
             <a [routerLink]="['/clientes', m.clienteId]" class="text-violet-400 hover:underline">{{ m.cliente?.nome }}</a>
+            <span
+              *ngIf="ehCortesia(m.cliente)"
+              class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-violet-500/40 bg-violet-500/10 text-violet-200"
+            >
+              Cortesia
+            </span>
           </td>
           <td class="py-3 px-2 text-slate-300">{{ m.referencia }}</td>
-          <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
+          <td class="py-3 px-2 text-slate-300">
+            {{ ehCortesia(m.cliente) ? '—' : fmtValor(m.valor) }}
+          </td>
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
           <td class="py-3 px-2">
             <span [ngClass]="classesStatusVencimento(m)">{{ statusLabel(m) }}</span>
@@ -166,10 +195,18 @@
               Ver cliente
             </a>
             <a
+              *ngIf="!ehCortesia(m.cliente)"
               routerLink="/financeiro"
               class="crm-btn-primary !py-1.5 !text-xs no-underline inline-block"
             >
               Quitar
+            </a>
+            <a
+              *ngIf="ehCortesia(m.cliente)"
+              [routerLink]="['/clientes', m.clienteId]"
+              class="crm-btn-primary !py-1.5 !text-xs no-underline inline-block"
+            >
+              Renovar
             </a>
           </td>
         </tr>
