@@ -45,7 +45,15 @@ export class CampanhaService {
     if (!Array.isArray(clienteIds) || clienteIds.length === 0) {
       throw new ValidationError('Informe ao menos um cliente para registrar o envio.');
     }
-    return campanhaRepository.registrarEnvios(id, clienteIds);
+
+    const idsValidos = [
+      ...new Set(clienteIds.filter((clienteId) => Number.isFinite(clienteId) && clienteId > 0)),
+    ];
+    if (idsValidos.length === 0) {
+      throw new ValidationError('Informe ao menos um cliente válido para registrar o envio.');
+    }
+
+    return campanhaRepository.registrarEnvios(id, idsValidos);
   }
 
   private validarCampos(titulo: string, mensagem: string, tipo: string) {

@@ -100,6 +100,12 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregar(true);
+    }
+  }
+
   get diasAntecedencia(): number {
     return this.painel?.diasAntecedencia ?? 5;
   }

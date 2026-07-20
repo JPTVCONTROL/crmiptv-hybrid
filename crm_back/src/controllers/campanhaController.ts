@@ -7,6 +7,15 @@ import {
 import { sendSuccess, sendError } from '../utils/helpers/response.js';
 import type { CreateCampanhaDto, UpdateCampanhaDto } from '../models/index.js';
 
+function parseCampanhaId(req: Request, res: Response): number | null {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    sendError(res, 'ID de campanha inválido.', 400);
+    return null;
+  }
+  return id;
+}
+
 export class CampanhaController {
   async listar(_req: Request, res: Response): Promise<void> {
     try {
@@ -20,7 +29,9 @@ export class CampanhaController {
 
   async buscarPorId(req: Request, res: Response): Promise<void> {
     try {
-      const id = Number(req.params.id);
+      const id = parseCampanhaId(req, res);
+      if (id === null) return;
+
       const campanha = await campanhaService.buscarPorId(id);
       sendSuccess(res, campanha);
     } catch (error) {
@@ -47,7 +58,9 @@ export class CampanhaController {
 
   async atualizar(req: Request, res: Response): Promise<void> {
     try {
-      const id = Number(req.params.id);
+      const id = parseCampanhaId(req, res);
+      if (id === null) return;
+
       const campanha = await campanhaService.atualizar(
         id,
         req.body as UpdateCampanhaDto
@@ -68,7 +81,9 @@ export class CampanhaController {
 
   async excluir(req: Request, res: Response): Promise<void> {
     try {
-      const id = Number(req.params.id);
+      const id = parseCampanhaId(req, res);
+      if (id === null) return;
+
       await campanhaService.excluir(id);
       sendSuccess(res, null, 'Campanha excluída com sucesso.');
     } catch (error) {
@@ -82,7 +97,9 @@ export class CampanhaController {
 
   async registrarEnvios(req: Request, res: Response): Promise<void> {
     try {
-      const id = Number(req.params.id);
+      const id = parseCampanhaId(req, res);
+      if (id === null) return;
+
       const { clienteIds } = req.body as { clienteIds?: number[] };
       const resultado = await campanhaService.registrarEnvios(
         id,

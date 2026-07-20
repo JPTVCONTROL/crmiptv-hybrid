@@ -6,7 +6,8 @@ export type DominioSync =
   | 'mensalidades'
   | 'dashboard'
   | 'catalogos'
-  | 'configuracoes';
+  | 'configuracoes'
+  | 'campanhas';
 
 export interface MudancaSync {
   dominios: DominioSync[];
@@ -39,6 +40,10 @@ export class DadosSyncService {
     this.emit(['catalogos']);
   }
 
+  notificarCampanhas(): void {
+    this.emit(['campanhas']);
+  }
+
   notificarTudo(): void {
     this.emit([
       'clientes',
@@ -46,6 +51,7 @@ export class DadosSyncService {
       'dashboard',
       'catalogos',
       'configuracoes',
+      'campanhas',
     ]);
   }
 

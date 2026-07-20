@@ -86,10 +86,21 @@ export class MarketPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    vincularSincronizacaoPagina(this.sync, this.destroy$, ['clientes'], () => {
-      void this.carregar();
-    });
+    vincularSincronizacaoPagina(
+      this.sync,
+      this.destroy$,
+      ['clientes', 'campanhas'],
+      () => {
+        void this.carregar(true);
+      }
+    );
     void this.carregar();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      void this.carregar(true);
+    }
   }
 
   ngOnDestroy(): void {
@@ -372,8 +383,10 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   async abrirCampanha(id: number): Promise<void> {
-    await this.carregarCampanha(id);
-    this.visualizacao = 'campanha';
+    const ok = await this.carregarCampanha(id);
+    if (ok) {
+      this.visualizacao = 'campanha';
+    }
   }
 
   voltarParaLista(): void {
@@ -385,8 +398,10 @@ export class MarketPage implements OnInit, OnDestroy {
     this.atualizarLinhasFiltradas();
   }
 
-  async carregar(): Promise<void> {
-    this.loading = true;
+  async carregar(silencioso = false): Promise<void> {
+    if (!silencioso) {
+      this.loading = true;
+    }
     try {
       try {
         this.clientes = await firstValueFrom(
@@ -414,11 +429,13 @@ export class MarketPage implements OnInit, OnDestroy {
 
       this.atualizarLinhasFiltradas();
     } finally {
-      this.loading = false;
+      if (!silencioso) {
+        this.loading = false;
+      }
     }
   }
 
-  private async carregarCampanha(id: number, resetSelecao = true): Promise<void> {
+  private async carregarCampanha(id: number, resetSelecao = true): Promise<boolean> {
     try {
       const campanha = await firstValueFrom(this.campanhaService.buscarPorId(id));
       this.campanhaId = campanha.id;
@@ -441,8 +458,10 @@ export class MarketPage implements OnInit, OnDestroy {
       }
 
       this.atualizarLinhasFiltradas();
+      return true;
     } catch {
       void this.toast.error('Erro ao carregar campanha.');
+      return false;
     }
   }
 
@@ -460,6 +479,7 @@ export class MarketPage implements OnInit, OnDestroy {
       await firstValueFrom(this.campanhaService.excluir(this.campanhaId));
       void this.toast.success('Campanha excluída.');
       this.campanhaId = null;
+      this.campanhaSelecionada = null;
       this.visualizacao = 'lista';
       await this.carregar();
     } catch {

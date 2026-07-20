@@ -11,23 +11,11 @@ function criarPrismaClient(): PrismaClient {
 }
 
 function obterPrismaClient(): PrismaClient {
-  const emCache = globalForPrisma.prisma;
-
-  if (emCache && 'campanha' in emCache && 'campanhaEnvio' in emCache) {
-    return emCache;
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = criarPrismaClient();
   }
 
-  if (emCache) {
-    void emCache.$disconnect();
-  }
-
-  const cliente = criarPrismaClient();
-
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = cliente;
-  }
-
-  return cliente;
+  return globalForPrisma.prisma;
 }
 
 export const prisma = obterPrismaClient();

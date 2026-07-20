@@ -194,6 +194,12 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  ionViewWillEnter(): void {
+    if (!this.loading) {
+      this.carregarConfig(true);
+    }
+  }
+
   private carregarConfig(silencioso = false): void {
     if (!silencioso) {
       this.loading = true;
