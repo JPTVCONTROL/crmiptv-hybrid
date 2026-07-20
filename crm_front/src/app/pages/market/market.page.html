@@ -14,6 +14,14 @@
       <button type="button" class="crm-btn-ghost" (click)="voltarParaLista()">
         ← Voltar
       </button>
+      <button
+        type="button"
+        class="crm-btn-ghost"
+        [disabled]="qtdPublicoElegivel === 0"
+        (click)="exportarCampanha()"
+      >
+        Exportar CSV
+      </button>
       <button type="button" class="crm-btn-primary" (click)="editarCampanhaAtual()">
         Editar campanha
       </button>
@@ -123,7 +131,7 @@
     <app-stat-card title="Enviados" [value]="totalEnviados.toString()" color="#22C55E"></app-stat-card>
     <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" color="#F59E0B"></app-stat-card>
     <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" color="#38BDF8"></app-stat-card>
-    <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#8B5CF6"></app-stat-card>
+    <app-stat-card title="Elegíveis" [value]="qtdPublicoElegivel.toString()" color="#8B5CF6"></app-stat-card>
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
@@ -170,19 +178,82 @@
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div>
             <p class="crm-section-label mb-1">Destinatários</p>
-            <p class="text-slate-400 text-sm">
-              {{ linhasFiltradas.length }} exibido(s)
+            <p class="text-slate-400 text-sm">{{ resumoPublicoElegivel }}</p>
+            <p class="text-slate-500 text-xs mt-1">
+              {{ linhasFiltradas.length }} exibido(s) na tabela
               <span *ngIf="qtdSelecionados > 0"> · {{ qtdSelecionados }} selecionado(s)</span>
             </p>
           </div>
-          <button
-            type="button"
-            class="crm-btn-success shrink-0"
-            [disabled]="!podeIniciarEnvio"
-            (click)="iniciarEnvio()"
-          >
-            {{ enviando ? 'Abrindo fila...' : 'Iniciar fila (' + qtdSelecionados + ')' }}
-          </button>
+          <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+            <button
+              type="button"
+              class="crm-btn-ghost"
+              [disabled]="qtdPublicoElegivel === 0"
+              (click)="exportarCampanha()"
+            >
+              Exportar CSV
+            </button>
+            <button
+              type="button"
+              class="crm-btn-success"
+              [disabled]="!podeIniciarEnvio"
+              (click)="iniciarEnvio()"
+            >
+              {{ enviando ? 'Abrindo fila...' : 'Iniciar fila (' + qtdSelecionados + ')' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 md:p-4 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p class="text-slate-300 text-sm font-medium">Público da campanha</p>
+            <p class="text-slate-500 text-xs">
+              Cortesia excluída por padrão · Vencendo = próximos {{ diasAntecedencia }} dias
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              *ngFor="let op of opcoesSegmentoPublico"
+              type="button"
+              [class]="classesChipPublico(op.valor)"
+              (click)="definirSegmentoPublico(op.valor)"
+            >
+              <span>{{ op.rotulo }}</span>
+              <span class="text-xs opacity-80 tabular-nums">{{
+                contagemSegmentoPublico(op.valor)
+              }}</span>
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
+            <label class="text-slate-400 text-sm shrink-0" for="market-filtro-plano">
+              Plano
+            </label>
+            <select
+              id="market-filtro-plano"
+              class="crm-input !py-2 !text-sm sm:max-w-xs"
+              [(ngModel)]="filtroPlanoId"
+              (ngModelChange)="onPublicoChange()"
+            >
+              <option [ngValue]="null">Todos os planos</option>
+              <option *ngFor="let plano of planos" [ngValue]="plano.id">
+                {{ plano.nome }}
+              </option>
+            </select>
+
+            <label
+              class="inline-flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                class="crm-checkbox"
+                [(ngModel)]="incluirCortesia"
+                (ngModelChange)="onPublicoChange()"
+              />
+              Incluir cortesia
+            </label>
+          </div>
         </div>
 
         <div class="relative">
@@ -214,6 +285,14 @@
 
           <span class="hidden sm:block w-px h-5 bg-slate-700 mx-1" aria-hidden="true"></span>
 
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs"
+            [disabled]="qtdPublicoSelecionaveis === 0"
+            (click)="selecionarElegiveisWhatsApp()"
+          >
+            Elegíveis WhatsApp
+          </button>
           <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarPendentes()">
             Pendentes
           </button>
@@ -277,9 +356,24 @@
               </td>
               <td>
                 <p class="text-white font-medium">{{ linha.nome }}</p>
-                <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs mt-0.5">
-                  Telefone inválido
-                </p>
+                <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <span class="text-slate-500 text-xs">{{ rotuloStatusPublico(linha.status) }}</span>
+                  <span
+                    *ngIf="linha.planoNome"
+                    class="text-slate-500 text-xs"
+                  >
+                    · {{ linha.planoNome }}
+                  </span>
+                  <span
+                    *ngIf="linha.cortesia"
+                    class="text-xs font-medium px-1.5 py-0.5 rounded-full border text-amber-300 border-amber-500/40 bg-amber-500/10"
+                  >
+                    Cortesia
+                  </span>
+                  <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs">
+                    Telefone inválido
+                  </p>
+                </div>
               </td>
               <td class="text-slate-400">{{ linha.telefone }}</td>
               <td class="pr-4" (click)="$event.stopPropagation()">
@@ -336,6 +430,11 @@
             <div class="min-w-0 flex-1">
               <p class="text-white font-medium">{{ linha.nome }}</p>
               <p class="text-slate-400 text-sm">{{ linha.telefone }}</p>
+              <p class="text-slate-500 text-xs mt-0.5">
+                {{ rotuloStatusPublico(linha.status) }}
+                <span *ngIf="linha.planoNome"> · {{ linha.planoNome }}</span>
+                <span *ngIf="linha.cortesia"> · Cortesia</span>
+              </p>
             </div>
           </label>
           <div class="pl-7 flex items-center gap-2 flex-wrap" (click)="$event.stopPropagation()">

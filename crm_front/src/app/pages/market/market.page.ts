@@ -4,11 +4,22 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CampanhaService } from '../../core/services/campanha.service';
 import { ClienteService } from '../../core/services/cliente.service';
+import { ConfiguracaoService } from '../../core/services/configuracao.service';
+import { PlanoService } from '../../core/services/plano.service';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
-import { Campanha, Cliente, TipoCampanha } from '../../core/models';
-import { formatarData } from '../../shared/utils/formatters';
+import { Campanha, Cliente, Plano, TipoCampanha } from '../../core/models';
+import { formatarData, statusCliente, StatusCliente } from '../../shared/utils/formatters';
+import {
+  FiltroPublicoCampanha,
+  SegmentoPublicoCampanha,
+  clientePassouFiltroPublico,
+  contarClientesPublico,
+  rotuloSegmentoPublico,
+  rotuloStatusPublico,
+} from '../../shared/utils/campanha-publico';
+import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
 import {
   FiltroEnvioCampanha,
   MENSAGEM_CAMPANHA_PADRAO,
@@ -22,6 +33,7 @@ import {
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { confirmarUsuario } from '../../shared/utils/confirm-notifier';
 import { CampanhaFormModalComponent } from '../../components/campanha/campanha-form-modal.component';
+import { exportarCampanhaCsv } from '../../shared/utils/campanha-export';
 
 export interface ClienteCampanhaLinha {
   id: number;
@@ -30,10 +42,18 @@ export interface ClienteCampanhaLinha {
   telefoneValido: boolean;
   enviado: boolean;
   enviadoEm?: string;
+  status: StatusCliente;
+  cortesia: boolean;
+  planoNome?: string;
 }
 
 interface OpcaoFiltroEnvio {
   valor: FiltroEnvioCampanha;
+  rotulo: string;
+}
+
+interface OpcaoSegmentoPublico {
+  valor: SegmentoPublicoCampanha;
   rotulo: string;
 }
 
@@ -56,11 +76,16 @@ export class MarketPage implements OnInit, OnDestroy {
   formMensagem = MENSAGEM_CAMPANHA_PADRAO;
 
   clientes: Cliente[] = [];
+  planos: Plano[] = [];
+  diasAntecedencia = resolverDiasAntecedencia();
   enviosPorCliente = new Map<number, string>();
   selecionadosIds: number[] = [];
   linhasFiltradas: ClienteCampanhaLinha[] = [];
 
-  filtroEnvio: FiltroEnvioCampanha = 'TODOS';
+  segmentoPublico: SegmentoPublicoCampanha = 'ATIVOS';
+  filtroPlanoId: number | null = null;
+  incluirCortesia = false;
+  filtroEnvio: FiltroEnvioCampanha = 'PENDENTES';
   busca = '';
   buscaCampanhas = '';
   visualizacao: 'lista' | 'campanha' = 'lista';
@@ -72,6 +97,15 @@ export class MarketPage implements OnInit, OnDestroy {
     { valor: 'PENDENTES', rotulo: 'Pendentes' },
     { valor: 'ENVIADOS', rotulo: 'Enviados' },
   ];
+  readonly opcoesSegmentoPublico: OpcaoSegmentoPublico[] = [
+    { valor: 'TODOS', rotulo: 'Todos' },
+    { valor: 'ATIVOS', rotulo: 'Ativos' },
+    { valor: 'VENCENDO', rotulo: 'Vencendo' },
+    { valor: 'ATRASADOS', rotulo: 'Atrasados' },
+    { valor: 'INATIVOS', rotulo: 'Inativos' },
+  ];
+  readonly rotuloSegmentoPublico = rotuloSegmentoPublico;
+  readonly rotuloStatusPublico = rotuloStatusPublico;
   readonly trackByLinhaId = (_: number, linha: ClienteCampanhaLinha) => linha.id;
 
   private readonly destroy$ = new Subject<void>();
@@ -79,6 +113,8 @@ export class MarketPage implements OnInit, OnDestroy {
   constructor(
     private campanhaService: CampanhaService,
     private clienteService: ClienteService,
+    private planoService: PlanoService,
+    private configuracaoService: ConfiguracaoService,
     private cobrancaLoteFila: CobrancaLoteFilaService,
     private toast: ToastService,
     private sync: DadosSyncService,
@@ -89,7 +125,7 @@ export class MarketPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'campanhas'],
+      ['clientes', 'campanhas', 'catalogos', 'configuracoes'],
       () => {
         void this.carregar(true);
       }
@@ -109,11 +145,45 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   get totalEnviados(): number {
-    return this.enviosPorCliente.size;
+    return this.clientesNoPublico.filter((c) => this.enviosPorCliente.has(c.id)).length;
   }
 
   get totalPendentes(): number {
-    return Math.max(0, this.clientes.length - this.totalEnviados);
+    return Math.max(0, this.qtdPublicoElegivel - this.totalEnviados);
+  }
+
+  get qtdPublicoElegivel(): number {
+    return this.clientesNoPublico.length;
+  }
+
+  get qtdPublicoComTelefone(): number {
+    return this.clientesNoPublico.filter((c) =>
+      telefoneValidoParaWhatsApp(c.telefone)
+    ).length;
+  }
+
+  get qtdPublicoSelecionaveis(): number {
+    return this.montarLinhas().filter((l) => this.podeSelecionar(l)).length;
+  }
+
+  get resumoPublicoElegivel(): string {
+    const pendentesEnvio = this.qtdPublicoSelecionaveis;
+    return `${this.qtdPublicoElegivel} elegível(is) · ${this.qtdPublicoComTelefone} com WhatsApp · ${pendentesEnvio} pendente(s) de envio`;
+  }
+
+  private get filtroPublicoAtual(): FiltroPublicoCampanha {
+    return {
+      segmento: this.segmentoPublico,
+      planoId: this.filtroPlanoId,
+      incluirCortesia: this.incluirCortesia,
+      diasAntecedenciaVencendo: this.diasAntecedencia,
+    };
+  }
+
+  private get clientesNoPublico(): Cliente[] {
+    return this.clientes.filter((cliente) =>
+      clientePassouFiltroPublico(cliente, this.filtroPublicoAtual)
+    );
   }
 
   get qtdSelecionados(): number {
@@ -183,6 +253,32 @@ export class MarketPage implements OnInit, OnDestroy {
 
   contagemFiltro(filtro: FiltroEnvioCampanha): number {
     return this.montarLinhas().filter((linha) => this.passouFiltroEnvio(linha, filtro)).length;
+  }
+
+  contagemSegmentoPublico(segmento: SegmentoPublicoCampanha): number {
+    return contarClientesPublico(this.clientes, {
+      ...this.filtroPublicoAtual,
+      segmento,
+    });
+  }
+
+  classesChipPublico(segmento: SegmentoPublicoCampanha): string {
+    const base =
+      'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors';
+    if (this.segmentoPublico !== segmento) {
+      return `${base} border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300`;
+    }
+    return `${base} border-sky-500/40 bg-sky-500/10 text-sky-200`;
+  }
+
+  definirSegmentoPublico(segmento: SegmentoPublicoCampanha): void {
+    this.segmentoPublico = segmento;
+    this.onPublicoChange();
+  }
+
+  onPublicoChange(): void {
+    this.podarSelecaoForaDoPublico();
+    this.atualizarLinhasFiltradas();
   }
 
   classesChipFiltro(filtro: FiltroEnvioCampanha): string {
@@ -311,8 +407,36 @@ export class MarketPage implements OnInit, OnDestroy {
       .map((l) => l.id);
   }
 
+  selecionarElegiveisWhatsApp(): void {
+    this.selecionadosIds = this.montarLinhas()
+      .filter((l) => this.podeSelecionar(l) && l.telefoneValido)
+      .map((l) => l.id);
+  }
+
   limparSelecao(): void {
     this.selecionadosIds = [];
+  }
+
+  exportarCampanha(): void {
+    const linhas = this.montarLinhas();
+    if (linhas.length === 0) {
+      void this.toast.warning('Nenhum destinatário no público atual para exportar.');
+      return;
+    }
+
+    const plano = this.filtroPlanoId
+      ? this.planos.find((item) => item.id === this.filtroPlanoId)
+      : undefined;
+
+    exportarCampanhaCsv(linhas, {
+      titulo: this.formTitulo.trim() || 'Campanha',
+      tipo: this.formTipo,
+      segmento: this.segmentoPublico,
+      planoNome: plano?.nome,
+      incluirCortesia: this.incluirCortesia,
+    });
+
+    void this.toast.success(`CSV exportado · ${linhas.length} destinatário(s) do público atual.`);
   }
 
   formatarDataEnvio(data?: string): string {
@@ -413,6 +537,23 @@ export class MarketPage implements OnInit, OnDestroy {
       }
 
       try {
+        this.planos = await firstValueFrom(
+          this.planoService.listar().pipe(takeUntil(this.destroy$))
+        );
+      } catch {
+        this.planos = [];
+      }
+
+      try {
+        const config = await firstValueFrom(
+          this.configuracaoService.carregar().pipe(takeUntil(this.destroy$))
+        );
+        this.diasAntecedencia = resolverDiasAntecedencia(config);
+      } catch {
+        this.diasAntecedencia = resolverDiasAntecedencia();
+      }
+
+      try {
         this.campanhas = await firstValueFrom(
           this.campanhaService.listar().pipe(takeUntil(this.destroy$))
         );
@@ -451,13 +592,15 @@ export class MarketPage implements OnInit, OnDestroy {
 
       if (resetSelecao) {
         this.selecionadosIds = [];
+        this.atualizarLinhasFiltradas();
+        this.selecionarElegiveisWhatsApp();
       } else {
         this.selecionadosIds = this.selecionadosIds.filter(
           (clienteId) => !this.enviosPorCliente.has(clienteId)
         );
+        this.atualizarLinhasFiltradas();
       }
 
-      this.atualizarLinhasFiltradas();
       return true;
     } catch {
       void this.toast.error('Erro ao carregar campanha.');
@@ -555,14 +698,22 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   private montarLinhas(): ClienteCampanhaLinha[] {
-    return this.clientes.map((cliente) => ({
+    return this.clientesNoPublico.map((cliente) => ({
       id: cliente.id,
       nome: cliente.nome,
       telefone: cliente.telefone,
       telefoneValido: telefoneValidoParaWhatsApp(cliente.telefone),
       enviado: this.enviosPorCliente.has(cliente.id),
       enviadoEm: this.enviosPorCliente.get(cliente.id),
+      status: statusCliente(cliente.expiraEm),
+      cortesia: !!cliente.cortesia,
+      planoNome: cliente.plano?.nome,
     }));
+  }
+
+  private podarSelecaoForaDoPublico(): void {
+    const idsPublico = new Set(this.clientesNoPublico.map((cliente) => cliente.id));
+    this.selecionadosIds = this.selecionadosIds.filter((id) => idsPublico.has(id));
   }
 
   private passouFiltroEnvio(
