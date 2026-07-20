@@ -19,15 +19,22 @@ import {
   lerSessionJson,
   salvarSessionJson,
 } from '../../shared/utils/session-persist.util';
+import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 
 type AbaConfiguracao = 'conta' | 'empresa' | 'mensagens' | 'sistema';
+type SubAbaMensagens = 'manual' | 'automatico';
 
 const CHAVE_ABA_CONFIG = 'crm.config.abaAtiva';
+const CHAVE_SUB_ABA_MENSAGENS = 'crm.config.subAbaMensagens';
 const ABAS_VALIDAS = new Set<AbaConfiguracao>([
   'conta',
   'empresa',
   'mensagens',
   'sistema',
+]);
+const SUB_ABAS_MENSAGENS_VALIDAS = new Set<SubAbaMensagens>([
+  'manual',
+  'automatico',
 ]);
 
 @Component({
@@ -35,8 +42,10 @@ const ABAS_VALIDAS = new Set<AbaConfiguracao>([
   templateUrl: './configuracoes.page.html',
 })
 export class ConfiguracoesPage implements OnInit, OnDestroy {
+  readonly automacaoMetaHabilitada = AUTOMACAO_META_HABILITADA;
   loading = true;
   abaAtiva: AbaConfiguracao = 'empresa';
+  subAbaMensagens: SubAbaMensagens = 'manual';
   private readonly destroy$ = new Subject<void>();
   salvando = false;
   baixandoBackup = false;
@@ -90,7 +99,9 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     {
       id: 'mensagens',
       rotulo: 'Mensagens',
-      subtitulo: 'Templates e regras de envio do WhatsApp.',
+      subtitulo: AUTOMACAO_META_HABILITADA
+        ? 'Templates do WhatsApp manual e da API oficial (Meta).'
+        : 'Templates do WhatsApp manual (WhatsApp Web).',
     },
     {
       id: 'sistema',
@@ -99,7 +110,37 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     },
   ];
 
+  readonly subAbasMensagens: {
+    id: SubAbaMensagens;
+    rotulo: string;
+    descricao: string;
+  }[] = [
+    {
+      id: 'manual',
+      rotulo: 'Manual (WhatsApp Web)',
+      descricao:
+        'Textos abertos ao clicar em Cobrar, Boas-vindas, Renovar, Bloqueio etc. Abre o WhatsApp no navegador com a mensagem pronta.',
+    },
+    {
+      id: 'automatico',
+      rotulo: 'Automático (API Meta)',
+      descricao:
+        'Textos usados pelo envio automático (Automações). Devem estar alinhados com os modelos aprovados crm_lembrete e crm_cobranca na Meta.',
+    },
+  ];
+
+  get subAbasMensagensVisiveis(): typeof this.subAbasMensagens {
+    return AUTOMACAO_META_HABILITADA
+      ? this.subAbasMensagens
+      : this.subAbasMensagens.filter((s) => s.id === 'manual');
+  }
+
   get subtituloAba(): string {
+    if (this.abaAtiva === 'mensagens') {
+      const sub = this.subAbasMensagensVisiveis.find((s) => s.id === this.subAbaMensagens);
+      return sub?.descricao ?? 'Templates do WhatsApp.';
+    }
+
     return this.abas.find((aba) => aba.id === this.abaAtiva)?.subtitulo ?? 'Configurações do CRM.';
   }
 
@@ -180,6 +221,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.restaurarAba();
+    this.restaurarSubAbaMensagens();
     this.carregarConfig();
     vincularSincronizacaoPagina(
       this.sync,
@@ -260,11 +302,34 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     salvarSessionJson(CHAVE_ABA_CONFIG, aba);
   }
 
+  definirSubAbaMensagens(subAba: SubAbaMensagens): void {
+    this.subAbaMensagens = subAba;
+    salvarSessionJson(CHAVE_SUB_ABA_MENSAGENS, subAba);
+  }
+
   private restaurarAba(): void {
     const salva = lerSessionJson<string>(CHAVE_ABA_CONFIG);
     if (salva && ABAS_VALIDAS.has(salva as AbaConfiguracao)) {
       this.abaAtiva = salva as AbaConfiguracao;
     }
+  }
+
+  private restaurarSubAbaMensagens(): void {
+    if (!AUTOMACAO_META_HABILITADA) {
+      this.subAbaMensagens = 'manual';
+      return;
+    }
+
+    const salva = lerSessionJson<string>(CHAVE_SUB_ABA_MENSAGENS);
+    if (salva && SUB_ABAS_MENSAGENS_VALIDAS.has(salva as SubAbaMensagens)) {
+      this.subAbaMensagens = salva as SubAbaMensagens;
+    }
+  }
+
+  classesSubAbaMensagens(subAba: SubAbaMensagens): string {
+    return subAba === this.subAbaMensagens
+      ? 'crm-filter-chip crm-filter-chip--selected-violet'
+      : 'crm-filter-chip crm-filter-chip--idle';
   }
 
   classesAba(aba: AbaConfiguracao): string {

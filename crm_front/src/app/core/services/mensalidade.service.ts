@@ -72,4 +72,16 @@ export class MensalidadeService {
       )
       .pipe(tap(() => this.sync.notificarContatos()));
   }
+
+  registrarBloqueio(id: number): Observable<{
+    bloqueioEnviadoEm: string;
+    contatoEm: string;
+  }> {
+    return this.api
+      .put<{ bloqueioEnviadoEm: string; contatoEm: string }>(
+        `/mensalidades/${id}/bloqueio`,
+        {}
+      )
+      .pipe(tap(() => this.sync.notificarMensalidades()));
+  }
 }

@@ -4,6 +4,8 @@ import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
+import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
+import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Configuracao, Mensalidade } from '../../core/models';
 import {
@@ -11,11 +13,16 @@ import {
   formatarData,
   calcularDias,
 } from '../../shared/utils/formatters';
-import { trackByMensalidadeId } from '../../shared/utils/cobranca-lote';
+import {
+  trackByMensalidadeId,
+  montarMensagemBloqueioMensalidade,
+  mensalidadeEstaAtrasada,
+} from '../../shared/utils/cobranca-lote';
 import {
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
   clienteEhCortesia,
+  clienteParticipaCobrancas,
 } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import {
@@ -42,6 +49,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
   pagina = 1;
   readonly porPagina = 10;
   tabelaCompacta = false;
+  renovandoMensalidadeId: number | null = null;
 
   readonly opcoesFiltro: { valor: FiltroVencimento; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -55,6 +63,8 @@ export class VencimentosPage implements OnInit, OnDestroy {
     private mensalidadeService: MensalidadeService,
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
+    private renovacao: RenovacaoMensalidadeService,
+    private toast: ToastService,
     private sync: DadosSyncService
   ) {}
 
@@ -123,7 +133,12 @@ export class VencimentosPage implements OnInit, OnDestroy {
           );
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        if (!silencioso) {
+          void this.toast.error('Erro ao carregar os vencimentos.');
+        }
+      },
     });
   }
 
@@ -247,6 +262,72 @@ export class VencimentosPage implements OnInit, OnDestroy {
 
   get classesTabela(): string {
     return this.tabelaCompacta ? 'crm-table crm-table--compact' : 'crm-table';
+  }
+
+  participaCobrancas(m: Mensalidade): boolean {
+    return clienteParticipaCobrancas(m.cliente);
+  }
+
+  mensalidadeAtrasada(m: Mensalidade): boolean {
+    return mensalidadeEstaAtrasada(m.vencimento);
+  }
+
+  mensagemBloqueio(m: Mensalidade): string {
+    return montarMensagemBloqueioMensalidade(
+      m,
+      this.configuracao,
+      undefined,
+      m.cliente?.nome
+    );
+  }
+
+  onBloqueioRegistrado(evento: {
+    mensalidadeId: number;
+    bloqueioEnviadoEm: string;
+  }): void {
+    this.mensalidades = this.mensalidades.map((m) =>
+      m.id === evento.mensalidadeId
+        ? {
+            ...m,
+            bloqueioEnviadoEm: evento.bloqueioEnviadoEm,
+            ultimoContatoEm: evento.bloqueioEnviadoEm,
+          }
+        : m
+    );
+  }
+
+  async renovar(m: Mensalidade): Promise<void> {
+    if (this.renovandoMensalidadeId !== null) return;
+
+    if (clienteEhCortesia(m.cliente)) {
+      this.renovandoMensalidadeId = m.id;
+      const ok = await this.renovacao.registrarRenovacaoCortesia({
+        mensalidadeId: m.id,
+        clienteId: m.clienteId,
+        telefone: m.cliente?.telefone ?? '',
+        nome: m.cliente?.nome ?? 'Cliente',
+        referencia: m.referencia,
+        planoIdAtual: m.cliente?.planoId,
+        nomePlanoAtual: m.cliente?.plano?.nome,
+      });
+      this.renovandoMensalidadeId = null;
+      if (ok) this.carregar(true);
+      return;
+    }
+
+    this.renovandoMensalidadeId = m.id;
+    const ok = await this.renovacao.registrarRenovacao({
+      mensalidadeId: m.id,
+      clienteId: m.clienteId,
+      telefone: m.cliente?.telefone ?? '',
+      nome: m.cliente?.nome ?? 'Cliente',
+      referencia: m.referencia,
+      valorFallback: m.valor,
+      planoIdAtual: m.cliente?.planoId,
+      nomePlanoAtual: m.cliente?.plano?.nome,
+    });
+    this.renovandoMensalidadeId = null;
+    if (ok) this.carregar(true);
   }
 
   exportarCsv(): void {

@@ -64,6 +64,7 @@ export interface Mensalidade {
   status: string;
   pagoEm?: string | null;
   ultimoContatoEm?: string | null;
+  bloqueioEnviadoEm?: string | null;
   cliente?: Cliente;
 }
 
@@ -88,6 +89,8 @@ export interface Cliente {
   vencimento: number;
   valorMensal: number;
   incluirCobrancas?: boolean;
+  incluirCampanhas?: boolean;
+  ativo?: boolean;
   cortesia?: boolean;
   status: string;
   observacao?: string | null;
@@ -125,12 +128,24 @@ export interface AutomacaoConfig {
   lembretesAtivos: boolean;
   cobrancaAtrasadosAtiva: boolean;
   horariosEnvio: string;
+  horarioInicioManha?: string;
+  horarioFimManha?: string;
   intervaloAtrasadosDias: number;
   templateLembreteNome: string;
   templateCobrancaNome: string;
   templateLinguagem: string;
+  templatesMetaAtivos?: boolean;
   ultimaExecucaoEm?: string | null;
   ultimoHorarioExecutado?: string | null;
+}
+
+export interface WhatsAppPerfilApi {
+  phoneNumberId: string;
+  displayPhoneNumber: string | null;
+  verifiedName: string | null;
+  apiVersion: string;
+  tokenValido: boolean;
+  erro: string | null;
 }
 
 export interface EnvioAutomatico {
@@ -139,6 +154,7 @@ export interface EnvioAutomatico {
   clienteId: number;
   clienteNome: string;
   tipo: 'LEMBRETE' | 'COBRANCA';
+  pontoDisparo?: string | null;
   telefone: string;
   status: 'ENVIADO' | 'FALHA' | 'PENDENTE';
   erro?: string | null;
@@ -149,12 +165,15 @@ export interface EnvioAutomatico {
 export interface AutomacaoPainel {
   config: AutomacaoConfig;
   whatsappConfigurado: boolean;
+  whatsappPerfil?: WhatsAppPerfilApi | null;
   pixConfigurado: boolean;
   nomeEmpresa: string;
   envioComSucesso: boolean;
+  templatesProntos: boolean;
   diasAntecedencia: number;
-  horarios: string[];
-  simulacao: { lembretes: number; cobrancas: number };
+  janelaManha: { inicio: string; fim: string };
+  filaHoje: { pendentes: number; enviados: number; falhas: number };
+  simulacao: { lembretes: number; cobrancas: number; porPonto?: Record<string, number> };
   envios: EnvioAutomatico[];
 }
 
@@ -167,6 +186,7 @@ export interface ResultadoExecucaoAutomacao {
     mensalidadeId: number;
     clienteNome: string;
     tipo: 'LEMBRETE' | 'COBRANCA';
+    pontoDisparo?: string;
     status: 'ENVIADO' | 'FALHA' | 'IGNORADO';
     erro?: string;
   }>;
@@ -239,6 +259,7 @@ export interface DashboardResumo {
     mensalidadeReferencia: string | null;
     mensalidadeValor: number | null;
     mensalidadeVencimento: string | null;
+    bloqueioEnviadoEm?: string | null;
   }>;
   cobrancaDiaria: {
     totalElegiveis: number;

@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
+import { ModalController, AlertController } from '@ionic/angular';
 import { Subject } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
-import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
 import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
@@ -14,7 +14,7 @@ import { DispositivoService } from '../../core/services/dispositivo.service';
 import { AplicativoService } from '../../core/services/aplicativo.service';
 import { Cliente, Configuracao, Dispositivo, Mensalidade, Aplicativo } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
-import { formatarValor, formatarData, statusCliente as calcularStatusCliente, StatusCliente } from '../../shared/utils/formatters';
+import { formatarValor, formatarData, resolverStatusCliente, StatusCliente } from '../../shared/utils/formatters';
 import { rotuloValidadePlano } from '../../shared/utils/planos';
 import {
   mensalidadeEstaAtrasada,
@@ -27,7 +27,6 @@ import {
   temAppParaEnviar,
   resolverAplicativoDaTela,
 } from '../../shared/utils/onboarding';
-import { montarMensagemRecibo, oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
@@ -46,6 +45,8 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   loading = true;
   alternandoCobrancas = false;
   alternandoCortesia = false;
+  alternandoAtividade = false;
+  renovandoMensalidadeId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -55,11 +56,12 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     private aplicativoService: AplicativoService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
-    private pagamentoUi: PagamentoUiService,
+    private renovacao: RenovacaoMensalidadeService,
     private modalCtrl: ModalController,
     private toast: ToastService,
     private confirmacao: ConfirmacaoService,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private alertCtrl: AlertController
   ) {}
 
   mostrarSenhaIptv = false;
@@ -146,6 +148,137 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     return clienteEhCortesia(this.cliente);
   }
 
+  get clienteEstaAtivo(): boolean {
+    return this.cliente?.ativo !== false;
+  }
+
+  get participaCampanhas(): boolean {
+    return this.cliente?.incluirCampanhas !== false;
+  }
+
+  async alternarAtividade(): Promise<void> {
+    if (!this.cliente || this.alternandoAtividade) {
+      return;
+    }
+
+    const marcarAtivo = !this.clienteEstaAtivo;
+
+    if (!marcarAtivo) {
+      const confirmado = await this.confirmacao.confirmar({
+        header: 'Marcar como inativo',
+        message:
+          'O cliente sairá das cobranças automáticas (Cobrança Diária, lembretes e rotinas de WhatsApp).',
+        confirmText: 'Continuar',
+      });
+      if (!confirmado) {
+        return;
+      }
+
+      const incluirCampanhas = await this.perguntarParticipacaoCampanhas();
+      if (incluirCampanhas === null) {
+        return;
+      }
+
+      this.salvarAtividade(false, incluirCampanhas, false);
+      return;
+    }
+
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Marcar como ativo',
+      message: 'O cliente voltará a poder participar de cobranças e campanhas.',
+      confirmText: 'Continuar',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    const incluirCampanhas = await this.perguntarParticipacaoCampanhas();
+    if (incluirCampanhas === null) {
+      return;
+    }
+
+    const incluirCobrancas = await this.confirmacao.confirmar({
+      header: 'Incluir nas cobranças?',
+      message:
+        'Deseja incluir este cliente na Cobrança Diária e nas rotinas automáticas de WhatsApp?',
+      confirmText: 'Incluir',
+      cancelText: 'Não incluir',
+    });
+
+    this.salvarAtividade(true, incluirCampanhas, incluirCobrancas);
+  }
+
+  private salvarAtividade(
+    ativo: boolean,
+    incluirCampanhas: boolean,
+    incluirCobrancas: boolean
+  ): void {
+    if (!this.cliente) {
+      return;
+    }
+
+    this.alternandoAtividade = true;
+    this.clienteService
+      .definirAtividade(this.cliente.id, {
+        ativo,
+        incluirCampanhas,
+        incluirCobrancas,
+      })
+      .subscribe({
+        next: (cliente) => {
+          this.cliente = cliente;
+          this.alternandoAtividade = false;
+          void this.toast.success(
+            ativo ? 'Cliente marcado como ativo.' : 'Cliente marcado como inativo.'
+          );
+        },
+        error: (err) => {
+          this.alternandoAtividade = false;
+          void this.toast.error(err.message);
+        },
+      });
+  }
+
+  private perguntarParticipacaoCampanhas(): Promise<boolean | null> {
+    return new Promise((resolve) => {
+      void this.montarAlertaCampanhas(resolve);
+    });
+  }
+
+  private async montarAlertaCampanhas(
+    resolve: (value: boolean | null) => void
+  ): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Campanhas do Market',
+      message:
+        'Este cliente deve continuar recebendo campanhas promocionais e avisos manuais do Market?',
+      cssClass: 'crm-alert',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          handler: () => resolve(null),
+        },
+        {
+          text: 'Não participar',
+          handler: () => {
+            resolve(false);
+            return true;
+          },
+        },
+        {
+          text: 'Participar',
+          handler: () => {
+            resolve(true);
+            return true;
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
   async alternarCortesia(): Promise<void> {
     if (!this.cliente || this.alternandoCortesia) {
       return;
@@ -181,23 +314,20 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   }
 
   async renovarCortesia(m: Mensalidade): Promise<void> {
-    if (!this.cliente) return;
+    if (!this.cliente || this.renovandoMensalidadeId !== null) return;
 
-    const confirmado = await this.confirmacao.confirmar({
-      header: 'Renovar cortesia',
-      message: 'Estender a validade do plano sem gerar cobrança?',
-      confirmText: 'Renovar',
+    this.renovandoMensalidadeId = m.id;
+    const ok = await this.renovacao.registrarRenovacaoCortesia({
+      mensalidadeId: m.id,
+      clienteId: this.cliente.id,
+      telefone: this.cliente.telefone,
+      nome: this.cliente.nome,
+      referencia: m.referencia,
+      planoIdAtual: this.cliente.planoId,
+      nomePlanoAtual: this.cliente.plano?.nome,
     });
-
-    if (!confirmado) return;
-
-    this.mensalidadeService.renovarCortesia(m.id).subscribe({
-      next: () => {
-        void this.toast.success('Cortesia renovada.');
-        this.carregar(this.cliente!.id);
-      },
-      error: (err) => void this.toast.error(err.message),
-    });
+    this.renovandoMensalidadeId = null;
+    if (ok) this.carregar(this.cliente.id);
   }
 
   async alternarInclusaoCobrancas(): Promise<void> {
@@ -261,18 +391,22 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     return mensalidadeEstaAtrasada(m.vencimento);
   }
 
-  mensagemRecibo(m: Mensalidade): string {
-    const cfg = this.configuracao;
-    return montarMensagemRecibo(
-      {
-        nome: this.cliente?.nome ?? '',
-        referencia: m.referencia,
-        valor: m.valor,
-        vencimento: m.vencimento,
-        pagoEm: m.pagoEm ?? new Date().toISOString(),
-        empresa: cfg?.nomeEmpresa ?? 'JPTV',
-      },
-      cfg?.mensagemRecibo
+  onBloqueioRegistrado(evento: {
+    mensalidadeId: number;
+    bloqueioEnviadoEm: string;
+  }): void {
+    if (!this.cliente?.mensalidades) {
+      return;
+    }
+
+    this.cliente.mensalidades = this.cliente.mensalidades.map((m) =>
+      m.id === evento.mensalidadeId
+        ? {
+            ...m,
+            bloqueioEnviadoEm: evento.bloqueioEnviadoEm,
+            ultimoContatoEm: evento.bloqueioEnviadoEm,
+          }
+        : m
     );
   }
 
@@ -302,27 +436,31 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     return !!app && temAppParaEnviar(this.cliente, app);
   }
 
-  async pagar(m: Mensalidade): Promise<void> {
-    if (!this.cliente) return;
+  async renovar(m: Mensalidade): Promise<void> {
+    if (!this.cliente || this.renovandoMensalidadeId !== null) return;
 
-    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
-    if (!pagoEm) return;
+    if (this.ehCortesia) {
+      await this.renovarCortesia(m);
+      return;
+    }
 
-    this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
-      next: (resultado) => {
-        void oferecerMensagemRenovacao({
-          telefone: this.cliente!.telefone,
-          nome: this.cliente!.nome,
-          referencia: m.referencia,
-          valor: resultado.valorRenovacao ?? m.valor,
-          novoVencimento: resultado.novoVencimento,
-          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
-          templateRenovacao: this.configuracao?.mensagemRenovacao,
-        });
-        this.carregar(this.cliente!.id);
-      },
-      error: (err) => void this.toast.error(err.message),
+    this.renovandoMensalidadeId = m.id;
+    const ok = await this.renovacao.registrarRenovacao({
+      mensalidadeId: m.id,
+      clienteId: this.cliente.id,
+      telefone: this.cliente.telefone,
+      nome: this.cliente.nome,
+      referencia: m.referencia,
+      valorFallback: m.valor,
+      planoIdAtual: this.cliente.planoId,
+      nomePlanoAtual: this.cliente.plano?.nome,
     });
+    this.renovandoMensalidadeId = null;
+    if (ok) this.carregar(this.cliente.id);
+  }
+
+  estaRenovando(m: Mensalidade): boolean {
+    return this.renovandoMensalidadeId === m.id;
   }
 
   async editar(): Promise<void> {
@@ -423,7 +561,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   fmtData = formatarData;
 
   status(): StatusCliente {
-    return calcularStatusCliente(this.cliente?.expiraEm);
+    return resolverStatusCliente(this.cliente ?? undefined);
   }
 
   get tipoStatusBadge(): StatusBadgeTipo {

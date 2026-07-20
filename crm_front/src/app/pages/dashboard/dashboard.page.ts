@@ -4,8 +4,9 @@ import { Subject } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
-import { MensalidadeService } from '../../core/services/mensalidade.service';
-import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ApiHealthService } from '../../core/services/api-health.service';
 import { AlertaOperacional, Configuracao, DashboardResumo } from '../../core/models';
 import {
   calcularDias,
@@ -15,11 +16,10 @@ import {
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
 import { rotuloUltimoContato } from '../../shared/utils/contato';
+import { montarMensagemBloqueioMensalidade } from '../../shared/utils/cobranca-lote';
+import { Mensalidade } from '../../core/models';
 import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
-import { ToastService } from '../../core/services/toast.service';
-import { ApiHealthService } from '../../core/services/api-health.service';
-import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 import {
   classesAlertaOperacional,
   iconeAlertaOperacional,
@@ -89,8 +89,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   constructor(
     private dashboardService: DashboardService,
     private configuracaoService: ConfiguracaoService,
-    private mensalidadeService: MensalidadeService,
-    private pagamentoUi: PagamentoUiService,
+    private renovacao: RenovacaoMensalidadeService,
     private sync: DadosSyncService,
     private toast: ToastService,
     private router: Router,
@@ -299,7 +298,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.permanenciaMediaMeses = `${m.permanenciaMediaMeses} meses`;
   }
 
-  async quitarCliente(cliente: ClienteAtencaoResumo): Promise<void> {
+  async renovarCliente(cliente: ClienteAtencaoResumo): Promise<void> {
     if (!cliente.mensalidadePendenteId) {
       void this.toast.warning('Este cliente não possui mensalidade pendente.');
       return;
@@ -309,34 +308,22 @@ export class DashboardPage implements OnInit, OnDestroy {
       return;
     }
 
-    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
-    if (!pagoEm) {
-      return;
-    }
-
     const mensalidadeId = cliente.mensalidadePendenteId;
     this.pagandoMensalidadeId = mensalidadeId;
 
-    this.mensalidadeService.registrarPagamento(mensalidadeId, pagoEm).subscribe({
-      next: (resultado) => {
-        this.pagandoMensalidadeId = null;
-        void oferecerMensagemRenovacao({
-          telefone: cliente.telefone,
-          nome: cliente.nome,
-          referencia: cliente.mensalidadeReferencia ?? '',
-          valor: resultado.valorRenovacao ?? cliente.mensalidadeValor ?? 0,
-          novoVencimento: resultado.novoVencimento,
-          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
-          templateRenovacao: this.configuracao?.mensagemRenovacao,
-        });
-        void this.toast.success('Pagamento registrado.');
-        this.carregar(true);
-      },
-      error: (err: Error) => {
-        this.pagandoMensalidadeId = null;
-        void this.toast.error(err.message);
-      },
+    const ok = await this.renovacao.registrarRenovacao({
+      mensalidadeId,
+      clienteId: cliente.id,
+      telefone: cliente.telefone,
+      nome: cliente.nome,
+      referencia: cliente.mensalidadeReferencia ?? '',
+      valorFallback: cliente.mensalidadeValor ?? 0,
     });
+
+    this.pagandoMensalidadeId = null;
+    if (ok) {
+      this.carregar(true);
+    }
   }
 
   estaPagando(cliente: ClienteAtencaoResumo): boolean {
@@ -344,6 +331,46 @@ export class DashboardPage implements OnInit, OnDestroy {
       cliente.mensalidadePendenteId !== null &&
       this.pagandoMensalidadeId === cliente.mensalidadePendenteId
     );
+  }
+
+  podeAvisarBloqueio(cliente: ClienteAtencaoResumo): boolean {
+    return (
+      cliente.mensalidadePendenteId !== null &&
+      !!cliente.mensalidadeVencimento &&
+      calcularDias(cliente.mensalidadeVencimento) < 0
+    );
+  }
+
+  mensagemBloqueio(cliente: ClienteAtencaoResumo): string {
+    return montarMensagemBloqueioMensalidade(
+      this.mensalidadeAtencao(cliente),
+      this.configuracao,
+      undefined,
+      cliente.nome
+    );
+  }
+
+  onBloqueioRegistrado(evento: {
+    mensalidadeId: number;
+    bloqueioEnviadoEm: string;
+  }): void {
+    this.clientesAtencao = this.clientesAtencao.map((c) =>
+      c.mensalidadePendenteId === evento.mensalidadeId
+        ? { ...c, bloqueioEnviadoEm: evento.bloqueioEnviadoEm }
+        : c
+    );
+  }
+
+  private mensalidadeAtencao(cliente: ClienteAtencaoResumo): Mensalidade {
+    return {
+      id: cliente.mensalidadePendenteId!,
+      clienteId: cliente.id,
+      referencia: cliente.mensalidadeReferencia ?? '',
+      valor: cliente.mensalidadeValor ?? 0,
+      vencimento: cliente.mensalidadeVencimento!,
+      status: 'PENDENTE',
+      bloqueioEnviadoEm: cliente.bloqueioEnviadoEm ?? null,
+    };
   }
 
   private montarSubtitulo(): string {

@@ -102,6 +102,17 @@ describe('clienteParticipaCobrancas', () => {
       false
     );
   });
+
+  it('exclui clientes inativos', () => {
+    assert.equal(clienteParticipaCobrancas({ ativo: false }), false);
+    assert.equal(
+      clienteParticipaCobrancas({
+        ativo: false,
+        incluirCobrancas: true,
+      }),
+      false
+    );
+  });
 });
 
 describe('calcularDiasVencimento', () => {

@@ -4,6 +4,7 @@ import {
   formatReferencia,
   parseDataSomenteDia,
 } from '../utils/helpers/dateHelpers.js';
+import { calcularDiasVencimento } from '../utils/helpers/cobrancaDiariaHelpers.js';
 
 type MensalidadeComCliente = NonNullable<
   Awaited<ReturnType<typeof mensalidadeRepository.findById>>
@@ -121,6 +122,31 @@ export class MensalidadeService {
     await mensalidadeRepository.registrarContato(id, dataContato);
 
     return dataContato;
+  }
+
+  async registrarBloqueio(id: number, bloqueioEm?: string) {
+    const mensalidade = await mensalidadeRepository.findById(id);
+
+    if (!mensalidade) {
+      throw new MensalidadeNotFoundError();
+    }
+
+    if (mensalidade.status === 'PAGO') {
+      throw new ValidationError(
+        'Não é possível avisar bloqueio em mensalidade paga.'
+      );
+    }
+
+    if (calcularDiasVencimento(mensalidade.vencimento) >= 0) {
+      throw new ValidationError(
+        'O aviso de bloqueio só está disponível após o vencimento.'
+      );
+    }
+
+    const dataBloqueio = parseDataContato(bloqueioEm);
+    await mensalidadeRepository.registrarBloqueio(id, dataBloqueio);
+
+    return dataBloqueio;
   }
 
   async registrarContatos(ids: number[], contatoEm?: string) {

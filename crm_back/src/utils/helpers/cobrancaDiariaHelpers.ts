@@ -36,8 +36,15 @@ export function clienteEhCortesia(
 }
 
 export function clienteParticipaCobrancas(
-  cliente?: { incluirCobrancas?: boolean | null; cortesia?: boolean | null } | null
+  cliente?: {
+    ativo?: boolean | null;
+    incluirCobrancas?: boolean | null;
+    cortesia?: boolean | null;
+  } | null
 ): boolean {
+  if (cliente?.ativo === false) {
+    return false;
+  }
   if (clienteEhCortesia(cliente)) {
     return false;
   }

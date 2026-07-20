@@ -46,6 +46,19 @@ export class ClienteService {
       .pipe(tap(() => this.sync.notificarClientes()));
   }
 
+  definirAtividade(
+    id: number,
+    dados: {
+      ativo: boolean;
+      incluirCampanhas: boolean;
+      incluirCobrancas: boolean;
+    }
+  ): Observable<Cliente> {
+    return this.api
+      .put<Cliente>(`/clientes/${id}/atividade`, dados)
+      .pipe(tap(() => this.sync.notificarClientes()));
+  }
+
   excluir(id: number): Observable<void> {
     return this.api
       .delete(`/clientes/${id}`)

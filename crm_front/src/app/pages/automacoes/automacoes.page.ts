@@ -11,6 +11,12 @@ import {
 } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  CRONOGRAMA_COBRANCAS_AUTOMACAO,
+  CRONOGRAMA_LEMBRETES_AUTOMACAO,
+  rotuloPontoDisparo,
+} from '../../shared/utils/automacao-disparo';
+import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 
 interface PassoChecklist {
   id: string;
@@ -29,6 +35,7 @@ interface ModeloMeta {
   templateUrl: './automacoes.page.html',
 })
 export class AutomacoesPage implements OnInit, OnDestroy {
+  readonly automacaoMetaHabilitada = AUTOMACAO_META_HABILITADA;
   loading = true;
   salvando = false;
   executando = false;
@@ -36,7 +43,6 @@ export class AutomacoesPage implements OnInit, OnDestroy {
 
   painel: AutomacaoPainel | null = null;
   form: AutomacaoConfig = this.formPadrao();
-  horariosTexto = '09:00,18:00';
   ultimoResultado: ResultadoExecucaoAutomacao | null = null;
 
   readonly fluxosAtuais = [
@@ -86,7 +92,11 @@ export class AutomacoesPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.carregar();
+    if (this.automacaoMetaHabilitada) {
+      this.carregar();
+    } else {
+      this.loading = false;
+    }
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
@@ -106,12 +116,51 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     }
   }
 
+  readonly cronogramaLembretes = CRONOGRAMA_LEMBRETES_AUTOMACAO;
+  readonly cronogramaCobrancas = CRONOGRAMA_COBRANCAS_AUTOMACAO;
+
   get diasAntecedencia(): number {
     return this.painel?.diasAntecedencia ?? 5;
   }
 
   get whatsappConfigurado(): boolean {
     return this.painel?.whatsappConfigurado ?? false;
+  }
+
+  get whatsappPerfil() {
+    return this.painel?.whatsappPerfil ?? null;
+  }
+
+  get whatsappResumoLinha(): string {
+    const perfil = this.whatsappPerfil;
+    if (!perfil) {
+      return this.whatsappConfigurado
+        ? 'Credenciais no .env detectadas.'
+        : 'API não configurada.';
+    }
+    const partes: string[] = [];
+    if (perfil.displayPhoneNumber) {
+      partes.push(perfil.displayPhoneNumber);
+    }
+    partes.push(`ID ${perfil.phoneNumberId}`);
+    if (perfil.verifiedName) {
+      partes.push(perfil.verifiedName);
+    }
+    return partes.join(' · ');
+  }
+
+  get whatsappTokenOk(): boolean {
+    return this.whatsappPerfil?.tokenValido === true;
+  }
+
+  get whatsappBadgeTexto(): string {
+    if (!this.whatsappConfigurado) return 'API não configurada';
+    if (this.whatsappPerfil && !this.whatsappTokenOk) return 'Token Meta expirado';
+    return 'API configurada';
+  }
+
+  get whatsappBadgeOk(): boolean {
+    return this.whatsappConfigurado && (this.whatsappTokenOk || !this.whatsappPerfil);
   }
 
   get envios(): EnvioAutomatico[] {
@@ -121,7 +170,11 @@ export class AutomacoesPage implements OnInit, OnDestroy {
   get simulacaoLeitura(): string {
     if (!this.painel) return '—';
     const { lembretes, cobrancas } = this.painel.simulacao;
-    return `${lembretes} lembrete(s) · ${cobrancas} cobrança(s) elegíveis agora`;
+    return `${lembretes} lembrete(s) · ${cobrancas} cobrança(s) no gatilho de hoje`;
+  }
+
+  contagemPonto(ponto: string): number {
+    return this.painel?.simulacao?.porPonto?.[ponto] ?? 0;
   }
 
   get simulacaoTotal(): number {
@@ -130,11 +183,39 @@ export class AutomacoesPage implements OnInit, OnDestroy {
   }
 
   get templatesProntos(): boolean {
-    return this.painel?.envioComSucesso ?? false;
+    return (
+      this.painel?.templatesProntos ??
+      this.painel?.envioComSucesso ??
+      this.form.templatesMetaAtivos ??
+      false
+    );
   }
 
   get aguardandoTemplatesMeta(): boolean {
     return this.whatsappConfigurado && !this.templatesProntos;
+  }
+
+  get templatesAprovadosNaMeta(): boolean {
+    return this.form.templatesMetaAtivos === true;
+  }
+
+  get janelaManhaTexto(): string {
+    const inicio =
+      this.painel?.janelaManha?.inicio ??
+      this.form.horarioInicioManha ??
+      '08:00';
+    const fim =
+      this.painel?.janelaManha?.fim ?? this.form.horarioFimManha ?? '09:00';
+    return `${inicio}–${fim}`;
+  }
+
+  get filaHojeResumo(): string {
+    const fila = this.painel?.filaHoje;
+    if (!fila) return '—';
+    if (fila.pendentes + fila.enviados + fila.falhas === 0) {
+      return 'Fila ainda não montada hoje';
+    }
+    return `${fila.pendentes} pendente(s) · ${fila.enviados} enviado(s) · ${fila.falhas} falha(s)`;
   }
 
   get automacoesAtivas(): boolean {
@@ -146,8 +227,10 @@ export class AutomacoesPage implements OnInit, OnDestroy {
       {
         id: 'env',
         titulo: 'Credenciais no backend',
-        descricao: 'WHATSAPP_PHONE_NUMBER_ID e WHATSAPP_ACCESS_TOKEN no crm_back/.env.',
-        concluido: this.whatsappConfigurado,
+        descricao: this.whatsappPerfil
+          ? `${this.whatsappResumoLinha}${this.whatsappTokenOk ? ' · token validado na Meta' : this.whatsappPerfil.erro ? ` · ${this.whatsappPerfil.erro}` : ''}`
+          : 'WHATSAPP_PHONE_NUMBER_ID e WHATSAPP_ACCESS_TOKEN no crm_back/.env.',
+        concluido: this.whatsappConfigurado && this.whatsappTokenOk,
       },
       {
         id: 'pix',
@@ -158,9 +241,9 @@ export class AutomacoesPage implements OnInit, OnDestroy {
       {
         id: 'templates',
         titulo: 'Templates Meta aprovados',
-        descricao: this.aguardandoTemplatesMeta
-          ? 'crm_lembrete e crm_cobranca em análise — aguarde status Ativo no Gerenciador do WhatsApp.'
-          : 'crm_lembrete e crm_cobranca (Utility, pt_BR) com status Ativo.',
+        descricao: this.templatesProntos
+          ? 'crm_lembrete e crm_cobranca aprovados e liberados no CRM.'
+          : 'crm_lembrete e crm_cobranca (Utility, pt_BR) — confirme após status Ativo na Meta.',
         concluido: this.templatesProntos,
       },
       {
@@ -185,7 +268,6 @@ export class AutomacoesPage implements OnInit, OnDestroy {
       next: (painel) => {
         this.painel = painel;
         this.form = { ...painel.config };
-        this.horariosTexto = painel.horarios.join(', ');
         this.loading = false;
       },
       error: () => {
@@ -195,11 +277,28 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     });
   }
 
+  confirmarTemplatesAprovados(): void {
+    this.salvando = true;
+    this.automacaoService.salvar({ templatesMetaAtivos: true }).subscribe({
+      next: (config) => {
+        this.form = { ...this.form, ...config };
+        this.salvando = false;
+        void this.toast.success(
+          'Modelos crm_lembrete e crm_cobranca marcados como aprovados. Você já pode ativar o envio automático.'
+        );
+        this.carregar(true);
+      },
+      error: (err: Error) => {
+        this.salvando = false;
+        void this.toast.error(err.message ?? 'Erro ao salvar.');
+      },
+    });
+  }
+
   salvar(): void {
     this.salvando = true;
     const payload: Partial<AutomacaoConfig> = {
       ...this.form,
-      horariosEnvio: this.horariosTexto,
     };
 
     this.automacaoService.salvar(payload).subscribe({
@@ -251,7 +350,10 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     return status;
   }
 
-  rotuloTipoEnvio(tipo: string): string {
+  rotuloTipoEnvio(tipo: string, pontoDisparo?: string | null): string {
+    if (pontoDisparo) {
+      return rotuloPontoDisparo(pontoDisparo);
+    }
     if (tipo === 'LEMBRETE') return 'Lembrete';
     if (tipo === 'COBRANCA') return 'Cobrança';
     return tipo;
@@ -272,11 +374,14 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     return {
       lembretesAtivos: false,
       cobrancaAtrasadosAtiva: false,
-      horariosEnvio: '09:00,18:00',
+      horariosEnvio: '08:00',
+      horarioInicioManha: '08:00',
+      horarioFimManha: '09:00',
       intervaloAtrasadosDias: 3,
       templateLembreteNome: 'crm_lembrete',
       templateCobrancaNome: 'crm_cobranca',
       templateLinguagem: 'pt_BR',
+      templatesMetaAtivos: false,
     };
   }
 }

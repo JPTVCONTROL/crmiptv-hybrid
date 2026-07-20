@@ -5,10 +5,14 @@ import { mensalidadeRepository } from '../repositories/mensalidadeRepository.js'
 import {
   calcularDiasVencimento,
   clienteParticipaCobrancas,
-  elegivelCobrancaDiaria,
   resolverDiasAntecedencia,
 } from '../utils/helpers/cobrancaDiariaHelpers.js';
-import { contatoRegistradoHoje } from '../utils/helpers/contatoHelpers.js';
+import {
+  resolverPontoCobranca,
+  resolverPontoLembrete,
+  rotuloPontoDisparo,
+  type PontoDisparoAutomacao,
+} from '../utils/helpers/automacaoDisparoHelpers.js';
 import {
   montarMensagemCobrancaAutomacao,
   parametrosTemplateWhatsApp,
@@ -16,8 +20,19 @@ import {
 } from '../utils/helpers/mensagemWhatsAppHelpers.js';
 import {
   enviarTemplateWhatsApp,
+  obterPerfilWhatsApp,
   whatsappApiConfigurado,
 } from '../utils/helpers/whatsappCloudHelpers.js';
+import {
+  estaNaJanelaManha,
+  horarioAtualLocal,
+  minutosAtuaisLocal,
+  minutosDoHorario,
+  montarDataAgendada,
+  referenciaDiaLocal,
+  sortearMinutosNaJanela,
+  validarJanelaManha,
+} from '../utils/helpers/automacaoJanelaHelpers.js';
 import type { UpdateAutomacaoConfigDto } from '../models/index.js';
 
 export class ValidationError extends Error {
@@ -29,6 +44,11 @@ export class ValidationError extends Error {
 
 export type TipoEnvioAutomacao = 'LEMBRETE' | 'COBRANCA';
 
+export interface ResolucaoEnvioAutomacao {
+  tipo: TipoEnvioAutomacao;
+  pontoDisparo: PontoDisparoAutomacao;
+}
+
 export interface ResultadoExecucaoAutomacao {
   horario: string;
   enviados: number;
@@ -38,54 +58,44 @@ export interface ResultadoExecucaoAutomacao {
     mensalidadeId: number;
     clienteNome: string;
     tipo: TipoEnvioAutomacao;
+    pontoDisparo?: PontoDisparoAutomacao;
     status: 'ENVIADO' | 'FALHA' | 'IGNORADO';
     erro?: string;
   }>;
 }
 
-function parseHorarios(valor: string): string[] {
-  return valor
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => /^\d{2}:\d{2}$/.test(item));
-}
-
-function horarioAtual(): string {
-  const agora = new Date();
-  const horas = String(agora.getHours()).padStart(2, '0');
-  const minutos = String(agora.getMinutes()).padStart(2, '0');
-  return `${horas}:${minutos}`;
-}
-
-function diasDesde(data: Date): number {
-  const inicio = new Date(data);
-  inicio.setHours(0, 0, 0, 0);
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  return Math.floor((hoje.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
-}
-
 export class AutomacaoService {
   async obterPainel() {
-    const [config, configuracao, envios] = await Promise.all([
+    const [config, configuracao, envios, whatsappPerfil] = await Promise.all([
       automacaoRepository.findOrCreateConfig(),
       configuracaoRepository.findOrCreate(),
       automacaoRepository.listarEnvios(30),
+      obterPerfilWhatsApp(),
     ]);
 
     const simulacao = await this.simularElegiveis(config, configuracao);
     const envioComSucesso = envios.some((envio) => envio.status === 'ENVIADO');
+    const templatesProntos =
+      envioComSucesso || config.templatesMetaAtivos;
+
+    const referenciaDia = referenciaDiaLocal();
+    const filaHoje = await automacaoRepository.contagemFilaHoje(referenciaDia);
+    const inicioManha = config.horarioInicioManha || '08:00';
+    const fimManha = config.horarioFimManha || '09:00';
 
     return {
       config: this.serializarConfig(config),
       whatsappConfigurado: whatsappApiConfigurado(),
+      whatsappPerfil,
       pixConfigurado: Boolean(configuracao.chavePix?.trim()),
       nomeEmpresa: configuracao.nomeEmpresa?.trim() || 'Sua empresa',
       envioComSucesso,
+      templatesProntos,
       diasAntecedencia: resolverDiasAntecedencia(
         configuracao.diasAntecedenciaLembrete
       ),
-      horarios: parseHorarios(config.horariosEnvio),
+      janelaManha: { inicio: inicioManha, fim: fimManha },
+      filaHoje,
       simulacao,
       envios: envios.map((envio) => ({
         id: envio.id,
@@ -93,6 +103,7 @@ export class AutomacaoService {
         clienteId: envio.clienteId,
         clienteNome: envio.mensalidade?.cliente?.nome ?? 'Cliente',
         tipo: envio.tipo,
+        pontoDisparo: envio.pontoDisparo,
         telefone: envio.telefone,
         status: envio.status,
         erro: envio.erro,
@@ -103,69 +114,76 @@ export class AutomacaoService {
   }
 
   async salvar(dados: UpdateAutomacaoConfigDto) {
-    if (dados.horariosEnvio !== undefined) {
-      const horarios = parseHorarios(String(dados.horariosEnvio));
-      if (horarios.length === 0) {
-        throw new ValidationError(
-          'Informe ao menos um horário válido (HH:MM), separados por vírgula.'
-        );
-      }
-      dados.horariosEnvio = horarios.join(',');
-    }
+    const atual = await automacaoRepository.findOrCreateConfig();
+    const inicio =
+      dados.horarioInicioManha?.trim() ?? atual.horarioInicioManha ?? '08:00';
+    const fim = dados.horarioFimManha?.trim() ?? atual.horarioFimManha ?? '09:00';
 
-    if (dados.intervaloAtrasadosDias !== undefined) {
-      const intervalo = Number(dados.intervaloAtrasadosDias);
-      if (!Number.isInteger(intervalo) || intervalo < 1 || intervalo > 30) {
+    if (
+      dados.horarioInicioManha !== undefined ||
+      dados.horarioFimManha !== undefined
+    ) {
+      try {
+        validarJanelaManha(inicio, fim);
+      } catch (error) {
         throw new ValidationError(
-          'Intervalo de cobrança de atrasados deve ser entre 1 e 30 dias.'
+          error instanceof Error ? error.message : 'Janela matinal inválida.'
         );
       }
+      dados.horarioInicioManha = inicio;
+      dados.horarioFimManha = fim;
+      dados.horariosEnvio = inicio;
     }
 
     const config = await automacaoRepository.upsertConfig(dados);
     return this.serializarConfig(config);
   }
 
-  deveExecutarAgora(config: AutomacaoConfig): string | null {
+  deveProcessarRotinaManha(config: AutomacaoConfig): boolean {
     if (!config.lembretesAtivos && !config.cobrancaAtrasadosAtiva) {
-      return null;
+      return false;
     }
 
-    const agora = horarioAtual();
-    const horarios = parseHorarios(config.horariosEnvio);
-    if (!horarios.includes(agora)) {
-      return null;
-    }
+    const inicio = config.horarioInicioManha || '08:00';
+    const fim = config.horarioFimManha || '09:00';
+    const minutos = minutosAtuaisLocal();
+    const inicioMin = minutosDoHorario(inicio);
+    const fimMin = minutosDoHorario(fim);
 
-    if (
-      config.ultimoHorarioExecutado === agora &&
-      config.ultimaExecucaoEm &&
-      config.ultimaExecucaoEm.getTime() > Date.now() - 55_000
-    ) {
-      return null;
-    }
-
-    return agora;
+    return minutos >= inicioMin && minutos < fimMin + 15;
   }
 
-  async executar(forcar = false): Promise<ResultadoExecucaoAutomacao> {
+  async processarRotinaManha(): Promise<ResultadoExecucaoAutomacao | null> {
     const config = await automacaoRepository.findOrCreateConfig();
-    const horario = forcar ? horarioAtual() : this.deveExecutarAgora(config);
 
-    if (!horario) {
-      throw new ValidationError(
-        forcar
-          ? 'Não foi possível iniciar a execução manual.'
-          : 'Fora do horário de envio ou automações desativadas.'
-      );
+    if (!this.deveProcessarRotinaManha(config)) {
+      return null;
     }
 
-    if (
-      !forcar &&
-      !config.lembretesAtivos &&
-      !config.cobrancaAtrasadosAtiva
-    ) {
-      throw new ValidationError('Ative lembretes ou cobrança de atrasados.');
+    if (!whatsappApiConfigurado()) {
+      return null;
+    }
+
+    const inicio = config.horarioInicioManha || '08:00';
+    const fim = config.horarioFimManha || '09:00';
+    const referenciaDia = referenciaDiaLocal();
+
+    if (estaNaJanelaManha(inicio, fim)) {
+      await this.montarFilaManha(config, referenciaDia, inicio, fim);
+    }
+
+    return this.processarFilaPendente(config, referenciaDia);
+  }
+
+  /** Execução manual imediata (teste) — ignora fila e janela matinal. */
+  async executar(forcar = false): Promise<ResultadoExecucaoAutomacao> {
+    const config = await automacaoRepository.findOrCreateConfig();
+    const horario = horarioAtualLocal();
+
+    if (!forcar) {
+      throw new ValidationError(
+        'Use o agendador matinal ou Executar agora para teste manual.'
+      );
     }
 
     if (!whatsappApiConfigurado()) {
@@ -177,7 +195,6 @@ export class AutomacaoService {
     const configuracao = await configuracaoRepository.findOrCreate();
     const mensalidades = await mensalidadeRepository.findAll();
     const pendentes = mensalidades.filter((m) => m.status === 'PENDENTE');
-    const ignorarToggles = forcar;
 
     const resultado: ResultadoExecucaoAutomacao = {
       horario,
@@ -188,154 +205,295 @@ export class AutomacaoService {
     };
 
     for (const mensalidade of pendentes) {
-      const tipo = await this.resolverTipoEnvio(
-        mensalidade,
-        config,
-        configuracao,
-        { ignorarToggles }
-      );
-      if (!tipo) {
+      const resolucao = await this.resolverTipoEnvio(mensalidade, config, {
+        ignorarToggles: true,
+      });
+      if (!resolucao) {
         resultado.ignorados++;
         continue;
       }
 
-      const cliente = mensalidade.cliente;
-      const valorCobranca = resolverValorMensalidade(mensalidade);
-      const preview = montarMensagemCobrancaAutomacao(
-        {
-          nome: cliente.nome,
-          referencia: mensalidade.referencia,
-          valor: valorCobranca,
-          vencimento: mensalidade.vencimento,
-          empresa: configuracao.nomeEmpresa,
-          atrasado: tipo === 'COBRANCA',
-          pix: configuracao.chavePix,
-          tipoPix: configuracao.tipoPix,
-          favorecido: configuracao.favorecidoPix,
-        },
+      const detalhe = await this.enviarMensalidadeAutomacao(
+        mensalidade,
+        resolucao,
+        config,
         configuracao
       );
 
-      try {
-        const parametros = parametrosTemplateWhatsApp({
-          nome: cliente.nome,
-          referencia: mensalidade.referencia,
-          valor: valorCobranca,
-          vencimento: mensalidade.vencimento,
-          empresa: configuracao.nomeEmpresa,
-          atrasado: tipo === 'COBRANCA',
-          pix: configuracao.chavePix,
-          tipoPix: configuracao.tipoPix,
-          favorecido: configuracao.favorecidoPix,
-        });
-
-        const templateNome =
-          tipo === 'COBRANCA'
-            ? config.templateCobrancaNome
-            : config.templateLembreteNome;
-
-        const envio = await enviarTemplateWhatsApp(
-          cliente.telefone,
-          templateNome,
-          config.templateLinguagem,
-          parametros
-        );
-
-        await mensalidadeRepository.registrarContato(mensalidade.id, new Date());
-
-        await automacaoRepository.criarEnvio({
-          mensalidadeId: mensalidade.id,
-          clienteId: cliente.id,
-          tipo,
-          telefone: cliente.telefone,
-          status: 'ENVIADO',
-          mensagemPreview: preview.slice(0, 500),
-          metaMessageId: envio.messageId,
-        });
-
+      if (detalhe.status === 'ENVIADO') {
         resultado.enviados++;
-        resultado.detalhes.push({
-          mensalidadeId: mensalidade.id,
-          clienteNome: cliente.nome,
-          tipo,
-          status: 'ENVIADO',
-        });
-      } catch (error) {
-        const erro =
-          error instanceof Error ? error.message : 'Erro ao enviar mensagem.';
-
-        await automacaoRepository.criarEnvio({
-          mensalidadeId: mensalidade.id,
-          clienteId: cliente.id,
-          tipo,
-          telefone: cliente.telefone,
-          status: 'FALHA',
-          mensagemPreview: preview.slice(0, 500),
-          erro,
-        });
-
+      } else {
         resultado.falhas++;
-        resultado.detalhes.push({
-          mensalidadeId: mensalidade.id,
-          clienteNome: cliente.nome,
-          tipo,
-          status: 'FALHA',
-          erro,
-        });
       }
+      resultado.detalhes.push(detalhe);
     }
 
     await automacaoRepository.registrarExecucao(horario);
     return resultado;
   }
 
-  private async resolverTipoEnvio(
-    mensalidade: Mensalidade & { cliente: { id: number; nome: string; telefone: string; incluirCobrancas: boolean } },
+  private async montarFilaManha(
     config: AutomacaoConfig,
-    configuracao: Configuracao,
+    referenciaDia: string,
+    inicio: string,
+    fim: string
+  ): Promise<void> {
+    if (await automacaoRepository.filaMontadaHoje(referenciaDia)) {
+      return;
+    }
+
+    const mensalidades = await mensalidadeRepository.findAll();
+    const elegiveis: Array<{
+      mensalidade: (typeof mensalidades)[number];
+      resolucao: ResolucaoEnvioAutomacao;
+    }> = [];
+
+    for (const mensalidade of mensalidades) {
+      if (mensalidade.status !== 'PENDENTE') continue;
+      const resolucao = await this.resolverTipoEnvio(mensalidade, config);
+      if (!resolucao) continue;
+      elegiveis.push({ mensalidade, resolucao });
+    }
+
+    if (elegiveis.length === 0) {
+      return;
+    }
+
+    const minutos = sortearMinutosNaJanela(elegiveis.length, inicio, fim);
+    const hoje = new Date();
+
+    await automacaoRepository.criarItensFila(
+      elegiveis.map(({ mensalidade, resolucao }, indice) => ({
+        mensalidadeId: mensalidade.id,
+        clienteId: mensalidade.cliente.id,
+        tipo: resolucao.tipo,
+        pontoDisparo: resolucao.pontoDisparo,
+        referenciaDia,
+        agendadoPara: montarDataAgendada(minutos[indice], hoje),
+      }))
+    );
+  }
+
+  private async processarFilaPendente(
+    config: AutomacaoConfig,
+    referenciaDia: string
+  ): Promise<ResultadoExecucaoAutomacao> {
+    const configuracao = await configuracaoRepository.findOrCreate();
+    const pendentes = await automacaoRepository.listarFilaPendenteAte(
+      referenciaDia,
+      10
+    );
+
+    const resultado: ResultadoExecucaoAutomacao = {
+      horario: horarioAtualLocal(),
+      enviados: 0,
+      falhas: 0,
+      ignorados: 0,
+      detalhes: [],
+    };
+
+    if (pendentes.length === 0) {
+      return resultado;
+    }
+
+    const mensalidades = await mensalidadeRepository.findAll();
+    const porId = new Map(mensalidades.map((m) => [m.id, m]));
+
+    for (const item of pendentes) {
+      const mensalidade = porId.get(item.mensalidadeId);
+      if (!mensalidade) {
+        await automacaoRepository.marcarFilaFalha(item.id, 'Mensalidade não encontrada.');
+        resultado.falhas++;
+        continue;
+      }
+
+      const resolucao: ResolucaoEnvioAutomacao = {
+        tipo: item.tipo as TipoEnvioAutomacao,
+        pontoDisparo: item.pontoDisparo as PontoDisparoAutomacao,
+      };
+
+      const detalhe = await this.enviarMensalidadeAutomacao(
+        mensalidade,
+        resolucao,
+        config,
+        configuracao
+      );
+
+      if (detalhe.status === 'ENVIADO') {
+        await automacaoRepository.marcarFilaEnviada(item.id);
+        resultado.enviados++;
+      } else {
+        await automacaoRepository.marcarFilaFalha(
+          item.id,
+          detalhe.erro ?? 'Falha ao enviar.'
+        );
+        resultado.falhas++;
+      }
+
+      resultado.detalhes.push(detalhe);
+    }
+
+    if (resultado.enviados > 0 || resultado.falhas > 0) {
+      await automacaoRepository.registrarExecucao(resultado.horario);
+    }
+
+    return resultado;
+  }
+
+  private async enviarMensalidadeAutomacao(
+    mensalidade: Mensalidade & {
+      cliente: {
+        id: number;
+        nome: string;
+        telefone: string;
+        incluirCobrancas: boolean;
+        valorMensal: number;
+      };
+    },
+    resolucao: ResolucaoEnvioAutomacao,
+    config: AutomacaoConfig,
+    configuracao: Configuracao
+  ): Promise<ResultadoExecucaoAutomacao['detalhes'][number]> {
+    const { tipo, pontoDisparo } = resolucao;
+    const cliente = mensalidade.cliente;
+    const valorCobranca = resolverValorMensalidade(mensalidade);
+    const preview = montarMensagemCobrancaAutomacao(
+      {
+        nome: cliente.nome,
+        referencia: mensalidade.referencia,
+        valor: valorCobranca,
+        vencimento: mensalidade.vencimento,
+        empresa: configuracao.nomeEmpresa,
+        atrasado: tipo === 'COBRANCA',
+        pix: configuracao.chavePix,
+        tipoPix: configuracao.tipoPix,
+        favorecido: configuracao.favorecidoPix,
+      },
+      configuracao
+    );
+
+    try {
+      const parametros = parametrosTemplateWhatsApp({
+        nome: cliente.nome,
+        referencia: mensalidade.referencia,
+        valor: valorCobranca,
+        vencimento: mensalidade.vencimento,
+        empresa: configuracao.nomeEmpresa,
+        atrasado: tipo === 'COBRANCA',
+        pix: configuracao.chavePix,
+        tipoPix: configuracao.tipoPix,
+        favorecido: configuracao.favorecidoPix,
+      });
+
+      const templateNome =
+        tipo === 'COBRANCA'
+          ? config.templateCobrancaNome
+          : config.templateLembreteNome;
+
+      const envio = await enviarTemplateWhatsApp(
+        cliente.telefone,
+        templateNome,
+        config.templateLinguagem,
+        parametros
+      );
+
+      await mensalidadeRepository.registrarContato(mensalidade.id, new Date());
+
+      await automacaoRepository.criarEnvio({
+        mensalidadeId: mensalidade.id,
+        clienteId: cliente.id,
+        tipo,
+        pontoDisparo,
+        telefone: cliente.telefone,
+        status: 'ENVIADO',
+        mensagemPreview: preview.slice(0, 500),
+        metaMessageId: envio.messageId,
+      });
+
+      return {
+        mensalidadeId: mensalidade.id,
+        clienteNome: cliente.nome,
+        tipo,
+        pontoDisparo,
+        status: 'ENVIADO',
+      };
+    } catch (error) {
+      const erroMsg =
+        error instanceof Error ? error.message : 'Erro ao enviar mensagem.';
+
+      await automacaoRepository.criarEnvio({
+        mensalidadeId: mensalidade.id,
+        clienteId: cliente.id,
+        tipo,
+        pontoDisparo,
+        telefone: cliente.telefone,
+        status: 'FALHA',
+        mensagemPreview: preview.slice(0, 500),
+        erro: erroMsg,
+      });
+
+      return {
+        mensalidadeId: mensalidade.id,
+        clienteNome: cliente.nome,
+        tipo,
+        pontoDisparo,
+        status: 'FALHA',
+        erro: erroMsg,
+      };
+    }
+  }
+
+  /** @deprecated Substituído por processarRotinaManha. */
+  deveExecutarAgora(_config: AutomacaoConfig): string | null {
+    return null;
+  }
+
+  private async resolverTipoEnvio(
+    mensalidade: Mensalidade & {
+      cliente: {
+        id: number;
+        nome: string;
+        telefone: string;
+        incluirCobrancas: boolean;
+        valorMensal: number;
+      };
+    },
+    config: AutomacaoConfig,
     opcoes?: { ignorarToggles?: boolean }
-  ): Promise<TipoEnvioAutomacao | null> {
+  ): Promise<ResolucaoEnvioAutomacao | null> {
     if (!clienteParticipaCobrancas(mensalidade.cliente)) {
       return null;
     }
 
     const dias = calcularDiasVencimento(mensalidade.vencimento);
-    const diasAntecedencia = resolverDiasAntecedencia(
-      configuracao.diasAntecedenciaLembrete
-    );
     const cobrancaAtiva =
       opcoes?.ignorarToggles || config.cobrancaAtrasadosAtiva;
     const lembretesAtivos = opcoes?.ignorarToggles || config.lembretesAtivos;
 
-    if (
-      cobrancaAtiva &&
-      dias < 0 &&
-      !contatoRegistradoHoje(mensalidade.ultimoContatoEm)
-    ) {
-      const ultimo = await automacaoRepository.ultimoEnvioTipo(
-        mensalidade.id,
-        'COBRANCA'
-      );
-      if (ultimo && diasDesde(ultimo) < config.intervaloAtrasadosDias) {
+    if (cobrancaAtiva && dias < 0) {
+      const pontoDisparo = resolverPontoCobranca(dias);
+      if (!pontoDisparo) {
         return null;
       }
-      return 'COBRANCA';
+      if (
+        await automacaoRepository.envioJaDisparado(mensalidade.id, pontoDisparo)
+      ) {
+        return null;
+      }
+      return { tipo: 'COBRANCA', pontoDisparo };
     }
 
-    if (
-      lembretesAtivos &&
-      dias >= 0 &&
-      elegivelCobrancaDiaria(mensalidade.vencimento, diasAntecedencia) &&
-      !contatoRegistradoHoje(mensalidade.ultimoContatoEm)
-    ) {
-      const jaEnviouHoje = await automacaoRepository.envioEnviadoHoje(
-        mensalidade.id,
-        'LEMBRETE'
-      );
-      if (jaEnviouHoje) {
+    if (lembretesAtivos && dias >= 0) {
+      const pontoDisparo = resolverPontoLembrete(dias);
+      if (!pontoDisparo) {
         return null;
       }
-      return 'LEMBRETE';
+      if (
+        await automacaoRepository.envioJaDisparado(mensalidade.id, pontoDisparo)
+      ) {
+        return null;
+      }
+      return { tipo: 'LEMBRETE', pontoDisparo };
     }
 
     return null;
@@ -343,22 +501,28 @@ export class AutomacaoService {
 
   private async simularElegiveis(
     config: AutomacaoConfig,
-    configuracao: Configuracao
+    _configuracao: Configuracao
   ) {
     const mensalidades = await mensalidadeRepository.findAll();
     let lembretes = 0;
     let cobrancas = 0;
+    const porPonto: Record<string, number> = {};
 
     for (const mensalidade of mensalidades) {
       if (mensalidade.status !== 'PENDENTE') continue;
-      const tipo = await this.resolverTipoEnvio(mensalidade, config, configuracao, {
+      const resolucao = await this.resolverTipoEnvio(mensalidade, config, {
         ignorarToggles: true,
       });
-      if (tipo === 'LEMBRETE') lembretes++;
-      if (tipo === 'COBRANCA') cobrancas++;
+      if (!resolucao) continue;
+
+      porPonto[resolucao.pontoDisparo] =
+        (porPonto[resolucao.pontoDisparo] ?? 0) + 1;
+
+      if (resolucao.tipo === 'LEMBRETE') lembretes++;
+      if (resolucao.tipo === 'COBRANCA') cobrancas++;
     }
 
-    return { lembretes, cobrancas };
+    return { lembretes, cobrancas, porPonto };
   }
 
   private serializarConfig(config: AutomacaoConfig) {
@@ -367,14 +531,18 @@ export class AutomacaoService {
       lembretesAtivos: config.lembretesAtivos,
       cobrancaAtrasadosAtiva: config.cobrancaAtrasadosAtiva,
       horariosEnvio: config.horariosEnvio,
+      horarioInicioManha: config.horarioInicioManha,
+      horarioFimManha: config.horarioFimManha,
       intervaloAtrasadosDias: config.intervaloAtrasadosDias,
       templateLembreteNome: config.templateLembreteNome,
       templateCobrancaNome: config.templateCobrancaNome,
       templateLinguagem: config.templateLinguagem,
+      templatesMetaAtivos: config.templatesMetaAtivos,
       ultimaExecucaoEm: config.ultimaExecucaoEm?.toISOString() ?? null,
       ultimoHorarioExecutado: config.ultimoHorarioExecutado,
     };
   }
 }
 
+export { rotuloPontoDisparo };
 export const automacaoService = new AutomacaoService();

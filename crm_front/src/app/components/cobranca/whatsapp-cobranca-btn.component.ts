@@ -12,6 +12,7 @@ import {
     <button
       type="button"
       class="crm-btn-success disabled:opacity-50 disabled:cursor-not-allowed"
+      [class.crm-btn-action]="compact"
       [disabled]="desabilitado"
       (click)="enviar()"
     >
@@ -23,8 +24,9 @@ export class WhatsappCobrancaBtnComponent {
   @Input() telefone = '';
   @Input() mensagem = '';
   @Input() mensalidadeId?: number;
-  @Input() label = 'WhatsApp';
+  @Input() label = 'Cobrar';
   @Input() disabled = false;
+  @Input() compact = false;
   @Output() erro = new EventEmitter<string>();
   @Output() contatoRegistrado = new EventEmitter<number>();
 

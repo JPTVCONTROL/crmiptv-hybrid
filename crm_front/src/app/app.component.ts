@@ -14,6 +14,7 @@ import { TemaService } from './core/services/tema.service';
 import { PullRefreshService } from './core/services/pull-refresh.service';
 import { ApiHealthService } from './core/services/api-health.service';
 import { AlertaOperacional, Usuario } from './core/models';
+import { AUTOMACAO_META_HABILITADA } from './shared/utils/automacao-meta';
 
 interface MenuItem {
   nome: string;
@@ -50,8 +51,11 @@ export class AppComponent implements OnInit, OnDestroy {
       itens: [
         { nome: 'Financeiro', rota: '/financeiro', icon: 'cash-outline' },
         { nome: 'Vencimentos', rota: '/vencimentos', icon: 'calendar-outline' },
+        { nome: 'Calendário', rota: '/calendario', icon: 'calendar-number-outline' },
         { nome: 'Cobrança Diária', rota: '/cobranca-diaria', icon: 'send-outline' },
-        { nome: 'Automações', rota: '/automacoes', icon: 'timer-outline' },
+        ...(AUTOMACAO_META_HABILITADA
+          ? [{ nome: 'Automações', rota: '/automacoes', icon: 'timer-outline' as const }]
+          : []),
       ],
     },
     {

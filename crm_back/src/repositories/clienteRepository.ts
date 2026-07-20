@@ -135,6 +135,29 @@ export class ClienteRepository {
     });
   }
 
+  updateAtividade(
+    id: number,
+    data: {
+      ativo: boolean;
+      incluirCampanhas: boolean;
+      incluirCobrancas: boolean;
+    }
+  ) {
+    return prisma.cliente.update({
+      where: { id },
+      data: {
+        ativo: data.ativo,
+        incluirCampanhas: data.incluirCampanhas,
+        incluirCobrancas: data.incluirCobrancas,
+      },
+      include: {
+        aplicativo: true,
+        plano: true,
+        mensalidades: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+  }
+
   delete(id: number) {
     return prisma.cliente.delete({ where: { id } });
   }

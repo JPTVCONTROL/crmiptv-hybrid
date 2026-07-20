@@ -72,6 +72,7 @@ function substituirVariaveis(
     '{referencia}': dados.referencia,
     '{valor}': formatarValorMsg(dados.valor),
     '{vencimento}': formatarDataMsg(dados.vencimento),
+    '{proximoVencimento}': formatarDataMsg(dados.vencimento),
     '{expiraEm}': expiraEm,
     '{pagoEm}': pagoEm,
     '{empresa}': dados.empresa,
@@ -185,6 +186,24 @@ export function abrirWhatsAppCobranca(telefone: string, mensagem: string): void 
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+export function urlWhatsAppContato(telefone: string): string | null {
+  const numero = formatarTelefoneWhatsApp(telefone);
+  if (!numero) return null;
+  return `https://wa.me/${numero}`;
+}
+
+export function abrirWhatsAppContato(telefone: string): void {
+  const url = urlWhatsAppContato(telefone);
+  if (!url) {
+    notificar(
+      'Telefone inválido. Cadastre o número com DDD, por exemplo: (62) 99999-9999.',
+      'warning'
+    );
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 export function telefoneValidoParaWhatsApp(telefone?: string | null): boolean {
   if (!telefone?.trim()) return false;
   return formatarTelefoneWhatsApp(telefone) !== null;
@@ -198,6 +217,7 @@ export interface ParamsPosPagamento {
   novoVencimento: string;
   empresa: string;
   templateRenovacao?: string | null;
+  cortesia?: boolean;
 }
 
 export async function oferecerMensagemRenovacao(
@@ -207,23 +227,26 @@ export async function oferecerMensagemRenovacao(
     return;
   }
 
-  const mensagem = montarMensagemRenovacao(
-    {
-      nome: params.nome,
-      referencia: params.referencia,
-      valor: params.valor,
-      vencimento: params.novoVencimento,
-      expiraEm: params.novoVencimento,
-      empresa: params.empresa,
-    },
-    params.templateRenovacao
-  );
+  const proximoVencimento = formatarData(params.novoVencimento);
+  const mensagem = params.cortesia
+    ? `Olá ${params.nome}! Sua cortesia foi renovada. O próximo vencimento será em ${proximoVencimento}.\n\n— ${params.empresa}`
+    : montarMensagemRenovacao(
+        {
+          nome: params.nome,
+          referencia: params.referencia,
+          valor: params.valor,
+          vencimento: params.novoVencimento,
+          expiraEm: params.novoVencimento,
+          empresa: params.empresa,
+        },
+        params.templateRenovacao
+      );
 
   if (
     await confirmarUsuario(
-      'Deseja enviar a mensagem de renovação no WhatsApp?',
-      'Pagamento registrado',
-      'Enviar'
+      `Deseja abrir o WhatsApp para informar que o próximo vencimento será em ${proximoVencimento}?`,
+      'Renovação registrada',
+      'Enviar WhatsApp'
     )
   ) {
     abrirWhatsAppCobranca(params.telefone, mensagem);

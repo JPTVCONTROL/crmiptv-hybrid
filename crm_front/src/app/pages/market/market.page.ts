@@ -10,7 +10,7 @@ import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Campanha, Cliente, Plano, TipoCampanha } from '../../core/models';
-import { formatarData, statusCliente, StatusCliente } from '../../shared/utils/formatters';
+import { formatarData, resolverStatusCliente, StatusCliente } from '../../shared/utils/formatters';
 import {
   FiltroPublicoCampanha,
   SegmentoPublicoCampanha,
@@ -749,7 +749,7 @@ export class MarketPage implements OnInit, OnDestroy {
       telefoneValido: telefoneValidoParaWhatsApp(cliente.telefone),
       enviado: this.enviosPorCliente.has(cliente.id),
       enviadoEm: this.enviosPorCliente.get(cliente.id),
-      status: statusCliente(cliente.expiraEm),
+      status: resolverStatusCliente(cliente),
       cortesia: !!cliente.cortesia,
       planoNome: cliente.plano?.nome,
     }));

@@ -387,21 +387,31 @@
             {{ rotuloExpiracao(c.expiraEm) }}
           </span>
         </div>
-        <div class="crm-mobile-card-actions">
+        <div class="crm-mobile-card-actions flex-wrap gap-2">
           <a
             [routerLink]="['/clientes', c.id]"
             class="crm-btn-ghost flex-1 !py-1.5 !text-xs no-underline text-center"
           >
             Ver
           </a>
+          <app-whatsapp-bloqueio-btn
+            *ngIf="podeAvisarBloqueio(c)"
+            class="flex-1"
+            [compact]="true"
+            [telefone]="c.telefone"
+            [mensagem]="mensagemBloqueio(c)"
+            [mensalidadeId]="c.mensalidadePendenteId!"
+            [bloqueioEnviadoEm]="c.bloqueioEnviadoEm"
+            (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+          ></app-whatsapp-bloqueio-btn>
           <button
             *ngIf="c.mensalidadePendenteId"
             type="button"
             class="crm-btn-primary flex-1 !py-1.5 !text-xs"
             [disabled]="estaPagando(c)"
-            (click)="quitarCliente(c)"
+            (click)="renovarCliente(c)"
           >
-            {{ estaPagando(c) ? 'Salvando...' : 'Quitar' }}
+            {{ estaPagando(c) ? 'Renovando...' : 'Renovar' }}
           </button>
         </div>
       </article>
@@ -456,14 +466,23 @@
                 >
                   Ver
                 </a>
+                <app-whatsapp-bloqueio-btn
+                  *ngIf="podeAvisarBloqueio(c)"
+                  [compact]="true"
+                  [telefone]="c.telefone"
+                  [mensagem]="mensagemBloqueio(c)"
+                  [mensalidadeId]="c.mensalidadePendenteId!"
+                  [bloqueioEnviadoEm]="c.bloqueioEnviadoEm"
+                  (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+                ></app-whatsapp-bloqueio-btn>
                 <button
                   *ngIf="c.mensalidadePendenteId"
                   type="button"
                   class="crm-btn-primary !py-1 !px-2 !text-xs"
                   [disabled]="estaPagando(c)"
-                  (click)="quitarCliente(c)"
+                  (click)="renovarCliente(c)"
                 >
-                  {{ estaPagando(c) ? 'Salvando...' : 'Quitar' }}
+                  {{ estaPagando(c) ? 'Renovando...' : 'Renovar' }}
                 </button>
               </div>
             </td>

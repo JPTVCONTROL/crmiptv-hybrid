@@ -165,6 +165,21 @@ export class ClienteService {
     return aplicarStatusCliente(cliente);
   }
 
+  async definirAtividade(
+    id: number,
+    ativo: boolean,
+    incluirCampanhas: boolean,
+    incluirCobrancas: boolean
+  ) {
+    await this.buscarPorId(id);
+    const cliente = await clienteRepository.updateAtividade(id, {
+      ativo,
+      incluirCampanhas,
+      incluirCobrancas,
+    });
+    return aplicarStatusCliente(cliente);
+  }
+
   async importarCsv(conteudo: string): Promise<ImportacaoClientesResultado> {
     if (!conteudo?.trim()) {
       throw new ValidationError('Envie um arquivo CSV com nome e telefone.');

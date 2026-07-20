@@ -137,27 +137,37 @@
         </div>
       </div>
 
-      <div class="crm-mobile-card-actions">
+      <div class="crm-mobile-card-actions flex-wrap gap-2">
+        <app-whatsapp-bloqueio-btn
+          *ngIf="participaCobrancas(m) && mensalidadeAtrasada(m)"
+          class="flex-1"
+          [compact]="true"
+          [telefone]="m.cliente?.telefone ?? ''"
+          [mensagem]="mensagemBloqueio(m)"
+          [mensalidadeId]="m.id"
+          [bloqueioEnviadoEm]="m.bloqueioEnviadoEm"
+          (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+        ></app-whatsapp-bloqueio-btn>
         <a
           [routerLink]="['/clientes', m.clienteId]"
           class="crm-btn-ghost flex-1 !py-1.5 !text-xs no-underline text-center"
         >
           Ver cliente
         </a>
-        <a
-          *ngIf="!ehCortesia(m.cliente)"
-          routerLink="/financeiro"
-          class="crm-btn-primary flex-1 !py-1.5 !text-xs no-underline text-center"
+        <button
+          type="button"
+          class="crm-btn-success crm-btn-action flex-1 !py-1.5 !text-xs"
+          [disabled]="renovandoMensalidadeId === m.id"
+          (click)="renovar(m)"
         >
-          Quitar
-        </a>
-        <a
-          *ngIf="ehCortesia(m.cliente)"
-          [routerLink]="['/clientes', m.clienteId]"
-          class="crm-btn-primary flex-1 !py-1.5 !text-xs no-underline text-center"
-        >
-          Renovar
-        </a>
+          {{
+            renovandoMensalidadeId === m.id
+              ? 'Renovando...'
+              : ehCortesia(m.cliente)
+                ? 'Renovar cortesia'
+                : 'Renovar'
+          }}
+        </button>
       </div>
     </article>
 
@@ -201,26 +211,35 @@
             <span [ngClass]="classesStatusVencimento(m)">{{ statusLabel(m) }}</span>
           </td>
           <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
+            <app-whatsapp-bloqueio-btn
+              *ngIf="participaCobrancas(m) && mensalidadeAtrasada(m)"
+              [compact]="true"
+              [telefone]="m.cliente?.telefone ?? ''"
+              [mensagem]="mensagemBloqueio(m)"
+              [mensalidadeId]="m.id"
+              [bloqueioEnviadoEm]="m.bloqueioEnviadoEm"
+              (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+            ></app-whatsapp-bloqueio-btn>
             <a
               [routerLink]="['/clientes', m.clienteId]"
               class="crm-btn-ghost !py-1.5 !text-xs no-underline inline-block"
             >
               Ver cliente
             </a>
-            <a
-              *ngIf="!ehCortesia(m.cliente)"
-              routerLink="/financeiro"
-              class="crm-btn-primary !py-1.5 !text-xs no-underline inline-block"
+            <button
+              type="button"
+              class="crm-btn-success crm-btn-action !py-1.5 !text-xs"
+              [disabled]="renovandoMensalidadeId === m.id"
+              (click)="renovar(m)"
             >
-              Quitar
-            </a>
-            <a
-              *ngIf="ehCortesia(m.cliente)"
-              [routerLink]="['/clientes', m.clienteId]"
-              class="crm-btn-primary !py-1.5 !text-xs no-underline inline-block"
-            >
-              Renovar
-            </a>
+              {{
+                renovandoMensalidadeId === m.id
+                  ? 'Renovando...'
+                  : ehCortesia(m.cliente)
+                    ? 'Renovar cortesia'
+                    : 'Renovar'
+              }}
+            </button>
           </td>
         </tr>
       </tbody>

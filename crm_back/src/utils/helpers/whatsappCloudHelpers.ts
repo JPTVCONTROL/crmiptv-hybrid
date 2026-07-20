@@ -17,6 +17,69 @@ export interface EnvioTemplateResultado {
   messageId: string;
 }
 
+export interface WhatsAppPerfilApi {
+  phoneNumberId: string;
+  displayPhoneNumber: string | null;
+  verifiedName: string | null;
+  apiVersion: string;
+  tokenValido: boolean;
+  erro: string | null;
+}
+
+export async function obterPerfilWhatsApp(): Promise<WhatsAppPerfilApi | null> {
+  if (!whatsappApiConfigurado()) {
+    return null;
+  }
+
+  const base: WhatsAppPerfilApi = {
+    phoneNumberId: env.whatsappPhoneNumberId,
+    displayPhoneNumber: null,
+    verifiedName: null,
+    apiVersion: env.whatsappApiVersion,
+    tokenValido: false,
+    erro: null,
+  };
+
+  const url = `https://graph.facebook.com/${env.whatsappApiVersion}/${env.whatsappPhoneNumberId}?fields=display_phone_number,verified_name`;
+
+  try {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${env.whatsappAccessToken}` },
+    });
+
+    const payload = (await response.json()) as {
+      display_phone_number?: string;
+      verified_name?: string;
+      error?: { message?: string; error_user_msg?: string };
+    };
+
+    if (!response.ok) {
+      return {
+        ...base,
+        erro:
+          payload.error?.error_user_msg ||
+          payload.error?.message ||
+          `HTTP ${response.status}`,
+      };
+    }
+
+    return {
+      ...base,
+      displayPhoneNumber: payload.display_phone_number?.trim() || null,
+      verifiedName: payload.verified_name?.trim() || null,
+      tokenValido: true,
+    };
+  } catch (error) {
+    return {
+      ...base,
+      erro:
+        error instanceof Error
+          ? error.message
+          : 'Erro ao consultar perfil na Meta.',
+    };
+  }
+}
+
 export async function enviarTemplateWhatsApp(
   telefone: string,
   templateNome: string,

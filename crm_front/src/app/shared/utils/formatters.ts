@@ -95,6 +95,16 @@ export function statusCliente(expiraEm?: string | null): StatusCliente {
   return 'INATIVO';
 }
 
+export function resolverStatusCliente(cliente?: {
+  expiraEm?: string | null;
+  ativo?: boolean | null;
+} | null): StatusCliente {
+  if (cliente?.ativo === false) {
+    return 'INATIVO';
+  }
+  return statusCliente(cliente?.expiraEm);
+}
+
 export function clienteEstaAtivo(expiraEm?: string | null): boolean {
   return statusCliente(expiraEm) !== 'INATIVO';
 }

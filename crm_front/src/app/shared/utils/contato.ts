@@ -43,3 +43,27 @@ export function classeIndicadorContato(
 
   return 'text-slate-500';
 }
+
+export function bloqueioEnviadoHoje(
+  bloqueioEnviadoEm?: string | null
+): boolean {
+  return contatoRegistradoHoje(bloqueioEnviadoEm);
+}
+
+export function rotuloBloqueioEnviado(
+  bloqueioEnviadoEm?: string | null
+): string | null {
+  if (!bloqueioEnviadoEm) {
+    return null;
+  }
+
+  if (bloqueioEnviadoHoje(bloqueioEnviadoEm)) {
+    const hora = new Date(bloqueioEnviadoEm).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `Bloqueio avisado hoje às ${hora}`;
+  }
+
+  return `Bloqueio avisado em ${new Date(bloqueioEnviadoEm).toLocaleDateString('pt-BR')}`;
+}

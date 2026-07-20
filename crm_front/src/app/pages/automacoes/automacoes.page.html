@@ -1,4 +1,34 @@
 <app-page-header
+  *ngIf="!automacaoMetaHabilitada"
+  title="Automações"
+  subtitle="Envio automático via Meta pausado — use Cobrança Diária e os botões WhatsApp Web."
+></app-page-header>
+
+<div *ngIf="!automacaoMetaHabilitada" class="max-w-3xl">
+  <section class="crm-card space-y-4 border border-slate-700">
+    <div class="flex items-start gap-3">
+      <ion-icon name="pause-circle-outline" class="text-2xl text-slate-400 shrink-0"></ion-icon>
+      <div class="space-y-2">
+        <p class="text-white font-medium">API Meta desativada no CRM</p>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Lembretes e cobranças seguem pelo envio <strong class="text-slate-300">manual</strong>
+          (WhatsApp Web) em Cobrança Diária, Financeiro, Vencimentos e ficha do cliente.
+        </p>
+        <p class="text-slate-500 text-xs">
+          Quando tiver MEI/CNPJ e quiser retomar a API, altere
+          <code class="text-violet-300">AUTOMACAO_META_HABILITADA</code> em
+          <code class="text-violet-300">automacao-meta.ts</code>.
+        </p>
+      </div>
+    </div>
+    <a routerLink="/cobranca-diaria" class="crm-btn-primary inline-block no-underline w-fit">
+      Ir para Cobrança Diária
+    </a>
+  </section>
+</div>
+
+<ng-container *ngIf="automacaoMetaHabilitada">
+<app-page-header
   title="Automações"
   subtitle="Lembretes e cobranças automáticas via WhatsApp Cloud API (Meta)."
 >
@@ -27,15 +57,43 @@
     *ngIf="aguardandoTemplatesMeta"
     class="crm-card border border-amber-500/30 bg-amber-500/5"
   >
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div class="flex items-start gap-3 min-w-0">
+        <ion-icon name="time-outline" class="text-xl text-amber-400 shrink-0 mt-0.5"></ion-icon>
+        <div class="space-y-1">
+          <p class="text-amber-200 text-sm font-medium">Aguardando confirmação dos modelos Meta</p>
+          <p class="text-slate-400 text-sm">
+            Quando <code class="text-violet-300">crm_lembrete</code> e
+            <code class="text-violet-300">crm_cobranca</code> estiverem
+            <strong class="text-slate-300">Ativos</strong> no Gerenciador do WhatsApp, clique no botão ao lado
+            para liberar o envio automático no CRM.
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="crm-btn-primary shrink-0 !py-2 !text-sm"
+        [disabled]="salvando"
+        (click)="confirmarTemplatesAprovados()"
+      >
+        {{ salvando ? 'Salvando...' : 'Templates aprovados na Meta' }}
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="whatsappConfigurado && templatesProntos"
+    class="crm-card border border-green-500/30 bg-green-500/5"
+  >
     <div class="flex items-start gap-3">
-      <ion-icon name="time-outline" class="text-xl text-amber-400 shrink-0 mt-0.5"></ion-icon>
+      <ion-icon name="checkmark-circle-outline" class="text-xl text-green-400 shrink-0 mt-0.5"></ion-icon>
       <div class="space-y-1">
-        <p class="text-amber-200 text-sm font-medium">Templates em análise na Meta</p>
+        <p class="text-green-200 text-sm font-medium">Modelos Meta prontos para uso</p>
         <p class="text-slate-400 text-sm">
-          Os modelos <code class="text-violet-300">crm_lembrete</code> e
-          <code class="text-violet-300">crm_cobranca</code> precisam ficar com status
-          <strong class="text-slate-300">Ativo</strong> antes do envio automático funcionar.
-          Enquanto isso, prepare PIX, clientes de teste e use a Cobrança Diária manual.
+          <code class="text-violet-300">crm_lembrete</code> e
+          <code class="text-violet-300">crm_cobranca</code>
+          {{ templatesAprovadosNaMeta ? 'confirmados como aprovados' : 'já enviaram com sucesso' }}.
+          Ative os toggles abaixo ou use <strong class="text-slate-300">Executar agora</strong> para testar.
         </p>
       </div>
     </div>
@@ -48,18 +106,18 @@
           <span
             class="text-xs font-medium px-2.5 py-1 rounded-full border"
             [ngClass]="
-              whatsappConfigurado
+              whatsappBadgeOk
                 ? 'text-green-300 border-green-500/40 bg-green-500/10'
                 : 'text-amber-300 border-amber-500/40 bg-amber-500/10'
             "
           >
-            {{ whatsappConfigurado ? 'API configurada' : 'API não configurada' }}
+            {{ whatsappBadgeTexto }}
           </span>
           <span
             *ngIf="automacoesAtivas"
             class="text-xs font-medium px-2.5 py-1 rounded-full border text-violet-300 border-violet-500/40 bg-violet-500/10"
           >
-            Agendador ativo nos horários salvos
+            Agendador ativo · manhã {{ janelaManhaTexto }}
           </span>
         </div>
 
@@ -67,9 +125,10 @@
           <h2 class="text-white font-semibold">Mensalidades elegíveis</h2>
           <p class="text-slate-400 text-sm mt-1">{{ simulacaoLeitura }}</p>
           <p class="text-slate-500 text-xs mt-2">
-            Contagem independente dos toggles — útil para testar antes de ativar o agendador.
-            Antecedência: {{ diasAntecedencia }} dias
-            (<a routerLink="/configuracoes" class="text-violet-300 hover:underline">Configurações</a>).
+            Contagem no gatilho de hoje (independente dos toggles). Cada ponto dispara
+            <strong class="text-slate-400">uma vez por mensalidade</strong>.
+            Envio automático entre {{ janelaManhaTexto }} (horário local), com minutos alternados por cliente.
+            Fila de hoje: {{ filaHojeResumo }}.
             Última execução: {{ fmtDataHora(form.ultimaExecucaoEm) }}
             <span *ngIf="form.ultimoHorarioExecutado"> às {{ form.ultimoHorarioExecutado }}</span>.
           </p>
@@ -82,7 +141,17 @@
           <code class="text-violet-300">crm_back/.env</code> e reinicie a API.
         </p>
 
-        <p class="text-slate-500 text-xs" *ngIf="whatsappConfigurado">
+        <p class="text-slate-500 text-xs" *ngIf="whatsappConfigurado && whatsappPerfil">
+          <span *ngIf="whatsappTokenOk" class="text-green-400/90">
+            Meta conectada: {{ whatsappResumoLinha }} (API {{ whatsappPerfil.apiVersion }}).
+          </span>
+          <span *ngIf="!whatsappTokenOk" class="text-amber-400/90">
+            Credenciais no .env, mas a Meta respondeu erro: {{ whatsappPerfil.erro || 'token inválido' }}.
+            Gere um novo token em API Setup.
+          </span>
+        </p>
+
+        <p class="text-slate-500 text-xs" *ngIf="whatsappConfigurado && !whatsappPerfil">
           Token temporário da Meta expira em ~24 h. Gere outro em API Setup se o envio falhar com erro de autenticação.
         </p>
       </div>
@@ -98,6 +167,61 @@
         </div>
       </div>
     </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
+      <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+        <p class="text-slate-300 text-xs font-medium uppercase tracking-wide">Lembretes automáticos</p>
+        <ul class="space-y-1">
+          <li
+            *ngFor="let item of cronogramaLembretes"
+            class="flex items-center justify-between gap-2 text-xs"
+          >
+            <span class="text-slate-400">{{ item.rotulo }}</span>
+            <span class="text-slate-500 shrink-0">{{ contagemPonto('LEMBRETE_D' + item.dias) }} hoje</span>
+          </li>
+        </ul>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+        <p class="text-slate-300 text-xs font-medium uppercase tracking-wide">Cobranças automáticas</p>
+        <ul class="space-y-1">
+          <li
+            *ngFor="let item of cronogramaCobrancas"
+            class="flex items-center justify-between gap-2 text-xs"
+          >
+            <span class="text-slate-400">{{ item.rotulo }}</span>
+            <span class="text-slate-500 shrink-0">{{ contagemPonto('COBRANCA_D' + item.dias) }} hoje</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="crm-card space-y-3" *ngIf="whatsappConfigurado && whatsappPerfil">
+    <h2 class="text-white font-semibold text-lg">Conexão Meta (WhatsApp Cloud API)</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
+        <dt class="text-slate-500 text-xs">Número remetente</dt>
+        <dd class="text-slate-200 mt-0.5">{{ whatsappPerfil.displayPhoneNumber || '—' }}</dd>
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
+        <dt class="text-slate-500 text-xs">Phone Number ID</dt>
+        <dd class="text-violet-300 mt-0.5 font-mono text-xs">{{ whatsappPerfil.phoneNumberId }}</dd>
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
+        <dt class="text-slate-500 text-xs">Nome verificado</dt>
+        <dd class="text-slate-200 mt-0.5">{{ whatsappPerfil.verifiedName || 'Test Number' }}</dd>
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
+        <dt class="text-slate-500 text-xs">Token</dt>
+        <dd class="mt-0.5" [class.text-green-400]="whatsappTokenOk" [class.text-amber-400]="!whatsappTokenOk">
+          {{ whatsappTokenOk ? 'Validado com a Meta' : (whatsappPerfil.erro || 'Não validado') }}
+        </dd>
+      </div>
+    </dl>
+    <p class="text-slate-500 text-xs">
+      Número de teste Meta: remetente acima. Cadastre destinatários reais em
+      <strong class="text-slate-400">Meta for Developers → WhatsApp → API Setup</strong>.
+    </p>
   </section>
 
   <section class="crm-card space-y-4">
@@ -173,7 +297,7 @@
         class="text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-b border-slate-800/60 pb-2 last:border-0 last:pb-0"
       >
         <span class="text-slate-300">
-          {{ item.clienteNome }} · {{ rotuloTipoEnvio(item.tipo) }}
+          {{ item.clienteNome }} · {{ rotuloTipoEnvio(item.tipo, item.pontoDisparo) }}
         </span>
         <span class="text-xs" [class.text-green-400]="item.status === 'ENVIADO'" [class.text-red-400]="item.status === 'FALHA'" [class.text-slate-500]="item.status === 'IGNORADO'">
           {{ item.status === 'ENVIADO' ? 'Enviado' : item.status === 'FALHA' ? (item.erro || 'Falha') : 'Ignorado' }}
@@ -186,36 +310,44 @@
     <div>
       <h2 class="text-white font-semibold text-lg">Regras de envio</h2>
       <p class="text-slate-500 text-sm mt-1">
-        Os toggles abaixo controlam o agendador automático nos horários salvos.
-        O botão <strong class="text-slate-400">Executar agora</strong> testa sem precisar ativá-los.
+        Os toggles abaixo controlam o agendador matinal ({{ janelaManhaTexto }}).
+        O botão <strong class="text-slate-400">Executar agora</strong> testa na hora, sem esperar a fila.
+      </p>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-2">
+      <p class="text-slate-300 text-sm font-medium">Janela de envio (manhã)</p>
+      <p class="text-white text-lg font-semibold tabular-nums">{{ janelaManhaTexto }}</p>
+      <p class="text-slate-500 text-xs">
+        Horário local do servidor. Vários clientes no mesmo dia recebem em minutos diferentes dentro dessa janela.
+      </p>
+      <p class="text-slate-400 text-xs">Fila de hoje: {{ filaHojeResumo }}</p>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
+      <p class="text-slate-300 text-sm font-medium">Cronograma fixo (API Meta)</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
+        <div>
+          <p class="text-slate-500 mb-1">Lembretes — 1 envio por mensalidade em cada dia:</p>
+          <ul class="list-disc pl-4 space-y-0.5">
+            <li *ngFor="let item of cronogramaLembretes">{{ item.rotulo }}</li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-slate-500 mb-1">Cobranças — 1 envio por mensalidade em cada dia:</p>
+          <ul class="list-disc pl-4 space-y-0.5">
+            <li *ngFor="let item of cronogramaCobrancas">{{ item.rotulo }}</li>
+          </ul>
+        </div>
+      </div>
+      <p class="text-slate-500 text-xs">
+        Textos em
+        <a routerLink="/configuracoes" class="text-violet-300 hover:underline">Configurações → Mensagens → Automático</a>.
+        Aviso de bloqueio continua só no envio manual (botão no CRM).
       </p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Horários (HH:MM)</label>
-        <input
-          class="crm-input"
-          [(ngModel)]="horariosTexto"
-          placeholder="09:00,18:00"
-        />
-        <p class="text-slate-500 text-xs mt-1">Separados por vírgula, horário local do PC.</p>
-      </div>
-
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Repetir cobrança de atrasados</label>
-        <div class="flex items-center gap-2">
-          <input
-            class="crm-input max-w-[5rem]"
-            type="number"
-            min="1"
-            max="30"
-            [(ngModel)]="form.intervaloAtrasadosDias"
-          />
-          <span class="text-slate-500 text-sm">dias entre envios</span>
-        </div>
-      </div>
-
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Template Meta — lembrete</label>
         <input class="crm-input" [(ngModel)]="form.templateLembreteNome" />
@@ -236,7 +368,7 @@
       <div class="flex items-center justify-between gap-4">
         <div>
           <p class="text-slate-300 text-sm font-medium">Lembretes automáticos</p>
-          <p class="text-slate-500 text-xs">Clientes a vencer (até {{ diasAntecedencia }} dias).</p>
+          <p class="text-slate-500 text-xs">3 dias antes, 1 dia antes e no vencimento (1 envio cada).</p>
         </div>
         <ion-toggle
           [(ngModel)]="form.lembretesAtivos"
@@ -248,7 +380,7 @@
       <div class="flex items-center justify-between gap-4">
         <div>
           <p class="text-slate-300 text-sm font-medium">Cobrança de atrasados</p>
-          <p class="text-slate-500 text-xs">Usa template de cobrança e intervalo configurado.</p>
+          <p class="text-slate-500 text-xs">1º, 5º e 7º dia de atraso (1 envio cada).</p>
         </div>
         <ion-toggle
           [(ngModel)]="form.cobrancaAtrasadosAtiva"
@@ -331,7 +463,7 @@
           <div class="min-w-0">
             <p class="crm-mobile-card-title">{{ envio.clienteNome }}</p>
             <p class="crm-mobile-card-subtitle">
-              {{ rotuloTipoEnvio(envio.tipo) }} · {{ envio.telefone }}
+              {{ rotuloTipoEnvio(envio.tipo, envio.pontoDisparo) }} · {{ envio.telefone }}
             </p>
           </div>
           <span [ngClass]="classesStatusEnvio(envio.status)">
@@ -360,7 +492,7 @@
         <tbody>
           <tr *ngFor="let envio of envios" class="border-b border-slate-800/60">
             <td class="py-2.5 px-2 text-slate-200">{{ envio.clienteNome }}</td>
-            <td class="py-2.5 px-2 text-slate-400">{{ rotuloTipoEnvio(envio.tipo) }}</td>
+            <td class="py-2.5 px-2 text-slate-400">{{ rotuloTipoEnvio(envio.tipo, envio.pontoDisparo) }}</td>
             <td class="py-2.5 px-2">
               <span [ngClass]="classesStatusEnvio(envio.status)">
                 {{ rotuloStatusEnvio(envio.status) }}
@@ -374,3 +506,4 @@
     </div>
   </section>
 </div>
+</ng-container>

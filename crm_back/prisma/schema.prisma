@@ -37,8 +37,11 @@ model Cliente {
   vencimento   Int
   valorMensal  Float    @default(0)
   incluirCobrancas Boolean @default(true)
+  incluirCampanhas Boolean @default(true)
   cortesia         Boolean @default(false)
-  /// Status derivado de expiraEm na API — não atualizar manualmente no banco
+  /// Ativo operacional (manual). Quando false, sai das cobranças.
+  ativo        Boolean  @default(true)
+  /// Legado — status exposto na API é calculado em clienteStatus.ts
   status       String   @default("ATIVO")
   observacao   String?
   createdAt    DateTime @default(now())
@@ -82,6 +85,7 @@ model Mensalidade {
   status     String   @default("PENDENTE")
   pagoEm     DateTime?
   ultimoContatoEm DateTime?
+  bloqueioEnviadoEm DateTime?
   createdAt  DateTime @default(now())
   enviosAutomaticos EnvioAutomatico[]
 
@@ -95,15 +99,35 @@ model AutomacaoConfig {
   id                     Int       @id @default(autoincrement())
   lembretesAtivos        Boolean   @default(false)
   cobrancaAtrasadosAtiva Boolean   @default(false)
-  horariosEnvio          String    @default("09:00,18:00")
+  horariosEnvio          String    @default("08:00")
+  horarioInicioManha     String    @default("08:00")
+  horarioFimManha        String    @default("09:00")
   intervaloAtrasadosDias Int       @default(3)
   templateLembreteNome   String    @default("crm_lembrete")
   templateCobrancaNome   String    @default("crm_cobranca")
   templateLinguagem      String    @default("pt_BR")
+  templatesMetaAtivos    Boolean   @default(false)
   ultimaExecucaoEm       DateTime?
   ultimoHorarioExecutado String?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
+}
+
+model AutomacaoFilaEnvio {
+  id            Int      @id @default(autoincrement())
+  mensalidadeId Int
+  clienteId     Int
+  tipo          String
+  pontoDisparo  String
+  referenciaDia String
+  agendadoPara  DateTime
+  status        String   @default("PENDENTE")
+  erro          String?
+  processadoEm  DateTime?
+  createdAt     DateTime @default(now())
+
+  @@unique([mensalidadeId, pontoDisparo, referenciaDia])
+  @@index([referenciaDia, status, agendadoPara])
 }
 
 model EnvioAutomatico {
@@ -112,6 +136,7 @@ model EnvioAutomatico {
   mensalidade     Mensalidade? @relation(fields: [mensalidadeId], references: [id], onDelete: SetNull)
   clienteId       Int
   tipo            String
+  pontoDisparo    String?
   telefone        String
   status          String
   mensagemPreview String?
@@ -120,6 +145,7 @@ model EnvioAutomatico {
   enviadoEm       DateTime     @default(now())
 
   @@index([mensalidadeId, tipo, enviadoEm])
+  @@index([mensalidadeId, pontoDisparo])
   @@index([clienteId])
 }
 

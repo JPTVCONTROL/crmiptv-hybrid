@@ -87,6 +87,30 @@ export class MensalidadeController {
     }
   }
 
+  async registrarBloqueio(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const bloqueioEm =
+        typeof req.body?.bloqueioEm === 'string' ? req.body.bloqueioEm : undefined;
+      const data = await mensalidadeService.registrarBloqueio(id, bloqueioEm);
+      sendSuccess(
+        res,
+        { bloqueioEnviadoEm: data, contatoEm: data },
+        'Aviso de bloqueio registrado.'
+      );
+    } catch (error) {
+      if (error instanceof MensalidadeNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      sendError(res, 'Erro ao registrar aviso de bloqueio');
+    }
+  }
+
   async registrarContatos(req: Request, res: Response): Promise<void> {
     try {
       const ids = Array.isArray(req.body?.ids)

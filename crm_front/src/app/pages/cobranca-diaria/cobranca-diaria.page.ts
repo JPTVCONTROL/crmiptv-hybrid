@@ -22,7 +22,9 @@ import {
   TipoCobrancaDiaria,
   trackByItemCobrancaDiaria,
 } from '../../shared/utils/cobranca-diaria';
+import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
+import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
 import {
   contatoRegistradoHoje,
   rotuloUltimoContato,
@@ -37,6 +39,7 @@ export type FiltroGrupoCobranca = 'TODOS' | TipoCobrancaDiaria;
   templateUrl: './cobranca-diaria.page.html',
 })
 export class CobrancaDiariaPage implements OnInit, OnDestroy {
+  readonly automacaoMetaHabilitada = AUTOMACAO_META_HABILITADA;
   loading = true;
   private readonly destroy$ = new Subject<void>();
   itens: ItemCobrancaDiaria[] = [];
@@ -47,7 +50,8 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   salvandoAutomacao = false;
   whatsappApiConfigurado = false;
   templatesMetaProntos = false;
-  horariosAutomacao = '09:00,18:00';
+  horariosAutomacao = '08:00–09:00';
+  renovandoMensalidadeId: number | null = null;
   readonly limitePorSecao = 30;
   private secoesExpandidas = new Set<TipoCobrancaDiaria>();
 
@@ -59,7 +63,8 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     private automacaoService: AutomacaoService,
     private toast: ToastService,
     private sync: DadosSyncService,
-    private cobrancaLoteFila: CobrancaLoteFilaService
+    private cobrancaLoteFila: CobrancaLoteFilaService,
+    private renovacao: RenovacaoMensalidadeService
   ) {}
 
   private get configuracao(): Configuracao | null {
@@ -161,13 +166,19 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   }
 
   carregarAutomacao(silencioso = false): void {
+    if (!AUTOMACAO_META_HABILITADA) {
+      return;
+    }
+
     this.automacaoService.obterPainel().subscribe({
       next: (painel) => {
         this.automacaoAtiva =
           painel.config.lembretesAtivos || painel.config.cobrancaAtrasadosAtiva;
         this.whatsappApiConfigurado = painel.whatsappConfigurado;
-        this.templatesMetaProntos = painel.envioComSucesso;
-        this.horariosAutomacao = painel.horarios.join(', ') || '09:00,18:00';
+        this.templatesMetaProntos = painel.templatesProntos;
+        const inicio = painel.janelaManha?.inicio ?? '08:00';
+        const fim = painel.janelaManha?.fim ?? '09:00';
+        this.horariosAutomacao = `${inicio}–${fim}`;
       },
       error: () => {
         if (!silencioso) {
@@ -189,7 +200,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     if (ativo && this.aguardandoTemplatesMeta) {
       this.automacaoAtiva = false;
       void this.toast.warning(
-        'Os modelos crm_lembrete e crm_cobranca ainda estão em análise na Meta. Use o envio manual até a aprovação.'
+        'Confirme os templates aprovados em Automações antes de ativar o envio automático.'
       );
       return;
     }
@@ -260,6 +271,9 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
+        if (!silencioso) {
+          void this.toast.error('Erro ao carregar a cobrança diária.');
+        }
       },
     });
   }
@@ -400,6 +414,33 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     this.atualizarContatosLocais([mensalidadeId]);
   }
 
+  onBloqueioRegistrado(evento: {
+    mensalidadeId: number;
+    bloqueioEnviadoEm: string;
+  }): void {
+    this.atualizarBloqueioLocal(evento.mensalidadeId, evento.bloqueioEnviadoEm);
+  }
+
+  estaRenovando(item: ItemCobrancaDiaria): boolean {
+    return this.renovandoMensalidadeId === item.mensalidadeId;
+  }
+
+  async renovar(item: ItemCobrancaDiaria): Promise<void> {
+    if (this.renovandoMensalidadeId !== null) return;
+
+    this.renovandoMensalidadeId = item.mensalidadeId;
+    const ok = await this.renovacao.registrarRenovacao({
+      mensalidadeId: item.mensalidadeId,
+      clienteId: item.clienteId,
+      telefone: item.telefone,
+      nome: item.nome,
+      referencia: item.referencia,
+      valorFallback: item.valor,
+    });
+    this.renovandoMensalidadeId = null;
+    if (ok) this.carregar(true);
+  }
+
   async enviarSelecionados(): Promise<void> {
     const selecionados = this.itens.filter(
       (item) =>
@@ -450,6 +491,21 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     this.itens = this.itens.map((item) =>
       idsSet.has(item.mensalidadeId)
         ? { ...item, ultimoContatoEm: agora }
+        : item
+    );
+  }
+
+  private atualizarBloqueioLocal(
+    mensalidadeId: number,
+    bloqueioEnviadoEm: string
+  ): void {
+    this.itens = this.itens.map((item) =>
+      item.mensalidadeId === mensalidadeId
+        ? {
+            ...item,
+            bloqueioEnviadoEm,
+            ultimoContatoEm: bloqueioEnviadoEm,
+          }
         : item
     );
   }

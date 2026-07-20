@@ -1,15 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ModalController } from '@ionic/angular';
 import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { PagamentoUiService } from '../../core/services/pagamento-ui.service';
+import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
-import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
-import { Cliente, Configuracao, Mensalidade, StatusFinanceiro } from '../../core/models';
+import { Configuracao, Mensalidade, StatusFinanceiro } from '../../core/models';
 import {
   formatarValor,
   formatarData,
@@ -21,13 +20,15 @@ import {
 import {
   nomeClienteMensalidade,
   trackByMensalidadeId,
+  montarMensagemBloqueioMensalidade,
+  mensalidadeEstaAtrasada,
 } from '../../shared/utils/cobranca-lote';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import {
   montarItensRenovacaoLote,
   oferecerMensagemRenovacao,
 } from '../../shared/utils/whatsapp';
-import { resolverDiasAntecedencia, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
+import { resolverDiasAntecedencia, clienteEhCortesia, clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import {
   persistirFiltrosFinanceiro,
@@ -51,7 +52,6 @@ export class FinanceiroPage implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   telefones = new Map<number, string>();
   nomesClientes = new Map<number, string>();
-  clientesPorId = new Map<number, Cliente>();
   loading = true;
   busca = '';
   filtro: StatusFinanceiro = 'TODOS';
@@ -74,8 +74,8 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private configuracaoService: ConfiguracaoService,
     private pagamentoUi: PagamentoUiService,
+    private renovacao: RenovacaoMensalidadeService,
     private toast: ToastService,
-    private modalCtrl: ModalController,
     private sync: DadosSyncService,
     private cobrancaLoteFila: CobrancaLoteFilaService
   ) {}
@@ -154,7 +154,6 @@ export class FinanceiroPage implements OnInit, OnDestroy {
         );
         this.telefones = criarMapaTelefones(clientes);
         this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));
-        this.clientesPorId = new Map(clientes.map((c) => [c.id, c]));
 
         const idsValidos = new Set(this.mensalidades.map((m) => m.id));
         this.selecionados = new Set(
@@ -163,7 +162,12 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        if (!silencioso) {
+          void this.toast.error('Erro ao carregar o financeiro.');
+        }
+      },
     });
   }
 
@@ -233,47 +237,57 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     return resolverTelefoneCliente(m, this.telefones);
   }
 
-  async editarCliente(m: Mensalidade): Promise<void> {
-    const cliente = this.clientesPorId.get(m.clienteId);
-    if (!cliente) {
-      void this.toast.error('Cliente não encontrado.');
-      return;
-    }
-
-    const modal = await this.modalCtrl.create({
-      component: NovoClienteModalComponent,
-      componentProps: { cliente },
-      cssClass: 'crm-modal crm-modal-cliente',
-    });
-    await modal.present();
-    const { data } = await modal.onDidDismiss();
-    if (data) this.carregar();
+  participaCobrancas(m: Mensalidade): boolean {
+    return clienteParticipaCobrancas(m.cliente);
   }
 
-  async pagar(m: Mensalidade): Promise<void> {
-    const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
-    if (!pagoEm) return;
-
-    this.mensalidadeService.registrarPagamento(m.id, pagoEm).subscribe({
-      next: (resultado) => {
-        this.selecionados.delete(m.id);
-        this.selecionados = new Set(this.selecionados);
-        void oferecerMensagemRenovacao({
-          telefone: this.telefone(m),
-          nome: nomeClienteMensalidade(m, this.nomesClientes),
-          referencia: m.referencia,
-          valor: resultado.valorRenovacao ?? m.valor,
-          novoVencimento: resultado.novoVencimento,
-          empresa: this.configuracao?.nomeEmpresa ?? 'JPTV',
-          templateRenovacao: this.configuracao?.mensagemRenovacao,
-        });
-        this.carregar(true);
-      },
-      error: (err) => void this.toast.error(err.message),
-    });
+  mensalidadeAtrasada(m: Mensalidade): boolean {
+    return mensalidadeEstaAtrasada(m.vencimento);
   }
 
-  async pagarSelecionados(): Promise<void> {
+  mensagemBloqueio(m: Mensalidade): string {
+    return montarMensagemBloqueioMensalidade(
+      m,
+      this.configuracao,
+      this.nomesClientes,
+      nomeClienteMensalidade(m, this.nomesClientes)
+    );
+  }
+
+  onBloqueioRegistrado(evento: {
+    mensalidadeId: number;
+    bloqueioEnviadoEm: string;
+  }): void {
+    this.mensalidades = this.mensalidades.map((m) =>
+      m.id === evento.mensalidadeId
+        ? {
+            ...m,
+            bloqueioEnviadoEm: evento.bloqueioEnviadoEm,
+            ultimoContatoEm: evento.bloqueioEnviadoEm,
+          }
+        : m
+    );
+  }
+
+  async renovar(m: Mensalidade): Promise<void> {
+    const ok = await this.renovacao.registrarRenovacao({
+      mensalidadeId: m.id,
+      clienteId: m.clienteId,
+      telefone: this.telefone(m),
+      nome: nomeClienteMensalidade(m, this.nomesClientes),
+      referencia: m.referencia,
+      valorFallback: m.valor,
+      planoIdAtual: m.cliente?.planoId,
+      nomePlanoAtual: m.cliente?.plano?.nome,
+    });
+    if (!ok) return;
+
+    this.selecionados.delete(m.id);
+    this.selecionados = new Set(this.selecionados);
+    this.carregar(true);
+  }
+
+  async renovarSelecionados(): Promise<void> {
     if (this.selecionados.size === 0 || this.pagandoLote) return;
 
     const selecionadas = this.mensalidades.filter((m) =>
@@ -297,7 +311,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
             );
           } else {
             void this.toast.success(
-              `${resultado.sucesso} pagamento(s) registrado(s) com sucesso.`
+              `${resultado.sucesso} renovação(ões) registrada(s) com sucesso.`
             );
           }
 

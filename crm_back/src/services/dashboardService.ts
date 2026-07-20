@@ -86,6 +86,7 @@ export interface DashboardResumo {
     mensalidadeReferencia: string | null;
     mensalidadeValor: number | null;
     mensalidadeVencimento: string | null;
+    bloqueioEnviadoEm: string | null;
   }>;
   cobrancaDiaria: {
     totalElegiveis: number;
@@ -433,6 +434,7 @@ export class DashboardService {
               referencia: true,
               valor: true,
               vencimento: true,
+              bloqueioEnviadoEm: true,
             },
             orderBy: { vencimento: 'asc' },
           });
@@ -451,6 +453,7 @@ export class DashboardService {
         mensalidadeReferencia: pendente?.referencia ?? null,
         mensalidadeValor: pendente?.valor ?? null,
         mensalidadeVencimento: pendente?.vencimento.toISOString() ?? null,
+        bloqueioEnviadoEm: pendente?.bloqueioEnviadoEm?.toISOString() ?? null,
       };
     });
 

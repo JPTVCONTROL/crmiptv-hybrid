@@ -44,6 +44,16 @@ export class MensalidadeRepository {
     });
   }
 
+  registrarBloqueio(id: number, bloqueioEm: Date) {
+    return prisma.mensalidade.update({
+      where: { id },
+      data: {
+        bloqueioEnviadoEm: bloqueioEm,
+        ultimoContatoEm: bloqueioEm,
+      },
+    });
+  }
+
   registrarContatos(ids: number[], contatoEm: Date) {
     if (ids.length === 0) {
       return Promise.resolve({ count: 0 });

@@ -19,6 +19,10 @@ router.put(
   '/:id/cortesia',
   asyncHandler((req, res) => clienteController.definirCortesia(req, res))
 );
+router.put(
+  '/:id/atividade',
+  asyncHandler((req, res) => clienteController.definirAtividade(req, res))
+);
 router.put('/:id', asyncHandler((req, res) => clienteController.atualizar(req, res)));
 router.delete('/:id', asyncHandler((req, res) => clienteController.excluir(req, res)));
 

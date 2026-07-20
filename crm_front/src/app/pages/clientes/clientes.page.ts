@@ -10,7 +10,7 @@ import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Cliente, Aplicativo, ImportacaoClientesResultado } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
-import { statusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
+import { resolverStatusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
 import { oferecerOnboardingCompleto } from '../../shared/utils/onboarding';
 import {
   clienteCadastroIncompleto,
@@ -727,7 +727,7 @@ export class ClientesPage implements OnInit, OnDestroy {
   }
 
   status(cliente: Cliente): StatusCliente {
-    return statusCliente(cliente.expiraEm);
+    return resolverStatusCliente(cliente);
   }
 
   tipoBadge(cliente: Cliente): StatusBadgeTipo {

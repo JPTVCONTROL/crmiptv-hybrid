@@ -7,28 +7,43 @@
 
 <div *ngIf="!loading" class="space-y-6">
   <div
-    *ngIf="aguardandoTemplatesMeta"
+    *ngIf="automacaoMetaHabilitada && aguardandoTemplatesMeta"
     class="crm-card border border-amber-500/30 bg-amber-500/5 !p-4"
   >
-    <div class="flex items-start gap-3">
-      <ion-icon name="time-outline" class="text-xl text-amber-400 shrink-0 mt-0.5"></ion-icon>
-      <div class="space-y-1">
-        <p class="text-amber-200 text-sm font-medium">Modelos de mensagem em análise na Meta</p>
-        <p class="text-slate-400 text-sm">
-          Os templates <code class="text-violet-300">crm_lembrete</code> e
-          <code class="text-violet-300">crm_cobranca</code> precisam ficar com status
-          <strong class="text-slate-300">Ativo</strong> antes do envio automático funcionar.
-          Enquanto isso, use o botão <strong class="text-slate-300">Enviar rotina</strong> abaixo
-          — abre o WhatsApp manualmente, sem depender da API.
-        </p>
-        <a routerLink="/automacoes" class="text-violet-400 text-xs hover:underline inline-block mt-1">
-          Ver checklist em Automações →
-        </a>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-start gap-3 min-w-0">
+        <ion-icon name="time-outline" class="text-xl text-amber-400 shrink-0 mt-0.5"></ion-icon>
+        <div class="space-y-1">
+          <p class="text-amber-200 text-sm font-medium">Confirme os modelos na Meta</p>
+          <p class="text-slate-400 text-sm">
+            Se <code class="text-violet-300">crm_lembrete</code> e
+            <code class="text-violet-300">crm_cobranca</code> já estão
+            <strong class="text-slate-300">Ativos</strong>, confirme em Automações para liberar o envio automático.
+            O envio manual abaixo continua disponível.
+          </p>
+        </div>
       </div>
+      <a routerLink="/automacoes" class="crm-btn-primary !py-2 !text-sm no-underline shrink-0 text-center">
+        Ir para Automações
+      </a>
     </div>
   </div>
 
   <div
+    *ngIf="automacaoMetaHabilitada && whatsappApiConfigurado && templatesMetaProntos && !aguardandoTemplatesMeta"
+    class="crm-card border border-green-500/30 bg-green-500/5 !p-4"
+  >
+    <div class="flex items-start gap-3">
+      <ion-icon name="checkmark-circle-outline" class="text-xl text-green-400 shrink-0 mt-0.5"></ion-icon>
+      <p class="text-slate-400 text-sm">
+        Modelos Meta <code class="text-violet-300">crm_lembrete</code> e
+        <code class="text-violet-300">crm_cobranca</code> prontos — você pode ligar a cobrança automática abaixo.
+      </p>
+    </div>
+  </div>
+
+  <div
+    *ngIf="automacaoMetaHabilitada"
     class="crm-card !p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
     [ngClass]="{
       'border-green-500/30 bg-green-500/5': automacaoAtiva,
@@ -51,8 +66,8 @@
         <span *ngIf="salvandoAutomacao" class="text-slate-500 text-xs">Salvando...</span>
       </div>
       <p class="text-slate-400 text-sm mt-1">
-        Envia lembretes e cobranças via WhatsApp API nos horários
-        <span class="text-slate-300">{{ horariosAutomacao }}</span>.
+        Envia lembretes e cobranças via WhatsApp API entre
+        <span class="text-slate-300">{{ horariosAutomacao }}</span> (horários alternados por cliente).
         O envio manual abaixo continua disponível.
       </p>
       <p *ngIf="aguardandoTemplatesMeta" class="text-amber-400 text-xs mt-2">
@@ -63,7 +78,7 @@
         <a routerLink="/automacoes" class="underline">veja o checklist em Automações</a>.
       </p>
       <p *ngIf="automacaoAtiva" class="text-green-400/90 text-xs mt-2">
-        Agendador ligado · lembretes (até {{ diasAntecedencia }} dias) e cobranças de atrasados.
+        Agendador ligado · lembretes (3/1/0 dias) e cobranças (1º, 5º e 7º dia de atraso).
       </p>
     </div>
     <div class="flex items-center gap-3 shrink-0 self-start sm:self-center">
@@ -86,8 +101,9 @@
           quem vence em até {{ diasAntecedencia }} dias recebe lembrete.
           O envio em lote abre uma <strong class="text-slate-300">fila assistida</strong>
           (um clique por cliente — evita bloqueio do navegador).
-          Para registrar pagamentos, use
-          <a routerLink="/financeiro" class="text-violet-400 hover:underline">Financeiro</a>.
+          Para registrar renovações, use
+          <a routerLink="/financeiro" class="text-violet-400 hover:underline">Financeiro</a>
+          ou o botão <strong class="text-slate-300">Renovar</strong> em cada linha.
         </p>
         <p *ngIf="rotinaFeitaHoje" class="text-green-400 text-xs mt-2">
           Rotina concluída hoje · {{ progressoRotina }}
@@ -244,15 +260,35 @@
             Selecionar para envio
           </label>
 
-          <div class="crm-mobile-card-actions">
+          <div class="crm-mobile-card-actions flex-wrap">
             <app-whatsapp-cobranca-btn
               class="flex-1"
+              [compact]="true"
               [telefone]="item.telefone"
               [mensagem]="item.mensagem"
               [mensalidadeId]="item.mensalidadeId"
               [disabled]="!item.telefoneValido"
               (contatoRegistrado)="onContatoRegistrado($event)"
             ></app-whatsapp-cobranca-btn>
+            <app-whatsapp-bloqueio-btn
+              *ngIf="item.mensagemBloqueio"
+              class="flex-1"
+              [compact]="true"
+              [telefone]="item.telefone"
+              [mensagem]="item.mensagemBloqueio"
+              [mensalidadeId]="item.mensalidadeId"
+              [bloqueioEnviadoEm]="item.bloqueioEnviadoEm"
+              [disabled]="!item.telefoneValido"
+              (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+            ></app-whatsapp-bloqueio-btn>
+            <button
+              type="button"
+              class="crm-btn-success crm-btn-action flex-1"
+              [disabled]="estaRenovando(item)"
+              (click)="renovar(item)"
+            >
+              {{ estaRenovando(item) ? 'Renovando...' : 'Renovar' }}
+            </button>
           </div>
         </article>
       </div>
@@ -268,7 +304,7 @@
               <th class="text-left py-3 px-2">Vencimento</th>
               <th class="text-left py-3 px-2">Tipo</th>
               <th class="text-left py-3 px-2">Contato</th>
-              <th class="text-right py-3 px-2">WhatsApp</th>
+              <th class="text-right py-3 px-2">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -306,14 +342,33 @@
               <td class="py-3 px-2">
                 <p class="text-xs" [class]="classeContato(item)">{{ rotuloContato(item) }}</p>
               </td>
-              <td class="py-3 px-2 text-right">
+              <td class="py-3 px-2 text-right space-x-1">
                 <app-whatsapp-cobranca-btn
+                  [compact]="true"
                   [telefone]="item.telefone"
                   [mensagem]="item.mensagem"
                   [mensalidadeId]="item.mensalidadeId"
                   [disabled]="!item.telefoneValido"
                   (contatoRegistrado)="onContatoRegistrado($event)"
                 ></app-whatsapp-cobranca-btn>
+                <app-whatsapp-bloqueio-btn
+                  *ngIf="item.mensagemBloqueio"
+                  [compact]="true"
+                  [telefone]="item.telefone"
+                  [mensagem]="item.mensagemBloqueio"
+                  [mensalidadeId]="item.mensalidadeId"
+                  [bloqueioEnviadoEm]="item.bloqueioEnviadoEm"
+                  [disabled]="!item.telefoneValido"
+                  (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+                ></app-whatsapp-bloqueio-btn>
+                <button
+                  type="button"
+                  class="crm-btn-success crm-btn-action"
+                  [disabled]="estaRenovando(item)"
+                  (click)="renovar(item)"
+                >
+                  {{ estaRenovando(item) ? 'Renovando...' : 'Renovar' }}
+                </button>
               </td>
             </tr>
           </tbody>
@@ -390,15 +445,24 @@
             Selecionar para envio
           </label>
 
-          <div class="crm-mobile-card-actions">
+          <div class="crm-mobile-card-actions flex-wrap">
             <app-whatsapp-cobranca-btn
               class="flex-1"
+              [compact]="true"
               [telefone]="item.telefone"
               [mensagem]="item.mensagem"
               [mensalidadeId]="item.mensalidadeId"
               [disabled]="!item.telefoneValido"
               (contatoRegistrado)="onContatoRegistrado($event)"
             ></app-whatsapp-cobranca-btn>
+            <button
+              type="button"
+              class="crm-btn-success crm-btn-action flex-1"
+              [disabled]="estaRenovando(item)"
+              (click)="renovar(item)"
+            >
+              {{ estaRenovando(item) ? 'Renovando...' : 'Renovar' }}
+            </button>
           </div>
         </article>
       </div>
@@ -414,7 +478,7 @@
               <th class="text-left py-3 px-2">Vencimento</th>
               <th class="text-left py-3 px-2">Tipo</th>
               <th class="text-left py-3 px-2">Contato</th>
-              <th class="text-right py-3 px-2">WhatsApp</th>
+              <th class="text-right py-3 px-2">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -452,14 +516,23 @@
               <td class="py-3 px-2">
                 <p class="text-xs" [class]="classeContato(item)">{{ rotuloContato(item) }}</p>
               </td>
-              <td class="py-3 px-2 text-right">
+              <td class="py-3 px-2 text-right space-x-1">
                 <app-whatsapp-cobranca-btn
+                  [compact]="true"
                   [telefone]="item.telefone"
                   [mensagem]="item.mensagem"
                   [mensalidadeId]="item.mensalidadeId"
                   [disabled]="!item.telefoneValido"
                   (contatoRegistrado)="onContatoRegistrado($event)"
                 ></app-whatsapp-cobranca-btn>
+                <button
+                  type="button"
+                  class="crm-btn-success crm-btn-action"
+                  [disabled]="estaRenovando(item)"
+                  (click)="renovar(item)"
+                >
+                  {{ estaRenovando(item) ? 'Renovando...' : 'Renovar' }}
+                </button>
               </td>
             </tr>
           </tbody>

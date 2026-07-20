@@ -47,6 +47,7 @@ export class AutomacaoRepository {
     mensalidadeId: number;
     clienteId: number;
     tipo: string;
+    pontoDisparo?: string;
     telefone: string;
     status: string;
     mensagemPreview?: string;
@@ -77,6 +78,85 @@ export class AutomacaoRepository {
       orderBy: { enviadoEm: 'desc' },
     });
     return registro?.enviadoEm ?? null;
+  }
+
+  async envioJaDisparado(
+    mensalidadeId: number,
+    pontoDisparo: string
+  ): Promise<boolean> {
+    const registro = await prisma.envioAutomatico.findFirst({
+      where: { mensalidadeId, pontoDisparo, status: 'ENVIADO' },
+    });
+    return Boolean(registro);
+  }
+
+  async filaMontadaHoje(referenciaDia: string): Promise<boolean> {
+    const registro = await prisma.automacaoFilaEnvio.findFirst({
+      where: { referenciaDia },
+    });
+    return Boolean(registro);
+  }
+
+  async contagemFilaHoje(referenciaDia: string) {
+    const [pendentes, enviados, falhas] = await Promise.all([
+      prisma.automacaoFilaEnvio.count({
+        where: { referenciaDia, status: 'PENDENTE' },
+      }),
+      prisma.automacaoFilaEnvio.count({
+        where: { referenciaDia, status: 'ENVIADO' },
+      }),
+      prisma.automacaoFilaEnvio.count({
+        where: { referenciaDia, status: 'FALHA' },
+      }),
+    ]);
+    return { pendentes, enviados, falhas };
+  }
+
+  async criarItensFila(
+    itens: Array<{
+      mensalidadeId: number;
+      clienteId: number;
+      tipo: string;
+      pontoDisparo: string;
+      referenciaDia: string;
+      agendadoPara: Date;
+    }>
+  ) {
+    if (itens.length === 0) {
+      return { criados: 0 };
+    }
+
+    const resultado = await prisma.automacaoFilaEnvio.createMany({
+      data: itens,
+    });
+
+    return { criados: resultado.count };
+  }
+
+  async listarFilaPendenteAte(referenciaDia: string, limite = 20) {
+    return prisma.automacaoFilaEnvio.findMany({
+      where: {
+        referenciaDia,
+        status: 'PENDENTE',
+        agendadoPara: { lte: new Date() },
+      },
+      orderBy: { agendadoPara: 'asc' },
+      take: limite,
+    });
+  }
+
+  async marcarFilaEnviada(id: number) {
+    return prisma.automacaoFilaEnvio.update({
+      where: { id },
+      data: { status: 'ENVIADO', processadoEm: new Date() },
+    });
+  }
+
+  async marcarFilaFalha(id: number, erro: string) {
+    return prisma.automacaoFilaEnvio.update({
+      where: { id },
+      data: { status: 'FALHA', erro, processadoEm: new Date() },
+    });
   }
 
   async envioEnviadoHoje(mensalidadeId: number, tipo: string): Promise<boolean> {

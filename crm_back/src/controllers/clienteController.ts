@@ -124,6 +124,50 @@ export class ClienteController {
     }
   }
 
+  async definirAtividade(req: Request, res: Response): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      const ativo = req.body?.ativo;
+      const incluirCampanhas = req.body?.incluirCampanhas;
+      const incluirCobrancas = req.body?.incluirCobrancas;
+
+      if (typeof ativo !== 'boolean') {
+        sendError(res, 'Informe se o cliente está ativo.', 400);
+        return;
+      }
+
+      if (typeof incluirCampanhas !== 'boolean') {
+        sendError(res, 'Informe se o cliente participa de campanhas.', 400);
+        return;
+      }
+
+      if (typeof incluirCobrancas !== 'boolean') {
+        sendError(res, 'Informe se o cliente participa das cobranças.', 400);
+        return;
+      }
+
+      const cliente = await clienteService.definirAtividade(
+        id,
+        ativo,
+        incluirCampanhas,
+        incluirCobrancas
+      );
+
+      sendSuccess(
+        res,
+        cliente,
+        ativo ? 'Cliente marcado como ativo.' : 'Cliente marcado como inativo.'
+      );
+    } catch (error) {
+      if (error instanceof ClienteNotFoundError) {
+        sendError(res, error.message, 404);
+        return;
+      }
+      console.error('Erro ao alterar atividade do cliente:', error);
+      sendError(res, 'Erro ao alterar atividade do cliente.');
+    }
+  }
+
   async excluir(req: Request, res: Response): Promise<void> {
     try {
       const id = Number(req.params.id);

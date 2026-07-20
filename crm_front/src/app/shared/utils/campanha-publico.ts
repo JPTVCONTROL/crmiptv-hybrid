@@ -1,5 +1,5 @@
 import { Cliente } from '../../core/models';
-import { calcularDias, statusCliente, StatusCliente } from './formatters';
+import { calcularDias, resolverStatusCliente, StatusCliente } from './formatters';
 import { clienteEhCortesia } from './cobranca-diaria';
 
 export type SegmentoPublicoCampanha =
@@ -58,11 +58,15 @@ export function clientePassouFiltroPublico(
     return false;
   }
 
+  if (cliente.incluirCampanhas === false) {
+    return false;
+  }
+
   if (filtro.planoId !== null && cliente.planoId !== filtro.planoId) {
     return false;
   }
 
-  const status = statusCliente(cliente.expiraEm);
+  const status = resolverStatusCliente(cliente);
 
   switch (filtro.segmento) {
     case 'TODOS':

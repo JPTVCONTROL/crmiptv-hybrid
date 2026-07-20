@@ -42,6 +42,11 @@ const routes: Routes = [
           import('./pages/vencimentos/vencimentos.module').then((m) => m.VencimentosPageModule),
       },
       {
+        path: 'calendario',
+        loadChildren: () =>
+          import('./pages/calendario/calendario.module').then((m) => m.CalendarioPageModule),
+      },
+      {
         path: 'cobranca-diaria',
         loadChildren: () =>
           import('./pages/cobranca-diaria/cobranca-diaria.module').then(

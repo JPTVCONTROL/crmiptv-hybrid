@@ -16,7 +16,12 @@
             <app-status-badge [tipo]="tipoStatusBadge" [label]="status()" [dot]="true"></app-status-badge>
             <app-status-badge *ngIf="ehCortesia" tipo="CORTESIA" label="Cortesia"></app-status-badge>
             <app-status-badge
-              *ngIf="!participaCobrancas && !ehCortesia"
+              *ngIf="!participaCampanhas"
+              tipo="SEM_COBRANCA"
+              label="Sem campanhas"
+            ></app-status-badge>
+            <app-status-badge
+              *ngIf="!participaCobrancas && !ehCortesia && clienteEstaAtivo"
               tipo="SEM_COBRANCA"
               label="Sem cobrança"
             ></app-status-badge>
@@ -25,6 +30,25 @@
       </div>
 
       <div class="flex flex-wrap gap-2 shrink-0">
+        <app-whatsapp-contato-btn [telefone]="cliente.telefone"></app-whatsapp-contato-btn>
+        <button
+          type="button"
+          class="crm-btn-ghost"
+          [ngClass]="{
+            '!border-red-500/40': !clienteEstaAtivo,
+            '!text-red-200': !clienteEstaAtivo
+          }"
+          [disabled]="alternandoAtividade"
+          (click)="alternarAtividade()"
+        >
+          {{
+            alternandoAtividade
+              ? 'Salvando...'
+              : clienteEstaAtivo
+                ? 'Marcar inativo'
+                : 'Marcar ativo'
+          }}
+        </button>
         <button
           type="button"
           class="crm-btn-ghost"
@@ -50,7 +74,7 @@
             '!border-amber-500/40': !incluirNasCobrancas && !ehCortesia,
             '!text-amber-200': !incluirNasCobrancas && !ehCortesia
           }"
-          [disabled]="alternandoCobrancas || ehCortesia"
+          [disabled]="alternandoCobrancas || ehCortesia || !clienteEstaAtivo"
           (click)="alternarInclusaoCobrancas()"
         >
           {{
@@ -74,6 +98,17 @@
     [breadcrumbs]="[{ label: 'Clientes', rota: '/clientes' }, { label: cliente.nome }]"
   >
   </app-page-header>
+
+  <div
+    *ngIf="!clienteEstaAtivo"
+    class="crm-card border border-red-500/25 bg-red-500/5"
+  >
+    <p class="text-red-200 text-sm">
+      Cliente <span class="font-medium">inativo</span>: fora das cobranças automáticas.
+      <span *ngIf="participaCampanhas"> Continua elegível para campanhas do Market.</span>
+      <span *ngIf="!participaCampanhas"> Excluído das campanhas do Market.</span>
+    </p>
+  </div>
 
   <div
     *ngIf="ehCortesia"
@@ -186,25 +221,38 @@
       <div *ngIf="mensalidadePendente() as pendente" class="flex flex-wrap gap-2 pt-2">
         <app-whatsapp-cobranca-btn
           *ngIf="participaCobrancas"
+          [compact]="true"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemWhatsApp(pendente)"
           [mensalidadeId]="pendente.id"
         ></app-whatsapp-cobranca-btn>
-        <app-whatsapp-cobranca-btn
+        <app-whatsapp-bloqueio-btn
           *ngIf="participaCobrancas && mensalidadeAtrasada(pendente)"
-          label="Bloqueio"
+          [compact]="true"
           [telefone]="cliente.telefone"
           [mensagem]="mensagemBloqueio(pendente)"
           [mensalidadeId]="pendente.id"
-        ></app-whatsapp-cobranca-btn>
+          [bloqueioEnviadoEm]="pendente.bloqueioEnviadoEm"
+          (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+        ></app-whatsapp-bloqueio-btn>
         <button
           *ngIf="ehCortesia"
-          class="crm-btn-primary"
+          type="button"
+          class="crm-btn-primary crm-btn-action"
+          [disabled]="estaRenovando(pendente)"
           (click)="renovarCortesia(pendente)"
         >
-          Renovar cortesia
+          {{ estaRenovando(pendente) ? 'Renovando...' : 'Renovar cortesia' }}
         </button>
-        <button *ngIf="!ehCortesia" class="crm-btn-success" (click)="pagar(pendente)">Marcar como Pago</button>
+        <button
+          *ngIf="!ehCortesia"
+          type="button"
+          class="crm-btn-success crm-btn-action"
+          [disabled]="estaRenovando(pendente)"
+          (click)="renovar(pendente)"
+        >
+          {{ estaRenovando(pendente) ? 'Renovando...' : 'Renovar' }}
+        </button>
       </div>
     </div>
   </div>
@@ -231,26 +279,38 @@
           <span class="crm-mobile-card-value">{{ fmtData(m.vencimento) }}</span>
         </div>
 
-        <div class="crm-mobile-card-actions flex-wrap">
+        <div class="crm-mobile-card-actions flex-wrap gap-2">
           <app-whatsapp-cobranca-btn
             *ngIf="m.status === 'PENDENTE' && participaCobrancas"
+            [compact]="true"
             [telefone]="cliente.telefone"
             [mensagem]="mensagemWhatsApp(m)"
             [mensalidadeId]="m.id"
           ></app-whatsapp-cobranca-btn>
-          <app-whatsapp-cobranca-btn
+          <app-whatsapp-bloqueio-btn
             *ngIf="m.status === 'PENDENTE' && participaCobrancas && mensalidadeAtrasada(m)"
-            label="Bloqueio"
+            [compact]="true"
             [telefone]="cliente.telefone"
             [mensagem]="mensagemBloqueio(m)"
             [mensalidadeId]="m.id"
-          ></app-whatsapp-cobranca-btn>
-          <app-whatsapp-cobranca-btn
-            *ngIf="m.status === 'PAGO'"
-            label="Recibo"
-            [telefone]="cliente.telefone"
-            [mensagem]="mensagemRecibo(m)"
-          ></app-whatsapp-cobranca-btn>
+            [bloqueioEnviadoEm]="m.bloqueioEnviadoEm"
+            (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+          ></app-whatsapp-bloqueio-btn>
+          <button
+            *ngIf="m.status === 'PENDENTE'"
+            type="button"
+            class="crm-btn-success crm-btn-action"
+            [disabled]="estaRenovando(m)"
+            (click)="renovar(m)"
+          >
+            {{
+              estaRenovando(m)
+                ? 'Renovando...'
+                : ehCortesia
+                  ? 'Renovar cortesia'
+                  : 'Renovar'
+            }}
+          </button>
         </div>
       </article>
     </div>
@@ -263,7 +323,7 @@
             <th class="text-left py-2">Valor</th>
             <th class="text-left py-2">Vencimento</th>
             <th class="text-left py-2">Status</th>
-            <th class="text-right py-2">WhatsApp</th>
+            <th class="text-right py-2">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -277,26 +337,40 @@
                 [label]="m.status"
               ></app-status-badge>
             </td>
-            <td class="py-2 text-right space-x-1">
-              <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PENDENTE' && participaCobrancas"
-                [telefone]="cliente.telefone"
-                [mensagem]="mensagemWhatsApp(m)"
-                [mensalidadeId]="m.id"
-              ></app-whatsapp-cobranca-btn>
-              <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PENDENTE' && participaCobrancas && mensalidadeAtrasada(m)"
-                label="Bloqueio"
-                [telefone]="cliente.telefone"
-                [mensagem]="mensagemBloqueio(m)"
-                [mensalidadeId]="m.id"
-              ></app-whatsapp-cobranca-btn>
-              <app-whatsapp-cobranca-btn
-                *ngIf="m.status === 'PAGO'"
-                label="Recibo"
-                [telefone]="cliente.telefone"
-                [mensagem]="mensagemRecibo(m)"
-              ></app-whatsapp-cobranca-btn>
+            <td class="py-2 text-right">
+              <div class="inline-flex flex-wrap justify-end gap-1">
+                <app-whatsapp-cobranca-btn
+                  *ngIf="m.status === 'PENDENTE' && participaCobrancas"
+                  [compact]="true"
+                  [telefone]="cliente.telefone"
+                  [mensagem]="mensagemWhatsApp(m)"
+                  [mensalidadeId]="m.id"
+                ></app-whatsapp-cobranca-btn>
+                <app-whatsapp-bloqueio-btn
+                  *ngIf="m.status === 'PENDENTE' && participaCobrancas && mensalidadeAtrasada(m)"
+                  [compact]="true"
+                  [telefone]="cliente.telefone"
+                  [mensagem]="mensagemBloqueio(m)"
+                  [mensalidadeId]="m.id"
+                  [bloqueioEnviadoEm]="m.bloqueioEnviadoEm"
+                  (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+                ></app-whatsapp-bloqueio-btn>
+                <button
+                  *ngIf="m.status === 'PENDENTE'"
+                  type="button"
+                  class="crm-btn-success crm-btn-action"
+                  [disabled]="estaRenovando(m)"
+                  (click)="renovar(m)"
+                >
+                  {{
+                    estaRenovando(m)
+                      ? 'Renovando...'
+                      : ehCortesia
+                        ? 'Renovar cortesia'
+                        : 'Renovar'
+                  }}
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

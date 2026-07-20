@@ -31,7 +31,7 @@ export const MENSAGEM_COBRANCA_LEMBRETE_PADRAO = `Olá {nome}! Passando para lem
 
 — {empresa}`;
 
-export const MENSAGEM_RENOVACAO_PADRAO = `Olá {nome}! Recebemos seu pagamento de {valor} referente a {referencia}. Seu plano foi renovado e agora vence em {vencimento}. Obrigado pela preferência!
+export const MENSAGEM_RENOVACAO_PADRAO = `Olá {nome}! Recebemos seu pagamento de {valor} referente a {referencia}. Seu plano foi renovado. O próximo vencimento será em {vencimento}. Obrigado pela preferência!
 
 — {empresa}`;
 

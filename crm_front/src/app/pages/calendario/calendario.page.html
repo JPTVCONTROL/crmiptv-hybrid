@@ -1,0 +1,218 @@
+<app-page-header
+  title="Calendário"
+  subtitle="Veja em qual dia cada cliente precisa de atenção — renovação ou cobrança."
+></app-page-header>
+
+<app-loading *ngIf="loading" variant="table"></app-loading>
+
+<div *ngIf="!loading" class="space-y-6">
+  <div class="crm-info-banner">
+    <p>
+      Cada <strong class="text-slate-300">ponto no calendário</strong> é um cliente com algo importante
+      naquele dia. Quando assinatura e mensalidade caem juntas, aparecem
+      <strong class="text-slate-300">uma vez só</strong> — é o dia da renovação.
+    </p>
+    <p class="crm-info-banner-hint">
+      Para listar e renovar cobranças: <a routerLink="/vencimentos" class="text-violet-400 hover:underline font-medium">Vencimentos</a>
+      · <a routerLink="/financeiro" class="text-violet-400 hover:underline font-medium">Financeiro</a>.
+      Para enviar WhatsApp em lote: <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <app-stat-card
+      title="Clientes no mês"
+      [value]="resumoMes.clientes.toString()"
+      color="#8B5CF6"
+      subtitle="Com renovação ou cobrança"
+    ></app-stat-card>
+    <app-stat-card
+      title="No dia selecionado"
+      [value]="clientesDiaSelecionado.length.toString()"
+      color="#64748B"
+      [subtitle]="clientesDiaSelecionado.length === 1 ? 'cliente' : 'clientes'"
+    ></app-stat-card>
+    <app-stat-card
+      title="Só expiração"
+      [value]="resumoMes.expiracoes.toString()"
+      color="#F59E0B"
+      subtitle="Datas de fim de assinatura"
+    ></app-stat-card>
+    <app-stat-card
+      title="Só mensalidade"
+      [value]="resumoMes.mensalidades.toString()"
+      color="#22C55E"
+      subtitle="Cobranças pendentes"
+    ></app-stat-card>
+  </div>
+
+  <div class="crm-card !p-4 md:!p-5 space-y-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <button type="button" class="crm-btn-ghost !px-2.5" (click)="mesAnterior()" aria-label="Mês anterior">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+        <h2 class="text-white font-semibold text-lg min-w-[12rem] text-center">{{ tituloMes }}</h2>
+        <button type="button" class="crm-btn-ghost !px-2.5" (click)="mesProximo()" aria-label="Próximo mês">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+        <button type="button" class="crm-btn-ghost !text-xs" (click)="irParaHoje()">Hoje</button>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngFor="let op of opcoesFiltro"
+          type="button"
+          [class]="classesChipTipo(op.valor)"
+          (click)="definirFiltro(op.valor)"
+        >
+          <span>{{ op.rotulo }}</span>
+          <span [class]="classesChipContagem(op.valor)">{{ contagemFiltro(op.valor) }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3 text-xs text-slate-500">
+      <span class="inline-flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        Tem expiração de assinatura
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        Tem mensalidade pendente
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-violet-400 ring-2 ring-violet-500/40"></span>
+        Hoje
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-6 items-start">
+    <section class="crm-card !p-3 md:!p-4 overflow-x-auto">
+      <div class="crm-calendar-grid min-w-[18rem]">
+        <div *ngFor="let rotulo of diasSemana" class="crm-calendar-weekday">
+          {{ rotulo }}
+        </div>
+
+        <button
+          *ngFor="let celula of gradeMes; trackBy: trackByCelula"
+          type="button"
+          class="crm-calendar-day"
+          [ngClass]="classeCelula(celula)"
+          [disabled]="!celula.data"
+          (click)="selecionarDia(celula.data)"
+        >
+          <span *ngIf="celula.dia !== null" class="crm-calendar-day-number">{{ celula.dia }}</span>
+          <div *ngIf="celula.clientes.length > 0" class="crm-calendar-day-dots">
+            <span
+              *ngIf="celulaTemExpiracao(celula)"
+              class="crm-calendar-dot crm-calendar-dot--expiracao"
+            ></span>
+            <span
+              *ngIf="celulaTemMensalidade(celula)"
+              class="crm-calendar-dot crm-calendar-dot--mensalidade"
+            ></span>
+            <span *ngIf="celula.clientes.length > 1" class="crm-calendar-dot-more">
+              {{ celula.clientes.length }}
+            </span>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <section class="crm-card !p-4 md:!p-5 space-y-4 min-h-[16rem]">
+      <div>
+        <p class="crm-section-label mb-1">Clientes do dia</p>
+        <h3 class="text-white font-medium" *ngIf="diaSelecionado">{{ rotuloDiaSelecionado }}</h3>
+        <p class="text-slate-500 text-sm" *ngIf="!diaSelecionado">Selecione um dia no calendário.</p>
+      </div>
+
+      <div *ngIf="diaSelecionado && clientesDiaSelecionado.length === 0" class="text-slate-500 text-sm">
+        Nenhum cliente neste dia com o filtro atual.
+      </div>
+
+      <div *ngIf="clientesDiaSelecionado.length > 0" class="space-y-3">
+        <article
+          *ngFor="let cliente of clientesDiaSelecionado; trackBy: trackByClienteDia"
+          class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <a
+                [routerLink]="['/clientes', cliente.clienteId]"
+                class="text-violet-400 hover:underline font-medium truncate block"
+              >
+                {{ cliente.clienteNome }}
+              </a>
+              <p class="text-slate-500 text-xs mt-0.5">{{ rotuloResumoCliente(cliente) }}</p>
+            </div>
+            <span [class]="classeUrgenciaCliente(cliente)">
+              {{
+                cliente.urgencia === 'ATRASADO'
+                  ? 'Atrasado'
+                  : cliente.urgencia === 'HOJE'
+                    ? 'Hoje'
+                    : 'Futuro'
+              }}
+            </span>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            <span *ngIf="cliente.temExpiracao" class="crm-badge-neutral">Assinatura</span>
+            <span *ngIf="cliente.temMensalidade" class="crm-badge-pendente">Mensalidade</span>
+            <span *ngIf="cliente.cortesia" class="crm-badge-cortesia">Cortesia</span>
+          </div>
+
+          <div class="text-sm text-slate-400 space-y-1">
+            <p *ngIf="cliente.planoNome">Plano: <span class="text-slate-200">{{ cliente.planoNome }}</span></p>
+            <p *ngIf="cliente.referenciaMensalidade">
+              Referência: <span class="text-slate-200">{{ cliente.referenciaMensalidade }}</span>
+            </p>
+            <p *ngIf="cliente.valorMensalidade !== undefined && !cliente.cortesia">
+              Valor: <span class="text-slate-200">{{ fmtValor(cliente.valorMensalidade) }}</span>
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-1">
+            <a
+              [routerLink]="['/clientes', cliente.clienteId]"
+              class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline"
+            >
+              Ver cliente
+            </a>
+            <button
+              *ngIf="podeRenovar(cliente)"
+              type="button"
+              class="crm-btn-success crm-btn-action !py-1 !px-2 !text-xs"
+              [disabled]="renovandoMensalidadeId === cliente.mensalidadeId"
+              (click)="renovar(cliente)"
+            >
+              {{
+                renovandoMensalidadeId === cliente.mensalidadeId
+                  ? 'Renovando...'
+                  : cliente.cortesia
+                    ? 'Renovar cortesia'
+                    : 'Renovar'
+              }}
+            </button>
+            <a
+              *ngIf="!podeRenovar(cliente) && cliente.temExpiracao"
+              [routerLink]="['/clientes', cliente.clienteId]"
+              class="crm-btn-primary !py-1 !px-2 !text-xs no-underline"
+            >
+              Renovar no cliente
+            </a>
+            <a
+              *ngIf="cliente.temExpiracao || cliente.temMensalidade"
+              routerLink="/cobranca-diaria"
+              class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline"
+            >
+              Cobrar
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>

@@ -19,5 +19,6 @@ router.put(
   asyncHandler((req, res) => mensalidadeController.renovarCortesia(req, res))
 );
 router.put('/:id/contato', asyncHandler((req, res) => mensalidadeController.registrarContato(req, res)));
+router.put('/:id/bloqueio', asyncHandler((req, res) => mensalidadeController.registrarBloqueio(req, res)));
 
 export default router;

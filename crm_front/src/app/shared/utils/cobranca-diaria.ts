@@ -2,6 +2,7 @@ import { Configuracao, Mensalidade } from '../../core/models';
 import { calcularDias } from './formatters';
 import {
   montarMensagemCobrancaMensalidade,
+  montarMensagemBloqueioMensalidade,
   nomeClienteMensalidade,
 } from './cobranca-lote';
 import { resolverValorMensalidade } from './formatters';
@@ -34,7 +35,9 @@ export interface ItemCobrancaDiaria {
   telefone: string;
   telefoneValido: boolean;
   ultimoContatoEm?: string | null;
+  bloqueioEnviadoEm?: string | null;
   mensagem: string;
+  mensagemBloqueio?: string;
 }
 
 export function tipoCobrancaDiaria(vencimento: string): TipoCobrancaDiaria {
@@ -56,8 +59,15 @@ export function clienteEhCortesia(
 }
 
 export function clienteParticipaCobrancas(
-  cliente?: { incluirCobrancas?: boolean | null; cortesia?: boolean | null } | null
+  cliente?: {
+    ativo?: boolean | null;
+    incluirCobrancas?: boolean | null;
+    cortesia?: boolean | null;
+  } | null
 ): boolean {
+  if (cliente?.ativo === false) {
+    return false;
+  }
   if (clienteEhCortesia(cliente)) {
     return false;
   }
@@ -123,12 +133,16 @@ export function montarItensCobrancaDiaria(
       telefone,
       telefoneValido: telefoneValidoParaWhatsApp(telefone),
       ultimoContatoEm: m.ultimoContatoEm ?? null,
+      bloqueioEnviadoEm: m.bloqueioEnviadoEm ?? null,
       mensagem: montarMensagemCobrancaMensalidade(
         m,
         configuracao,
         nomes,
         atrasado
       ),
+      mensagemBloqueio: atrasado
+        ? montarMensagemBloqueioMensalidade(m, configuracao, nomes)
+        : undefined,
     };
   });
 }

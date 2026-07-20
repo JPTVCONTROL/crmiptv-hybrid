@@ -11,7 +11,7 @@
     Status da cobrança pendente:
     <strong class="text-slate-400">Vencendo</strong> (próximos {{ diasAntecedencia }} dias),
     <strong class="text-slate-400">Longe do vencimento</strong> (além disso),
-    <strong class="text-slate-400">Atrasado</strong> (data passou). Não indica se já foi pago — use <strong class="text-slate-400">Pagar</strong>.
+    <strong class="text-slate-400">Atrasado</strong> (data passou). Use <strong class="text-slate-400">Renovar</strong> para registrar pagamento e estender a assinatura.
   </p>
 </div>
 
@@ -124,9 +124,9 @@
     <button
       class="crm-btn-success"
       [disabled]="qtdSelecionados === 0 || pagandoLote"
-      (click)="pagarSelecionados()"
+      (click)="renovarSelecionados()"
     >
-      {{ pagandoLote ? 'Salvando...' : 'Pagar selecionados (' + qtdSelecionados + ')' }}
+      {{ pagandoLote ? 'Salvando...' : 'Renovar selecionados (' + qtdSelecionados + ')' }}
     </button>
     <button class="crm-btn-ghost" (click)="selecionarAtrasados()">
       Selecionar atrasados
@@ -177,12 +177,25 @@
         Selecionar para pagamento
       </label>
 
-      <div class="crm-mobile-card-actions">
-        <button type="button" class="crm-btn-ghost flex-1 !py-1.5 !text-xs" (click)="editarCliente(m)">
-          Editar
-        </button>
-        <button type="button" class="crm-btn-success flex-1 !py-1.5 !text-xs" (click)="pagar(m)">
-          Pagar
+      <div class="crm-mobile-card-actions flex-wrap gap-2">
+        <a
+          [routerLink]="['/clientes', m.clienteId]"
+          class="crm-btn-ghost flex-1 !py-1.5 !text-xs no-underline text-center"
+        >
+          Ver
+        </a>
+        <app-whatsapp-bloqueio-btn
+          *ngIf="participaCobrancas(m) && mensalidadeAtrasada(m)"
+          class="flex-1"
+          [compact]="true"
+          [telefone]="telefone(m)"
+          [mensagem]="mensagemBloqueio(m)"
+          [mensalidadeId]="m.id"
+          [bloqueioEnviadoEm]="m.bloqueioEnviadoEm"
+          (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+        ></app-whatsapp-bloqueio-btn>
+        <button type="button" class="crm-btn-success crm-btn-action flex-1" (click)="renovar(m)">
+          Renovar
         </button>
       </div>
     </article>
@@ -233,8 +246,22 @@
             <span [ngClass]="classesStatusFinanceiro(m)">{{ rotuloStatus(m) }}</span>
           </td>
           <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
-            <button class="crm-btn-ghost !py-1.5 !text-xs" (click)="editarCliente(m)">Editar</button>
-            <button class="crm-btn-success !py-1.5 !text-xs" (click)="pagar(m)">Pagar</button>
+            <a
+              [routerLink]="['/clientes', m.clienteId]"
+              class="crm-btn-ghost !py-1.5 !text-xs no-underline inline-block"
+            >
+              Ver
+            </a>
+            <app-whatsapp-bloqueio-btn
+              *ngIf="participaCobrancas(m) && mensalidadeAtrasada(m)"
+              [compact]="true"
+              [telefone]="telefone(m)"
+              [mensagem]="mensagemBloqueio(m)"
+              [mensalidadeId]="m.id"
+              [bloqueioEnviadoEm]="m.bloqueioEnviadoEm"
+              (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+            ></app-whatsapp-bloqueio-btn>
+            <button class="crm-btn-success crm-btn-action" (click)="renovar(m)">Renovar</button>
           </td>
         </tr>
       </tbody>

@@ -1,6 +1,5 @@
 import cron from 'node-cron';
 import { env } from '../config/env.js';
-import { automacaoRepository } from '../repositories/automacaoRepository.js';
 import { automacaoService } from '../services/automacaoService.js';
 
 let tarefaAtiva = false;
@@ -12,26 +11,26 @@ export function iniciarAgendadorAutomacao(): void {
   }
 
   cron.schedule('* * * * *', () => {
-    void executarSeHorario();
+    void executarRotinaManha();
   });
 
-  console.log('[Automação] Agendador ativo — verifica horários a cada minuto.');
+  console.log(
+    '[Automação] Agendador ativo — fila matinal 08:00–09:00 (horários alternados por cliente).'
+  );
 }
 
-async function executarSeHorario(): Promise<void> {
+async function executarRotinaManha(): Promise<void> {
   if (tarefaAtiva) return;
 
   try {
     tarefaAtiva = true;
-    const config = await automacaoRepository.findOrCreateConfig();
-    const horario = automacaoService.deveExecutarAgora(config);
+    const resultado = await automacaoService.processarRotinaManha();
 
-    if (!horario) return;
-
-    const resultado = await automacaoService.executar(false);
-    console.log(
-      `[Automação ${horario}] enviados=${resultado.enviados} falhas=${resultado.falhas} ignorados=${resultado.ignorados}`
-    );
+    if (resultado && (resultado.enviados > 0 || resultado.falhas > 0)) {
+      console.log(
+        `[Automação ${resultado.horario}] enviados=${resultado.enviados} falhas=${resultado.falhas}`
+      );
+    }
   } catch (error) {
     if (error instanceof Error && error.name === 'ValidationError') {
       return;
