@@ -51,7 +51,7 @@
         class="crm-input !pl-11"
         placeholder="Buscar cliente..."
         [(ngModel)]="busca"
-        (ngModelChange)="pagina = 1"
+        (ngModelChange)="onBuscaChange()"
         autocomplete="off"
       />
     </div>
@@ -88,6 +88,24 @@
         Limpar filtros
       </button>
     </div>
+  </div>
+
+  <div
+    *ngIf="qtdSelecionados > 0"
+    class="crm-card !p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-violet-500/25 bg-violet-500/5"
+  >
+    <div>
+      <p class="text-white font-medium">
+        {{ qtdSelecionados }}
+        {{ qtdSelecionados === 1 ? 'cobrança selecionada' : 'cobranças selecionadas' }}
+      </p>
+      <p class="text-slate-400 text-sm mt-0.5">
+        Total: <span class="text-violet-300 font-medium">{{ valorTotalSelecionados }}</span>
+      </p>
+    </div>
+    <p class="text-slate-500 text-xs sm:max-w-xs sm:text-right">
+      Após registrar, o CRM oferece enviar mensagens de renovação no WhatsApp, uma por cliente.
+    </p>
   </div>
 
   <div class="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
@@ -218,8 +236,8 @@
   </div>
 
   <div *ngIf="totalPaginas > 1" class="flex justify-center gap-2">
-    <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="pagina = pagina - 1">Anterior</button>
+    <button class="crm-btn-ghost" [disabled]="pagina === 1" (click)="onPaginaChange(-1)">Anterior</button>
     <span class="text-slate-400 self-center">{{ pagina }} / {{ totalPaginas }}</span>
-    <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="pagina = pagina + 1">Próxima</button>
+    <button class="crm-btn-ghost" [disabled]="pagina === totalPaginas" (click)="onPaginaChange(1)">Próxima</button>
   </div>
 </div>

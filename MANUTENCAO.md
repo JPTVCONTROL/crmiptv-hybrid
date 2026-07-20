@@ -306,8 +306,8 @@ A tela está organizada em **quatro abas**: Conta (senha), Empresa (dados + PIX)
 | `/dashboard` | Dashboard | KPIs, gráfico de faturamento, links para Cobrança Diária |
 | `/clientes` | Clientes | Listagem com filtros (persistidos na sessão), busca por nome/telefone, CRUD |
 | `/clientes/:id` | Detalhe | Perfil completo, mensalidades, WhatsApp, pagamento |
-| `/financeiro` | Financeiro | Cobranças pendentes, paginação, pagamentos e lote |
-| `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp: atrasados + lembretes (até N dias) |
+| `/financeiro` | Financeiro | Cobranças pendentes, paginação, pagamentos em lote e renovação WhatsApp em lote |
+| `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp manual + toggle de envio automático (API Meta) |
 | `/vencimentos` | Vencimentos | Consulta de pendentes por data (sem lote duplicado) |
 | `/aplicativos` | Aplicativos | Catálogo de apps IPTV |
 | `/planos` | Planos | Catálogo de planos (valor e validade) |
@@ -327,8 +327,9 @@ Quando `http://localhost:3001/health` não responde, um aviso amarelo aparece no
 |------|------------------|
 | **Configurações** | Última aba aberta (Conta, Empresa, Mensagens, Sistema) |
 | **Clientes** | Busca, filtros, ordenação e página atual |
+| **Financeiro** | Busca, filtro de status e página atual |
 
-Links do dashboard com query params (`?status=`, `?cadastro=`, `?incompleto=`) **têm prioridade** sobre os filtros salvos em Clientes.
+Links do dashboard com query params (`?status=`, `?cadastro=`, `?incompleto=`) **têm prioridade** sobre os filtros salvos em Clientes. Em Financeiro, `?status=` também sobrescreve o filtro salvo.
 
 ### Mobile-first
 
@@ -355,7 +356,7 @@ Utilitários em `src/app/shared/utils/whatsapp.ts` e `cobranca-lote.ts`:
 - Variáveis de template: `{nome}`, `{referencia}`, `{valor}`, `{vencimento}`, `{expiraEm}`, `{pagoEm}`, `{empresa}`, `{pix}`, `{tipoPix}`, `{favorecido}`
 - Template customizado de **cobrança** só para clientes **atrasados**; pendente/vencendo usa lembrete amigável.
 - Cobrança em lote com confirmação cliente a cliente (Financeiro, Vencimentos, Dashboard).
-- Após pagamento, oferece envio de mensagem de **renovação**.
+- Após pagamento individual ou **pagamento em lote** no Financeiro, oferece envio de mensagem de **renovação** (um WhatsApp por cliente, com confirmação).
 
 ### Status no Financeiro (cobrança pendente)
 

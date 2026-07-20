@@ -11,6 +11,11 @@ export interface ResultadoPagamento {
 
 export interface ResultadoPagamentosLote {
   sucesso: number;
+  pagamentos: {
+    id: number;
+    novoVencimento: string;
+    valorRenovacao: number;
+  }[];
   erros: { id: number; mensagem: string }[];
   pagoEm: string;
 }

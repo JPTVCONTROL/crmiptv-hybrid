@@ -4,6 +4,7 @@ import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
+import { AutomacaoService } from '../../core/services/automacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Configuracao } from '../../core/models';
@@ -42,6 +43,11 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   selecionados = new Set<number>();
   enviando = false;
   filtroGrupo: FiltroGrupoCobranca = 'TODOS';
+  automacaoAtiva = false;
+  salvandoAutomacao = false;
+  whatsappApiConfigurado = false;
+  templatesMetaProntos = false;
+  horariosAutomacao = '09:00,18:00';
   readonly limitePorSecao = 30;
   private secoesExpandidas = new Set<TipoCobrancaDiaria>();
 
@@ -50,6 +56,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
+    private automacaoService: AutomacaoService,
     private toast: ToastService,
     private sync: DadosSyncService
   ) {}
@@ -60,6 +67,18 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   get diasAntecedencia(): number {
     return resolverDiasAntecedencia(this.configuracao);
+  }
+
+  get aguardandoTemplatesMeta(): boolean {
+    return this.whatsappApiConfigurado && !this.templatesMetaProntos;
+  }
+
+  get automacaoToggleDesabilitado(): boolean {
+    return (
+      this.salvandoAutomacao ||
+      !this.whatsappApiConfigurado ||
+      this.aguardandoTemplatesMeta
+    );
   }
 
   get subtitulo(): string {
@@ -109,6 +128,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     });
 
     this.carregar();
+    this.carregarAutomacao();
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
@@ -136,6 +156,67 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     if (!this.loading) {
       this.carregar(true);
     }
+    this.carregarAutomacao(true);
+  }
+
+  carregarAutomacao(silencioso = false): void {
+    this.automacaoService.obterPainel().subscribe({
+      next: (painel) => {
+        this.automacaoAtiva =
+          painel.config.lembretesAtivos || painel.config.cobrancaAtrasadosAtiva;
+        this.whatsappApiConfigurado = painel.whatsappConfigurado;
+        this.templatesMetaProntos = painel.envioComSucesso;
+        this.horariosAutomacao = painel.horarios.join(', ') || '09:00,18:00';
+      },
+      error: () => {
+        if (!silencioso) {
+          void this.toast.error('Erro ao carregar status da automação.');
+        }
+      },
+    });
+  }
+
+  alternarAutomacao(ativo: boolean): void {
+    if (ativo && !this.whatsappApiConfigurado) {
+      this.automacaoAtiva = false;
+      void this.toast.warning(
+        'Configure a WhatsApp API no backend antes de ativar o envio automático.'
+      );
+      return;
+    }
+
+    if (ativo && this.aguardandoTemplatesMeta) {
+      this.automacaoAtiva = false;
+      void this.toast.warning(
+        'Os modelos crm_lembrete e crm_cobranca ainda estão em análise na Meta. Use o envio manual até a aprovação.'
+      );
+      return;
+    }
+
+    const anterior = this.automacaoAtiva;
+    this.automacaoAtiva = ativo;
+    this.salvandoAutomacao = true;
+
+    this.automacaoService
+      .salvar({
+        lembretesAtivos: ativo,
+        cobrancaAtrasadosAtiva: ativo,
+      })
+      .subscribe({
+        next: () => {
+          this.salvandoAutomacao = false;
+          void this.toast.success(
+            ativo
+              ? 'Cobrança diária automática ativada.'
+              : 'Cobrança diária automática desativada.'
+          );
+        },
+        error: (err: Error) => {
+          this.automacaoAtiva = anterior;
+          this.salvandoAutomacao = false;
+          void this.toast.error(err.message ?? 'Erro ao salvar automação.');
+        },
+      });
   }
 
   carregar(silencioso = false): void {

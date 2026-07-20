@@ -68,13 +68,21 @@ export class MensalidadeService {
     }
 
     const pagamento = parseDataPagamento(pagoEm);
-    const sucesso: number[] = [];
+    const pagamentos: {
+      id: number;
+      novoVencimento: string;
+      valorRenovacao: number;
+    }[] = [];
     const erros: { id: number; mensagem: string }[] = [];
 
     for (const id of unicos) {
       try {
-        await this.executarPagamento(id, pagamento);
-        sucesso.push(id);
+        const resultado = await this.executarPagamento(id, pagamento);
+        pagamentos.push({
+          id,
+          novoVencimento: resultado.novoVencimento,
+          valorRenovacao: resultado.valorRenovacao,
+        });
       } catch (error) {
         erros.push({
           id,
@@ -84,14 +92,15 @@ export class MensalidadeService {
       }
     }
 
-    if (sucesso.length === 0) {
+    if (pagamentos.length === 0) {
       throw new ValidationError(
         erros[0]?.mensagem ?? 'Nenhum pagamento foi registrado.'
       );
     }
 
     return {
-      sucesso: sucesso.length,
+      sucesso: pagamentos.length,
+      pagamentos,
       erros,
       pagoEm: pagamento.toISOString(),
     };

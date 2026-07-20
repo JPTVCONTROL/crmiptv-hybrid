@@ -1,6 +1,7 @@
-import { formatarData } from './formatters';
+import { formatarData, resolverTelefoneCliente } from './formatters';
 import { notificar } from './toast-notifier';
 import { confirmarUsuario } from './confirm-notifier';
+import { Mensalidade } from '../../core/models';
 import {
   MENSAGEM_BLOQUEIO_PADRAO,
   MENSAGEM_COBRANCA_LEMBRETE_PADRAO,
@@ -202,6 +203,159 @@ export async function oferecerMensagemRenovacao(
   ) {
     abrirWhatsAppCobranca(params.telefone, mensagem);
   }
+}
+
+export interface RenovacaoLoteItem {
+  id: number;
+  nome: string;
+  telefone: string;
+  mensagem: string;
+}
+
+export interface ResultadoRenovacaoLote {
+  abertos: number;
+  ignorados: number;
+  cancelado: boolean;
+}
+
+export async function executarRenovacaoEmLote(
+  itens: RenovacaoLoteItem[]
+): Promise<ResultadoRenovacaoLote> {
+  const validos = itens.filter((item) =>
+    telefoneValidoParaWhatsApp(item.telefone)
+  );
+  const ignorados = itens.length - validos.length;
+
+  if (validos.length === 0) {
+    return { abertos: 0, ignorados, cancelado: true };
+  }
+
+  const enviarTodos = await confirmarUsuario(
+    validos.length === 1
+      ? `Enviar mensagem de renovação para ${validos[0].nome}?`
+      : `Enviar mensagens de renovação para ${validos.length} cliente(s)?` +
+          (ignorados > 0
+            ? `\n\n${ignorados} cliente(s) serão ignorados por telefone inválido.`
+            : '') +
+          '\n\nOs chats abrem um por vez. Confirme cada cliente antes de abrir.',
+    'Pagamentos registrados',
+    validos.length === 1 ? 'Enviar' : 'Continuar'
+  );
+
+  if (!enviarTodos) {
+    return { abertos: 0, ignorados, cancelado: true };
+  }
+
+  const avisoIgnorados =
+    ignorados > 0
+      ? `\n\n${ignorados} cliente(s) serão ignorados por telefone inválido ou ausente.`
+      : '';
+
+  let abertos = 0;
+  let cancelado = false;
+
+  for (let indice = 0; indice < validos.length; indice++) {
+    const atual = validos[indice];
+    const instrucaoLote =
+      validos.length > 1
+        ? '\n\nOs chats abrem um por vez. Confirme cada cliente antes de abrir.'
+        : '';
+    const rotulo =
+      validos.length === 1
+        ? `Abrir WhatsApp para ${atual.nome}?${avisoIgnorados}`
+        : `Abrir WhatsApp (${indice + 1}/${validos.length})?\n\nCliente: ${atual.nome}${indice === 0 ? avisoIgnorados : ''}${instrucaoLote}`;
+
+    const confirmado = await confirmarUsuario(rotulo, 'Renovação', 'Abrir');
+    if (!confirmado) {
+      cancelado = true;
+      if (abertos > 0) {
+        notificar(
+          `Renovação interrompida. ${abertos} WhatsApp(s) aberto(s).`,
+          'info'
+        );
+      }
+      break;
+    }
+
+    abrirWhatsAppCobranca(atual.telefone, atual.mensagem);
+    abertos++;
+
+    if (indice + 1 < validos.length) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  if (!cancelado && abertos > 0) {
+    setTimeout(
+      () =>
+        notificar(
+          `Renovação em lote concluída: ${abertos} WhatsApp(s) aberto(s).`,
+          'success'
+        ),
+      300
+    );
+  }
+
+  return { abertos, ignorados, cancelado };
+}
+
+export function montarItensRenovacaoLote(
+  pagamentos: {
+    id: number;
+    novoVencimento: string;
+    valorRenovacao: number;
+  }[],
+  mensalidades: Pick<
+    Mensalidade,
+    'id' | 'referencia' | 'clienteId' | 'cliente'
+  >[],
+  telefones: Map<number, string>,
+  nomes: Map<number, string>,
+  empresa: string,
+  templateRenovacao?: string | null
+): RenovacaoLoteItem[] {
+  const porId = new Map(mensalidades.map((m) => [m.id, m]));
+
+  return pagamentos
+    .map((pagamento) => {
+      const mensalidade = porId.get(pagamento.id);
+      if (!mensalidade) {
+        return null;
+      }
+
+      const nome =
+        mensalidade.cliente?.nome?.trim() ||
+        nomes.get(mensalidade.clienteId) ||
+        'Cliente';
+      const telefone = resolverTelefoneCliente(
+        {
+          clienteId: mensalidade.clienteId,
+          cliente: mensalidade.cliente
+            ? { telefone: mensalidade.cliente.telefone }
+            : undefined,
+        },
+        telefones
+      );
+      const mensagem = montarMensagemRenovacao(
+        {
+          nome,
+          referencia: mensalidade.referencia,
+          valor: pagamento.valorRenovacao,
+          vencimento: pagamento.novoVencimento,
+          expiraEm: pagamento.novoVencimento,
+          empresa,
+        },
+        templateRenovacao
+      );
+
+      return {
+        id: pagamento.id,
+        nome,
+        telefone,
+        mensagem,
+      };
+    })
+    .filter((item): item is RenovacaoLoteItem => item !== null);
 }
 
 export interface CobrancaLoteItem {

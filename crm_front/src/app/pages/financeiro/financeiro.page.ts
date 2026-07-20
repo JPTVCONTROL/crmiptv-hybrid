@@ -22,9 +22,17 @@ import {
   nomeClienteMensalidade,
   trackByMensalidadeId,
 } from '../../shared/utils/cobranca-lote';
-import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
+import {
+  executarRenovacaoEmLote,
+  montarItensRenovacaoLote,
+  oferecerMensagemRenovacao,
+} from '../../shared/utils/whatsapp';
 import { resolverDiasAntecedencia, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  persistirFiltrosFinanceiro,
+  restaurarFiltrosFinanceiro,
+} from '../../shared/utils/financeiro-filtros-persist.util';
 import {
   classesFilterChip,
   classesFilterChipContagem,
@@ -80,15 +88,27 @@ export class FinanceiroPage implements OnInit, OnDestroy {
       this.configuracaoService.carregar().subscribe();
     }
 
+    const filtrosSalvos = restaurarFiltrosFinanceiro();
+    if (filtrosSalvos) {
+      this.busca = filtrosSalvos.busca;
+      this.filtro = filtrosSalvos.filtro;
+      this.pagina = filtrosSalvos.pagina;
+    }
+
     this.route.queryParamMap.subscribe((params) => {
       const status = params.get('status');
-      this.filtro =
+      if (
         status === 'PENDENTE' ||
         status === 'REGULAR' ||
         status === 'ATRASADO'
-          ? status
-          : 'TODOS';
-      this.pagina = 1;
+      ) {
+        this.filtro = status;
+        this.pagina = 1;
+        this.persistirFiltros();
+      } else if (!filtrosSalvos) {
+        this.filtro = 'TODOS';
+        this.pagina = 1;
+      }
     });
 
     this.carregar();
@@ -248,6 +268,9 @@ export class FinanceiroPage implements OnInit, OnDestroy {
   async pagarSelecionados(): Promise<void> {
     if (this.selecionados.size === 0 || this.pagandoLote) return;
 
+    const selecionadas = this.mensalidades.filter((m) =>
+      this.selecionados.has(m.id)
+    );
     const pagoEm = await this.pagamentoUi.solicitarDataPagamento();
     if (!pagoEm) return;
 
@@ -255,7 +278,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     this.mensalidadeService
       .registrarPagamentos([...this.selecionados], pagoEm)
       .subscribe({
-        next: (resultado) => {
+        next: async (resultado) => {
           this.pagandoLote = false;
           this.limparSelecao();
           this.carregar(true);
@@ -269,12 +292,37 @@ export class FinanceiroPage implements OnInit, OnDestroy {
               `${resultado.sucesso} pagamento(s) registrado(s) com sucesso.`
             );
           }
+
+          const empresa = this.configuracao?.nomeEmpresa ?? 'JPTV';
+          const itensRenovacao = montarItensRenovacaoLote(
+            resultado.pagamentos ?? [],
+            selecionadas,
+            this.telefones,
+            this.nomesClientes,
+            empresa,
+            this.configuracao?.mensagemRenovacao
+          );
+
+          if (itensRenovacao.length > 0) {
+            await executarRenovacaoEmLote(itensRenovacao);
+          }
         },
         error: (err) => {
           this.pagandoLote = false;
           void this.toast.error(err.message ?? 'Erro ao registrar pagamentos.');
         },
       });
+  }
+
+  get valorTotalSelecionados(): string {
+    const total = this.mensalidades
+      .filter((m) => this.selecionados.has(m.id))
+      .reduce((acc, m) => acc + m.valor, 0);
+    return formatarValor(total);
+  }
+
+  get mensalidadesSelecionadas(): Mensalidade[] {
+    return this.mensalidades.filter((m) => this.selecionados.has(m.id));
   }
 
   get qtdSelecionados(): number {
@@ -345,6 +393,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
   definirFiltro(valor: StatusFinanceiro): void {
     this.filtro = valor;
     this.pagina = 1;
+    this.persistirFiltros();
   }
 
   contagemFiltro(valor: StatusFinanceiro): number {
@@ -365,6 +414,25 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     this.busca = '';
     this.filtro = 'TODOS';
     this.pagina = 1;
+    this.persistirFiltros();
+  }
+
+  onBuscaChange(): void {
+    this.pagina = 1;
+    this.persistirFiltros();
+  }
+
+  onPaginaChange(delta: number): void {
+    this.pagina += delta;
+    this.persistirFiltros();
+  }
+
+  private persistirFiltros(): void {
+    persistirFiltrosFinanceiro({
+      busca: this.busca,
+      filtro: this.filtro,
+      pagina: this.pagina,
+    });
   }
 
   classesChipStatus(filtro: StatusFinanceiro): string {
