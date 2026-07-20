@@ -30,6 +30,26 @@ import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
 export type FiltroCobrancaCliente = 'TODOS' | 'COM_COBRANCA' | 'SEM_COBRANCA';
+export type ColunaOrdenacaoCliente = 'nome' | 'aplicativo' | 'vencimento' | 'status';
+export type DirecaoOrdenacao = 'asc' | 'desc';
+export type ModoOrdenacaoAplicativo = 'az' | 'za' | 'sem_primeiro' | 'sem_ultimo';
+export type ModoOrdenacaoStatus =
+  | 'atrasado_primeiro'
+  | 'ativo_primeiro'
+  | 'inativo_primeiro';
+
+const MODOS_APLICATIVO: ModoOrdenacaoAplicativo[] = [
+  'az',
+  'za',
+  'sem_primeiro',
+  'sem_ultimo',
+];
+
+const MODOS_STATUS: ModoOrdenacaoStatus[] = [
+  'atrasado_primeiro',
+  'ativo_primeiro',
+  'inativo_primeiro',
+];
 
 interface OpcaoFiltroCatalogo {
   id: number;
@@ -54,6 +74,10 @@ export class ClientesPage implements OnInit, OnDestroy {
   filtroCadastroIncompleto = false;
   pagina = 1;
   readonly porPagina = 15;
+  ordenacaoColuna: ColunaOrdenacaoCliente = 'vencimento';
+  ordenacaoDirecao: DirecaoOrdenacao = 'asc';
+  modoOrdenacaoAplicativo: ModoOrdenacaoAplicativo = 'az';
+  modoOrdenacaoStatus: ModoOrdenacaoStatus = 'atrasado_primeiro';
   opcoesAplicativos: OpcaoFiltroCatalogo[] = [];
   opcoesPlanos: OpcaoFiltroCatalogo[] = [];
   aplicativos: Aplicativo[] = [];
@@ -347,23 +371,193 @@ export class ClientesPage implements OnInit, OnDestroy {
       );
     });
 
-    return filtrados.sort((a, b) => {
-      const ordemCobrancaA = clienteParticipaCobrancas(a) ? 0 : 1;
-      const ordemCobrancaB = clienteParticipaCobrancas(b) ? 0 : 1;
+    return filtrados.sort((a, b) => this.compararClientes(a, b));
+  }
 
-      if (ordemCobrancaA !== ordemCobrancaB) {
-        return ordemCobrancaA - ordemCobrancaB;
+  alternarOrdenacao(coluna: ColunaOrdenacaoCliente): void {
+    if (this.ordenacaoColuna === coluna) {
+      if (coluna === 'aplicativo') {
+        this.modoOrdenacaoAplicativo = this.proximoModo(
+          this.modoOrdenacaoAplicativo,
+          MODOS_APLICATIVO
+        );
+      } else if (coluna === 'status') {
+        this.modoOrdenacaoStatus = this.proximoModo(
+          this.modoOrdenacaoStatus,
+          MODOS_STATUS
+        );
+      } else {
+        this.ordenacaoDirecao = this.ordenacaoDirecao === 'asc' ? 'desc' : 'asc';
+      }
+    } else {
+      this.ordenacaoColuna = coluna;
+
+      if (coluna === 'nome' || coluna === 'vencimento') {
+        this.ordenacaoDirecao = 'asc';
       }
 
-      const tsA = a.expiraEm ? new Date(a.expiraEm).getTime() : Number.MAX_SAFE_INTEGER;
-      const tsB = b.expiraEm ? new Date(b.expiraEm).getTime() : Number.MAX_SAFE_INTEGER;
-
-      if (tsA !== tsB) {
-        return tsA - tsB;
+      if (coluna === 'aplicativo') {
+        this.modoOrdenacaoAplicativo = 'az';
       }
 
-      return a.nome.localeCompare(b.nome, 'pt-BR');
-    });
+      if (coluna === 'status') {
+        this.modoOrdenacaoStatus = 'atrasado_primeiro';
+      }
+    }
+
+    this.pagina = 1;
+  }
+
+  rotuloModoOrdenacao(coluna: ColunaOrdenacaoCliente): string {
+    if (coluna === 'nome') {
+      return this.ordenacaoColuna === 'nome'
+        ? `Nome · ${this.ordenacaoDirecao === 'asc' ? 'A→Z' : 'Z→A'}`
+        : 'Ordenar por nome';
+    }
+
+    if (coluna === 'vencimento') {
+      return this.ordenacaoColuna === 'vencimento'
+        ? `Vencimento · ${this.ordenacaoDirecao === 'asc' ? 'mais próximo' : 'mais distante'}`
+        : 'Ordenar por vencimento';
+    }
+
+    if (coluna === 'aplicativo') {
+      const rotulos: Record<ModoOrdenacaoAplicativo, string> = {
+        az: 'A→Z',
+        za: 'Z→A',
+        sem_primeiro: 'Sem app primeiro',
+        sem_ultimo: 'Sem app por último',
+      };
+      return `Aplicativo · ${rotulos[this.modoOrdenacaoAplicativo]}`;
+    }
+
+    const rotulos: Record<ModoOrdenacaoStatus, string> = {
+      atrasado_primeiro: 'Atrasados primeiro',
+      ativo_primeiro: 'Ativos primeiro',
+      inativo_primeiro: 'Inativos primeiro',
+    };
+    return `Status · ${rotulos[this.modoOrdenacaoStatus]}`;
+  }
+
+  rotuloModoOrdenacaoCurto(coluna: ColunaOrdenacaoCliente): string {
+    if (this.ordenacaoColuna !== coluna) {
+      return '';
+    }
+
+    if (coluna === 'aplicativo') {
+      const rotulos: Record<ModoOrdenacaoAplicativo, string> = {
+        az: 'A→Z',
+        za: 'Z→A',
+        sem_primeiro: '∅↑',
+        sem_ultimo: '∅↓',
+      };
+      return rotulos[this.modoOrdenacaoAplicativo];
+    }
+
+    if (coluna === 'status') {
+      const rotulos: Record<ModoOrdenacaoStatus, string> = {
+        atrasado_primeiro: 'Atr.',
+        ativo_primeiro: 'Atv.',
+        inativo_primeiro: 'Ina.',
+      };
+      return rotulos[this.modoOrdenacaoStatus];
+    }
+
+    return this.ordenacaoDirecao === 'asc' ? '↑' : '↓';
+  }
+
+  colunaOrdenacaoAtiva(coluna: ColunaOrdenacaoCliente): boolean {
+    return this.ordenacaoColuna === coluna;
+  }
+
+  iconeOrdenacao(coluna: ColunaOrdenacaoCliente): string {
+    if (this.ordenacaoColuna !== coluna) {
+      return 'swap-vertical-outline';
+    }
+
+    if (coluna === 'aplicativo' || coluna === 'status') {
+      return 'options-outline';
+    }
+
+    return this.ordenacaoDirecao === 'asc'
+      ? 'arrow-up-outline'
+      : 'arrow-down-outline';
+  }
+
+  private proximoModo<T extends string>(atual: T, opcoes: readonly T[]): T {
+    const indice = opcoes.indexOf(atual);
+    return opcoes[(indice + 1) % opcoes.length];
+  }
+
+  private compararClientes(a: Cliente, b: Cliente): number {
+    let result = 0;
+
+    switch (this.ordenacaoColuna) {
+      case 'nome':
+        result = a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+        return result * (this.ordenacaoDirecao === 'asc' ? 1 : -1);
+      case 'aplicativo':
+        result = this.compararPorAplicativo(a, b);
+        break;
+      case 'vencimento': {
+        const tsA = a.expiraEm
+          ? new Date(a.expiraEm).getTime()
+          : Number.MAX_SAFE_INTEGER;
+        const tsB = b.expiraEm
+          ? new Date(b.expiraEm).getTime()
+          : Number.MAX_SAFE_INTEGER;
+        result = tsA - tsB;
+        return result * (this.ordenacaoDirecao === 'asc' ? 1 : -1);
+      }
+      case 'status':
+        result =
+          this.prioridadeStatusPorModo(this.status(a)) -
+          this.prioridadeStatusPorModo(this.status(b));
+        break;
+    }
+
+    if (result === 0) {
+      result = a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+    }
+
+    return result;
+  }
+
+  private compararPorAplicativo(a: Cliente, b: Cliente): number {
+    const nomeA = a.aplicativo?.nome ?? '';
+    const nomeB = b.aplicativo?.nome ?? '';
+    const semA = !a.aplicativoId || !nomeA;
+    const semB = !b.aplicativoId || !nomeB;
+
+    switch (this.modoOrdenacaoAplicativo) {
+      case 'sem_primeiro':
+        if (semA !== semB) {
+          return semA ? -1 : 1;
+        }
+        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+      case 'sem_ultimo':
+        if (semA !== semB) {
+          return semA ? 1 : -1;
+        }
+        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+      case 'za':
+        return nomeB.localeCompare(nomeA, 'pt-BR', { sensitivity: 'base' });
+      case 'az':
+      default:
+        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+    }
+  }
+
+  private prioridadeStatusPorModo(status: StatusCliente): number {
+    switch (this.modoOrdenacaoStatus) {
+      case 'ativo_primeiro':
+        return status === 'ATIVO' ? 0 : status === 'ATRASADO' ? 1 : 2;
+      case 'inativo_primeiro':
+        return status === 'INATIVO' ? 0 : status === 'ATRASADO' ? 1 : 2;
+      case 'atrasado_primeiro':
+      default:
+        return status === 'ATRASADO' ? 0 : status === 'ATIVO' ? 1 : 2;
+    }
   }
 
   get clientesPaginados(): Cliente[] {

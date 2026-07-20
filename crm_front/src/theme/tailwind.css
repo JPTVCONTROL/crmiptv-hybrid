@@ -205,6 +205,34 @@
     @apply text-left py-3 px-2 font-medium text-slate-400 text-xs uppercase tracking-wide;
   }
 
+  .crm-table-sort {
+    @apply inline-flex items-center gap-1 border-0 bg-transparent p-0 m-0 cursor-pointer text-inherit font-medium uppercase tracking-wide transition-colors;
+  }
+
+  .crm-table-sort ion-icon {
+    @apply text-sm opacity-40 transition-opacity;
+  }
+
+  .crm-table-sort:hover {
+    @apply text-slate-200;
+  }
+
+  .crm-table-sort:hover ion-icon {
+    @apply opacity-70;
+  }
+
+  .crm-table-sort-ativo {
+    @apply text-violet-300;
+  }
+
+  .crm-table-sort-ativo ion-icon {
+    @apply opacity-100 text-violet-300;
+  }
+
+  .crm-table-sort-modo {
+    @apply normal-case text-[10px] font-semibold text-violet-300/90 px-1 py-0.5 rounded bg-violet-500/15;
+  }
+
   .crm-table tbody tr {
     border-bottom: 1px solid rgba(30, 41, 59, 0.55);
     @apply transition-colors duration-150;
