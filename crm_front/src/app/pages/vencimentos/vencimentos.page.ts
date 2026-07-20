@@ -18,6 +18,11 @@ import {
   clienteEhCortesia,
 } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  classesFilterChip,
+  classesFilterChipContagem,
+  VarianteFilterChip,
+} from '../../shared/utils/filter-chip.util';
 
 export type FiltroVencimento = 'TODOS' | 'HOJE' | 'PROXIMO' | 'ATRASADO';
 
@@ -206,60 +211,26 @@ export class VencimentosPage implements OnInit, OnDestroy {
     this.pagina = 1;
   }
 
-  classesChipStatus(filtro: FiltroVencimento): Record<string, boolean> {
+  classesChipStatus(filtro: FiltroVencimento): string {
     const ativo = this.filtro === filtro;
-
-    if (!ativo) {
-      return {
-        'border-slate-700': true,
-        'bg-slate-800/50': true,
-        'text-slate-400': true,
-        'hover:border-slate-600': true,
-        'hover:text-slate-300': true,
-      };
-    }
-
-    if (filtro === 'TODOS') {
-      return {
-        'border-violet-500': true,
-        'bg-violet-600/15': true,
-        'text-violet-200': true,
-        'shadow-sm': true,
-        'shadow-violet-900/20': true,
-      };
-    }
-
-    if (filtro === 'PROXIMO') {
-      return {
-        'border-amber-500': true,
-        'bg-amber-600/15': true,
-        'text-amber-200': true,
-        'shadow-sm': true,
-        'shadow-amber-900/20': true,
-      };
-    }
-
-    return {
-      'border-red-500': true,
-      'bg-red-600/15': true,
-      'text-red-200': true,
-      'shadow-sm': true,
-      'shadow-red-900/20': true,
+    const variantes: Record<FiltroVencimento, VarianteFilterChip> = {
+      TODOS: 'violet',
+      HOJE: 'red',
+      PROXIMO: 'amber',
+      ATRASADO: 'red',
     };
+    return classesFilterChip(ativo, variantes[filtro]);
   }
 
-  classesChipContagem(filtro: FiltroVencimento): Record<string, boolean> {
+  classesChipContagem(filtro: FiltroVencimento): string {
     const ativo = this.filtro === filtro;
-
-    if (!ativo) {
-      return { 'bg-slate-700/80': true };
-    }
-
-    return {
-      'bg-violet-500/25': filtro === 'TODOS',
-      'bg-red-500/25': filtro === 'HOJE' || filtro === 'ATRASADO',
-      'bg-amber-500/25': filtro === 'PROXIMO',
+    const variantes: Record<FiltroVencimento, VarianteFilterChip> = {
+      TODOS: 'violet',
+      HOJE: 'red',
+      PROXIMO: 'amber',
+      ATRASADO: 'red',
     };
+    return classesFilterChipContagem(ativo, variantes[filtro]);
   }
 
   exportarCsv(): void {

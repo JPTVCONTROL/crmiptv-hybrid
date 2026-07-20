@@ -36,6 +36,7 @@ crm_back/prisma/*.db
 crm_back/prisma/*.db-journal
 crm_back/prisma/*.db-wal
 crm_back/prisma/*.db-shm
+crm_back/backups/
 
 # --- Frontend (crm_front) ---
 crm_front/www/

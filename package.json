@@ -1,0 +1,16 @@
+{
+  "name": "crm-jptv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CRM JPTV — API + frontend",
+  "scripts": {
+    "dev": "concurrently -k -n back,front -c blue,green \"npm run dev --prefix crm_back\" \"npm run start --prefix crm_front\"",
+    "dev:back": "npm run dev --prefix crm_back",
+    "dev:front": "npm run start --prefix crm_front",
+    "build": "npm run build --prefix crm_back && npm run build --prefix crm_front",
+    "test": "npm run test --prefix crm_back && npm run test:unit --prefix crm_front"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

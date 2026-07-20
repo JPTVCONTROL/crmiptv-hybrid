@@ -71,7 +71,7 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <div class="crm-card space-y-3">
-      <h2 class="text-white font-semibold">Dados Pessoais</h2>
+      <h2 class="crm-section-label !mb-0">Dados Pessoais</h2>
       <p class="text-slate-300"><span class="text-slate-500">Telefone:</span> {{ cliente.telefone }}</p>
       <p class="text-slate-300 flex items-center gap-2">
         <span class="text-slate-500">Status:</span>
@@ -93,7 +93,7 @@
 
     <div class="crm-card space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h2 class="text-white font-semibold">Credenciais IPTV</h2>
+        <h2 class="crm-section-label !mb-0">Credenciais IPTV</h2>
         <div class="flex flex-wrap gap-2">
           <button
             *ngIf="temCredenciais()"
@@ -137,12 +137,12 @@
 
     <div class="crm-card space-y-3">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-white font-semibold">Dispositivos</h2>
+        <h2 class="crm-section-label !mb-0">Dispositivos</h2>
         <span class="text-slate-400 text-sm">{{ qtdTelas() }} tela(s)</span>
       </div>
       <div
         *ngFor="let disp of dispositivos(); let i = index"
-        class="rounded-lg border border-slate-800/80 bg-slate-900/30 p-3 space-y-2"
+        class="crm-card-nested"
         [class.mt-0]="i === 0"
       >
         <p *ngIf="qtdTelas() > 1" class="text-violet-400 text-xs font-medium">Tela {{ i + 1 }}</p>
@@ -160,7 +160,7 @@
     </div>
 
     <div class="crm-card space-y-3">
-      <h2 class="text-white font-semibold">Plano</h2>
+      <h2 class="crm-section-label !mb-0">Plano</h2>
       <p class="text-slate-300"><span class="text-slate-500">Plano:</span> {{ cliente.plano?.nome || '—' }}</p>
       <p class="text-slate-300" *ngIf="cliente.plano"><span class="text-slate-500">Validade:</span> {{ rotuloValidadePlano(cliente.plano) }}</p>
       <p class="text-slate-300"><span class="text-slate-500">Expira em:</span> {{ cliente.expiraEm ? fmtData(cliente.expiraEm) : '—' }}</p>
@@ -192,7 +192,7 @@
   </div>
 
   <div class="crm-card">
-    <h2 class="text-white font-semibold mb-4">Mensalidades</h2>
+    <h2 class="crm-section-label mb-4">Mensalidades</h2>
 
     <div class="md:hidden crm-mobile-list">
       <article *ngFor="let m of cliente.mensalidades" class="crm-mobile-card">
@@ -202,9 +202,9 @@
             <p class="crm-mobile-card-subtitle">{{ fmtValor(m.valor) }}</p>
           </div>
           <span
-            class="text-xs font-semibold shrink-0"
-            [class.text-green-400]="m.status === 'PAGO'"
-            [class.text-amber-400]="m.status === 'PENDENTE'"
+            class="shrink-0"
+            [class.crm-badge-pago]="m.status === 'PAGO'"
+            [class.crm-badge-pendente]="m.status === 'PENDENTE'"
           >
             {{ m.status }}
           </span>
@@ -256,7 +256,12 @@
             <td class="py-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
             <td class="py-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
             <td class="py-2">
-              <span [class.text-green-400]="m.status === 'PAGO'" [class.text-amber-400]="m.status === 'PENDENTE'">{{ m.status }}</span>
+              <span
+                [class.crm-badge-pago]="m.status === 'PAGO'"
+                [class.crm-badge-pendente]="m.status === 'PENDENTE'"
+              >
+                {{ m.status }}
+              </span>
             </td>
             <td class="py-2 text-right space-x-1">
               <app-whatsapp-cobranca-btn
@@ -283,5 +288,11 @@
         </tbody>
       </table>
     </div>
+
+    <app-empty-state
+      *ngIf="!cliente.mensalidades?.length"
+      message="Nenhuma mensalidade registrada para este cliente."
+      iconName="calendar-outline"
+    ></app-empty-state>
   </div>
 </div>

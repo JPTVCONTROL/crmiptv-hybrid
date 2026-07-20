@@ -1,147 +1,127 @@
-<app-page-header title="Configurações" subtitle="Empresa, PIX e mensagens do WhatsApp."></app-page-header>
+<app-page-header
+  title="Configurações"
+  [subtitle]="subtituloAba"
+></app-page-header>
 
 <app-loading *ngIf="loading"></app-loading>
 
-<div *ngIf="!loading" class="crm-card space-y-8 max-w-4xl">
-  <div>
-    <h2 class="text-white font-semibold text-lg mb-2">Conta</h2>
-    <p class="text-slate-500 text-sm mb-4">Altere a senha de acesso ao CRM.</p>
-
+<ng-container *ngIf="!loading">
+  <nav class="flex flex-wrap gap-2 mb-6 max-w-4xl" aria-label="Seções de configurações">
     <button
-      *ngIf="!mostrarFormSenha"
+      *ngFor="let aba of abas"
       type="button"
-      class="crm-btn-ghost"
-      (click)="abrirFormSenha()"
+      [class]="classesAba(aba.id)"
+      [attr.aria-current]="abaAtiva === aba.id ? 'page' : null"
+      (click)="definirAba(aba.id)"
     >
-      Alterar senha
+      {{ aba.rotulo }}
     </button>
+  </nav>
 
-    <div *ngIf="mostrarFormSenha" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Senha atual</label>
-          <input type="password" class="crm-input" [(ngModel)]="senhaAtual" autocomplete="current-password" />
-        </div>
-        <div></div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Nova senha</label>
-          <input type="password" class="crm-input" [(ngModel)]="novaSenha" autocomplete="new-password" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Confirmar nova senha</label>
-          <input type="password" class="crm-input" [(ngModel)]="confirmarSenha" autocomplete="new-password" />
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <button class="crm-btn-primary" [disabled]="alterandoSenha" (click)="alterarSenha()">
-          {{ alterandoSenha ? 'Alterando...' : 'Salvar nova senha' }}
-        </button>
+  <div class="crm-card space-y-8 max-w-4xl">
+    <!-- Conta -->
+    <ng-container *ngIf="abaAtiva === 'conta'">
+      <div>
+        <h2 class="text-white font-semibold text-lg mb-2">Conta</h2>
+        <p class="text-slate-500 text-sm mb-4">Altere a senha de acesso ao CRM.</p>
+
         <button
+          *ngIf="!mostrarFormSenha"
           type="button"
           class="crm-btn-ghost"
-          [disabled]="alterandoSenha"
-          (click)="cancelarAlteracaoSenha()"
+          (click)="abrirFormSenha()"
         >
-          Cancelar
+          Alterar senha
         </button>
-      </div>
-    </div>
-  </div>
 
-  <div>
-    <h2 class="text-white font-semibold text-lg mb-2">Backup</h2>
-    <p class="text-slate-500 text-sm mb-4">
-      Baixe uma cópia do banco de dados com todos os clientes, mensalidades e configurações.
-    </p>
-    <button
-      type="button"
-      class="crm-btn-ghost"
-      [disabled]="baixandoBackup"
-      (click)="baixarBackup()"
-    >
-      {{ baixandoBackup ? 'Gerando backup...' : 'Baixar backup (.db)' }}
-    </button>
-  </div>
-
-  <div>
-    <h2 class="text-white font-semibold text-lg mb-2">Sincronização de cobranças</h2>
-    <p class="text-slate-500 text-sm mb-4">
-      Alinha mensalidades pendentes com as datas de vencimento dos clientes. Executado automaticamente no login.
-    </p>
-    <p *ngIf="ultimaSincronizacao" class="text-slate-400 text-sm mb-3">{{ ultimaSincronizacao }}</p>
-    <button
-      type="button"
-      class="crm-btn-primary"
-      [disabled]="sincronizandoCobrancas"
-      (click)="sincronizarCobrancas()"
-    >
-      {{ sincronizandoCobrancas ? 'Sincronizando...' : 'Sincronizar cobranças' }}
-    </button>
-  </div>
-
-  <div>
-    <h2 class="text-white font-semibold text-lg mb-4">Empresa</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Nome da Empresa</label>
-        <input class="crm-input" [(ngModel)]="form.nomeEmpresa" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">WhatsApp</label>
-        <input class="crm-input" [(ngModel)]="form.whatsapp" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">E-mail</label>
-        <input class="crm-input" [(ngModel)]="form.email" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Site</label>
-        <input class="crm-input" [(ngModel)]="form.site" />
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Instagram</label>
-        <input class="crm-input" [(ngModel)]="form.instagram" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="block text-slate-300 mb-2 text-sm">Cor principal do sistema</label>
-        <p class="text-slate-500 text-xs mb-3">
-          Usada nos botões, menu e destaques do CRM.
-        </p>
-        <div class="flex flex-wrap items-center gap-3">
-          <input
-            type="color"
-            class="h-11 w-14 rounded-lg border border-slate-700 bg-slate-800 cursor-pointer shrink-0"
-            [(ngModel)]="form.corPrincipal"
-          />
-          <input
-            class="crm-input max-w-[8rem] uppercase"
-            [(ngModel)]="form.corPrincipal"
-            maxlength="7"
-            placeholder="#7C3AED"
-          />
-          <button
-            type="button"
-            class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
-            [style.background-color]="form.corPrincipal"
-            (click)="preVisualizarCor()"
-          >
-            Pré-visualizar
-          </button>
-        </div>
-        <div class="flex flex-wrap gap-2 mt-3">
-          <button
-            *ngFor="let cor of coresSugeridas"
-            type="button"
-            class="h-8 w-8 rounded-full border-2 transition-transform hover:scale-105"
-            [style.background-color]="cor"
-            [class.border-white]="form.corPrincipal?.toUpperCase() === cor"
-            [class.border-transparent]="form.corPrincipal?.toUpperCase() !== cor"
-            [attr.aria-label]="'Cor ' + cor"
-            (click)="definirCorSugerida(cor)"
-          ></button>
+        <div *ngIf="mostrarFormSenha" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-slate-300 mb-2 text-sm">Senha atual</label>
+              <input type="password" class="crm-input" [(ngModel)]="senhaAtual" autocomplete="current-password" />
+            </div>
+            <div></div>
+            <div>
+              <label class="block text-slate-300 mb-2 text-sm">Nova senha</label>
+              <input type="password" class="crm-input" [(ngModel)]="novaSenha" autocomplete="new-password" />
+            </div>
+            <div>
+              <label class="block text-slate-300 mb-2 text-sm">Confirmar nova senha</label>
+              <input type="password" class="crm-input" [(ngModel)]="confirmarSenha" autocomplete="new-password" />
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button class="crm-btn-primary" [disabled]="alterandoSenha" (click)="alterarSenha()">
+              {{ alterandoSenha ? 'Alterando...' : 'Salvar nova senha' }}
+            </button>
+            <button
+              type="button"
+              class="crm-btn-ghost"
+              [disabled]="alterandoSenha"
+              (click)="cancelarAlteracaoSenha()"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
+    </ng-container>
+
+    <!-- Empresa -->
+    <ng-container *ngIf="abaAtiva === 'empresa'">
       <div>
+        <h2 class="text-white font-semibold text-lg mb-4">Empresa</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Nome da Empresa</label>
+            <input class="crm-input" [(ngModel)]="form.nomeEmpresa" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">WhatsApp</label>
+            <input class="crm-input" [(ngModel)]="form.whatsapp" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">E-mail</label>
+            <input class="crm-input" [(ngModel)]="form.email" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Site</label>
+            <input class="crm-input" [(ngModel)]="form.site" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Instagram</label>
+            <input class="crm-input" [(ngModel)]="form.instagram" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-white font-semibold text-lg mb-4">PIX</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Chave PIX</label>
+            <input class="crm-input" [(ngModel)]="form.chavePix" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Tipo PIX</label>
+            <input class="crm-input" [(ngModel)]="form.tipoPix" placeholder="CPF, CNPJ, E-mail..." />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-slate-300 mb-2 text-sm">Favorecido</label>
+            <input class="crm-input" [(ngModel)]="form.favorecidoPix" />
+          </div>
+        </div>
+      </div>
+
+      <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
+      </button>
+    </ng-container>
+
+    <!-- Mensagens -->
+    <ng-container *ngIf="abaAtiva === 'mensagens'">
+      <div>
+        <h2 class="text-white font-semibold text-lg mb-2">Lembretes</h2>
         <label class="block text-slate-300 mb-2 text-sm">Dias de antecedência do lembrete</label>
         <p class="text-slate-500 text-xs mb-2">
           Usado na Cobrança Diária, Financeiro e Vencimentos (padrão: 5).
@@ -154,129 +134,196 @@
           [(ngModel)]="form.diasAntecedenciaLembrete"
         />
       </div>
-    </div>
-  </div>
 
-  <div>
-    <h2 class="text-white font-semibold text-lg mb-4">PIX</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label class="block text-slate-300 mb-2 text-sm">Chave PIX</label>
-        <input class="crm-input" [(ngModel)]="form.chavePix" />
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h2 class="text-white font-semibold text-lg">Mensagem de Boas-vindas</h2>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs self-start"
+            (click)="restaurarMensagem('mensagemBoasVindas')"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+        <p class="text-slate-500 text-xs mb-1">
+          Enviada ao cadastrar um cliente ou pelo botão Boas-vindas no detalhe do cliente.
+        </p>
+        <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBoasVindas.join(', ') }}</p>
+        <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBoasVindas"></textarea>
       </div>
+
       <div>
-        <label class="block text-slate-300 mb-2 text-sm">Tipo PIX</label>
-        <input class="crm-input" [(ngModel)]="form.tipoPix" placeholder="CPF, CNPJ, E-mail..." />
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h2 class="text-white font-semibold text-lg">Mensagem de Lembrete</h2>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs self-start"
+            (click)="restaurarMensagem('mensagemLembrete')"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+        <p class="text-slate-500 text-xs mb-1">
+          Enviada para clientes com vencimento em dia ou pendente (não atrasados).
+        </p>
+        <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
+        <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
       </div>
-      <div class="md:col-span-2">
-        <label class="block text-slate-300 mb-2 text-sm">Favorecido</label>
-        <input class="crm-input" [(ngModel)]="form.favorecidoPix" />
+
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h2 class="text-white font-semibold text-lg">Mensagem de Cobrança</h2>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs self-start"
+            (click)="restaurarMensagem('mensagemCobranca')"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+        <p class="text-slate-500 text-xs mb-1">
+          Usada para clientes atrasados.
+        </p>
+        <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
+        <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>
       </div>
-    </div>
-  </div>
 
-  <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-      <h2 class="text-white font-semibold text-lg">Mensagem de Boas-vindas</h2>
-      <button
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start"
-        (click)="restaurarMensagem('mensagemBoasVindas')"
-      >
-        Restaurar padrão
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h2 class="text-white font-semibold text-lg">Mensagem de Renovação</h2>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs self-start"
+            (click)="restaurarMensagem('mensagemRenovacao')"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+        <p class="text-slate-500 text-xs mb-1">Enviada após registrar o pagamento e renovar o plano.</p>
+        <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRenovacao.join(', ') }}</p>
+        <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRenovacao"></textarea>
+      </div>
+
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h2 class="text-white font-semibold text-lg">Mensagem de Recibo</h2>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs self-start"
+            (click)="restaurarMensagem('mensagemRecibo')"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+        <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRecibo.join(', ') }}</p>
+        <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRecibo"></textarea>
+      </div>
+
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h2 class="text-white font-semibold text-lg">Mensagem de Bloqueio</h2>
+          <button
+            type="button"
+            class="crm-btn-ghost !py-1.5 !text-xs self-start"
+            (click)="restaurarMensagem('mensagemBloqueio')"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+        <p class="text-slate-500 text-xs mb-1">Para clientes inadimplentes com acesso suspenso.</p>
+        <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBloqueio.join(', ') }}</p>
+        <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBloqueio"></textarea>
+      </div>
+
+      <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
       </button>
-    </div>
-    <p class="text-slate-500 text-xs mb-1">
-      Enviada ao cadastrar um cliente ou pelo botão Boas-vindas no detalhe do cliente.
-    </p>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBoasVindas.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBoasVindas"></textarea>
-  </div>
+    </ng-container>
 
-  <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-      <h2 class="text-white font-semibold text-lg">Mensagem de Lembrete</h2>
-      <button
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start"
-        (click)="restaurarMensagem('mensagemLembrete')"
-      >
-        Restaurar padrão
+    <!-- Sistema -->
+    <ng-container *ngIf="abaAtiva === 'sistema'">
+      <div>
+        <h2 class="text-white font-semibold text-lg mb-4">Aparência</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Cor principal do sistema</label>
+            <p class="text-slate-500 text-xs mb-3">
+              Usada nos botões, menu e destaques do CRM.
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+              <input
+                type="color"
+                class="h-11 w-14 rounded-lg border border-slate-700 bg-slate-800 cursor-pointer shrink-0"
+                [(ngModel)]="form.corPrincipal"
+                (ngModelChange)="aplicarCorPreview($event)"
+              />
+              <input
+                class="crm-input max-w-[8rem] uppercase"
+                [(ngModel)]="form.corPrincipal"
+                (ngModelChange)="aplicarCorPreview($event)"
+                maxlength="7"
+                placeholder="#7C3AED"
+              />
+              <button
+                type="button"
+                class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                [style.background-color]="form.corPrincipal"
+                (click)="preVisualizarCor()"
+              >
+                Pré-visualizar
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button
+                *ngFor="let cor of coresSugeridas"
+                type="button"
+                class="h-8 w-8 rounded-full border-2 transition-transform hover:scale-105"
+                [style.background-color]="cor"
+                [class.border-white]="form.corPrincipal?.toUpperCase() === cor"
+                [class.border-transparent]="form.corPrincipal?.toUpperCase() !== cor"
+                [attr.aria-label]="'Cor ' + cor"
+                (click)="definirCorSugerida(cor)"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-white font-semibold text-lg mb-2">Backup</h2>
+        <p class="text-slate-500 text-sm mb-4">
+          Baixe uma cópia do banco de dados com todos os clientes, mensalidades e configurações.
+        </p>
+        <button
+          type="button"
+          class="crm-btn-ghost"
+          [disabled]="baixandoBackup"
+          (click)="baixarBackup()"
+        >
+          {{ baixandoBackup ? 'Gerando backup...' : 'Baixar backup (.db)' }}
+        </button>
+      </div>
+
+      <div>
+        <h2 class="text-white font-semibold text-lg mb-2">Sincronização de cobranças</h2>
+        <p class="text-slate-500 text-sm mb-4">
+          Alinha mensalidades pendentes com as datas de vencimento dos clientes. Executado automaticamente no login.
+        </p>
+        <p *ngIf="ultimaSincronizacao" class="text-slate-400 text-sm mb-3">{{ ultimaSincronizacao }}</p>
+        <button
+          type="button"
+          class="crm-btn-primary"
+          [disabled]="sincronizandoCobrancas"
+          (click)="sincronizarCobrancas()"
+        >
+          {{ sincronizandoCobrancas ? 'Sincronizando...' : 'Sincronizar cobranças' }}
+        </button>
+      </div>
+
+      <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
       </button>
-    </div>
-    <p class="text-slate-500 text-xs mb-1">
-      Enviada para clientes com vencimento em dia ou pendente (não atrasados).
-    </p>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
+    </ng-container>
   </div>
-
-  <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-      <h2 class="text-white font-semibold text-lg">Mensagem de Cobrança</h2>
-      <button
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start"
-        (click)="restaurarMensagem('mensagemCobranca')"
-      >
-        Restaurar padrão
-      </button>
-    </div>
-    <p class="text-slate-500 text-xs mb-1">
-      Usada para clientes atrasados.
-    </p>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>
-  </div>
-
-  <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-      <h2 class="text-white font-semibold text-lg">Mensagem de Renovação</h2>
-      <button
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start"
-        (click)="restaurarMensagem('mensagemRenovacao')"
-      >
-        Restaurar padrão
-      </button>
-    </div>
-    <p class="text-slate-500 text-xs mb-1">Enviada após registrar o pagamento e renovar o plano.</p>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRenovacao.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRenovacao"></textarea>
-  </div>
-
-  <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-      <h2 class="text-white font-semibold text-lg">Mensagem de Recibo</h2>
-      <button
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start"
-        (click)="restaurarMensagem('mensagemRecibo')"
-      >
-        Restaurar padrão
-      </button>
-    </div>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRecibo.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRecibo"></textarea>
-  </div>
-
-  <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-      <h2 class="text-white font-semibold text-lg">Mensagem de Bloqueio</h2>
-      <button
-        type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs self-start"
-        (click)="restaurarMensagem('mensagemBloqueio')"
-      >
-        Restaurar padrão
-      </button>
-    </div>
-    <p class="text-slate-500 text-xs mb-1">Para clientes inadimplentes com acesso suspenso.</p>
-    <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBloqueio.join(', ') }}</p>
-    <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBloqueio"></textarea>
-  </div>
-
-  <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
-    {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
-  </button>
-</div>
+</ng-container>

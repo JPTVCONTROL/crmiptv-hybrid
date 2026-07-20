@@ -12,9 +12,10 @@ import {
 export class TemaService {
   constructor(private configuracaoService: ConfiguracaoService) {
     this.configuracaoService.configuracao$.subscribe((config) => {
-      if (config?.corPrincipal) {
-        this.aplicar(config.corPrincipal);
+      if (!config) {
+        return;
       }
+      this.aplicar(config.corPrincipal);
     });
   }
 

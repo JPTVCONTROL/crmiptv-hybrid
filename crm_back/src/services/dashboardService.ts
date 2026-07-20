@@ -3,7 +3,6 @@ import { configuracaoRepository } from '../repositories/configuracaoRepository.j
 import { calcularStatusCliente } from '../utils/helpers/clienteStatus.js';
 import {
   calcularDiasVencimento,
-  clienteParticipaCobrancas,
   elegivelCobrancaDiaria,
   resolverDiasAntecedencia,
 } from '../utils/helpers/cobrancaDiariaHelpers.js';
@@ -11,13 +10,20 @@ import {
   contatoRegistradoHoje,
   telefoneValidoParaWhatsApp,
 } from '../utils/helpers/contatoHelpers.js';
-import { parseDataSomenteDia } from '../utils/helpers/dateHelpers.js';
-
 import {
   resumirPendenciasCadastro,
   rotaPendenciaCadastro,
   contarCadastrosIncompletos,
 } from '../utils/helpers/clienteCadastroHelpers.js';
+import {
+  calcularLimitesDashboard,
+  whereClienteAtivo,
+  whereClienteAtrasado,
+  whereClienteInativo,
+  whereClienteGerenciado,
+  whereClienteParticipaCobranca,
+  whereMensalidadeCobrancaCliente,
+} from '../utils/helpers/dashboardStatusLimits.js';
 
 export interface AlertaOperacional {
   tipo:
@@ -126,44 +132,50 @@ const MESES = [
   'Dez',
 ];
 
+function montarFaturamentoMensal(
+  pagos: Array<{ valor: number; pagoEm: Date | null }>,
+  hoje: Date
+): DashboardResumo['faturamentoMensal'] {
+  const faturamentoMensal: DashboardResumo['faturamentoMensal'] = [];
+
+  for (let i = 5; i >= 0; i--) {
+    const referencia = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const rotulo = `${MESES[referencia.getMonth()]}/${String(referencia.getFullYear()).slice(-2)}`;
+
+    const total = pagos
+      .filter((m) => {
+        if (!m.pagoEm) return false;
+        const pago = new Date(m.pagoEm);
+        return (
+          pago.getMonth() === referencia.getMonth() &&
+          pago.getFullYear() === referencia.getFullYear()
+        );
+      })
+      .reduce((acc, m) => acc + m.valor, 0);
+
+    faturamentoMensal.push({ mes: rotulo, total });
+  }
+
+  return faturamentoMensal;
+}
+
+function primeiraMensalidadePorCliente<
+  T extends { clienteId: number; id: number; referencia: string; valor: number; vencimento: Date },
+>(
+  mensalidades: T[]
+): Map<number, T> {
+  const mapa = new Map<number, T>();
+  for (const mensalidade of mensalidades) {
+    if (!mapa.has(mensalidade.clienteId)) {
+      mapa.set(mensalidade.clienteId, mensalidade);
+    }
+  }
+  return mapa;
+}
+
 export class DashboardService {
   async obterResumo(): Promise<DashboardResumo> {
-    const [clientes, mensalidades, configuracao, aplicativosCatalogo] = await Promise.all([
-      prisma.cliente.findMany({
-        select: {
-          id: true,
-          nome: true,
-          telefone: true,
-          planoId: true,
-          valorMensal: true,
-          expiraEm: true,
-          incluirCobrancas: true,
-          cortesia: true,
-          servidor: true,
-          usuario: true,
-          senha: true,
-          aplicativoId: true,
-          dispositivos: true,
-          macAddress: true,
-          qtdTelas: true,
-          createdAt: true,
-        },
-      }),
-      prisma.mensalidade.findMany({
-        include: {
-          cliente: {
-            select: {
-              id: true,
-              nome: true,
-              telefone: true,
-              expiraEm: true,
-              incluirCobrancas: true,
-              cortesia: true,
-            },
-          },
-        },
-        orderBy: { vencimento: 'asc' },
-      }),
+    const [configuracao, aplicativosCatalogo] = await Promise.all([
       configuracaoRepository.findOrCreate(),
       prisma.aplicativo.findMany({
         select: {
@@ -180,168 +192,270 @@ export class DashboardService {
     );
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
+    const fimHoje = new Date(hoje);
+    fimHoje.setHours(23, 59, 59, 999);
 
-    const pendentes = mensalidades.filter((m) => m.status === 'PENDENTE');
-    const pagos = mensalidades.filter((m) => m.status === 'PAGO');
+    const limites = calcularLimitesDashboard(hoje, diasAntecedencia);
+    const whereAtivo = whereClienteAtivo(limites.inicioHoje);
+    const whereAtrasado = whereClienteAtrasado(
+      limites.inicioHoje,
+      limites.inicioAtrasado
+    );
+    const whereInativo = whereClienteInativo(limites.inicioAtrasado);
+    const whereGerenciado = whereClienteGerenciado(limites.inicioAtrasado);
+    const whereAtivoComercial = {
+      cortesia: false,
+      ...whereAtivo,
+    };
+    const whereMensalidadeCobranca = whereMensalidadeCobrancaCliente();
+    const whereMensalidadeCobrancaJanela = {
+      ...whereMensalidadeCobranca,
+      OR: [
+        { vencimento: { lt: limites.inicioHoje } },
+        {
+          vencimento: {
+            gte: limites.inicioHoje,
+            lte: limites.fimAntecedencia,
+          },
+        },
+      ],
+    };
+
+    const [
+      totalClientes,
+      ativosCount,
+      atrasadosCount,
+      inativosCount,
+      cortesiaCount,
+      clientesGerenciados,
+      novosClientes30d,
+      novosPeriodoAnterior,
+      clientesAtivosComercial,
+      expiradosSemMensalidade,
+      recebidoHojeAgg,
+      recebidoMesAgg,
+      pendentesEsteMesAgg,
+      pendentesProximosMesesAgg,
+      pagosUltimos6Meses,
+      pendentesCobrancaJanela,
+      pendentesCobrancaAtrasados,
+      totalPendenteCobrancaAgg,
+      cobrancaAtrasadaAgg,
+      clientesAtencaoRaw,
+    ] = await Promise.all([
+      prisma.cliente.count(),
+      prisma.cliente.count({ where: whereAtivo }),
+      prisma.cliente.count({ where: whereAtrasado }),
+      prisma.cliente.count({ where: whereInativo }),
+      prisma.cliente.count({ where: { cortesia: true } }),
+      prisma.cliente.findMany({
+        where: whereGerenciado,
+        select: {
+          telefone: true,
+          planoId: true,
+          valorMensal: true,
+          cortesia: true,
+          expiraEm: true,
+          servidor: true,
+          usuario: true,
+          senha: true,
+          aplicativoId: true,
+          dispositivos: true,
+          macAddress: true,
+        },
+      }),
+      prisma.cliente.count({
+        where: { createdAt: { gte: limites.trintaDiasAtras } },
+      }),
+      prisma.cliente.count({
+        where: {
+          createdAt: {
+            gte: limites.sessentaDiasAtras,
+            lt: limites.trintaDiasAtras,
+          },
+        },
+      }),
+      prisma.cliente.findMany({
+        where: whereAtivoComercial,
+        select: { valorMensal: true, qtdTelas: true, createdAt: true },
+      }),
+      prisma.cliente.count({
+        where: {
+          expiraEm: { not: null },
+          OR: [whereAtrasado, whereInativo],
+          mensalidades: { none: { status: 'PENDENTE' } },
+        },
+      }),
+      prisma.mensalidade.aggregate({
+        where: {
+          status: 'PAGO',
+          pagoEm: { gte: hoje, lte: fimHoje },
+        },
+        _sum: { valor: true },
+      }),
+      prisma.mensalidade.aggregate({
+        where: {
+          status: 'PAGO',
+          pagoEm: { gte: limites.inicioMes, lt: limites.inicioProximoMes },
+        },
+        _sum: { valor: true },
+      }),
+      prisma.mensalidade.aggregate({
+        where: {
+          status: 'PENDENTE',
+          vencimento: { gte: limites.inicioMes, lt: limites.inicioProximoMes },
+        },
+        _sum: { valor: true },
+        _count: true,
+      }),
+      prisma.mensalidade.aggregate({
+        where: {
+          status: 'PENDENTE',
+          vencimento: { gte: limites.inicioProximoMes },
+        },
+        _sum: { valor: true },
+        _count: true,
+      }),
+      prisma.mensalidade.findMany({
+        where: {
+          status: 'PAGO',
+          pagoEm: { gte: limites.seisMesesAtras },
+        },
+        select: { valor: true, pagoEm: true },
+      }),
+      prisma.mensalidade.findMany({
+        where: whereMensalidadeCobrancaJanela,
+        select: {
+          id: true,
+          clienteId: true,
+          referencia: true,
+          valor: true,
+          vencimento: true,
+          ultimoContatoEm: true,
+          cliente: {
+            select: {
+              nome: true,
+              telefone: true,
+            },
+          },
+        },
+        orderBy: { vencimento: 'asc' },
+      }),
+      prisma.mensalidade.findMany({
+        where: {
+          ...whereMensalidadeCobranca,
+          vencimento: { lt: limites.inicioHoje },
+        },
+        select: {
+          ultimoContatoEm: true,
+          cliente: { select: { telefone: true } },
+        },
+      }),
+      prisma.mensalidade.aggregate({
+        where: whereMensalidadeCobranca,
+        _sum: { valor: true },
+      }),
+      prisma.mensalidade.aggregate({
+        where: {
+          ...whereMensalidadeCobranca,
+          vencimento: { lt: limites.inicioHoje },
+        },
+        _sum: { valor: true },
+        _count: true,
+      }),
+      prisma.cliente.findMany({
+        where: {
+          ...whereClienteParticipaCobranca(),
+          OR: [whereAtrasado, whereInativo],
+        },
+        select: { id: true, nome: true, telefone: true, expiraEm: true },
+        orderBy: { expiraEm: 'asc' },
+        take: 10,
+      }),
+    ]);
 
     const aplicativosRequisitos = new Map(
       aplicativosCatalogo.map((app) => [app.id, app])
     );
 
     const clientesResumo = {
-      total: clientes.length,
-      ativos: clientes.filter((c) => calcularStatusCliente(c.expiraEm) === 'ATIVO')
-        .length,
-      atrasados: clientes.filter(
-        (c) => calcularStatusCliente(c.expiraEm) === 'ATRASADO'
-      ).length,
-      inativos: clientes.filter(
-        (c) => calcularStatusCliente(c.expiraEm) === 'INATIVO'
-      ).length,
-      cortesia: clientes.filter((c) => c.cortesia).length,
+      total: totalClientes,
+      ativos: ativosCount,
+      atrasados: atrasadosCount,
+      inativos: inativosCount,
+      cortesia: cortesiaCount,
       cadastrosIncompletos: contarCadastrosIncompletos(
-        clientes,
+        clientesGerenciados,
         aplicativosRequisitos
       ),
     };
 
-    const recebidoHoje = pagos
-      .filter((m) => {
-        if (!m.pagoEm) return false;
-        const pago = new Date(m.pagoEm);
-        return (
-          pago.getFullYear() === hoje.getFullYear() &&
-          pago.getMonth() === hoje.getMonth() &&
-          pago.getDate() === hoje.getDate()
-        );
-      })
-      .reduce((total, m) => total + m.valor, 0);
+    const recebidoHoje = recebidoHojeAgg._sum.valor ?? 0;
+    const recebidoMes = recebidoMesAgg._sum.valor ?? 0;
+    const aReceberEsteMes = pendentesEsteMesAgg._sum.valor ?? 0;
+    const qtdEsteMes = pendentesEsteMesAgg._count;
+    const aReceberProximosMeses = pendentesProximosMesesAgg._sum.valor ?? 0;
+    const qtdProximosMeses = pendentesProximosMesesAgg._count;
 
-    const recebidoMes = pagos
-      .filter((m) => {
-        if (!m.pagoEm) return false;
-        const pago = new Date(m.pagoEm);
-        return (
-          pago.getMonth() === hoje.getMonth() &&
-          pago.getFullYear() === hoje.getFullYear()
-        );
-      })
-      .reduce((total, m) => total + m.valor, 0);
+    const faturamentoMensal = montarFaturamentoMensal(pagosUltimos6Meses, hoje);
 
-    const pendentesEsteMes = pendentes.filter((m) => {
-      const vencimento = parseDataSomenteDia(m.vencimento);
-      return (
-        vencimento.getUTCMonth() === hoje.getMonth() &&
-        vencimento.getUTCFullYear() === hoje.getFullYear()
-      );
+    const vencendoLista = pendentesCobrancaJanela.filter((m) => {
+      const dias = calcularDiasVencimento(m.vencimento);
+      return dias >= 0 && dias <= diasAntecedencia;
     });
-    const aReceberEsteMes = pendentesEsteMes.reduce((total, m) => total + m.valor, 0);
-    const qtdEsteMes = pendentesEsteMes.length;
-    const pendentesCobranca = pendentes.filter((m) =>
-      clienteParticipaCobrancas(m.cliente)
-    );
-    const pendentesProximosMeses = pendentes.filter((m) => {
-      const vencimento = parseDataSomenteDia(m.vencimento);
-      const inicioProximoMesUtc = Date.UTC(
-        hoje.getFullYear(),
-        hoje.getMonth() + 1,
-        1
-      );
-      const vencUtc = Date.UTC(
-        vencimento.getUTCFullYear(),
-        vencimento.getUTCMonth(),
-        vencimento.getUTCDate()
-      );
-      return vencUtc >= inicioProximoMesUtc;
-    });
-    const aReceberProximosMeses = pendentesProximosMeses.reduce(
-      (total, m) => total + m.valor,
-      0
-    );
-    const qtdProximosMeses = pendentesProximosMeses.length;
-    const vencemHoje = pendentesCobranca.filter(
+    const vencemHoje = vencendoLista.filter(
       (m) => calcularDiasVencimento(m.vencimento) === 0
     ).length;
 
-    const faturamentoMensal: DashboardResumo['faturamentoMensal'] = [];
-    for (let i = 5; i >= 0; i--) {
-      const referencia = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const rotulo = `${MESES[referencia.getMonth()]}/${String(referencia.getFullYear()).slice(-2)}`;
+    const proximosVencimentos = vencendoLista.map((m) => ({
+      id: m.id,
+      clienteId: m.clienteId,
+      referencia: m.referencia,
+      valor: m.valor,
+      vencimento: m.vencimento.toISOString(),
+      ultimoContatoEm: m.ultimoContatoEm?.toISOString() ?? null,
+      clienteNome: m.cliente.nome,
+      telefone: m.cliente.telefone,
+    }));
 
-      const total = pagos
-        .filter((m) => {
-          if (!m.pagoEm) return false;
-          const pago = new Date(m.pagoEm);
-          return (
-            pago.getMonth() === referencia.getMonth() &&
-            pago.getFullYear() === referencia.getFullYear()
-          );
-        })
-        .reduce((acc, m) => acc + m.valor, 0);
+    const idsAtencao = clientesAtencaoRaw.map((cliente) => cliente.id);
+    const pendentesAtencao =
+      idsAtencao.length === 0
+        ? []
+        : await prisma.mensalidade.findMany({
+            where: {
+              status: 'PENDENTE',
+              clienteId: { in: idsAtencao },
+            },
+            select: {
+              id: true,
+              clienteId: true,
+              referencia: true,
+              valor: true,
+              vencimento: true,
+            },
+            orderBy: { vencimento: 'asc' },
+          });
+    const pendentePorCliente = primeiraMensalidadePorCliente(pendentesAtencao);
 
-      faturamentoMensal.push({ mes: rotulo, total });
-    }
+    const clientesAtencao = clientesAtencaoRaw.map((cliente) => {
+      const pendente = pendentePorCliente.get(cliente.id);
+      const status = calcularStatusCliente(cliente.expiraEm);
+      return {
+        id: cliente.id,
+        nome: cliente.nome,
+        telefone: cliente.telefone,
+        expiraEm: cliente.expiraEm?.toISOString() ?? null,
+        status: status as 'ATRASADO' | 'INATIVO',
+        mensalidadePendenteId: pendente?.id ?? null,
+        mensalidadeReferencia: pendente?.referencia ?? null,
+        mensalidadeValor: pendente?.valor ?? null,
+        mensalidadeVencimento: pendente?.vencimento.toISOString() ?? null,
+      };
+    });
 
-    const proximosVencimentos = pendentesCobranca
-      .filter((m) => {
-        const dias = calcularDiasVencimento(m.vencimento);
-        return dias >= 0 && dias <= diasAntecedencia;
-      })
-      .map((m) => ({
-        id: m.id,
-        clienteId: m.clienteId,
-        referencia: m.referencia,
-        valor: m.valor,
-        vencimento: m.vencimento.toISOString(),
-        ultimoContatoEm: m.ultimoContatoEm?.toISOString() ?? null,
-        clienteNome: m.cliente.nome,
-        telefone: m.cliente.telefone,
-      }));
-
-    const pendentesPorCliente = new Map<
-      number,
-      { id: number; referencia: string; valor: number; vencimento: Date }
-    >();
-    for (const mensalidade of pendentes) {
-      pendentesPorCliente.set(mensalidade.clienteId, {
-        id: mensalidade.id,
-        referencia: mensalidade.referencia,
-        valor: mensalidade.valor,
-        vencimento: mensalidade.vencimento,
-      });
-    }
-
-    const clientesAtencao = clientes
-      .filter((cliente) => clienteParticipaCobrancas(cliente))
-      .map((cliente) => {
-        const pendente = pendentesPorCliente.get(cliente.id);
-        return {
-          id: cliente.id,
-          nome: cliente.nome,
-          telefone: cliente.telefone,
-          expiraEm: cliente.expiraEm?.toISOString() ?? null,
-          status: calcularStatusCliente(cliente.expiraEm),
-          mensalidadePendenteId: pendente?.id ?? null,
-          mensalidadeReferencia: pendente?.referencia ?? null,
-          mensalidadeValor: pendente?.valor ?? null,
-          mensalidadeVencimento: pendente?.vencimento.toISOString() ?? null,
-        };
-      })
-      .filter(
-        (cliente): cliente is typeof cliente & { status: 'ATRASADO' | 'INATIVO' } =>
-          cliente.status === 'ATRASADO' || cliente.status === 'INATIVO'
-      )
-      .sort((a, b) => {
-        const da = a.expiraEm ? new Date(a.expiraEm).getTime() : 0;
-        const db = b.expiraEm ? new Date(b.expiraEm).getTime() : 0;
-        return da - db;
-      })
-      .slice(0, 10);
-
-    const elegiveis = pendentes.filter(
-      (m) =>
-        elegivelCobrancaDiaria(m.vencimento, diasAntecedencia) &&
-        clienteParticipaCobrancas(m.cliente)
+    const elegiveis = pendentesCobrancaJanela.filter((m) =>
+      elegivelCobrancaDiaria(m.vencimento, diasAntecedencia)
     );
     const contactaveis = elegiveis.filter((m) =>
       telefoneValidoParaWhatsApp(m.cliente.telefone)
@@ -353,22 +467,13 @@ export class DashboardService {
     const naoContactados = contactaveis.length - contactadosHoje;
     const rotinaFeita =
       contactaveis.length === 0 || contactadosHoje === contactaveis.length;
-
     const semTelefoneRotina = elegiveis.filter(
       (m) => !telefoneValidoParaWhatsApp(m.cliente.telefone)
     ).length;
 
-    const expiradosSemMensalidade = clientes.filter((cliente) => {
-      if (!cliente.expiraEm) return false;
-      const status = calcularStatusCliente(cliente.expiraEm);
-      if (status === 'ATIVO') return false;
-      return !pendentesPorCliente.has(cliente.id);
-    }).length;
-
     const alertas: AlertaOperacional[] = [];
-
     const pendenciasCadastro = resumirPendenciasCadastro(
-      clientes,
+      clientesGerenciados,
       aplicativosRequisitos
     );
 
@@ -466,8 +571,7 @@ export class DashboardService {
       });
     }
 
-    const atrasadosSemContato = pendentesCobranca.filter((m) => {
-      if (calcularDiasVencimento(m.vencimento) >= 0) return false;
+    const atrasadosSemContato = pendentesCobrancaAtrasados.filter((m) => {
       if (!telefoneValidoParaWhatsApp(m.cliente.telefone)) return false;
       return !contatoRegistradoHoje(m.ultimoContatoEm);
     }).length;
@@ -524,37 +628,23 @@ export class DashboardService {
       });
     }
 
-    const clientesAtivosLista = clientes.filter(
-      (c) =>
-        calcularStatusCliente(c.expiraEm) === 'ATIVO' && !c.cortesia
-    );
-    const mrr = clientesAtivosLista.reduce(
-      (total, cliente) => total + (cliente.valorMensal > 0 ? cliente.valorMensal : 0),
+    const mrr = clientesAtivosComercial.reduce(
+      (total, cliente) =>
+        total + (cliente.valorMensal > 0 ? cliente.valorMensal : 0),
       0
     );
     const arrAno = hoje.getFullYear();
     const arrMesesRestantes = 12 - hoje.getMonth();
     const arr = Math.round(mrr * arrMesesRestantes * 100) / 100;
     const ticketMedio =
-      clientesAtivosLista.length > 0 ? mrr / clientesAtivosLista.length : 0;
-    const conexoes = clientesAtivosLista.reduce(
+      clientesAtivosComercial.length > 0
+        ? mrr / clientesAtivosComercial.length
+        : 0;
+    const conexoes = clientesAtivosComercial.reduce(
       (total, cliente) => total + (cliente.qtdTelas > 0 ? cliente.qtdTelas : 1),
       0
     );
 
-    const trintaDiasAtras = new Date(hoje);
-    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
-    const sessentaDiasAtras = new Date(hoje);
-    sessentaDiasAtras.setDate(sessentaDiasAtras.getDate() - 60);
-
-    const novosClientes30d = clientes.filter(
-      (cliente) => cliente.createdAt >= trintaDiasAtras
-    ).length;
-    const novosPeriodoAnterior = clientes.filter(
-      (cliente) =>
-        cliente.createdAt >= sessentaDiasAtras &&
-        cliente.createdAt < trintaDiasAtras
-    ).length;
     const variacaoNovosClientes =
       novosPeriodoAnterior === 0
         ? novosClientes30d > 0
@@ -565,48 +655,34 @@ export class DashboardService {
               100
           );
 
-    const vencendoLista = pendentesCobranca.filter((m) => {
-      const dias = calcularDiasVencimento(m.vencimento);
-      return dias >= 0 && dias <= diasAntecedencia;
-    });
     const vencendoQtd = vencendoLista.length;
     const vencendoValor = vencendoLista.reduce((total, m) => total + m.valor, 0);
 
-    const cobrancaAtrasadaLista = pendentesCobranca.filter(
-      (m) => calcularDiasVencimento(m.vencimento) < 0
-    );
-    const cobrancaAtrasadaQtd = cobrancaAtrasadaLista.length;
-    const cobrancaAtrasadaValor = cobrancaAtrasadaLista.reduce(
-      (total, m) => total + m.valor,
-      0
-    );
-
-    const totalPendenteValor = pendentesCobranca.reduce(
-      (total, m) => total + m.valor,
-      0
-    );
+    const cobrancaAtrasadaQtd = cobrancaAtrasadaAgg._count;
+    const cobrancaAtrasadaValor = cobrancaAtrasadaAgg._sum.valor ?? 0;
+    const totalPendenteValor = totalPendenteCobrancaAgg._sum.valor ?? 0;
     const inadimplenciaPercentual =
       totalPendenteValor > 0
         ? Math.round((cobrancaAtrasadaValor / totalPendenteValor) * 1000) / 10
         : 0;
 
     const retencaoPercentual =
-      clientes.length > 0
-        ? Math.round((clientesResumo.ativos / clientes.length) * 1000) / 10
+      totalClientes > 0
+        ? Math.round((clientesResumo.ativos / totalClientes) * 1000) / 10
         : 0;
     const churnPercentual =
-      clientes.length > 0
-        ? Math.round((clientesResumo.inativos / clientes.length) * 1000) / 10
+      totalClientes > 0
+        ? Math.round((clientesResumo.inativos / totalClientes) * 1000) / 10
         : 0;
 
     const permanenciaMediaMeses =
-      clientesAtivosLista.length > 0
-        ? clientesAtivosLista.reduce((total, cliente) => {
+      clientesAtivosComercial.length > 0
+        ? clientesAtivosComercial.reduce((total, cliente) => {
             const meses =
               (hoje.getTime() - cliente.createdAt.getTime()) /
               (1000 * 60 * 60 * 24 * 30.44);
             return total + Math.max(0, meses);
-          }, 0) / clientesAtivosLista.length
+          }, 0) / clientesAtivosComercial.length
         : 0;
     const ltvEstimado = ticketMedio * permanenciaMediaMeses;
 

@@ -1,13 +1,13 @@
 <app-page-header title="Financeiro" subtitle="Quitação de cobranças pendentes e pagamentos em lote."></app-page-header>
 
-<div *ngIf="!loading" class="crm-card border border-violet-500/20 bg-violet-500/5 mb-6 space-y-2">
-  <p class="text-slate-300 text-sm">
+<div *ngIf="!loading" class="crm-info-banner mb-6">
+  <p>
     Cobrança WhatsApp (individual ou em lote):
     <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
     Consulta por data:
     <a routerLink="/vencimentos" class="text-violet-400 hover:underline font-medium">Vencimentos</a>.
   </p>
-  <p class="text-slate-500 text-xs">
+  <p class="crm-info-banner-hint">
     Status da cobrança pendente:
     <strong class="text-slate-400">Vencendo</strong> (próximos {{ diasAntecedencia }} dias),
     <strong class="text-slate-400">Longe do vencimento</strong> (além disso),
@@ -19,21 +19,24 @@
 
 <div *ngIf="!loading" class="space-y-6">
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-    <div class="crm-card">
-      <p class="text-slate-400 text-sm">Vencendo ({{ diasAntecedencia }} dias)</p>
-      <p class="text-amber-400 text-xl font-bold">{{ resumo('PENDENTE').valor }}</p>
-      <p class="text-slate-500 text-xs">{{ resumo('PENDENTE').qtd }} cobrança(s) · vence em até {{ diasAntecedencia }} dias</p>
-    </div>
-    <div class="crm-card">
-      <p class="text-slate-400 text-sm">Longe do vencimento</p>
-      <p class="text-green-400 text-xl font-bold">{{ resumo('REGULAR').valor }}</p>
-      <p class="text-slate-500 text-xs">{{ resumo('REGULAR').qtd }} cobrança(s) · vence após {{ diasAntecedencia }} dias</p>
-    </div>
-    <div class="crm-card">
-      <p class="text-slate-400 text-sm">Atrasado</p>
-      <p class="text-red-400 text-xl font-bold">{{ resumo('ATRASADO').valor }}</p>
-      <p class="text-slate-500 text-xs">{{ resumo('ATRASADO').qtd }} cobrança(s) · data já passou</p>
-    </div>
+    <app-stat-card
+      title="Vencendo ({{ diasAntecedencia }} dias)"
+      [value]="resumo('PENDENTE').valor"
+      color="#F59E0B"
+      [subtitle]="resumo('PENDENTE').qtd + ' cobrança(s) · vence em até ' + diasAntecedencia + ' dias'"
+    ></app-stat-card>
+    <app-stat-card
+      title="Longe do vencimento"
+      [value]="resumo('REGULAR').valor"
+      color="#22C55E"
+      [subtitle]="resumo('REGULAR').qtd + ' cobrança(s) · vence após ' + diasAntecedencia + ' dias'"
+    ></app-stat-card>
+    <app-stat-card
+      title="Atrasado"
+      [value]="resumo('ATRASADO').valor"
+      color="#EF4444"
+      [subtitle]="resumo('ATRASADO').qtd + ' cobrança(s) · data já passou'"
+    ></app-stat-card>
   </div>
 
   <div class="crm-card !p-4 md:!p-5 space-y-4">
@@ -57,15 +60,11 @@
       <button
         *ngFor="let op of opcoesFiltro"
         type="button"
-        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
-        [ngClass]="classesChipStatus(op.valor)"
+        [class]="classesChipStatus(op.valor)"
         (click)="definirFiltro(op.valor)"
       >
         <span>{{ op.rotulo }}</span>
-        <span
-          class="min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-xs font-semibold tabular-nums"
-          [ngClass]="classesChipContagem(op.valor)"
-        >
+        <span [class]="classesChipContagem(op.valor)">
           {{ contagemFiltro(op.valor) }}
         </span>
       </button>
@@ -141,7 +140,7 @@
       <label class="flex items-center gap-2 text-slate-300 text-sm">
         <input
           type="checkbox"
-          class="rounded border-slate-600"
+          class="crm-checkbox"
           [checked]="estaSelecionado(m)"
           (change)="alternarSelecao(m)"
         />
@@ -168,7 +167,7 @@
           <th class="text-left py-3 px-2 w-10">
             <input
               type="checkbox"
-              class="rounded border-slate-600"
+              class="crm-checkbox"
               [checked]="todosPaginaSelecionados"
               (change)="alternarPagina()"
             />
@@ -186,7 +185,7 @@
           <td class="py-3 px-2">
             <input
               type="checkbox"
-              class="rounded border-slate-600"
+              class="crm-checkbox"
               [checked]="estaSelecionado(m)"
               (change)="alternarSelecao(m)"
             />

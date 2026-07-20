@@ -27,6 +27,11 @@ import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { exportarClientesCsv } from '../../shared/utils/cliente-export';
 import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
+import {
+  classesFilterChip,
+  classesFilterChipContagem,
+  VarianteFilterChip,
+} from '../../shared/utils/filter-chip.util';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
 export type FiltroCobrancaCliente = 'TODOS' | 'COM_COBRANCA' | 'SEM_COBRANCA';
@@ -73,7 +78,8 @@ export class ClientesPage implements OnInit, OnDestroy {
   filtroCobranca: FiltroCobrancaCliente = 'TODOS';
   filtroCadastroIncompleto = false;
   pagina = 1;
-  readonly porPagina = 15;
+  readonly porPagina = 10;
+  menuAcoesAberto = false;
   ordenacaoColuna: ColunaOrdenacaoCliente = 'vencimento';
   ordenacaoDirecao: DirecaoOrdenacao = 'asc';
   modoOrdenacaoAplicativo: ModoOrdenacaoAplicativo = 'az';
@@ -126,30 +132,26 @@ export class ClientesPage implements OnInit, OnDestroy {
     ).length;
   }
 
-  classesChipCobranca(filtro: FiltroCobrancaCliente): Record<string, boolean> {
+  classesChipCobranca(filtro: FiltroCobrancaCliente): string {
     const ativo = this.filtroCobranca === filtro;
+    const variante: VarianteFilterChip =
+      filtro === 'SEM_COBRANCA' ? 'amber' : 'violet';
+    return classesFilterChip(ativo, variante);
+  }
 
-    if (!ativo) {
-      return {
-        'border-slate-700': true,
-        'bg-slate-800/50': true,
-        'text-slate-400': true,
-      };
-    }
+  classesChipContagemCobranca(filtro: FiltroCobrancaCliente): string {
+    const ativo = this.filtroCobranca === filtro;
+    const variante: VarianteFilterChip =
+      filtro === 'SEM_COBRANCA' ? 'amber' : 'violet';
+    return classesFilterChipContagem(ativo, variante);
+  }
 
-    if (filtro === 'SEM_COBRANCA') {
-      return {
-        'border-amber-500': true,
-        'bg-amber-600/15': true,
-        'text-amber-200': true,
-      };
-    }
+  fecharMenuAcoes(): void {
+    this.menuAcoesAberto = false;
+  }
 
-    return {
-      'border-violet-500': true,
-      'bg-violet-600/15': true,
-      'text-violet-200': true,
-    };
+  toggleMenuAcoes(): void {
+    this.menuAcoesAberto = !this.menuAcoesAberto;
   }
 
   definirFiltroStatus(filtro: FiltroStatusCliente): void {
@@ -199,71 +201,34 @@ export class ClientesPage implements OnInit, OnDestroy {
     });
   }
 
-  classesChipStatus(filtro: FiltroStatusCliente): Record<string, boolean> {
+  classesChipStatus(filtro: FiltroStatusCliente): string {
     const ativo = this.filtroStatus === filtro;
-
-    if (!ativo) {
-      return {
-        'border-slate-700': true,
-        'bg-slate-800/50': true,
-        'text-slate-400': true,
-        'hover:border-slate-600': true,
-        'hover:text-slate-300': true,
-      };
-    }
-
-    if (filtro === 'TODOS') {
-      return {
-        'border-violet-500': true,
-        'bg-violet-600/15': true,
-        'text-violet-200': true,
-        'shadow-sm': true,
-        'shadow-violet-900/20': true,
-      };
-    }
-
-    if (filtro === 'ATIVO') {
-      return {
-        'border-green-500': true,
-        'bg-green-600/15': true,
-        'text-green-200': true,
-        'shadow-sm': true,
-        'shadow-green-900/20': true,
-      };
-    }
-
-    if (filtro === 'ATRASADO') {
-      return {
-        'border-amber-500': true,
-        'bg-amber-600/15': true,
-        'text-amber-200': true,
-        'shadow-sm': true,
-        'shadow-amber-900/20': true,
-      };
-    }
-
-    return {
-      'border-red-500': true,
-      'bg-red-600/15': true,
-      'text-red-200': true,
-      'shadow-sm': true,
-      'shadow-red-900/20': true,
+    const variantes: Record<FiltroStatusCliente, VarianteFilterChip> = {
+      TODOS: 'violet',
+      ATIVO: 'emerald',
+      ATRASADO: 'amber',
+      INATIVO: 'red',
     };
+    return classesFilterChip(ativo, variantes[filtro]);
   }
 
-  classesChipContagem(filtro: FiltroStatusCliente): Record<string, boolean> {
+  classesChipContagem(filtro: FiltroStatusCliente): string {
     const ativo = this.filtroStatus === filtro;
-
-    if (!ativo) {
-      return { 'bg-slate-700/80': true };
-    }
-
-    return {
-      'bg-violet-500/25': filtro === 'TODOS',
-      'bg-green-500/25': filtro === 'ATIVO',
-      'bg-amber-500/25': filtro === 'ATRASADO',
-      'bg-red-500/25': filtro === 'INATIVO',
+    const variantes: Record<FiltroStatusCliente, VarianteFilterChip> = {
+      TODOS: 'violet',
+      ATIVO: 'emerald',
+      ATRASADO: 'amber',
+      INATIVO: 'red',
     };
+    return classesFilterChipContagem(ativo, variantes[filtro]);
+  }
+
+  classesFilterChipCadastroIncompleto(): string {
+    return classesFilterChip(this.filtroCadastroIncompleto, 'amber');
+  }
+
+  classesFilterChipContagemCadastroIncompleto(): string {
+    return classesFilterChipContagem(this.filtroCadastroIncompleto, 'amber');
   }
 
   constructor(

@@ -16,12 +16,15 @@ import {
 import { DIAS_ANTECEDENCIA_LEMBRETE_PADRAO } from '../../shared/utils/cobranca-diaria';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
+type AbaConfiguracao = 'conta' | 'empresa' | 'mensagens' | 'sistema';
+
 @Component({
   selector: 'app-configuracoes',
   templateUrl: './configuracoes.page.html',
 })
 export class ConfiguracoesPage implements OnInit, OnDestroy {
   loading = true;
+  abaAtiva: AbaConfiguracao = 'empresa';
   private readonly destroy$ = new Subject<void>();
   salvando = false;
   baixandoBackup = false;
@@ -60,6 +63,33 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     '#EA580C',
     '#DB2777',
   ];
+
+  readonly abas: { id: AbaConfiguracao; rotulo: string; subtitulo: string }[] = [
+    {
+      id: 'conta',
+      rotulo: 'Conta',
+      subtitulo: 'Senha de acesso ao CRM.',
+    },
+    {
+      id: 'empresa',
+      rotulo: 'Empresa',
+      subtitulo: 'Dados da empresa e PIX.',
+    },
+    {
+      id: 'mensagens',
+      rotulo: 'Mensagens',
+      subtitulo: 'Templates e regras de envio do WhatsApp.',
+    },
+    {
+      id: 'sistema',
+      rotulo: 'Sistema',
+      subtitulo: 'Aparência, backup e sincronização.',
+    },
+  ];
+
+  get subtituloAba(): string {
+    return this.abas.find((aba) => aba.id === this.abaAtiva)?.subtitulo ?? 'Configurações do CRM.';
+  }
 
   readonly variaveisBoasVindas = [
     '{nome}',
@@ -201,6 +231,17 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
 
   definirCorSugerida(cor: string): void {
     this.form.corPrincipal = cor;
+    this.tema.aplicar(cor);
+  }
+
+  definirAba(aba: AbaConfiguracao): void {
+    this.abaAtiva = aba;
+  }
+
+  classesAba(aba: AbaConfiguracao): string {
+    return aba === this.abaAtiva
+      ? 'crm-filter-chip crm-filter-chip--selected-violet'
+      : 'crm-filter-chip crm-filter-chip--idle';
   }
 
   preVisualizarCor(): void {
@@ -208,6 +249,10 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     this.form.corPrincipal = cor;
     this.tema.aplicar(cor);
     void this.toast.info('Pré-visualização aplicada. Salve para manter.');
+  }
+
+  aplicarCorPreview(cor?: string | null): void {
+    this.tema.aplicar(cor);
   }
 
   restaurarMensagem(campo: CampoMensagemConfig): void {

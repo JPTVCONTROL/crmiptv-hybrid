@@ -11,7 +11,7 @@ import {
   template: `
     <button
       type="button"
-      class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="crm-btn-success disabled:opacity-50 disabled:cursor-not-allowed"
       [disabled]="desabilitado"
       (click)="enviar()"
     >

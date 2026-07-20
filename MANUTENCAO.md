@@ -67,6 +67,28 @@ crm-jptv/
 
 ## 3. Primeira Instalação
 
+### Atalho — backend + frontend juntos (recomendado)
+
+Na **raiz** do repositório (`crm-jptv/`):
+
+```bash
+npm install
+cd crm_back && npm install && cd ..
+cd crm_front && npm install && cd ..
+npm run dev
+```
+
+Isso sobe a API em **http://localhost:3001** e o CRM em **http://localhost:4200** no mesmo terminal.
+
+| URL | Uso |
+|-----|-----|
+| http://localhost:4200 | Interface do CRM |
+| http://localhost:3001/health | Verificar se a API está online |
+
+> Use `npm run dev:back` ou `npm run dev:front` na raiz se quiser subir apenas um dos dois.
+
+Configure o backend (`.env`) e rode o seed **antes** do primeiro uso — ver seção 3.1.
+
 ### 3.1 Backend (`crm_back`)
 
 ```bash
@@ -121,7 +143,7 @@ Resposta esperada: `{"success":true,"message":"CRM JPTV API online"}`
 
 ### 3.2 Frontend (`crm_front`)
 
-Em **outro terminal**:
+Se não usar o atalho da raiz, em **outro terminal**:
 
 ```bash
 cd crm_front
@@ -136,6 +158,16 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 ---
 
 ## 4. Scripts Disponíveis
+
+### Raiz (`crm-jptv/`)
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Sobe backend (3001) + frontend (4200) juntos |
+| `npm run dev:back` | Apenas a API |
+| `npm run dev:front` | Apenas o CRM |
+| `npm run build` | Build de backend e frontend |
+| `npm test` | Testes unitários de ambos |
 
 ### Backend (`crm_back`)
 
@@ -156,7 +188,7 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 
 | Comando | Descrição |
 |---------|-----------|
-| `npm start` | Servidor de desenvolvimento (`ng serve`) |
+| `npm start` | Servidor de desenvolvimento (`ng serve --port 4200`) |
 | `npm run build` | Build de produção em `www/` |
 | `npm test` | Testes unitários (Karma/Jasmine) |
 | `npm run lint` | ESLint |

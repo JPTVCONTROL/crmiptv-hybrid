@@ -1,67 +1,70 @@
-<div *ngIf="!loading" class="flex justify-end mb-4">
-  <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Dispositivo</button>
-</div>
-
-<div *ngIf="!loading" class="crm-card !p-4 mb-4 flex flex-col sm:flex-row gap-3">
-  <input type="search" class="crm-input flex-1" placeholder="Buscar dispositivo..." [(ngModel)]="busca" />
-  <select class="crm-input sm:max-w-[10rem]" [(ngModel)]="filtroAtivo">
-    <option value="TODOS">Todos</option>
-    <option value="ATIVO">Ativos</option>
-    <option value="INATIVO">Inativos</option>
-  </select>
-</div>
-
-<app-loading *ngIf="loading"></app-loading>
-<p *ngIf="error" class="text-red-400 mb-4">{{ error }}</p>
-
-<div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-  <div
-    *ngFor="let item of dispositivosFiltrados"
-    class="crm-card hover:border-violet-600 transition-colors flex flex-col cursor-pointer"
-    [class.opacity-60]="!item.ativo"
-    (click)="verClientes(item)"
+<div class="space-y-6">
+  <app-page-header
+    title="Dispositivos"
+    subtitle="Tipos de aparelho vinculados às telas dos clientes."
+    rotaVoltar="/catalogos"
   >
-    <div class="flex items-start gap-4 mb-3">
-      <div class="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-        <span class="text-2xl">📺</span>
-      </div>
-      <div class="min-w-0 flex-1">
-        <div class="flex items-start justify-between gap-2">
-          <h3 class="text-white font-semibold truncate">{{ rotulo(item) }}</h3>
-          <span
-            class="text-xs px-2 py-0.5 rounded shrink-0"
-            [class.bg-green-600]="item.ativo"
-            [class.bg-slate-700]="!item.ativo"
-          >
-            {{ item.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
+    <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Dispositivo</button>
+  </app-page-header>
+
+  <div *ngIf="!loading" class="crm-card !p-4 flex flex-col sm:flex-row gap-3">
+    <input type="search" class="crm-input flex-1" placeholder="Buscar dispositivo..." [(ngModel)]="busca" />
+    <select class="crm-input sm:max-w-[10rem]" [(ngModel)]="filtroAtivo">
+      <option value="TODOS">Todos</option>
+      <option value="ATIVO">Ativos</option>
+      <option value="INATIVO">Inativos</option>
+    </select>
+  </div>
+
+  <app-loading *ngIf="loading"></app-loading>
+  <p *ngIf="error" class="text-red-400">{{ error }}</p>
+
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+    <div
+      *ngFor="let item of dispositivosFiltrados"
+      class="crm-card hover:border-violet-600 transition-colors flex flex-col cursor-pointer"
+      [class.opacity-60]="!item.ativo"
+      (click)="verClientes(item)"
+    >
+      <div class="flex items-start gap-4 mb-3">
+        <div class="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+          <span class="text-2xl">📺</span>
         </div>
-        <button
-          type="button"
-          class="crm-contador-clientes"
-          [class.crm-contador-clientes--ativo]="(item._count?.clientes ?? 0) > 0"
-          [class.crm-contador-clientes--vazio]="(item._count?.clientes ?? 0) === 0"
-          (click)="verClientes(item, $event)"
-        >
-          <span class="font-semibold tabular-nums">{{ item._count?.clientes ?? 0 }}</span>
-          <span>{{ (item._count?.clientes ?? 0) === 1 ? 'cliente' : 'clientes' }}</span>
-        </button>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <h3 class="crm-card-title truncate">{{ rotulo(item) }}</h3>
+            <span [class]="item.ativo ? 'crm-badge-ativo' : 'crm-badge-inativo'">
+              {{ item.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </div>
+          <button
+            type="button"
+            class="crm-contador-clientes"
+            [class.crm-contador-clientes--ativo]="(item._count?.clientes ?? 0) > 0"
+            [class.crm-contador-clientes--vazio]="(item._count?.clientes ?? 0) === 0"
+            (click)="verClientes(item, $event)"
+          >
+            <span class="font-semibold tabular-nums">{{ item._count?.clientes ?? 0 }}</span>
+            <span>{{ (item._count?.clientes ?? 0) === 1 ? 'cliente' : 'clientes' }}</span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <p class="text-slate-400 text-sm line-clamp-2 flex-1 mb-4">
-      {{ item.descricao || 'Sem descrição' }}
-    </p>
+      <p class="text-slate-400 text-sm line-clamp-2 flex-1 mb-4">
+        {{ item.descricao || 'Sem descrição' }}
+      </p>
 
-    <div class="flex gap-2 mt-auto" (click)="$event.stopPropagation()">
-      <button type="button" class="crm-btn-ghost flex-1" (click)="abrirModal(item)">Editar</button>
-      <button type="button" class="crm-btn-danger flex-1" (click)="excluir(item)">Excluir</button>
+      <div class="flex gap-2 mt-auto" (click)="$event.stopPropagation()">
+        <button type="button" class="crm-btn-ghost flex-1" (click)="abrirModal(item)">Editar</button>
+        <button type="button" class="crm-btn-danger flex-1" (click)="excluir(item)">Excluir</button>
+      </div>
     </div>
   </div>
-</div>
 
-<app-empty-state *ngIf="!loading && dispositivos.length === 0" message="Nenhum dispositivo cadastrado."></app-empty-state>
-<app-empty-state
-  *ngIf="!loading && dispositivos.length > 0 && dispositivosFiltrados.length === 0"
-  message="Nenhum dispositivo encontrado para os filtros."
-></app-empty-state>
+  <app-empty-state *ngIf="!loading && dispositivos.length === 0" iconName="tv-outline"></app-empty-state>
+  <app-empty-state
+    *ngIf="!loading && dispositivos.length > 0 && dispositivosFiltrados.length === 0"
+    message="Nenhum dispositivo encontrado para os filtros."
+    iconName="search-outline"
+  ></app-empty-state>
+</div>
