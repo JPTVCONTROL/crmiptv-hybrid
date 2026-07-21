@@ -146,7 +146,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades'],
+      ['clientes', 'mensalidades', 'configuracoes'],
       () => this.carregar(true)
     );
   }

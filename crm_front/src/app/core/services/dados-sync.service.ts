@@ -29,7 +29,7 @@ export class DadosSyncService {
   }
 
   notificarContatos(): void {
-    this.emit(['mensalidades', 'dashboard']);
+    this.emit(['mensalidades', 'clientes', 'dashboard']);
   }
 
   notificarConfiguracao(): void {

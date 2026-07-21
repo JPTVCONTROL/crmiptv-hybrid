@@ -169,7 +169,12 @@ export class RelatoriosPage implements OnInit, OnDestroy {
         this.calcular();
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        if (!silencioso) {
+          void this.toast.error('Erro ao carregar relatórios.');
+        }
+      },
     });
   }
 

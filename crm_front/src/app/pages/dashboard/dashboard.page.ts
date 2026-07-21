@@ -197,7 +197,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'dashboard'],
+      ['clientes', 'mensalidades', 'dashboard', 'configuracoes'],
       () => this.carregar(true)
     );
     this.pullRefresh.registrar((concluir) => this.carregar(true, concluir));

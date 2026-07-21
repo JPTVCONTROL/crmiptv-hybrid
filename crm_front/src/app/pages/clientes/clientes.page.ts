@@ -648,6 +648,9 @@ export class ClientesPage implements OnInit, OnDestroy {
       error: () => {
         this.loading = false;
         aoConcluir?.();
+        if (!silencioso) {
+          void this.toast.error('Erro ao carregar clientes.');
+        }
       },
     });
   }
