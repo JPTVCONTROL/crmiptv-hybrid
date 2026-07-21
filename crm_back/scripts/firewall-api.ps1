@@ -26,18 +26,21 @@ if (-not (Test-Administrador)) {
   Write-Host ""
   Write-Host "Alternativa manual:"
   Write-Host "  Configuracoes > Rede e Internet > Firewall > Regras de entrada"
-  Write-Host "  Nova regra > Porta > TCP $Porta > Permitir > Rede privada"
+  Write-Host "  Nova regra > Porta > TCP $Porta > Permitir > Dominio, Privada e Publica"
+  Write-Host ""
+  Write-Host "Dica: se a rede Ethernet/Wi-Fi estiver como 'Publica', regras so para 'Privada' nao funcionam."
   Write-Host ""
   exit 1
 }
 
 $existente = Get-NetFirewallRule -DisplayName $NomeRegra -ErrorAction SilentlyContinue
 if ($existente) {
-  Write-Host "Regra de firewall ja existe: $NomeRegra"
+  Set-NetFirewallRule -DisplayName $NomeRegra -Profile Domain, Private, Public -Enabled True | Out-Null
+  Write-Host "Regra de firewall atualizada: $NomeRegra (Dominio, Privada e Publica)" -ForegroundColor Green
   exit 0
 }
 
-Write-Host "Criando regra de firewall para porta TCP $Porta (rede privada)..."
+Write-Host "Criando regra de firewall para porta TCP $Porta (Dominio, Privada e Publica)..."
 
 New-NetFirewallRule `
   -DisplayName $NomeRegra `
@@ -45,7 +48,7 @@ New-NetFirewallRule `
   -Action Allow `
   -Protocol TCP `
   -LocalPort $Porta `
-  -Profile Private `
+  -Profile Domain, Private, Public `
   | Out-Null
 
 Write-Host ""

@@ -22,7 +22,6 @@ import {
 })
 export class AlertasSinoComponent implements OnInit, OnDestroy {
   aberto = false;
-  private botaoAbriuPainel = false;
 
   @ViewChild('painelAlertas') painelRef?: ElementRef<HTMLElement>;
   @ViewChild('botaoAlertas') botaoRef?: ElementRef<HTMLButtonElement>;
@@ -83,11 +82,11 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
     return `${this.badge} pendência${this.badge === 1 ? '' : 's'}`;
   }
 
-  alternarPainel(): void {
+  alternarPainel(event?: Event): void {
+    event?.stopPropagation();
     this.aberto = !this.aberto;
 
     if (this.aberto) {
-      this.botaoAbriuPainel = true;
       queueMicrotask(() => this.focarPrimeiroItem());
     }
   }
@@ -225,16 +224,15 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.aberto) return;
-
-    if (this.botaoAbriuPainel) {
-      this.botaoAbriuPainel = false;
+    if (!this.aberto) {
       return;
     }
 
     const alvo = event.target as Node | null;
-    if (alvo && !this.elementRef.nativeElement.contains(alvo)) {
-      this.fecharPainel();
+    if (alvo && this.elementRef.nativeElement.contains(alvo)) {
+      return;
     }
+
+    this.fecharPainel();
   }
 }

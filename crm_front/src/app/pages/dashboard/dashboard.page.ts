@@ -7,6 +7,7 @@ import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ApiHealthService } from '../../core/services/api-health.service';
+import { textoHintDashboardApiOffline } from '../../shared/utils/api-endereco';
 import { AlertaOperacional, Configuracao, DashboardResumo } from '../../core/models';
 import {
   calcularDias,
@@ -166,7 +167,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   get erroHint(): string {
     if (!this.apiHealth.estaOnline()) {
-      return 'Confirme se o backend está ativo em http://localhost:3001 (npm run dev na raiz do projeto).';
+      return textoHintDashboardApiOffline();
     }
 
     return 'A API está online, mas o resumo falhou. Clique em Tentar novamente ou confira o terminal do backend (crm_back).';

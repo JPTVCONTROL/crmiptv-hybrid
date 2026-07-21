@@ -144,6 +144,7 @@ ion-menu.crm-menu ion-content.menu-content::part(scroll) {
 
 ion-buttons[slot='end'] {
   padding-inline-end: 0.5rem;
+  overflow: visible;
 }
 
 ion-content {
@@ -154,6 +155,7 @@ ion-toolbar {
   --background: var(--crm-surface);
   --color: #ffffff;
   border-bottom: 1px solid var(--crm-border-subtle);
+  overflow: visible;
 }
 
 ion-header ion-toolbar {
@@ -161,6 +163,8 @@ ion-header ion-toolbar {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   padding-top: env(safe-area-inset-top, 0px);
+  overflow: visible;
+  contain: none;
 }
 
 .mobile-logo-title {

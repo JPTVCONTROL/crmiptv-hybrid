@@ -8,7 +8,7 @@
     aria-haspopup="dialog"
     aria-controls="alertas-sino-painel"
     aria-label="Alertas operacionais"
-    (click)="alternarPainel()"
+    (click)="alternarPainel($event)"
   >
     <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
     <span
@@ -19,6 +19,14 @@
       {{ badge > 99 ? '99+' : badge }}
     </span>
   </button>
+
+  <button
+    *ngIf="aberto"
+    type="button"
+    class="alertas-sino-backdrop lg:hidden"
+    aria-label="Fechar alertas"
+    (click)="fecharPainel()"
+  ></button>
 
   <div
     *ngIf="aberto"

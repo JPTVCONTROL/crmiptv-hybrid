@@ -25,4 +25,8 @@ export class SistemaService {
       )
       .pipe(tap(() => this.sync.notificarTudo()));
   }
+
+  obterRevisaoDados(): Observable<{ revisao: number }> {
+    return this.api.get<{ revisao: number }>('/sistema/revisao-dados');
+  }
 }

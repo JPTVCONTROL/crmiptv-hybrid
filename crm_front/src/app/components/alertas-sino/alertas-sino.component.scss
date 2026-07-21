@@ -14,6 +14,8 @@
   background: rgba(30, 41, 59, 0.75);
   color: #e2e8f0;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -49,13 +51,34 @@
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  z-index: 1000;
+  z-index: 10000;
   width: min(22rem, calc(100vw - 2rem));
   border: 1px solid var(--crm-border-subtle);
   border-radius: 1rem;
   background: var(--crm-surface);
   box-shadow: var(--crm-shadow-lg);
   overflow: hidden;
+}
+
+.alertas-sino-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(2, 6, 23, 0.45);
+  cursor: default;
+}
+
+@media (max-width: 1023px) {
+  .alertas-sino-painel {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 3.25rem);
+    right: 0.75rem;
+    left: auto;
+    width: min(22rem, calc(100vw - 1.5rem));
+  }
 }
 
 .alertas-sino-header {

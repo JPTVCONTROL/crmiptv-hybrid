@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { textoErroLoginIndisponivel } from '../../shared/utils/api-endereco';
 
 const EMAIL_LEMBRADO_KEY = 'crm-login-email';
 
@@ -66,7 +67,7 @@ export class LoginPage implements OnInit {
           msg.toLowerCase().includes('unknown error') ||
           msg.toLowerCase().includes('http failure');
         this.erro = indisponivel
-          ? 'Servidor indisponível. Em outro terminal: cd crm_back → npm run dev. Teste http://localhost:3001/health no navegador.'
+          ? textoErroLoginIndisponivel()
           : msg || 'Não foi possível entrar.';
       },
     });

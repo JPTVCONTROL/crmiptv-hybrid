@@ -13,8 +13,10 @@ import { ConfiguracaoService } from './core/services/configuracao.service';
 import { TemaService } from './core/services/tema.service';
 import { PullRefreshService } from './core/services/pull-refresh.service';
 import { ApiHealthService } from './core/services/api-health.service';
+import { SincronizacaoRedeService } from './core/services/sincronizacao-rede.service';
 import { AlertaOperacional, Usuario } from './core/models';
 import { AUTOMACAO_META_HABILITADA } from './shared/utils/automacao-meta';
+import { origemApi, textoBannerApiOffline } from './shared/utils/api-endereco';
 
 interface MenuItem {
   nome: string;
@@ -73,6 +75,8 @@ export class AppComponent implements OnInit, OnDestroy {
   alertas: AlertaOperacional[] = [];
   totalPendencias = 0;
   apiOnline = true;
+  readonly apiOrigem = origemApi();
+  readonly apiOfflineTexto = textoBannerApiOffline();
 
   private readonly destroy$ = new Subject<void>();
   private sincronizacaoInicialFeita = false;
@@ -86,7 +90,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private configuracao: ConfiguracaoService,
     private tema: TemaService,
     private pullRefresh: PullRefreshService,
-    private apiHealth: ApiHealthService
+    private apiHealth: ApiHealthService,
+    private sincronizacaoRede: SincronizacaoRedeService
   ) {
     this.router.events
       .pipe(
@@ -119,14 +124,17 @@ export class AppComponent implements OnInit, OnDestroy {
       .subscribe((usuario) => {
         this.usuario = usuario;
         if (usuario) {
+          this.sincronizacaoRede.iniciar();
           this.sincronizarDadosIniciais();
         } else {
+          this.sincronizacaoRede.parar();
           this.alertasOperacionais.limpar();
           this.sincronizacaoInicialFeita = false;
         }
       });
 
     if (this.auth.estaAutenticado()) {
+      this.sincronizacaoRede.iniciar();
       this.auth.restaurarSessao().subscribe({
         next: () => {
           this.configuracao.carregar().subscribe({
@@ -142,6 +150,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.sincronizacaoRede.parar();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -217,6 +226,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   onPullRefresh(event: RefresherCustomEvent): void {
     this.apiHealth.verificar();
+    this.atualizarAlertasSeAutenticado();
     this.pullRefresh.executar(() => event.target.complete());
   }
 

@@ -8,20 +8,24 @@ const DEFAULTS_INSEGUROS = {
   webhookToken: 'crm-jptv-webhook',
 };
 
-function parseCorsOrigins(valor?: string): string[] {
-  if (!valor?.trim()) {
-    return [
-      'http://localhost:4200',
-      'http://127.0.0.1:4200',
-      'capacitor://localhost',
-      'http://localhost',
-    ];
-  }
+const ORIGENS_CAPACITOR = [
+  'capacitor://localhost',
+  'ionic://localhost',
+  'http://localhost',
+  'https://localhost',
+];
 
-  return valor
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+function parseCorsOrigins(valor?: string): string[] {
+  const webDev = ['http://localhost:4200', 'http://127.0.0.1:4200'];
+
+  const configuradas = valor?.trim()
+    ? valor
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [...webDev, ...ORIGENS_CAPACITOR];
+
+  return [...new Set([...configuradas, ...ORIGENS_CAPACITOR])];
 }
 
 export const env = {

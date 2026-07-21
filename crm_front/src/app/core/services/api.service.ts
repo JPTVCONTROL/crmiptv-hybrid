@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models';
+import { textoErroLoginIndisponivel } from '../../shared/utils/api-endereco';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -89,7 +90,7 @@ export class ApiService {
   private handleError(error: HttpErrorResponse): Observable<never> {
     const message =
       error.status === 0
-        ? 'Servidor indisponível. Na raiz do projeto, execute: npm run dev (API na porta 3001).'
+        ? textoErroLoginIndisponivel()
         : (error.error?.message ??
           error.message ??
           'Erro ao comunicar com o servidor');

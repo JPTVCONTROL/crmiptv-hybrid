@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { env } from '../config/env.js';
 import { clienteService } from '../services/clienteService.js';
+import { obterRevisaoDados } from '../services/dataRevisionService.js';
 import { sendError, sendSuccess } from '../utils/helpers/response.js';
 
 function resolverCaminhoBanco(): string {
@@ -49,6 +50,10 @@ export class SistemaController {
         err instanceof Error ? err.message : 'Erro ao sincronizar cobranças.';
       sendError(res, message);
     }
+  }
+
+  async revisaoDados(_req: Request, res: Response): Promise<void> {
+    sendSuccess(res, { revisao: obterRevisaoDados() });
   }
 }
 

@@ -513,6 +513,8 @@ No Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**. Inst
 | `npm run cap:home` | `crm_front` | IP + build mobile + sync Android |
 | `npm run cap:sync` | `crm_front` | Build mobile + sync (sem alterar IP) |
 | `npm run firewall:api` | `crm_back` | Regra de firewall TCP 3001 (rede privada) |
+| `npm run api:startup:install` | `crm_back` | API sobe ao logar no Windows |
+| `npm run api:startup:remove` | `crm_back` | Remove tarefa de inicializacao da API |
 | `npm run db:backup` | `crm_back` | Cópia manual do SQLite |
 | `npm run db:backup:install` | `crm_back` | Agenda backup diário (admin) |
 | `npm run db:backup:remove` | `crm_back` | Remove agendamento |
@@ -538,9 +540,117 @@ apiUrl: 'http://192.168.1.100:3001/api',
 
 Alterações no tablet ou no PC vão para o **mesmo SQLite** no servidor. Ao reabrir uma tela, os dados são recarregados da API. Não há banco offline no app.
 
-### Produção (futuro)
+### Acesso fora de casa (Tailscale — gratuito)
 
-Para acesso fora de casa: VPS, domínio, HTTPS e `apiUrl` com `https://seudominio.com/api`.
+Rede privada entre PC e celular, sem abrir porta no roteador. O APK usa o IP Tailscale do PC (`100.x.x.x`).
+
+#### Passo 1 — Instalar Tailscale no PC (Windows)
+
+1. Baixe em [tailscale.com/download/windows](https://tailscale.com/download/windows) e instale.
+2. Abra o Tailscale e entre com Google, Microsoft ou GitHub.
+3. Confirme que o PC aparece como **Connected** na bandeja do Windows.
+
+Verificar no terminal:
+
+```bash
+cd crm_front
+npm run tailscale:status
+```
+
+Anote o IP IPv4 (ex.: `100.64.12.34`).
+
+#### Passo 2 — Instalar Tailscale no celular/tablet
+
+1. App **Tailscale** na Play Store / App Store.
+2. **Mesma conta** usada no PC.
+3. Ative a VPN quando for usar o CRM fora de casa (pode deixar sempre ligado).
+
+#### Passo 3 — API rodando no PC
+
+Manual:
+
+```bash
+cd crm_back
+npm run dev
+```
+
+Ou na raiz: `npm run dev:back`
+
+**Automatico ao ligar o PC** (recomendado para APK + Tailscale):
+
+```bash
+cd crm_back
+npm run api:startup:install
+```
+
+Isso agenda a tarefa **CRM JPTV API ao Logon** (45s apos login no Windows). A API sobe em segundo plano; log em `crm_back/logs/api-startup.log`.
+
+Teste imediato:
+
+```powershell
+cd crm_back
+powershell -File scripts/start-api-boot.ps1
+```
+
+Remover agendamento: `npm run api:startup:remove`
+
+Firewall (uma vez, PowerShell **como Administrador**):
+
+```bash
+cd crm_back
+npm run firewall:api
+```
+
+#### Passo 4 — Testar do celular (4G ou outra Wi‑Fi)
+
+Com Tailscale **ligado** no celular, abra no navegador:
+
+```
+http://100.x.x.x:3001/health
+```
+
+(substitua pelo IP do passo 1)
+
+Deve retornar JSON `CRM JPTV API online`.
+
+#### Passo 5 — Gerar APK apontando para Tailscale
+
+```bash
+cd crm_front
+npm run apk:tailscale
+```
+
+Isso detecta o IP Tailscale, atualiza `environment.mobile.ts` e gera:
+
+`releases/crm-jptv-v1.1-debug.apk`
+
+Instale no tablet. **Importante:** o celular precisa do Tailscale ativo para o CRM funcionar.
+
+#### Scripts Tailscale
+
+| Comando | Função |
+|---------|--------|
+| `npm run tailscale:status` | Mostra se Tailscale está instalado e o IP |
+| `npm run mobile:prepare:tailscale` | Atualiza `environment.mobile.ts` com IP Tailscale |
+| `npm run apk:tailscale` | IP Tailscale + build + APK |
+
+IP manual se a detecção falhar:
+
+```powershell
+cd crm_front
+powershell -File scripts/prepare-mobile-env.ps1 -Tailscale -Ip 100.64.12.34
+npm run apk:debug
+```
+
+#### Limitações
+
+- PC em casa precisa estar **ligado** com a API rodando.
+- Tailscale **ativo** no celular (fora da Wi‑Fi de casa).
+- Em casa na mesma Wi‑Fi, pode continuar usando `npm run apk:debug` (IP local).
+
+### Produção (VPS / domínio)
+
+Para servidor sempre online sem depender do PC: VPS, domínio, HTTPS e `apiUrl` com `https://seudominio.com/api`.
 
 ### Automações WhatsApp (Meta Cloud API)
 

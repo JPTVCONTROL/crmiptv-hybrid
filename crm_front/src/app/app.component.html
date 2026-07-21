@@ -111,12 +111,8 @@
           <div>
             <p class="crm-api-offline-banner-title">API offline</p>
             <p class="crm-api-offline-banner-text">
-              O backend não responde em
-              <span class="font-mono text-amber-100/90">http://localhost:3001</span>.
-              Na raiz do projeto, execute
-              <span class="font-mono text-amber-100/90">npm run dev</span>
-              ou
-              <span class="font-mono text-amber-100/90">npm run dev:back</span>.
+              {{ apiOfflineTexto }}
+              <span class="block mt-1 font-mono text-amber-100/90">{{ apiOrigem }}/health</span>
             </p>
           </div>
           <button
