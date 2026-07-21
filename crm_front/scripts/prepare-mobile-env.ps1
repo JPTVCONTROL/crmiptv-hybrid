@@ -80,6 +80,7 @@ if ($Tailscale) {
 
 $apiUrl = "http://${ipRede}:${Porta}/api"
 $healthUrl = "http://${ipRede}:${Porta}/health"
+$appUrl = "http://${ipRede}:${Porta}/app"
 
 $conteudo = Get-Content $arquivoEnv -Raw
 $conteudoAtualizado = [regex]::Replace(
@@ -95,10 +96,18 @@ $conteudoAtualizado = [regex]::Replace(
 
 Set-Content -Path $arquivoEnv -Value $conteudoAtualizado -NoNewline
 
+$arquivoCap = Join-Path $raizFront "capacitor.config.ts"
+if (Test-Path $arquivoCap) {
+  $cap = Get-Content $arquivoCap -Raw
+  $cap = [regex]::Replace($cap, "url:\s*'[^']+'", "url: '$appUrl'")
+  Set-Content -Path $arquivoCap -Value $cap -NoNewline
+}
+
 Write-Host ""
 Write-Host "Mobile environment atualizado ($modo):" -ForegroundColor Green
 Write-Host "  apiUrl = $apiUrl"
 Write-Host "  healthUrl = $healthUrl"
+Write-Host "  appUrl = $appUrl"
 Write-Host ""
 
 if ($Tailscale) {
@@ -108,7 +117,8 @@ if ($Tailscale) {
   Write-Host "  - Teste no celular (4G ou outra Wi-Fi): $healthUrl"
   Write-Host ""
   Write-Host "Proximos passos:"
-  Write-Host "  1. cd crm_front && npm run apk:tailscale"
+  Write-Host "  1. cd crm_front && npm run apk:shell:tailscale   (instalar shell uma vez)"
+  Write-Host "  2. Apos alteracoes no codigo: npm run app:publish"
   Write-Host ""
 } else {
   Write-Host "Proximos passos:"

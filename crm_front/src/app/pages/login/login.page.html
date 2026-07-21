@@ -75,6 +75,27 @@
         </div>
       </div>
 
+      <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
+          <input
+            type="checkbox"
+            class="crm-checkbox"
+            [(ngModel)]="salvarDados"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          Salvar dados
+        </label>
+        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
+          <input
+            type="checkbox"
+            class="crm-checkbox"
+            [(ngModel)]="manterConectado"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          Manter conectado
+        </label>
+      </div>
+
       <p *ngIf="erro" class="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{{ erro }}</p>
 
       <button
@@ -84,6 +105,32 @@
       >
         {{ carregando ? 'Entrando...' : 'Entrar' }}
       </button>
+
+      <div
+        *ngIf="mostrarAtualizacaoApp"
+        class="pt-3 mt-1 border-t border-slate-800 space-y-2"
+      >
+        <p *ngIf="statusApp" class="text-slate-400 text-xs leading-relaxed m-0">
+          {{ statusApp }}
+        </p>
+        <p class="text-slate-500 text-[11px] leading-relaxed m-0">
+          O app verifica atualizacoes ao abrir. Use o botao abaixo para forcar.
+        </p>
+        <button
+          type="button"
+          class="crm-btn-ghost w-full !py-2.5 text-sm"
+          [disabled]="atualizandoApp"
+          (click)="atualizarApp()"
+        >
+          {{
+            atualizandoApp
+              ? 'Atualizando...'
+              : novaVersaoApp
+                ? 'Atualizar app (nova versao)'
+                : 'Atualizar app'
+          }}
+        </button>
+      </div>
     </form>
   </div>
 </div>

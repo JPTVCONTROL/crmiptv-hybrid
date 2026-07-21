@@ -8,6 +8,8 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'http://192.168.20.2:3001/api',
-  healthUrl: 'http://192.168.20.2:3001/health',
+  /** Interface servida pelo PC em /app (APK shell + botao Atualizar). */
+  appRemoto: true,
+  apiUrl: 'http://100.84.153.18:3001/api',
+  healthUrl: 'http://100.84.153.18:3001/health',
 };

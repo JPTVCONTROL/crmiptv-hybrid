@@ -9,6 +9,8 @@ const config: CapacitorConfig = {
   },
   server: {
     androidScheme: 'https',
+    url: 'http://100.84.153.18:3001/app',
+    cleartext: true,
   },
 };
 

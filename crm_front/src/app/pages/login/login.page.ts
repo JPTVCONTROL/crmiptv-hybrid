@@ -1,19 +1,38 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  AppAtualizacaoService,
+  ResultadoVerificacaoApp,
+} from '../../core/services/app-atualizacao.service';
 import { textoErroLoginIndisponivel } from '../../shared/utils/api-endereco';
-
-const EMAIL_LEMBRADO_KEY = 'crm-login-email';
+import {
+  carregarCredenciaisLogin,
+  lerManterConectadoLogin,
+  lerSalvarDadosLogin,
+  persistirCredenciaisLogin,
+  salvarPreferenciasLogin,
+} from '../../shared/utils/login-persist.util';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, OnDestroy {
   erro = '';
   carregando = false;
   mostrarSenha = false;
+  atualizandoApp = false;
+  statusApp = '';
+  novaVersaoApp = false;
+  versaoAppLabel = '';
+  salvarDados = true;
+  manterConectado = true;
+
+  private readonly destroy$ = new Subject<void>();
+  private ultimaVerificacao?: ResultadoVerificacaoApp;
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -24,18 +43,109 @@ export class LoginPage implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private appAtualizacao: AppAtualizacaoService
   ) {}
 
+  get mostrarAtualizacaoApp(): boolean {
+    return this.appAtualizacao.ehAppNativo;
+  }
+
   ngOnInit(): void {
-    const emailSalvo = localStorage.getItem(EMAIL_LEMBRADO_KEY);
-    if (emailSalvo) {
-      this.form.patchValue({ email: emailSalvo });
+    this.salvarDados = lerSalvarDadosLogin();
+    this.manterConectado = lerManterConectadoLogin();
+
+    const credenciais = carregarCredenciaisLogin();
+    if (credenciais.email || credenciais.senha) {
+      this.form.patchValue(credenciais);
     }
+
+    if (this.mostrarAtualizacaoApp) {
+      this.carregarStatusAtualizacao();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   alternarSenha(): void {
     this.mostrarSenha = !this.mostrarSenha;
+  }
+
+  carregarStatusAtualizacao(): void {
+    if (!this.mostrarAtualizacaoApp || this.atualizandoApp) {
+      return;
+    }
+
+    this.appAtualizacao
+      .verificar()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (resultado) => {
+          this.ultimaVerificacao = resultado;
+          this.novaVersaoApp = resultado.novaVersao;
+          this.versaoAppLabel = resultado.remoto?.version ?? '';
+
+          if (resultado.erro) {
+            this.statusApp = resultado.erro;
+            return;
+          }
+
+          this.statusApp = resultado.novaVersao
+            ? `Versao ${this.versaoAppLabel || ''} disponivel no PC.`
+            : 'App atualizado com o PC (atualiza ao abrir).';
+        },
+        error: () => {
+          this.statusApp = 'Falha ao verificar atualizacao.';
+        },
+      });
+  }
+
+  verificarAtualizacaoApp(forcarReload: boolean): void {
+    if (!this.mostrarAtualizacaoApp || this.atualizandoApp) {
+      return;
+    }
+
+    this.atualizandoApp = true;
+    this.statusApp = forcarReload
+      ? 'Recarregando app...'
+      : 'Verificando atualizacao...';
+
+    this.appAtualizacao
+      .checarEAtualizar({ forcarReload })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (resultado) => {
+          this.ultimaVerificacao = resultado;
+          this.atualizandoApp = false;
+          this.novaVersaoApp = resultado.novaVersao;
+          this.versaoAppLabel = resultado.remoto?.version ?? '';
+
+          if (resultado.erro) {
+            this.statusApp = resultado.erro;
+            return;
+          }
+
+          if (forcarReload || resultado.novaVersao) {
+            this.statusApp = resultado.novaVersao
+              ? 'Nova versao encontrada. Atualizando...'
+              : 'Recarregando app...';
+            return;
+          }
+
+          this.statusApp = 'App atualizado com o PC.';
+        },
+        error: () => {
+          this.atualizandoApp = false;
+          this.statusApp = 'Falha ao verificar atualizacao.';
+        },
+      });
+  }
+
+  atualizarApp(): void {
+    this.verificarAtualizacaoApp(true);
   }
 
   entrar(): void {
@@ -49,9 +159,11 @@ export class LoginPage implements OnInit {
 
     const { email, senha } = this.form.getRawValue();
 
-    this.auth.login(email, senha).subscribe({
+    salvarPreferenciasLogin(this.salvarDados, this.manterConectado);
+
+    this.auth.login(email, senha, this.manterConectado).subscribe({
       next: () => {
-        localStorage.setItem(EMAIL_LEMBRADO_KEY, email);
+        persistirCredenciaisLogin(this.salvarDados, email, senha);
         this.carregando = false;
         const returnUrl = this.resolverReturnUrl(
           this.route.snapshot.queryParamMap.get('returnUrl')

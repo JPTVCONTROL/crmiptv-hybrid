@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { env, validarConfiguracaoProducao } from './config/env.js';
 import apiRoutes from './routes/index.js';
 import whatsappWebhookRoutes from './routes/whatsappWebhookRoutes.js';
@@ -36,6 +38,68 @@ app.use(
 app.use(express.json({ limit: '2mb' }));
 
 app.use('/api', apiRoutes);
+
+const wwwMobile = path.resolve(process.cwd(), '../crm_front/www');
+const versionJsonMobile = path.join(wwwMobile, 'version.json');
+
+if (fs.existsSync(wwwMobile)) {
+  app.get('/app/version.json', (_req, res, next) => {
+    if (!fs.existsSync(versionJsonMobile)) {
+      res.status(503).json({
+        success: false,
+        message: 'App mobile nao publicado. No PC execute: npm run app:publish',
+      });
+      return;
+    }
+
+    next();
+  });
+
+  app.use(
+    '/app',
+    express.static(wwwMobile, {
+      maxAge: 0,
+      etag: false,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('index.html') || filePath.endsWith('version.json')) {
+          res.setHeader('Cache-Control', 'no-store');
+        }
+      },
+    })
+  );
+  app.use('/app', (req, res, next) => {
+    if (req.path.endsWith('.json')) {
+      res.status(404).json({
+        success: false,
+        message: 'Arquivo nao encontrado. No PC execute: npm run app:publish',
+      });
+      return;
+    }
+
+    res.sendFile(path.join(wwwMobile, 'index.html'), (err) => {
+      if (err) {
+        next(err);
+      }
+    });
+  });
+  console.log(`App mobile (OTA): http://localhost:${env.port}/app/`);
+
+  const indexHtml = path.join(wwwMobile, 'index.html');
+  if (fs.existsSync(indexHtml)) {
+    const html = fs.readFileSync(indexHtml, 'utf8');
+    if (!html.includes('base href="/app/"')) {
+      console.warn(
+        'AVISO: www/index.html sem base href="/app/". No PC execute: npm run app:publish (nao use npm run build).'
+      );
+    }
+  }
+
+  if (!fs.existsSync(versionJsonMobile)) {
+    console.warn(
+      'AVISO: crm_front/www/version.json ausente. No PC execute: npm run app:publish'
+    );
+  }
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -14,6 +14,7 @@ import { TemaService } from './core/services/tema.service';
 import { PullRefreshService } from './core/services/pull-refresh.service';
 import { ApiHealthService } from './core/services/api-health.service';
 import { SincronizacaoRedeService } from './core/services/sincronizacao-rede.service';
+import { AppAtualizacaoService } from './core/services/app-atualizacao.service';
 import { AlertaOperacional, Usuario } from './core/models';
 import { AUTOMACAO_META_HABILITADA } from './shared/utils/automacao-meta';
 import { origemApi, textoBannerApiOffline } from './shared/utils/api-endereco';
@@ -91,7 +92,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private tema: TemaService,
     private pullRefresh: PullRefreshService,
     private apiHealth: ApiHealthService,
-    private sincronizacaoRede: SincronizacaoRedeService
+    private sincronizacaoRede: SincronizacaoRedeService,
+    private appAtualizacao: AppAtualizacaoService
   ) {
     this.router.events
       .pipe(
@@ -105,6 +107,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.appAtualizacao.iniciarVerificacaoAutomatica();
     this.apiHealth.iniciar();
     this.apiHealth.online$
       .pipe(takeUntil(this.destroy$))
@@ -150,6 +153,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.appAtualizacao.pararVerificacaoAutomatica();
     this.sincronizacaoRede.parar();
     this.destroy$.next();
     this.destroy$.complete();

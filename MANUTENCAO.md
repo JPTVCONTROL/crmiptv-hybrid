@@ -648,6 +648,37 @@ npm run apk:debug
 - Tailscale **ativo** no celular (fora da Wi‑Fi de casa).
 - Em casa na mesma Wi‑Fi, pode continuar usando `npm run apk:debug` (IP local).
 
+### Atualizar o APK sem reinstalar (OTA)
+
+O APK **shell** carrega a interface do PC em `/app`. Depois de alterar o código, publique no PC e toque **Atualizar app** na tela de login.
+
+#### Uma vez — instalar APK shell
+
+```bash
+cd crm_front
+npm run apk:shell:tailscale
+```
+
+Instale `releases/crm-jptv-v1.1-debug.apk`. Esse APK aponta para `http://SEU_IP:3001/app` (Tailscale ou rede local).
+
+#### Sempre que alterar o CRM
+
+No PC:
+
+```bash
+npm run app:publish
+```
+
+Isso gera `crm_front/www/` + `version.json` servidos pela API em `/app`.
+
+No celular: abra o app → login → **Atualizar app**.
+
+| Comando | Função |
+|---------|--------|
+| `npm run app:publish` | Build mobile remoto + version.json (raiz ou `crm_front`) |
+| `npm run apk:shell:tailscale` | Gera APK shell (instalar uma vez) |
+| `npm run apk:tailscale` | APK com bundle embutido (modo antigo, exige reinstalar) |
+
 ### Produção (VPS / domínio)
 
 Para servidor sempre online sem depender do PC: VPS, domínio, HTTPS e `apiUrl` com `https://seudominio.com/api`.
