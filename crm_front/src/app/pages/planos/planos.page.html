@@ -27,7 +27,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div
           *ngFor="let plano of grupo.planos"
-          class="crm-card !p-3 hover:border-violet-600 transition-colors cursor-pointer"
+          class="crm-card-selectable !p-3 cursor-pointer"
           [class.opacity-60]="!plano.ativo"
           (click)="verClientes(plano)"
         >
@@ -36,7 +36,7 @@
               <h3 class="crm-card-title text-sm truncate">
                 {{ plano.nome.split(' - ').slice(1).join(' - ') || plano.nome }}
               </h3>
-              <p class="text-violet-400 font-bold text-base mt-0.5">{{ fmtValor(plano.valor) }}</p>
+              <p class="crm-text-value text-base mt-0.5">{{ fmtValor(plano.valor) }}</p>
             </div>
             <span [class]="plano.ativo ? 'crm-badge-ativo' : 'crm-badge-inativo'">
               {{ plano.ativo ? 'Ativo' : 'Inativo' }}

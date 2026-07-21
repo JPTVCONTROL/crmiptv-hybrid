@@ -19,9 +19,9 @@
     <p>
       Tela de <span class="text-white font-medium">consulta</span>. Para enviar lembretes e cobranças em lote,
       use a
-      <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
+      <a routerLink="/cobranca-diaria" class="crm-link font-medium">Cobrança Diária</a>.
       Pagamentos em lote ficam no
-      <a routerLink="/financeiro" class="text-violet-400 hover:underline font-medium">Financeiro</a>.
+      <a routerLink="/financeiro" class="crm-link font-medium">Financeiro</a>.
     </p>
     <p class="crm-info-banner-hint">
       Filtro “Próximos” considera até {{ diasAntecedencia }} dias (configurável em Configurações).
@@ -29,8 +29,8 @@
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-    <app-stat-card title="Total Pendente" [value]="totalPendente" color="#F59E0B"></app-stat-card>
-    <app-stat-card title="Vencem Hoje" [value]="vencemHoje.toString()" color="#EF4444"></app-stat-card>
+    <app-stat-card title="Total Pendente" [value]="totalPendente" variant="warning"></app-stat-card>
+    <app-stat-card title="Vencem Hoje" [value]="vencemHoje.toString()" variant="danger"></app-stat-card>
     <app-stat-card title="Atrasados" [value]="atrasados.toString()" color="#DC2626"></app-stat-card>
   </div>
 
@@ -79,7 +79,7 @@
         <button
           *ngIf="temFiltrosAtivos"
           type="button"
-          class="crm-btn-ghost !py-1.5 !text-xs"
+          class="crm-btn-ghost crm-btn-sm"
           (click)="limparFiltros()"
         >
           Limpar filtros
@@ -110,7 +110,7 @@
     <article *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="crm-mobile-card">
       <div class="crm-mobile-card-header">
         <div class="min-w-0">
-          <a [routerLink]="['/clientes', m.clienteId]" class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate">
+          <a [routerLink]="['/clientes', m.clienteId]" class="crm-mobile-card-title crm-link block truncate">
             {{ m.cliente?.nome }}
           </a>
           <p class="crm-mobile-card-subtitle">
@@ -198,7 +198,7 @@
       <tbody>
         <tr *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="border-b border-slate-800/50" [class.crm-table-row--contacted]="linhaContactada(m)">
           <td class="py-3 px-2">
-            <a [routerLink]="['/clientes', m.clienteId]" class="text-violet-400 hover:underline inline-flex items-center gap-2">
+            <a [routerLink]="['/clientes', m.clienteId]" class="crm-link inline-flex items-center gap-2">
               <span [class]="classeDot(m)" aria-hidden="true"></span>
               {{ m.cliente?.nome }}
             </a>
@@ -230,7 +230,7 @@
             ></app-whatsapp-bloqueio-btn>
             <a
               [routerLink]="['/clientes', m.clienteId]"
-              class="crm-btn-ghost !py-1.5 !text-xs no-underline inline-block"
+              class="crm-btn-ghost crm-btn-sm no-underline inline-block"
             >
               Ver cliente
             </a>

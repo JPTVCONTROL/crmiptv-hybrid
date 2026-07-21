@@ -13,9 +13,9 @@
       <strong class="text-slate-300">uma vez só</strong> — é o dia da renovação.
     </p>
     <p class="crm-info-banner-hint">
-      Para listar e renovar cobranças: <a routerLink="/vencimentos" class="text-violet-400 hover:underline font-medium">Vencimentos</a>
-      · <a routerLink="/financeiro" class="text-violet-400 hover:underline font-medium">Financeiro</a>.
-      Para enviar WhatsApp em lote: <a routerLink="/cobranca-diaria" class="text-violet-400 hover:underline font-medium">Cobrança Diária</a>.
+      Para listar e renovar cobranças: <a routerLink="/vencimentos" class="crm-link font-medium">Vencimentos</a>
+      · <a routerLink="/financeiro" class="crm-link font-medium">Financeiro</a>.
+      Para enviar WhatsApp em lote: <a routerLink="/cobranca-diaria" class="crm-link font-medium">Cobrança Diária</a>.
     </p>
   </div>
 
@@ -23,7 +23,7 @@
     <app-stat-card
       title="Clientes no mês"
       [value]="resumoMes.clientes.toString()"
-      color="#8B5CF6"
+      variant="primary"
       subtitle="Com renovação ou cobrança"
     ></app-stat-card>
     <app-stat-card
@@ -35,13 +35,13 @@
     <app-stat-card
       title="Só expiração"
       [value]="resumoMes.expiracoes.toString()"
-      color="#F59E0B"
+      variant="warning"
       subtitle="Datas de fim de assinatura"
     ></app-stat-card>
     <app-stat-card
       title="Só mensalidade"
       [value]="resumoMes.mensalidades.toString()"
-      color="#22C55E"
+      variant="success"
       subtitle="Cobranças pendentes"
     ></app-stat-card>
   </div>
@@ -143,7 +143,7 @@
             <div class="min-w-0">
               <a
                 [routerLink]="['/clientes', cliente.clienteId]"
-                class="text-violet-400 hover:underline font-medium truncate block"
+                class="crm-link font-medium truncate block"
               >
                 {{ cliente.clienteNome }}
               </a>
@@ -179,7 +179,7 @@
           <div class="flex flex-wrap gap-2 pt-1">
             <a
               [routerLink]="['/clientes', cliente.clienteId]"
-              class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline"
+              class="crm-btn-ghost crm-btn-xs no-underline"
             >
               Ver cliente
             </a>
@@ -201,14 +201,14 @@
             <a
               *ngIf="!podeRenovar(cliente) && cliente.temExpiracao"
               [routerLink]="['/clientes', cliente.clienteId]"
-              class="crm-btn-primary !py-1 !px-2 !text-xs no-underline"
+              class="crm-btn-primary crm-btn-xs no-underline"
             >
               Renovar no cliente
             </a>
             <a
               *ngIf="cliente.temExpiracao || cliente.temMensalidade"
               routerLink="/cobranca-diaria"
-              class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline"
+              class="crm-btn-ghost crm-btn-xs no-underline"
             >
               Cobrar
             </a>

@@ -16,14 +16,14 @@
         <div class="space-y-1">
           <p class="text-amber-200 text-sm font-medium">Confirme os modelos na Meta</p>
           <p class="text-slate-400 text-sm">
-            Se <code class="text-violet-300">crm_lembrete</code> e
-            <code class="text-violet-300">crm_cobranca</code> já estão
+            Se <code class="crm-code">crm_lembrete</code> e
+            <code class="crm-code">crm_cobranca</code> já estão
             <strong class="text-slate-300">Ativos</strong>, confirme em Automações para liberar o envio automático.
             O envio manual abaixo continua disponível.
           </p>
         </div>
       </div>
-      <a routerLink="/automacoes" class="crm-btn-primary !py-2 !text-sm no-underline shrink-0 text-center">
+      <a routerLink="/automacoes" class="crm-btn-primary crm-btn-md no-underline shrink-0 text-center">
         Ir para Automações
       </a>
     </div>
@@ -36,8 +36,8 @@
     <div class="flex items-start gap-3">
       <ion-icon name="checkmark-circle-outline" class="text-xl text-green-400 shrink-0 mt-0.5"></ion-icon>
       <p class="text-slate-400 text-sm">
-        Modelos Meta <code class="text-violet-300">crm_lembrete</code> e
-        <code class="text-violet-300">crm_cobranca</code> prontos — você pode ligar a cobrança automática abaixo.
+        Modelos Meta <code class="crm-code">crm_lembrete</code> e
+        <code class="crm-code">crm_cobranca</code> prontos — você pode ligar a cobrança automática abaixo.
       </p>
     </div>
   </div>
@@ -95,7 +95,7 @@
   <div class="crm-hero-card !p-4 md:!p-5">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="min-w-0">
-        <p class="text-violet-300/90 text-xs font-semibold uppercase tracking-[0.14em] mb-1.5">
+        <p class="crm-kicker mb-1.5">
           Rotina do dia
         </p>
         <h2 class="text-white text-lg md:text-xl font-bold">
@@ -110,7 +110,7 @@
       <div class="flex flex-wrap gap-2 shrink-0">
         <button
           type="button"
-          class="crm-btn-success !py-2 !text-sm"
+          class="crm-btn-success crm-btn-md"
           [disabled]="qtdPendentesHoje === 0"
           (click)="selecionarNaoContactados()"
         >
@@ -118,7 +118,7 @@
         </button>
         <button
           type="button"
-          class="crm-btn-ghost !py-2 !text-sm !border-red-500/40 !text-red-200"
+          class="crm-btn-ghost crm-btn-md !border-red-500/40 !text-red-200"
           [disabled]="qtdAtrasadosNaoContactados === 0"
           (click)="selecionarAtrasadosNaoContactados()"
         >
@@ -126,8 +126,8 @@
         </button>
         <button
           type="button"
-          class="crm-btn-ghost !py-2 !text-sm"
-          [class.!border-violet-500]="filtroSomentePendentes"
+          class="crm-btn-ghost crm-btn-md"
+          [class.crm-btn-ghost--active]="filtroSomentePendentes"
           (click)="alternarFiltroSomentePendentes()"
         >
           {{ filtroSomentePendentes ? 'Mostrar todos' : 'Só não contactados' }}
@@ -176,13 +176,13 @@
     <app-stat-card
       title="A vencer"
       [value]="qtdAVencer.toString()"
-      color="#F59E0B"
+      variant="warning"
       [subtitle]="'Próximos ' + diasAntecedencia + ' dias'"
     ></app-stat-card>
     <app-stat-card
       title="Valor total"
       [value]="valorTotal"
-      color="#A855F7"
+      variant="primary"
       [subtitle]="itens.length + ' cliente(s)'"
     ></app-stat-card>
   </div>
@@ -191,15 +191,15 @@
     <div class="flex flex-wrap gap-2">
       <button
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs"
-        [class.!border-violet-500]="filtroGrupo === 'TODOS'"
+        class="crm-btn-ghost crm-btn-sm"
+        [class.crm-btn-ghost--active]="filtroGrupo === 'TODOS'"
         (click)="definirFiltroGrupo('TODOS')"
       >
         Todos
       </button>
       <button
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs"
+        class="crm-btn-ghost crm-btn-sm"
         [class.!border-red-500]="filtroGrupo === 'ATRASADO'"
         (click)="definirFiltroGrupo('ATRASADO')"
       >
@@ -207,27 +207,27 @@
       </button>
       <button
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs"
+        class="crm-btn-ghost crm-btn-sm"
         [class.!border-amber-500]="filtroGrupo === 'A_VENCER'"
         (click)="definirFiltroGrupo('A_VENCER')"
       >
         Só a vencer
       </button>
-      <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('ATRASADO')">
+      <button type="button" class="crm-btn-ghost crm-btn-sm" (click)="selecionarSomente('ATRASADO')">
         Selecionar atrasados
       </button>
-      <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('A_VENCER')">
+      <button type="button" class="crm-btn-ghost crm-btn-sm" (click)="selecionarSomente('A_VENCER')">
         Selecionar a vencer
       </button>
       <button
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs"
+        class="crm-btn-ghost crm-btn-sm"
         [class.!border-emerald-500]="filtroSomentePendentes"
         (click)="alternarFiltroSomentePendentes()"
       >
         {{ filtroSomentePendentes ? 'Mostrar todos' : 'Só pendentes' }}
       </button>
-      <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarNaoContactados()">
+      <button type="button" class="crm-btn-ghost crm-btn-sm" (click)="selecionarNaoContactados()">
         Selecionar pendentes
       </button>
     </div>
@@ -271,7 +271,7 @@
           <h2 class="text-white font-semibold">Cobranças · atrasados</h2>
           <p class="text-slate-500 text-xs">{{ qtdAtrasados }} cliente(s)</p>
         </div>
-        <button type="button" class="crm-btn-ghost !py-1.5 !text-xs self-start" (click)="alternarTipo('ATRASADO')">
+        <button type="button" class="crm-btn-ghost crm-btn-sm self-start" (click)="alternarTipo('ATRASADO')">
           {{ todosTipoSelecionados('ATRASADO') ? 'Desmarcar grupo' : 'Selecionar grupo' }}
         </button>
       </div>
@@ -284,7 +284,7 @@
         >
           <div class="crm-mobile-card-header">
             <div class="min-w-0">
-              <a [routerLink]="['/clientes', item.clienteId]" class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate">
+              <a [routerLink]="['/clientes', item.clienteId]" class="crm-mobile-card-title crm-link block truncate">
                 {{ item.nome }}
               </a>
               <p class="crm-mobile-card-subtitle">{{ item.referencia }}</p>
@@ -392,7 +392,7 @@
                 />
               </td>
               <td class="py-3 px-2">
-                <a [routerLink]="['/clientes', item.clienteId]" class="text-violet-400 hover:underline inline-flex items-center gap-2">
+                <a [routerLink]="['/clientes', item.clienteId]" class="crm-link inline-flex items-center gap-2">
                   <span [class]="classeDot(item)" aria-hidden="true"></span>
                   {{ item.nome }}
                 </a>
@@ -453,7 +453,7 @@
       <button
         *ngIf="temMaisItens('ATRASADO')"
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs w-full"
+        class="crm-btn-ghost crm-btn-sm w-full"
         (click)="expandirSecao('ATRASADO')"
       >
         Ver mais atrasados ({{ itensPorTipo('ATRASADO').length - limitePorSecao }})
@@ -466,7 +466,7 @@
           <h2 class="text-white font-semibold">Lembretes · a vencer</h2>
           <p class="text-slate-500 text-xs">Vencem nos próximos {{ diasAntecedencia }} dias</p>
         </div>
-        <button type="button" class="crm-btn-ghost !py-1.5 !text-xs self-start" (click)="alternarTipo('A_VENCER')">
+        <button type="button" class="crm-btn-ghost crm-btn-sm self-start" (click)="alternarTipo('A_VENCER')">
           {{ todosTipoSelecionados('A_VENCER') ? 'Desmarcar grupo' : 'Selecionar grupo' }}
         </button>
       </div>
@@ -479,7 +479,7 @@
         >
           <div class="crm-mobile-card-header">
             <div class="min-w-0">
-              <a [routerLink]="['/clientes', item.clienteId]" class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate">
+              <a [routerLink]="['/clientes', item.clienteId]" class="crm-mobile-card-title crm-link block truncate">
                 {{ item.nome }}
               </a>
               <p class="crm-mobile-card-subtitle">{{ item.referencia }}</p>
@@ -576,7 +576,7 @@
                 />
               </td>
               <td class="py-3 px-2">
-                <a [routerLink]="['/clientes', item.clienteId]" class="text-violet-400 hover:underline inline-flex items-center gap-2">
+                <a [routerLink]="['/clientes', item.clienteId]" class="crm-link inline-flex items-center gap-2">
                   <span [class]="classeDot(item)" aria-hidden="true"></span>
                   {{ item.nome }}
                 </a>
@@ -627,7 +627,7 @@
       <button
         *ngIf="temMaisItens('A_VENCER')"
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs w-full"
+        class="crm-btn-ghost crm-btn-sm w-full"
         (click)="expandirSecao('A_VENCER')"
       >
         Ver mais lembretes ({{ itensPorTipo('A_VENCER').length - limitePorSecao }})

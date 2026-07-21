@@ -24,7 +24,7 @@
   <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
     <div
       *ngFor="let item of dispositivosFiltrados"
-      class="crm-card hover:border-violet-600 transition-colors flex flex-col cursor-pointer"
+      class="crm-card-selectable flex flex-col cursor-pointer"
       [class.opacity-60]="!item.ativo"
       (click)="verClientes(item)"
     >

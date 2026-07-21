@@ -22,7 +22,7 @@
   <section class="crm-hero-card">
     <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
       <div class="flex-1 min-w-0">
-        <p class="text-violet-300/90 text-xs font-semibold uppercase tracking-[0.14em] mb-2">
+        <p class="crm-kicker mb-2">
           Painel do dia
         </p>
         <h2 class="text-white text-xl md:text-2xl font-bold tracking-tight">
@@ -156,7 +156,7 @@
   <section>
     <div class="flex items-center justify-between gap-3 mb-3">
       <h2 class="crm-section-label !mb-0">Base de clientes</h2>
-      <a routerLink="/clientes" class="text-violet-400 text-xs hover:underline no-underline">
+      <a routerLink="/clientes" class="crm-link crm-link-sm">
         Ver todos ({{ totalClientes }})
       </a>
     </div>
@@ -165,7 +165,7 @@
         <app-stat-card
           title="Clientes ativos"
           [value]="qtdAtivos.toString()"
-          color="#22C55E"
+          variant="success"
           [subtitle]="percentualAtivos + ' da base · retenção ' + retencaoPercentual"
         ></app-stat-card>
       </a>
@@ -173,7 +173,7 @@
         <app-stat-card
           title="Planos atrasados"
           [value]="qtdAtrasados.toString()"
-          color="#F59E0B"
+          variant="warning"
           subtitle="expiração vencida · precisam renovar"
         ></app-stat-card>
       </a>
@@ -181,7 +181,7 @@
         <app-stat-card
           title="Clientes inativos"
           [value]="qtdInativos.toString()"
-          color="#EF4444"
+          variant="danger"
           [subtitle]="'churn ' + churnPercentual"
         ></app-stat-card>
       </a>
@@ -191,7 +191,7 @@
   <section class="space-y-4">
     <div class="flex items-center justify-between gap-3">
       <h2 class="crm-section-label !mb-0">Indicadores</h2>
-      <a routerLink="/relatorios" class="text-violet-400 text-xs hover:underline no-underline">
+      <a routerLink="/relatorios" class="crm-link crm-link-sm">
         Relatórios
       </a>
     </div>
@@ -205,7 +205,7 @@
           <app-stat-card
             title="Recebido no mês"
             [value]="recebidoMes"
-            color="#22C55E"
+            variant="success"
             [subtitle]="'Meta ' + metaMesPercentual + '% do previsto'"
           ></app-stat-card>
         </a>
@@ -213,7 +213,7 @@
           <app-stat-card
             title="A receber no mês"
             [value]="aReceberEsteMes"
-            color="#F59E0B"
+            variant="warning"
             [subtitle]="qtdEsteMes + ' cobrança(s) pendente(s)'"
           ></app-stat-card>
         </a>
@@ -221,14 +221,14 @@
           <app-stat-card
             [title]="'Vencendo · ' + diasAntecedencia + 'd'"
             [value]="vencendoQtd.toString()"
-            color="#FB923C"
+            variant="orange"
             [subtitle]="vencendoValor + ' em risco'"
           ></app-stat-card>
         </a>
         <app-stat-card
           title="Inadimplência"
           [value]="inadimplenciaPercentual"
-          color="#EF4444"
+          variant="danger"
           [subtitle]="cobrancaAtrasadaQtd + ' cobrança(s) · ' + cobrancaAtrasadaValor"
         ></app-stat-card>
       </div>
@@ -242,26 +242,26 @@
         <app-stat-card
           title="MRR estimado"
           [value]="mrr"
-          color="#A855F7"
+          variant="primary"
           [subtitle]="conexoes + ' conexões · ticket ' + ticketMedio"
         ></app-stat-card>
         <app-stat-card
           title="ARR até fim do ano"
           [value]="arr"
-          color="#D946EF"
+          variant="accent"
           [subtitle]="arrRotulo"
         ></app-stat-card>
         <app-stat-card
           title="Estimativa · próximo ano"
           [value]="ganhosProximoAno"
-          color="#3B82F6"
+          variant="info"
           [subtitle]="ganhosProximoAnoRotulo"
         ></app-stat-card>
         <a routerLink="/clientes" class="crm-stat-card-link">
           <app-stat-card
             title="Novos (30 dias)"
             [value]="'+' + novosClientes30d"
-            [color]="variacaoNovosPositiva ? '#22C55E' : '#EF4444'"
+            [variant]="variacaoNovosPositiva ? 'success' : 'danger'"
             [subtitle]="variacaoNovosRotulo"
           ></app-stat-card>
         </a>
@@ -269,7 +269,7 @@
           *ngIf="qtdCortesia > 0"
           title="Cortesia"
           [value]="qtdCortesia.toString()"
-          color="#A855F7"
+          variant="primary"
           subtitle="sem cobrança automática"
         ></app-stat-card>
         <a
@@ -281,7 +281,7 @@
           <app-stat-card
             title="Cadastro incompleto"
             [value]="cadastrosIncompletos.toString()"
-            color="#F59E0B"
+            variant="warning"
             subtitle="corrigir dados faltantes"
           ></app-stat-card>
         </a>
@@ -307,46 +307,55 @@
       <app-faturamento-chart [data]="faturamentoMensal" [height]="260"></app-faturamento-chart>
     </div>
 
-    <div class="crm-card">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
+    <div class="crm-card crm-dash-vencimentos-panel">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div class="min-w-0">
           <h2 class="crm-section-label !mb-0">Próximos vencimentos</h2>
-          <p class="crm-card-subtitle">Próximos {{ diasAntecedencia }} dias</p>
+          <p class="crm-card-subtitle mt-1">
+            <ng-container *ngIf="proximosVencimentos.length > 0">
+              {{ vencendoQtd }} cobrança{{ vencendoQtd === 1 ? '' : 's' }} · {{ vencendoValor }}
+              <span class="text-slate-600"> · próximos {{ diasAntecedencia }} dias</span>
+            </ng-container>
+            <ng-container *ngIf="proximosVencimentos.length === 0">
+              Nenhum vencimento nos próximos {{ diasAntecedencia }} dias
+            </ng-container>
+          </p>
         </div>
-        <a routerLink="/vencimentos" class="crm-btn-ghost !py-1.5 !text-xs no-underline">Ver todos</a>
+        <a routerLink="/vencimentos" class="crm-btn-ghost crm-btn-sm no-underline shrink-0">
+          Ver todos
+        </a>
       </div>
-      <div class="space-y-3">
-        <div
-          *ngFor="let m of proximosVencimentosVisiveis"
-          class="border-b border-slate-800 pb-3 last:border-0"
-        >
-          <div class="flex justify-between items-start gap-3">
-            <div class="min-w-0">
-              <a
-                [routerLink]="['/clientes', m.clienteId]"
-                class="text-violet-400 text-sm font-medium truncate no-underline hover:underline block"
-              >
-                {{ m.clienteNome }}
-              </a>
-              <p class="text-slate-400 text-xs">{{ m.referencia }} · {{ fmtValor(m.valor) }}</p>
-              <p class="text-slate-500 text-[11px] mt-0.5">{{ rotuloContato(m.ultimoContatoEm) }}</p>
-            </div>
-            <div class="text-right shrink-0">
-              <p class="text-amber-400 text-sm">{{ fmtData(m.vencimento) }}</p>
-              <p class="text-slate-500 text-xs">{{ rotuloVencimento(m.vencimento) }}</p>
-            </div>
-          </div>
-        </div>
-        <app-empty-state
-          *ngIf="proximosVencimentos.length === 0"
-          [message]="'Nenhum vencimento nos próximos ' + diasAntecedencia + ' dias.'"
-        ></app-empty-state>
+
+      <div *ngIf="proximosVencimentosVisiveis.length > 0" class="crm-dash-vencimentos-list">
         <a
-          *ngIf="proximosVencimentos.length > limiteLista"
-          routerLink="/vencimentos"
-          class="block text-center text-violet-400 text-xs hover:underline no-underline pt-1"
+          *ngFor="let m of proximosVencimentosVisiveis"
+          [routerLink]="['/clientes', m.clienteId]"
+          class="crm-dash-vencimento-item no-underline"
+          [ngClass]="classeVencimentoItem(m.vencimento)"
         >
-          + {{ proximosVencimentos.length - limiteLista }} vencimento(s)
+          <div class="crm-dash-vencimento-data" aria-hidden="true">
+            <span class="crm-dash-vencimento-dia">{{ partesDataVencimento(m.vencimento).dia }}</span>
+            <span class="crm-dash-vencimento-mes">{{ partesDataVencimento(m.vencimento).mes }}</span>
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="crm-dash-vencimento-nome">{{ m.clienteNome }}</p>
+            <p class="crm-dash-vencimento-meta">{{ m.referencia }} · {{ fmtValor(m.valor) }}</p>
+            <p class="crm-dash-vencimento-contato">{{ rotuloContato(m.ultimoContatoEm) }}</p>
+          </div>
+
+          <span class="crm-dash-vencimento-prazo">{{ rotuloVencimento(m.vencimento) }}</span>
+        </a>
+      </div>
+
+      <app-empty-state
+        *ngIf="proximosVencimentos.length === 0"
+        message="Nenhum vencimento na janela configurada."
+      ></app-empty-state>
+
+      <div *ngIf="proximosVencimentos.length > limiteLista" class="crm-dash-vencimentos-footer">
+        <a routerLink="/vencimentos" class="crm-link crm-link-sm font-medium">
+          + {{ proximosVencimentos.length - limiteLista }} vencimento(s) · abrir Vencimentos
         </a>
       </div>
     </div>
@@ -364,14 +373,14 @@
         <a
           routerLink="/clientes"
           [queryParams]="{ status: 'ATRASADO' }"
-          class="crm-btn-ghost !py-1.5 !text-xs no-underline"
+          class="crm-btn-ghost crm-btn-sm no-underline"
         >
           Ver atrasados
         </a>
         <a
           routerLink="/clientes"
           [queryParams]="{ status: 'INATIVO' }"
-          class="crm-btn-ghost !py-1.5 !text-xs no-underline"
+          class="crm-btn-ghost crm-btn-sm no-underline"
         >
           Ver inativos
         </a>
@@ -392,7 +401,7 @@
             <p class="crm-mobile-card-title">
               <a
                 [routerLink]="['/clientes', c.id]"
-                class="text-violet-400 hover:underline no-underline block truncate"
+                class="crm-link block truncate"
               >
                 {{ c.nome }}
               </a>
@@ -467,7 +476,7 @@
             <td class="py-2.5 px-2">
               <a
                 [routerLink]="['/clientes', c.id]"
-                class="text-violet-400 hover:underline font-medium truncate max-w-[200px] no-underline block"
+                class="crm-link font-medium truncate max-w-[200px] no-underline block"
               >
                 {{ c.nome }}
               </a>
@@ -496,7 +505,7 @@
               <div class="inline-flex flex-wrap justify-end gap-1">
                 <a
                   [routerLink]="['/clientes', c.id]"
-                  class="crm-btn-ghost !py-1 !px-2 !text-xs no-underline inline-block"
+                  class="crm-btn-ghost crm-btn-xs no-underline inline-block"
                 >
                   Ver
                 </a>
@@ -512,7 +521,7 @@
                 <button
                   *ngIf="c.mensalidadePendenteId"
                   type="button"
-                  class="crm-btn-primary !py-1 !px-2 !text-xs"
+                  class="crm-btn-primary crm-btn-xs"
                   [disabled]="estaPagando(c)"
                   (click)="renovarCliente(c)"
                 >
@@ -529,7 +538,7 @@
       *ngIf="clientesAtencao.length > limiteLista"
       routerLink="/clientes"
       [queryParams]="{ status: 'ATRASADO' }"
-      class="block text-center text-violet-400 text-xs hover:underline no-underline mt-4"
+      class="block text-center crm-link crm-link-sm mt-4"
     >
       + {{ clientesAtencao.length - limiteLista }} cliente(s) precisam de atenção
     </a>

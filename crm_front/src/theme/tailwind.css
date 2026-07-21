@@ -29,11 +29,47 @@
   --crm-radius-lg: 1rem;
   --crm-radius-xl: 1.25rem;
   --crm-blur: 16px;
+
+  --crm-success: #22c55e;
+  --crm-success-soft: rgba(34, 197, 94, 0.14);
+  --crm-success-border: rgba(74, 222, 128, 0.35);
+  --crm-warning: #f59e0b;
+  --crm-warning-soft: rgba(245, 158, 11, 0.14);
+  --crm-warning-border: rgba(251, 191, 36, 0.35);
+  --crm-danger: #ef4444;
+  --crm-danger-soft: rgba(239, 68, 68, 0.12);
+  --crm-danger-border: rgba(248, 113, 113, 0.35);
+  --crm-info: #3b82f6;
+  --crm-info-soft: rgba(59, 130, 246, 0.12);
+
+  --crm-text-primary: #f8fafc;
+  --crm-text-secondary: #e2e8f0;
+  --crm-text-muted: #94a3b8;
+  --crm-text-subtle: #64748b;
+  --crm-link: #c4b5fd;
+  --crm-link-hover: #e9d5ff;
+
+  --crm-font-xs: 0.6875rem;
+  --crm-font-sm: 0.8125rem;
+  --crm-font-base: 0.875rem;
+  --crm-font-md: 0.9375rem;
+  --crm-font-lg: 1.125rem;
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+
+  ion-app,
+  ion-content,
+  ion-modal,
+  .crm-app {
+    font-family: theme('fontFamily.sans');
+    font-size: var(--crm-font-base);
+    color: var(--crm-text-secondary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
@@ -150,14 +186,31 @@
       0 4px 14px var(--crm-primary-glow);
   }
 
+  .crm-btn-sm {
+    @apply !py-1.5 !px-3 !text-xs;
+  }
+
+  .crm-btn-xs {
+    @apply !py-1 !px-2.5 !text-xs;
+  }
+
+  .crm-btn-md {
+    @apply !py-2 !text-sm;
+  }
+
   .crm-btn-success {
     @apply text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200;
     background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
     box-shadow: 0 4px 14px rgba(34, 197, 94, 0.2);
   }
 
-  .crm-btn-success:hover {
+  .crm-btn-success:hover:not(:disabled) {
     @apply brightness-110;
+  }
+
+  .crm-btn-success:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--crm-success-soft);
   }
 
   .crm-btn-action {
@@ -170,8 +223,13 @@
     box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18);
   }
 
-  .crm-btn-danger:hover {
+  .crm-btn-danger:hover:not(:disabled) {
     @apply brightness-110;
+  }
+
+  .crm-btn-danger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--crm-danger-soft);
   }
 
   .crm-btn-ghost {
@@ -181,10 +239,110 @@
     backdrop-filter: blur(8px);
   }
 
-  .crm-btn-ghost:hover {
+  .crm-btn-ghost:hover:not(:disabled) {
     background: rgba(51, 65, 85, 0.55);
-    border-color: rgba(167, 139, 250, 0.22);
-    color: #f8fafc;
+    border-color: var(--crm-primary-border);
+    color: var(--crm-text-primary);
+  }
+
+  .crm-btn-ghost:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--crm-primary-soft);
+  }
+
+  .crm-btn-ghost--active {
+    border-color: var(--crm-primary-border) !important;
+    background: var(--crm-primary-soft) !important;
+    color: var(--crm-primary-text) !important;
+  }
+
+  .crm-card-selectable {
+    @apply crm-card-interactive text-left;
+  }
+
+  .crm-card-selectable:hover,
+  .crm-card-selectable:focus-visible {
+    border-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft);
+  }
+
+  .crm-status-pill {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold;
+    border-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft);
+    color: var(--crm-primary-text);
+  }
+
+  .crm-link {
+    @apply font-medium no-underline transition-colors duration-150;
+    color: var(--crm-link);
+  }
+
+  .crm-link:hover {
+    color: var(--crm-link-hover);
+    text-decoration: underline;
+  }
+
+  .crm-link-sm {
+    @apply text-xs;
+  }
+
+  .crm-link-muted {
+    @apply text-slate-500 no-underline transition-colors duration-150;
+  }
+
+  .crm-link-muted:hover {
+    color: var(--crm-link);
+  }
+
+  .crm-text-accent {
+    color: var(--crm-link);
+  }
+
+  .crm-text-value {
+    @apply font-bold;
+    color: var(--crm-link);
+  }
+
+  .crm-accent-panel {
+    border-color: var(--crm-primary-border) !important;
+    background: var(--crm-primary-soft) !important;
+  }
+
+  .crm-accent-panel-sm {
+    @apply rounded-xl border p-3 space-y-2;
+    border-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft);
+  }
+
+  .crm-selection-bar {
+    @apply crm-card crm-accent-panel !p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3;
+  }
+
+  .crm-segment {
+    @apply inline-flex rounded-xl border p-0.5 gap-0.5;
+    border-color: var(--crm-border-subtle);
+    background: rgba(15, 23, 42, 0.65);
+  }
+
+  .crm-segment-btn {
+    @apply px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200;
+    color: var(--crm-text-subtle);
+  }
+
+  .crm-segment-btn:hover:not(.crm-segment-btn--active) {
+    @apply text-slate-300;
+    background: rgba(51, 65, 85, 0.35);
+  }
+
+  .crm-segment-btn--active {
+    color: var(--crm-text-primary);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--crm-primary) 88%, white 12%) 0%,
+      var(--crm-primary) 100%
+    );
+    box-shadow: 0 4px 14px var(--crm-primary-glow);
   }
 
   .crm-contador-clientes {
@@ -259,6 +417,21 @@
 
   .crm-section-label {
     @apply text-slate-400 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] mb-3;
+  }
+
+  .crm-kicker {
+    @apply text-xs font-semibold uppercase tracking-[0.14em];
+    color: color-mix(in srgb, var(--crm-primary-text) 90%, transparent);
+  }
+
+  .crm-code {
+    @apply font-mono text-sm px-1 py-0.5 rounded;
+    color: var(--crm-primary-text);
+    background: var(--crm-primary-soft);
+  }
+
+  .crm-text-highlight {
+    color: var(--crm-primary-text);
   }
 
   .crm-table {
@@ -380,11 +553,17 @@
   }
 
   .crm-badge-cortesia {
-    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border border-violet-500/40 bg-violet-500/10 text-violet-200;
+    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border;
+    border-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft);
+    color: var(--crm-primary-text);
   }
 
   .crm-badge-sem-cobranca {
-    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200;
+    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border;
+    border-color: var(--crm-warning-border);
+    background: var(--crm-warning-soft);
+    color: #fde68a;
   }
 
   .crm-badge-somente-contato {
@@ -392,7 +571,9 @@
   }
 
   .crm-badge-promocao {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/25;
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ring-1 ring-amber-500/25;
+    background: var(--crm-warning-soft);
+    color: #fde68a;
   }
 
   .crm-badge-comemorativa {
@@ -400,7 +581,10 @@
   }
 
   .crm-badge-campanha {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-violet-500/15 text-violet-200 ring-1 ring-violet-500/25;
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ring-1;
+    ring-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft);
+    color: var(--crm-primary-text);
   }
 
   .crm-badge-dot {
@@ -423,7 +607,11 @@
   }
 
   .crm-info-banner {
-    @apply crm-card border border-violet-500/20 bg-violet-500/5 space-y-2;
+    @apply crm-card crm-accent-panel space-y-2;
+  }
+
+  .crm-info-banner a {
+    @apply crm-link font-medium;
   }
 
   .crm-info-banner p {
@@ -511,11 +699,20 @@
   }
 
   .crm-filter-chip--idle {
-    @apply border-slate-700/80 bg-slate-900/35 text-slate-400 hover:border-violet-500/25 hover:text-slate-200 hover:bg-violet-500/5;
+    @apply border-slate-700/80 bg-slate-900/35 text-slate-400;
+  }
+
+  .crm-filter-chip--idle:hover {
+    border-color: var(--crm-primary-border);
+    color: var(--crm-text-secondary);
+    background: var(--crm-primary-soft);
   }
 
   .crm-filter-chip--selected-violet {
-    @apply border-violet-400/50 bg-violet-500/15 text-violet-100 shadow-md shadow-violet-900/25 ring-1 ring-violet-400/20;
+    border-color: var(--crm-primary-border);
+    background: var(--crm-primary-soft-strong);
+    color: var(--crm-primary-text);
+    box-shadow: 0 4px 16px var(--crm-primary-glow);
   }
 
   .crm-filter-chip--selected-emerald {
@@ -543,7 +740,7 @@
   }
 
   .crm-filter-chip-count--violet {
-    @apply bg-violet-500/25;
+    background: var(--crm-primary-soft-strong);
   }
 
   .crm-filter-chip-count--emerald {
@@ -769,6 +966,121 @@
 
   .crm-dash-alerta--neutral .crm-dash-alerta-qtd {
     @apply bg-slate-700/60 text-slate-300;
+  }
+
+  .crm-dash-vencimentos-panel {
+    @apply flex flex-col h-full;
+  }
+
+  .crm-dash-vencimentos-list {
+    @apply flex flex-col gap-2;
+    max-height: min(22rem, 52vh);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+  }
+
+  .crm-dash-vencimentos-list::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .crm-dash-vencimentos-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.45);
+  }
+
+  .crm-dash-vencimento-item {
+    @apply flex items-stretch gap-3 rounded-xl border border-slate-800/70 bg-slate-950/30 p-3 transition-all duration-200;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .crm-dash-vencimento-item:hover {
+    @apply border-slate-600/50 bg-slate-900/45;
+    transform: translateY(-1px);
+    box-shadow: var(--crm-shadow-sm);
+  }
+
+  .crm-dash-vencimento-data {
+    @apply flex flex-col items-center justify-center shrink-0 w-12 rounded-lg border px-1 py-1.5 text-center;
+    background: rgba(15, 23, 42, 0.55);
+    border-color: rgba(51, 65, 85, 0.65);
+  }
+
+  .crm-dash-vencimento-dia {
+    @apply text-base font-bold leading-none text-slate-100;
+  }
+
+  .crm-dash-vencimento-mes {
+    @apply mt-1 text-[0.625rem] font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .crm-dash-vencimento-nome {
+    @apply text-sm font-semibold truncate leading-snug;
+    color: var(--crm-link);
+  }
+
+  .crm-dash-vencimento-meta {
+    @apply text-xs text-slate-400 mt-0.5 truncate;
+  }
+
+  .crm-dash-vencimento-contato {
+    @apply text-[11px] text-slate-500 mt-1 truncate;
+  }
+
+  .crm-dash-vencimento-prazo {
+    @apply shrink-0 self-center text-[11px] font-semibold px-2 py-1 rounded-lg border;
+  }
+
+  .crm-dash-vencimento--hoje {
+    border-left: 3px solid #f97316;
+  }
+
+  .crm-dash-vencimento--hoje .crm-dash-vencimento-data {
+    @apply border-orange-500/35 bg-orange-500/10;
+  }
+
+  .crm-dash-vencimento--hoje .crm-dash-vencimento-dia {
+    @apply text-orange-200;
+  }
+
+  .crm-dash-vencimento--hoje .crm-dash-vencimento-prazo {
+    @apply text-orange-200 border-orange-500/30 bg-orange-500/10;
+  }
+
+  .crm-dash-vencimento--amanha {
+    border-left: 3px solid #f59e0b;
+  }
+
+  .crm-dash-vencimento--amanha .crm-dash-vencimento-data {
+    @apply border-amber-500/30 bg-amber-500/10;
+  }
+
+  .crm-dash-vencimento--amanha .crm-dash-vencimento-dia {
+    @apply text-amber-200;
+  }
+
+  .crm-dash-vencimento--amanha .crm-dash-vencimento-prazo {
+    @apply text-amber-200 border-amber-500/30 bg-amber-500/10;
+  }
+
+  .crm-dash-vencimento--breve {
+    border-left: 3px solid #a855f7;
+  }
+
+  .crm-dash-vencimento--breve .crm-dash-vencimento-prazo {
+    @apply text-violet-200 border-violet-500/25 bg-violet-500/10;
+  }
+
+  .crm-dash-vencimento--normal {
+    border-left: 3px solid rgba(100, 116, 139, 0.45);
+  }
+
+  .crm-dash-vencimento--normal .crm-dash-vencimento-prazo {
+    @apply text-slate-400 border-slate-700/70 bg-slate-800/40;
+  }
+
+  .crm-dash-vencimentos-footer {
+    @apply mt-3 pt-3 border-t border-slate-800/80 text-center;
   }
 
   .crm-loading {

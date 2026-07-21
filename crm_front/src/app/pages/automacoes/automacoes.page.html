@@ -16,8 +16,8 @@
         </p>
         <p class="text-slate-500 text-xs">
           Quando tiver MEI/CNPJ e quiser retomar a API, altere
-          <code class="text-violet-300">AUTOMACAO_META_HABILITADA</code> em
-          <code class="text-violet-300">automacao-meta.ts</code>.
+          <code class="crm-code">AUTOMACAO_META_HABILITADA</code> em
+          <code class="crm-code">automacao-meta.ts</code>.
         </p>
       </div>
     </div>
@@ -63,8 +63,8 @@
         <div class="space-y-1">
           <p class="text-amber-200 text-sm font-medium">Aguardando confirmação dos modelos Meta</p>
           <p class="text-slate-400 text-sm">
-            Quando <code class="text-violet-300">crm_lembrete</code> e
-            <code class="text-violet-300">crm_cobranca</code> estiverem
+            Quando <code class="crm-code">crm_lembrete</code> e
+            <code class="crm-code">crm_cobranca</code> estiverem
             <strong class="text-slate-300">Ativos</strong> no Gerenciador do WhatsApp, clique no botão ao lado
             para liberar o envio automático no CRM.
           </p>
@@ -90,8 +90,8 @@
       <div class="space-y-1">
         <p class="text-green-200 text-sm font-medium">Modelos Meta prontos para uso</p>
         <p class="text-slate-400 text-sm">
-          <code class="text-violet-300">crm_lembrete</code> e
-          <code class="text-violet-300">crm_cobranca</code>
+          <code class="crm-code">crm_lembrete</code> e
+          <code class="crm-code">crm_cobranca</code>
           {{ templatesAprovadosNaMeta ? 'confirmados como aprovados' : 'já enviaram com sucesso' }}.
           Ative os toggles abaixo ou use <strong class="text-slate-300">Executar agora</strong> para testar.
         </p>
@@ -115,7 +115,7 @@
           </span>
           <span
             *ngIf="automacoesAtivas"
-            class="text-xs font-medium px-2.5 py-1 rounded-full border text-violet-300 border-violet-500/40 bg-violet-500/10"
+            class="crm-status-pill"
           >
             Agendador ativo · manhã {{ janelaManhaTexto }}
           </span>
@@ -136,9 +136,9 @@
 
         <p class="text-slate-400 text-sm" *ngIf="!whatsappConfigurado">
           Defina
-          <code class="text-violet-300">WHATSAPP_PHONE_NUMBER_ID</code> e
-          <code class="text-violet-300">WHATSAPP_ACCESS_TOKEN</code> em
-          <code class="text-violet-300">crm_back/.env</code> e reinicie a API.
+          <code class="crm-code">WHATSAPP_PHONE_NUMBER_ID</code> e
+          <code class="crm-code">WHATSAPP_ACCESS_TOKEN</code> em
+          <code class="crm-code">crm_back/.env</code> e reinicie a API.
         </p>
 
         <p class="text-slate-500 text-xs" *ngIf="whatsappConfigurado && whatsappPerfil">
@@ -205,7 +205,7 @@
       </div>
       <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
         <dt class="text-slate-500 text-xs">Phone Number ID</dt>
-        <dd class="text-violet-300 mt-0.5 font-mono text-xs">{{ whatsappPerfil.phoneNumberId }}</dd>
+        <dd class="crm-code mt-0.5 text-xs">{{ whatsappPerfil.phoneNumberId }}</dd>
       </div>
       <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
         <dt class="text-slate-500 text-xs">Nome verificado</dt>
@@ -236,7 +236,7 @@
         [href]="linkGerenciadorMeta"
         target="_blank"
         rel="noopener noreferrer"
-        class="crm-btn-ghost !py-1.5 !text-xs no-underline"
+        class="crm-btn-ghost crm-btn-sm no-underline"
       >
         Abrir modelos na Meta
       </a>
@@ -342,7 +342,7 @@
       </div>
       <p class="text-slate-500 text-xs">
         Textos em
-        <a routerLink="/configuracoes" class="text-violet-300 hover:underline">Configurações → Mensagens → Automático</a>.
+        <a routerLink="/configuracoes" class="crm-link">Configurações → Mensagens → Automático</a>.
         Aviso de bloqueio continua só no envio manual (botão no CRM).
       </p>
     </div>
@@ -415,7 +415,7 @@
       class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3"
     >
       <div class="flex items-center justify-between gap-3 flex-wrap">
-        <code class="text-violet-300 text-sm">{{ modelo.nome }}</code>
+        <code class="crm-code">{{ modelo.nome }}</code>
         <button
           type="button"
           class="crm-btn-ghost !py-1 !text-xs"
@@ -430,9 +430,9 @@
     <p class="text-slate-500 text-xs">
       Variáveis não podem ficar no início ou fim do template — mantenha texto fixo após a 5ª variável.
       Webhook (opcional):
-      <code class="text-violet-300">/api/webhook/whatsapp</code>
+      <code class="crm-code">/api/webhook/whatsapp</code>
       · verify token:
-      <code class="text-violet-300">WHATSAPP_WEBHOOK_VERIFY_TOKEN</code>.
+      <code class="crm-code">WHATSAPP_WEBHOOK_VERIFY_TOKEN</code>.
     </p>
   </section>
 
@@ -442,7 +442,7 @@
       <article *ngFor="let fluxo of fluxosAtuais" class="crm-card space-y-3 !p-4">
         <h3 class="text-white font-medium">{{ fluxo.titulo }}</h3>
         <p class="text-slate-400 text-sm">{{ fluxo.descricao }}</p>
-        <a [routerLink]="fluxo.rota" class="crm-btn-ghost !py-1.5 !text-xs inline-block no-underline">
+        <a [routerLink]="fluxo.rota" class="crm-btn-ghost crm-btn-sm inline-block no-underline">
           {{ fluxo.rotuloLink }}
         </a>
       </article>

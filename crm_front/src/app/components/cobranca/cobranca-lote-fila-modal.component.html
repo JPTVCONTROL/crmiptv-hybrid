@@ -21,7 +21,7 @@
     </div>
 
     <div *ngIf="!concluido && atual" class="space-y-4 max-w-xl mx-auto">
-      <div class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
+      <div class="crm-accent-panel-sm p-4 space-y-2">
         <p class="text-white font-medium">{{ atual.nome }}</p>
         <p class="text-slate-400 text-sm">{{ atual.telefone }}</p>
       </div>
@@ -40,7 +40,7 @@
 
       <button
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs"
+        class="crm-btn-ghost crm-btn-sm"
         (click)="mostrarMensagem = !mostrarMensagem"
       >
         {{ mostrarMensagem ? 'Ocultar mensagem' : 'Ver mensagem' }}

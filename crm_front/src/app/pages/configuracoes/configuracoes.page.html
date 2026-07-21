@@ -155,7 +155,7 @@
         <div class="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4">
           <p class="text-slate-300 text-sm font-medium">Envio manual pelo operador</p>
           <p class="text-slate-500 text-xs mt-1 leading-relaxed">
-            Estas mensagens abrem o WhatsApp Web (<code class="text-violet-300">wa.me</code>) ao clicar nos botões do CRM.
+            Estas mensagens abrem o WhatsApp Web (<code class="crm-code">wa.me</code>) ao clicar nos botões do CRM.
             Não passam pela API oficial da Meta.
           </p>
         </div>
@@ -165,7 +165,7 @@
             <h2 class="text-white font-semibold text-lg">Mensagem de Conta ativada</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemBoasVindas')"
             >
               Restaurar padrão
@@ -183,7 +183,7 @@
             <h2 class="text-white font-semibold text-lg">Mensagem de Lembrete</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemLembrete')"
             >
               Restaurar padrão
@@ -202,7 +202,7 @@
             <h2 class="text-white font-semibold text-lg">Mensagem de Cobrança</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemCobranca')"
             >
               Restaurar padrão
@@ -220,7 +220,7 @@
             <h2 class="text-white font-semibold text-lg">Mensagem de Renovação</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemRenovacao')"
             >
               Restaurar padrão
@@ -236,7 +236,7 @@
             <h2 class="text-white font-semibold text-lg">Mensagem de Recibo</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemRecibo')"
             >
               Restaurar padrão
@@ -252,7 +252,7 @@
             <h2 class="text-white font-semibold text-lg">Mensagem de Bloqueio</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemBloqueio')"
             >
               Restaurar padrão
@@ -268,11 +268,11 @@
 
       <!-- Automático (API Meta) -->
       <ng-container *ngIf="automacaoMetaHabilitada && subAbaMensagens === 'automatico'">
-        <div class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
-          <p class="text-violet-200 text-sm font-medium">WhatsApp Cloud API (Meta)</p>
+        <div class="crm-accent-panel-sm p-4 space-y-2">
+          <p class="crm-text-highlight text-sm font-medium">WhatsApp Cloud API (Meta)</p>
           <p class="text-slate-400 text-xs leading-relaxed">
-            Estes textos alimentam os templates <code class="text-violet-300">crm_lembrete</code> e
-            <code class="text-violet-300">crm_cobranca</code> na execução automática (Automações).
+            Estes textos alimentam os templates <code class="crm-code">crm_lembrete</code> e
+            <code class="crm-code">crm_cobranca</code> na execução automática (Automações).
             O corpo aprovado na Meta deve corresponder ao texto aqui — a API envia 5 variáveis:
             nome, referência, valor, vencimento e PIX.
           </p>
@@ -297,7 +297,7 @@
           <p class="text-slate-500 text-xs">
             Cada ponto dispara uma única vez por mensalidade. Aviso de bloqueio de acesso é envio manual (botão no CRM).
           </p>
-          <a routerLink="/automacoes" class="crm-btn-ghost !py-1.5 !text-xs inline-block no-underline mt-1">
+          <a routerLink="/automacoes" class="crm-btn-ghost crm-btn-sm inline-block no-underline mt-1">
             Abrir Automações (horários e execução)
           </a>
         </div>
@@ -307,14 +307,14 @@
             <h2 class="text-white font-semibold text-lg">Lembrete automático</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemLembrete')"
             >
               Restaurar padrão
             </button>
           </div>
           <p class="text-slate-500 text-xs mb-1">
-            Template Meta: <code class="text-violet-300">crm_lembrete</code> · clientes a vencer na janela de antecedência.
+            Template Meta: <code class="crm-code">crm_lembrete</code> · clientes a vencer na janela de antecedência.
           </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
@@ -325,14 +325,14 @@
             <h2 class="text-white font-semibold text-lg">Cobrança automática</h2>
             <button
               type="button"
-              class="crm-btn-ghost !py-1.5 !text-xs self-start"
+              class="crm-btn-ghost crm-btn-sm self-start"
               (click)="restaurarMensagem('mensagemCobranca')"
             >
               Restaurar padrão
             </button>
           </div>
           <p class="text-slate-500 text-xs mb-1">
-            Template Meta: <code class="text-violet-300">crm_cobranca</code> · clientes com mensalidade atrasada.
+            Template Meta: <code class="crm-code">crm_cobranca</code> · clientes com mensalidade atrasada.
           </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>

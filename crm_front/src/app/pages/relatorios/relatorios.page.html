@@ -3,23 +3,19 @@
     title="Relatórios"
     [subtitle]="subtituloPagina"
   >
-    <div class="flex rounded-lg border border-slate-700 p-0.5 bg-slate-900/60">
+    <div class="crm-segment">
       <button
         type="button"
-        class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-        [class.bg-violet-600]="modo === 'MENSAL'"
-        [class.text-white]="modo === 'MENSAL'"
-        [class.text-slate-400]="modo !== 'MENSAL'"
+        class="crm-segment-btn"
+        [class.crm-segment-btn--active]="modo === 'MENSAL'"
         (click)="definirModo('MENSAL')"
       >
         Mensal
       </button>
       <button
         type="button"
-        class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-        [class.bg-violet-600]="modo === 'ANUAL'"
-        [class.text-white]="modo === 'ANUAL'"
-        [class.text-slate-400]="modo !== 'ANUAL'"
+        class="crm-segment-btn"
+        [class.crm-segment-btn--active]="modo === 'ANUAL'"
         (click)="definirModo('ANUAL')"
       >
         Anual
@@ -84,48 +80,48 @@
         <app-stat-card
           [title]="modo === 'ANUAL' ? 'Recebido no ano' : 'Recebido no período'"
           [value]="recebidoPeriodo"
-          color="#22C55E"
+          variant="success"
           [subtitle]="qtdPagamentosPeriodo + ' pagamento(s)'"
         ></app-stat-card>
         <app-stat-card
           [title]="rotuloComparativo"
           [value]="variacaoRecebido"
-          [color]="variacaoRecebidoPositiva ? '#22C55E' : '#EF4444'"
+          [variant]="variacaoRecebidoPositiva ? 'success' : 'danger'"
           [subtitle]="recebidoComparativo"
         ></app-stat-card>
         <app-stat-card
           *ngIf="modo === 'ANUAL'"
           title="Média mensal"
           [value]="mediaMensalAnual"
-          color="#3B82F6"
+          variant="info"
           [subtitle]="melhorMesAnual ? 'Melhor: ' + melhorMesAnual : 'Sem receita no ano'"
         ></app-stat-card>
         <app-stat-card
           *ngIf="modo === 'MENSAL'"
           title="A receber (atual)"
           [value]="totalPendente"
-          color="#F59E0B"
+          variant="warning"
           [subtitle]="qtdPendentes + ' cobrança(s)'"
         ></app-stat-card>
         <app-stat-card
           *ngIf="modo === 'MENSAL'"
           title="Ticket médio pendente"
           [value]="ticketMedio"
-          color="#A855F7"
+          variant="primary"
           [subtitle]="'Inadimplência ' + taxaInadimplencia"
         ></app-stat-card>
         <app-stat-card
           *ngIf="modo === 'ANUAL'"
           title="A receber (atual)"
           [value]="totalPendente"
-          color="#F59E0B"
+          variant="warning"
           [subtitle]="qtdPendentes + ' cobrança(s)'"
         ></app-stat-card>
         <app-stat-card
           *ngIf="modo === 'ANUAL'"
           title="Inadimplência"
           [value]="taxaInadimplencia"
-          color="#EF4444"
+          variant="danger"
           [subtitle]="totalAtrasado + ' atrasado(s)'"
         ></app-stat-card>
       </div>
@@ -146,10 +142,10 @@
       <app-faturamento-chart [data]="faturamentoMensal" [height]="280"></app-faturamento-chart>
     </section>
 
-    <section class="crm-card border border-violet-500/20 bg-violet-950/10">
+    <section class="crm-card crm-accent-panel">
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
         <div>
-          <p class="text-violet-300 text-xs font-semibold uppercase tracking-wider mb-1">
+          <p class="crm-kicker mb-1">
             Projeção
           </p>
           <h2 class="text-white font-semibold">
@@ -169,7 +165,7 @@
             <p class="text-slate-500 text-[10px] uppercase tracking-wide">Clientes pagantes</p>
             <p class="text-white font-semibold text-sm">{{ projecaoClientesPagantes }}</p>
           </div>
-          <div class="rounded-lg bg-violet-900/30 border border-violet-500/30 px-3 py-2 col-span-2 sm:col-span-1">
+          <div class="crm-accent-panel-sm col-span-2 sm:col-span-1">
             <p class="text-violet-300 text-[10px] uppercase tracking-wide">Total esperado</p>
             <p class="text-violet-200 font-semibold text-sm">{{ projecaoTotal }}</p>
           </div>
@@ -241,7 +237,7 @@
             </div>
             <a
               routerLink="/catalogos/planos"
-              class="text-violet-400 text-xs hover:underline no-underline shrink-0"
+              class="crm-link crm-link-sm shrink-0"
             >
               Ver catálogo
             </a>
@@ -264,7 +260,7 @@
             </div>
             <a
               routerLink="/catalogos/aplicativos"
-              class="text-violet-400 text-xs hover:underline no-underline shrink-0"
+              class="crm-link crm-link-sm shrink-0"
             >
               Ver catálogo
             </a>
@@ -287,7 +283,7 @@
             </div>
             <a
               routerLink="/catalogos/dispositivos"
-              class="text-violet-400 text-xs hover:underline no-underline shrink-0"
+              class="crm-link crm-link-sm shrink-0"
             >
               Ver catálogo
             </a>
@@ -324,7 +320,7 @@
             <div class="min-w-0">
               <a
                 [routerLink]="['/clientes', p.clienteId]"
-                class="crm-mobile-card-title text-violet-400 hover:underline no-underline block truncate"
+                class="crm-mobile-card-title crm-link block truncate"
               >
                 {{ p.clienteNome }}
               </a>
@@ -357,7 +353,7 @@
               <td class="py-2 px-2">
                 <a
                   [routerLink]="['/clientes', p.clienteId]"
-                  class="text-violet-400 hover:underline no-underline"
+                  class="crm-link"
                 >
                   {{ p.clienteNome }}
                 </a>

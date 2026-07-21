@@ -4,7 +4,7 @@
   <a
     *ngFor="let aba of abas"
     [routerLink]="aba.rota"
-    class="inline-flex items-center px-4 py-2 rounded-lg border text-sm font-medium transition-colors no-underline"
+    class="crm-filter-chip no-underline"
     [ngClass]="classesAba(aba.rota)"
   >
     {{ aba.rotulo }}

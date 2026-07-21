@@ -29,17 +29,17 @@
   </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <app-stat-card title="Campanhas" [value]="campanhas.length.toString()" color="#8B5CF6"></app-stat-card>
+    <app-stat-card title="Campanhas" [value]="campanhas.length.toString()" variant="primary"></app-stat-card>
     <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#64748B"></app-stat-card>
     <app-stat-card
       title="Total enviados"
       [value]="totalEnviosTodasCampanhas.toString()"
-      color="#22C55E"
+      variant="success"
     ></app-stat-card>
     <app-stat-card
       title="Última campanha"
       [value]="campanhas.length > 0 ? formatarDataCampanha(campanhas[0].createdAt) : '—'"
-      color="#F59E0B"
+      variant="warning"
     ></app-stat-card>
   </div>
 
@@ -92,7 +92,7 @@
       <button
         *ngFor="let c of campanhasFiltradas; trackBy: trackByCampanhaId"
         type="button"
-        class="crm-card text-left !p-4 md:!p-5 space-y-3 transition-colors hover:border-violet-500/40 hover:bg-violet-500/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+        class="crm-card-selectable !p-4 md:!p-5 space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
         (click)="abrirCampanha(c.id)"
       >
         <div class="flex items-start justify-between gap-2">
@@ -124,7 +124,7 @@
           <p class="text-slate-500 text-[11px]">{{ legendaProgressoCampanha(c) }}</p>
         </div>
 
-        <p class="text-violet-400 text-xs font-medium pt-1">Abrir campanha →</p>
+        <p class="crm-text-accent text-xs font-medium pt-1">Abrir campanha →</p>
       </button>
     </div>
 
@@ -151,7 +151,7 @@
   <div *ngIf="campanhaId" class="crm-hero-card !p-4 md:!p-5">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="min-w-0">
-        <p class="text-violet-300/90 text-xs font-semibold uppercase tracking-[0.14em] mb-1.5">
+        <p class="crm-kicker mb-1.5">
           Progresso da campanha
         </p>
         <h2 class="text-white text-lg md:text-xl font-bold">
@@ -168,7 +168,7 @@
       <div class="flex flex-wrap gap-2 shrink-0">
         <button
           type="button"
-          class="crm-btn-success !py-2 !text-sm"
+          class="crm-btn-success crm-btn-md"
           [disabled]="totalPendentes === 0"
           (click)="selecionarPendentes()"
         >
@@ -176,8 +176,8 @@
         </button>
         <button
           type="button"
-          class="crm-btn-ghost !py-2 !text-sm"
-          [class.!border-violet-500]="filtroEnvio === 'PENDENTES'"
+          class="crm-btn-ghost crm-btn-md"
+          [class.crm-btn-ghost--active]="filtroEnvio === 'PENDENTES'"
           (click)="focarPendentes()"
         >
           Ver só pendentes
@@ -201,15 +201,15 @@
 
   <div class="crm-info-banner">
     <p>
-      O link <code class="text-violet-300">wa.me</code> envia só texto. Na fila, use
+      O link <code class="crm-code">wa.me</code> envia só texto. Na fila, use
       <strong class="text-slate-300">Marcar enviado</strong> para registrar cada cliente.
     </p>
   </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <app-stat-card title="Enviados" [value]="totalEnviados.toString()" color="#22C55E"></app-stat-card>
-    <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" color="#F59E0B"></app-stat-card>
-    <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" color="#8B5CF6"></app-stat-card>
+    <app-stat-card title="Enviados" [value]="totalEnviados.toString()" variant="success"></app-stat-card>
+    <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" variant="warning"></app-stat-card>
+    <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" variant="primary"></app-stat-card>
     <app-stat-card title="Elegíveis" [value]="qtdPublicoElegivel.toString()" color="#64748B"></app-stat-card>
   </div>
 
@@ -236,8 +236,8 @@
           <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-32 overflow-y-auto">{{ formMensagem }}</pre>
         </div>
 
-        <div class="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3 space-y-2">
-          <p class="text-violet-300/90 text-xs font-medium uppercase tracking-wide">
+        <div class="rounded-xl crm-accent-panel p-3 space-y-2">
+          <p class="crm-kicker">
             Prévia com nome
           </p>
           <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-32 overflow-y-auto">{{ previewMensagemCampanha }}</pre>
@@ -410,7 +410,7 @@
             <div class="flex flex-wrap gap-2">
               <button
                 type="button"
-                class="crm-btn-ghost !py-1.5 !text-xs"
+                class="crm-btn-ghost crm-btn-sm"
                 [disabled]="qtdPublicoSelecionaveis === 0"
                 (click)="selecionarElegiveisWhatsApp()"
               >
@@ -418,7 +418,7 @@
               </button>
               <button
                 type="button"
-                class="crm-btn-ghost !py-1.5 !text-xs"
+                class="crm-btn-ghost crm-btn-sm"
                 [disabled]="qtdFiltradosSelecionaveis === 0"
                 (click)="alternarSelecionarTodosFiltrados($event)"
               >
@@ -426,7 +426,7 @@
               </button>
               <button
                 type="button"
-                class="crm-btn-ghost !py-1.5 !text-xs"
+                class="crm-btn-ghost crm-btn-sm"
                 [disabled]="qtdSelecionados === 0"
                 (click)="limparSelecao()"
               >
@@ -479,7 +479,7 @@
               <td>
                 <a
                   [routerLink]="['/clientes', linha.id]"
-                  class="text-violet-400 hover:underline font-medium no-underline block"
+                  class="crm-link font-medium block"
                   (click)="$event.stopPropagation()"
                 >
                   {{ linha.nome }}
@@ -506,7 +506,7 @@
                   <button
                     *ngIf="podeReenviar(linha)"
                     type="button"
-                    class="crm-btn-ghost !py-1 !px-2 !text-xs shrink-0"
+                    class="crm-btn-ghost crm-btn-xs shrink-0"
                     [disabled]="reenviandoId === linha.id"
                     (click)="reenviarCliente(linha, $event)"
                   >
@@ -548,7 +548,7 @@
                 <p class="crm-mobile-card-title">
                   <a
                     [routerLink]="['/clientes', linha.id]"
-                    class="text-violet-400 hover:underline no-underline block truncate"
+                    class="crm-link block truncate"
                     (click)="$event.stopPropagation()"
                   >
                     {{ linha.nome }}
@@ -589,7 +589,7 @@
             <button
               *ngIf="podeReenviar(linha)"
               type="button"
-              class="crm-btn-ghost !py-1 !px-2 !text-xs"
+              class="crm-btn-ghost crm-btn-xs"
               [disabled]="reenviandoId === linha.id"
               (click)="reenviarCliente(linha, $event)"
             >

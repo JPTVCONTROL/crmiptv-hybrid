@@ -45,7 +45,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   background: var(--crm-bg);
-  color: #e2e8f0;
+  color: var(--crm-text-secondary);
+  font-size: var(--crm-font-base);
 }
 
 * {

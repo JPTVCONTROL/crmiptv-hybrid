@@ -11,6 +11,7 @@ import { textoHintDashboardApiOffline } from '../../shared/utils/api-endereco';
 import { AlertaOperacional, Configuracao, DashboardResumo } from '../../core/models';
 import {
   calcularDias,
+  dataIsoParaDateUtc,
   formatarData,
   formatarValor,
 } from '../../shared/utils/formatters';
@@ -405,6 +406,25 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   rotuloContato(ultimoContatoEm?: string | null): string {
     return rotuloUltimoContato(ultimoContatoEm);
+  }
+
+  classeVencimentoItem(vencimento: string): string {
+    const dias = calcularDias(vencimento);
+    if (dias <= 0) return 'crm-dash-vencimento--hoje';
+    if (dias === 1) return 'crm-dash-vencimento--amanha';
+    if (dias <= 3) return 'crm-dash-vencimento--breve';
+    return 'crm-dash-vencimento--normal';
+  }
+
+  partesDataVencimento(vencimento: string): { dia: string; mes: string } {
+    const data = dataIsoParaDateUtc(vencimento);
+    const dia = data.getUTCDate().toString().padStart(2, '0');
+    const mes = data
+      .toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' })
+      .replace('.', '')
+      .toUpperCase();
+
+    return { dia, mes };
   }
 
   fmtData = formatarData;

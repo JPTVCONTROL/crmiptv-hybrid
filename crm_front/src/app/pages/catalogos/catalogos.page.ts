@@ -46,17 +46,10 @@ export class CatalogosPage {
       });
   }
 
-  classesAba(rota: string): Record<string, boolean> {
+  classesAba(rota: string): string {
     const ativa = this.router.url.startsWith(rota);
-    return {
-      'border-violet-500': ativa,
-      'bg-violet-600/15': ativa,
-      'text-violet-200': ativa,
-      'border-slate-700': !ativa,
-      'bg-slate-800/50': !ativa,
-      'text-slate-400': !ativa,
-      'hover:border-slate-600': !ativa,
-      'hover:text-slate-300': !ativa,
-    };
+    return ativa
+      ? 'crm-filter-chip crm-filter-chip--selected-violet'
+      : 'crm-filter-chip crm-filter-chip--idle';
   }
 }

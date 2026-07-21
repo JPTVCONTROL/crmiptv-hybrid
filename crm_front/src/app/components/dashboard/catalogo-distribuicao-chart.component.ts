@@ -1,21 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges } from '@angular/core';
 
+import { CRM_CHART_PALETTE } from '../../shared/constants/crm-theme.constants';
+
 export interface DadoCatalogoDistribuicao {
   nome: string;
   quantidade: number;
 }
 
-const CORES = [
-  '#7C3AED',
-  '#22C55E',
-  '#38BDF8',
-  '#F59E0B',
-  '#EF4444',
-  '#EC4899',
-  '#14B8A6',
-  '#A855F7',
-];
+const CORES = [...CRM_CHART_PALETTE, '#14B8A6', '#EC4899'];
 
 @Component({
   selector: 'app-catalogo-distribuicao-chart',

@@ -79,7 +79,7 @@
           type="button"
           class="crm-btn-ghost"
           [ngClass]="{
-            '!border-violet-500/40': ehCortesia,
+            'crm-accent-panel': ehCortesia,
             '!text-violet-200': ehCortesia
           }"
           [disabled]="alternandoCortesia"
@@ -150,9 +150,9 @@
 
   <div
     *ngIf="ehCortesia && !ehSomenteContato"
-    class="crm-card border border-violet-500/25 bg-violet-500/5"
+    class="crm-card crm-accent-panel"
   >
-    <p class="text-violet-200 text-sm">
+    <p class="crm-text-highlight text-sm">
       Cliente <span class="font-medium">cortesia</span>: aparece em Vencimentos, mas sem cobrança,
       lembretes ou pagamento. Use <span class="font-medium">Renovar cortesia</span> para estender a validade.
     </p>
@@ -213,7 +213,7 @@
           <button
             *ngIf="temCredenciais()"
             type="button"
-            class="crm-btn-ghost !py-1.5 !text-xs"
+            class="crm-btn-ghost crm-btn-sm"
             (click)="copiarCredenciais()"
           >
             Copiar credenciais
@@ -243,7 +243,7 @@
       <button
         *ngIf="temPix()"
         type="button"
-        class="crm-btn-ghost !py-1.5 !text-xs"
+        class="crm-btn-ghost crm-btn-sm"
         (click)="copiarPix()"
       >
         Copiar PIX
@@ -269,7 +269,7 @@
         class="crm-card-nested"
         [class.mt-0]="i === 0"
       >
-        <p *ngIf="qtdTelas() > 1" class="text-violet-400 text-xs font-medium">Tela {{ i + 1 }}</p>
+        <p *ngIf="qtdTelas() > 1" class="crm-text-accent text-xs font-medium">Tela {{ i + 1 }}</p>
         <p class="text-slate-300"><span class="text-slate-500">Dispositivo:</span> {{ rotuloTela(disp, i) }}</p>
         <p class="text-slate-300"><span class="text-slate-500">Aplicativo:</span> {{ rotuloAplicativoTela(disp) }}</p>
         <p class="text-slate-300"><span class="text-slate-500">MAC:</span> {{ disp.macAddress || '—' }}</p>
