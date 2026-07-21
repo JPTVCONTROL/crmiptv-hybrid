@@ -47,6 +47,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   selecionados = new Set<number>();
   enviando = false;
   filtroGrupo: FiltroGrupoCobranca = 'TODOS';
+  filtroSomentePendentes = false;
   automacaoAtiva = false;
   salvandoAutomacao = false;
   whatsappApiConfigurado = false;
@@ -114,6 +115,20 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     );
   }
 
+  get qtdPendentesHoje(): number {
+    return this.itensContactaveis.filter(
+      (item) => !contatoRegistradoHoje(item.ultimoContatoEm)
+    ).length;
+  }
+
+  get itensFiltrados(): ItemCobrancaDiaria[] {
+    return this.itens.filter((item) => this.itemPassaFiltroPendentes(item));
+  }
+
+  get listaFiltradaVazia(): boolean {
+    return this.itens.length > 0 && this.itensFiltrados.length === 0;
+  }
+
   get progressoRotina(): string {
     return `${this.contactadosHoje} de ${this.itensContactaveis.length} contactados hoje`;
   }
@@ -157,6 +172,10 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   }
 
   private aplicarQueryParams(selecionarPendentes: boolean): void {
+    if (selecionarPendentes) {
+      this.filtroSomentePendentes = true;
+    }
+
     if (selecionarPendentes && this.itens.length > 0) {
       this.selecionarNaoContactados();
     } else {
@@ -312,6 +331,18 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     this.filtroGrupo = filtro;
   }
 
+  alternarFiltroSomentePendentes(): void {
+    this.filtroSomentePendentes = !this.filtroSomentePendentes;
+  }
+
+  private itemPassaFiltroPendentes(item: ItemCobrancaDiaria): boolean {
+    if (!this.filtroSomentePendentes) {
+      return true;
+    }
+
+    return !contatoRegistradoHoje(item.ultimoContatoEm);
+  }
+
   selecionarSomente(tipo: TipoCobrancaDiaria): void {
     this.selecionados = new Set(
       this.itensPorTipo(tipo)
@@ -329,7 +360,9 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   }
 
   itensPorTipo(tipo: TipoCobrancaDiaria): ItemCobrancaDiaria[] {
-    return this.itens.filter((item) => item.tipo === tipo);
+    return this.itens.filter(
+      (item) => item.tipo === tipo && this.itemPassaFiltroPendentes(item)
+    );
   }
 
   get qtdAtrasados(): number {

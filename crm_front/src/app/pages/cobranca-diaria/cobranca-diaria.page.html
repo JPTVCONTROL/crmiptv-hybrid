@@ -92,6 +92,55 @@
     </div>
   </div>
 
+  <div class="crm-hero-card !p-4 md:!p-5">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-violet-300/90 text-xs font-semibold uppercase tracking-[0.14em] mb-1.5">
+          Rotina do dia
+        </p>
+        <h2 class="text-white text-lg md:text-xl font-bold">
+          {{
+            rotinaFeitaHoje
+              ? 'Todos contactados hoje'
+              : qtdPendentesHoje + ' cliente(s) aguardando contato'
+          }}
+        </h2>
+        <p class="text-slate-400 text-sm mt-1">{{ progressoRotina }}</p>
+      </div>
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <button
+          type="button"
+          class="crm-btn-success !py-2 !text-sm"
+          [disabled]="qtdPendentesHoje === 0"
+          (click)="selecionarNaoContactados()"
+        >
+          Contactar pendentes ({{ qtdPendentesHoje }})
+        </button>
+        <button
+          type="button"
+          class="crm-btn-ghost !py-2 !text-sm"
+          [class.!border-violet-500]="filtroSomentePendentes"
+          (click)="alternarFiltroSomentePendentes()"
+        >
+          {{ filtroSomentePendentes ? 'Mostrar todos' : 'Só não contactados' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="itensContactaveis.length > 0" class="mt-4">
+      <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+        <span>Progresso da rotina WhatsApp</span>
+        <span class="text-slate-300">{{ progressoRotinaPercent }}%</span>
+      </div>
+      <div class="crm-progress-track">
+        <div
+          class="crm-progress-fill crm-progress-fill--rotina"
+          [style.width.%]="progressoRotinaPercent"
+        ></div>
+      </div>
+    </div>
+  </div>
+
   <div class="flex flex-col sm:flex-row flex-wrap gap-2">
     <button
       class="crm-btn-primary"
@@ -162,6 +211,14 @@
       <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('A_VENCER')">
         Selecionar a vencer
       </button>
+      <button
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs"
+        [class.!border-emerald-500]="filtroSomentePendentes"
+        (click)="alternarFiltroSomentePendentes()"
+      >
+        {{ filtroSomentePendentes ? 'Mostrar todos' : 'Só pendentes' }}
+      </button>
       <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarNaoContactados()">
         Selecionar pendentes
       </button>
@@ -190,7 +247,16 @@
     actionRoute="/vencimentos"
   ></app-empty-state>
 
-  <ng-container *ngIf="itens.length > 0">
+  <app-empty-state
+    *ngIf="listaFiltradaVazia"
+    title="Nenhum pendente na lista"
+    message="Todos os clientes elegiveis ja foram contactados hoje. Desative o filtro para rever a rotina completa."
+    iconName="checkmark-circle-outline"
+    actionLabel="Mostrar todos"
+    (action)="alternarFiltroSomentePendentes()"
+  ></app-empty-state>
+
+  <ng-container *ngIf="itensFiltrados.length > 0">
     <section *ngIf="itensVisiveisPorTipo('ATRASADO').length > 0" class="space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
