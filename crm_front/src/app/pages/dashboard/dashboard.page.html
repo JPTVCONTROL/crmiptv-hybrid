@@ -180,90 +180,104 @@
     </div>
   </section>
 
-  <section>
-    <div class="flex items-center justify-between gap-3 mb-3">
+  <section class="space-y-4">
+    <div class="flex items-center justify-between gap-3">
       <h2 class="crm-section-label !mb-0">Indicadores</h2>
       <a routerLink="/relatorios" class="text-violet-400 text-xs hover:underline no-underline">
         Relatórios
       </a>
     </div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <a routerLink="/financeiro" class="crm-stat-card-link">
+
+    <div class="crm-indicators-tier crm-indicators-tier--operacao space-y-3">
+      <p class="text-emerald-300/90 text-[10px] font-semibold uppercase tracking-[0.14em]">
+        Operação · mês atual
+      </p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <a routerLink="/financeiro" class="crm-stat-card-link">
+          <app-stat-card
+            title="Recebido no mês"
+            [value]="recebidoMes"
+            color="#22C55E"
+            [subtitle]="'Meta ' + metaMesPercentual + '% do previsto'"
+          ></app-stat-card>
+        </a>
+        <a routerLink="/financeiro" class="crm-stat-card-link">
+          <app-stat-card
+            title="A receber no mês"
+            [value]="aReceberEsteMes"
+            color="#F59E0B"
+            [subtitle]="qtdEsteMes + ' cobrança(s) pendente(s)'"
+          ></app-stat-card>
+        </a>
+        <a routerLink="/vencimentos" class="crm-stat-card-link">
+          <app-stat-card
+            [title]="'Vencendo · ' + diasAntecedencia + 'd'"
+            [value]="vencendoQtd.toString()"
+            color="#FB923C"
+            [subtitle]="vencendoValor + ' em risco'"
+          ></app-stat-card>
+        </a>
         <app-stat-card
-          title="Recebido no mês"
-          [value]="recebidoMes"
-          color="#22C55E"
-          [subtitle]="'Meta ' + metaMesPercentual + '% do previsto'"
+          title="Inadimplência"
+          [value]="inadimplenciaPercentual"
+          color="#EF4444"
+          [subtitle]="cobrancaAtrasadaQtd + ' cobrança(s) · ' + cobrancaAtrasadaValor"
         ></app-stat-card>
-      </a>
-      <a routerLink="/financeiro" class="crm-stat-card-link">
+      </div>
+    </div>
+
+    <div class="crm-indicators-tier crm-indicators-tier--negocio space-y-3">
+      <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-[0.14em]">
+        Negócio · projeções
+      </p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <app-stat-card
-          title="A receber no mês"
-          [value]="aReceberEsteMes"
-          color="#F59E0B"
-          [subtitle]="qtdEsteMes + ' cobrança(s) pendente(s)'"
+          title="MRR estimado"
+          [value]="mrr"
+          color="#A855F7"
+          [subtitle]="conexoes + ' conexões · ticket ' + ticketMedio"
         ></app-stat-card>
-      </a>
-      <app-stat-card
-        title="MRR estimado"
-        [value]="mrr"
-        color="#A855F7"
-        [subtitle]="conexoes + ' conexões · ticket ' + ticketMedio"
-      ></app-stat-card>
-      <app-stat-card
-        title="ARR até fim do ano"
-        [value]="arr"
-        color="#D946EF"
-        [subtitle]="arrRotulo"
-      ></app-stat-card>
-      <a routerLink="/vencimentos" class="crm-stat-card-link">
         <app-stat-card
-          [title]="'Vencendo · ' + diasAntecedencia + 'd'"
-          [value]="vencendoQtd.toString()"
-          color="#FB923C"
-          [subtitle]="vencendoValor + ' em risco'"
+          title="ARR até fim do ano"
+          [value]="arr"
+          color="#D946EF"
+          [subtitle]="arrRotulo"
         ></app-stat-card>
-      </a>
-      <app-stat-card
-        title="Estimativa · próximo ano"
-        [value]="ganhosProximoAno"
-        color="#3B82F6"
-        [subtitle]="ganhosProximoAnoRotulo"
-      ></app-stat-card>
-      <a routerLink="/clientes" class="crm-stat-card-link">
         <app-stat-card
-          title="Novos (30 dias)"
-          [value]="'+' + novosClientes30d"
-          [color]="variacaoNovosPositiva ? '#22C55E' : '#EF4444'"
-          [subtitle]="variacaoNovosRotulo"
+          title="Estimativa · próximo ano"
+          [value]="ganhosProximoAno"
+          color="#3B82F6"
+          [subtitle]="ganhosProximoAnoRotulo"
         ></app-stat-card>
-      </a>
-      <app-stat-card
-        title="Inadimplência"
-        [value]="inadimplenciaPercentual"
-        color="#EF4444"
-        [subtitle]="cobrancaAtrasadaQtd + ' cobrança(s) · ' + cobrancaAtrasadaValor"
-      ></app-stat-card>
-      <app-stat-card
-        *ngIf="qtdCortesia > 0"
-        title="Cortesia"
-        [value]="qtdCortesia.toString()"
-        color="#A855F7"
-        subtitle="sem cobrança automática"
-      ></app-stat-card>
-      <a
-        *ngIf="cadastrosIncompletos > 0"
-        routerLink="/clientes"
-        [queryParams]="{ incompleto: 1 }"
-        class="crm-stat-card-link"
-      >
+        <a routerLink="/clientes" class="crm-stat-card-link">
+          <app-stat-card
+            title="Novos (30 dias)"
+            [value]="'+' + novosClientes30d"
+            [color]="variacaoNovosPositiva ? '#22C55E' : '#EF4444'"
+            [subtitle]="variacaoNovosRotulo"
+          ></app-stat-card>
+        </a>
         <app-stat-card
-          title="Cadastro incompleto"
-          [value]="cadastrosIncompletos.toString()"
-          color="#F59E0B"
-          subtitle="corrigir dados faltantes"
+          *ngIf="qtdCortesia > 0"
+          title="Cortesia"
+          [value]="qtdCortesia.toString()"
+          color="#A855F7"
+          subtitle="sem cobrança automática"
         ></app-stat-card>
-      </a>
+        <a
+          *ngIf="cadastrosIncompletos > 0"
+          routerLink="/clientes"
+          [queryParams]="{ incompleto: 1 }"
+          class="crm-stat-card-link"
+        >
+          <app-stat-card
+            title="Cadastro incompleto"
+            [value]="cadastrosIncompletos.toString()"
+            color="#F59E0B"
+            subtitle="corrigir dados faltantes"
+          ></app-stat-card>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -302,7 +316,7 @@
             <div class="min-w-0">
               <a
                 [routerLink]="['/clientes', m.clienteId]"
-                class="text-white text-sm font-medium truncate no-underline hover:text-violet-300 block"
+                class="text-violet-400 text-sm font-medium truncate no-underline hover:underline block"
               >
                 {{ m.clienteNome }}
               </a>
@@ -367,7 +381,14 @@
       >
         <div class="crm-mobile-card-header">
           <div class="min-w-0">
-            <p class="crm-mobile-card-title">{{ c.nome }}</p>
+            <p class="crm-mobile-card-title">
+              <a
+                [routerLink]="['/clientes', c.id]"
+                class="text-violet-400 hover:underline no-underline block truncate"
+              >
+                {{ c.nome }}
+              </a>
+            </p>
             <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
           </div>
           <app-status-badge
@@ -436,7 +457,12 @@
             [class.border-l-red-500]="c.status === 'INATIVO'"
           >
             <td class="py-2.5 px-2">
-              <p class="text-white font-medium truncate max-w-[200px]">{{ c.nome }}</p>
+              <a
+                [routerLink]="['/clientes', c.id]"
+                class="text-violet-400 hover:underline font-medium truncate max-w-[200px] no-underline block"
+              >
+                {{ c.nome }}
+              </a>
               <p class="text-slate-500 text-xs">{{ c.telefone }}</p>
             </td>
             <td class="py-2.5 px-2 text-slate-300 whitespace-nowrap">

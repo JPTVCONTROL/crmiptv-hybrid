@@ -40,6 +40,10 @@ import {
   VarianteFilterChip,
 } from '../../shared/utils/filter-chip.util';
 import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+import {
+  contatoRegistradoHoje,
+  classeDotContato,
+} from '../../shared/utils/contato';
 
 const CHAVE_DENSIDADE_FINANCEIRO = 'crm.financeiro.tabelaCompacta';
 
@@ -489,6 +493,14 @@ export class FinanceiroPage implements OnInit, OnDestroy {
 
   get classesTabela(): string {
     return this.tabelaCompacta ? 'crm-table crm-table--compact' : 'crm-table';
+  }
+
+  linhaContactada(m: Mensalidade): boolean {
+    return contatoRegistradoHoje(m.ultimoContatoEm);
+  }
+
+  classeDot(m: Mensalidade): string {
+    return classeDotContato(m.ultimoContatoEm);
   }
 
   fmtValor = formatarValor;

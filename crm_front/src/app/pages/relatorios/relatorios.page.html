@@ -374,9 +374,12 @@
 
       <app-empty-state
         *ngIf="ultimosPagamentos.length === 0"
+        [title]="modo === 'ANUAL' ? 'Nenhum pagamento no ano' : 'Nenhum pagamento no período'"
         [message]="modo === 'ANUAL'
-          ? 'Nenhum pagamento registrado neste ano.'
-          : 'Nenhum pagamento registrado neste período.'"
+          ? 'Registre renovações no Financeiro para ver o histórico aqui.'
+          : 'Altere o mês ou registre pagamentos no Financeiro.'"
+        actionLabel="Ir para Financeiro"
+        actionRoute="/financeiro"
       ></app-empty-state>
     </section>
   </div>

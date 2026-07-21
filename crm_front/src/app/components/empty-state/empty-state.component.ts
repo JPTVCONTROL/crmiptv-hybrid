@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 @Component({
   selector: 'app-empty-state',
   template: `
-    <div class="crm-empty-state">
+    <div class="crm-empty-state crm-fade-in">
       <div class="crm-empty-state-icon" aria-hidden="true">
         <ion-icon *ngIf="iconName" [name]="iconName"></ion-icon>
         <svg
@@ -28,8 +28,16 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
       </div>
       <p class="crm-empty-state-title">{{ displayTitle }}</p>
       <p *ngIf="displayHint" class="crm-empty-state-message">{{ displayHint }}</p>
+      <a
+        *ngIf="actionLabel && actionRoute"
+        [routerLink]="actionRoute"
+        [queryParams]="actionQueryParams"
+        class="crm-btn-primary mt-2 no-underline inline-block"
+      >
+        {{ actionLabel }}
+      </a>
       <button
-        *ngIf="actionLabel"
+        *ngIf="actionLabel && !actionRoute"
         type="button"
         class="crm-btn-primary mt-2"
         (click)="action.emit()"
@@ -44,6 +52,8 @@ export class EmptyStateComponent {
   @Input() message = '';
   @Input() iconName?: string;
   @Input() actionLabel?: string;
+  @Input() actionRoute?: string | any[];
+  @Input() actionQueryParams?: Record<string, string | number | boolean | null>;
   @Output() action = new EventEmitter<void>();
 
   get displayTitle(): string {

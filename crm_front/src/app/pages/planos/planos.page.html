@@ -7,13 +7,15 @@
     <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Plano</button>
   </app-page-header>
 
-  <div *ngIf="!loading" class="crm-card !p-4 flex flex-col sm:flex-row gap-3">
+  <div *ngIf="!loading" class="crm-sticky-toolbar">
+    <div class="crm-card !p-4 flex flex-col sm:flex-row gap-3">
     <input type="search" class="crm-input flex-1" placeholder="Buscar plano..." [(ngModel)]="busca" />
     <select class="crm-input sm:max-w-[10rem]" [(ngModel)]="filtroAtivo">
       <option value="TODOS">Todos</option>
       <option value="ATIVO">Ativos</option>
       <option value="INATIVO">Inativos</option>
     </select>
+    </div>
   </div>
 
   <app-loading *ngIf="loading" variant="cards"></app-loading>
@@ -71,10 +73,18 @@
     </section>
   </div>
 
-  <app-empty-state *ngIf="!loading && planos.length === 0" iconName="albums-outline"></app-empty-state>
+  <app-empty-state
+    *ngIf="!loading && planos.length === 0"
+    title="Nenhum plano cadastrado"
+    message="Crie planos para vincular aos clientes."
+    iconName="albums-outline"
+    actionLabel="+ Novo plano"
+    (action)="abrirModal()"
+  ></app-empty-state>
   <app-empty-state
     *ngIf="!loading && planos.length > 0 && planosFiltrados.length === 0"
-    message="Nenhum plano encontrado para os filtros."
+    title="Nenhum plano encontrado"
+    message="Ajuste a busca ou o filtro de status."
     iconName="search-outline"
   ></app-empty-state>
 </div>

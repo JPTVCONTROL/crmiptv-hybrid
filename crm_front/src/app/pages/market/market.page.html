@@ -188,8 +188,8 @@
               (click)="alternarDensidadeTabela()"
               title="Alternar densidade da tabela"
             >
-              <ion-icon [name]="tabelaCompacta ? 'expand-outline' : 'contract-outline'"></ion-icon>
-              {{ tabelaCompacta ? 'Confortável' : 'Compacto' }}
+              <ion-icon [name]="tabelaCompacta ? 'contract-outline' : 'expand-outline'"></ion-icon>
+              {{ tabelaCompacta ? 'Compacto' : 'Confortável' }}
             </button>
             <button
               type="button"
@@ -384,7 +384,13 @@
                 />
               </td>
               <td>
-                <p class="text-white font-medium">{{ linha.nome }}</p>
+                <a
+                  [routerLink]="['/clientes', linha.id]"
+                  class="text-violet-400 hover:underline font-medium no-underline block"
+                  (click)="$event.stopPropagation()"
+                >
+                  {{ linha.nome }}
+                </a>
                 <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
                   <span [class]="classeBadgeStatusPublico(linha.status)">{{
                     rotuloStatusPublico(linha.status)
@@ -445,7 +451,15 @@
                 (click)="alternarSelecaoClick(linha.id, $event)"
               />
               <div class="min-w-0">
-                <p class="crm-mobile-card-title">{{ linha.nome }}</p>
+                <p class="crm-mobile-card-title">
+                  <a
+                    [routerLink]="['/clientes', linha.id]"
+                    class="text-violet-400 hover:underline no-underline block truncate"
+                    (click)="$event.stopPropagation()"
+                  >
+                    {{ linha.nome }}
+                  </a>
+                </p>
                 <p class="crm-mobile-card-subtitle">{{ linha.telefone }}</p>
               </div>
             </label>

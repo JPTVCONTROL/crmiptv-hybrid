@@ -7,13 +7,15 @@
     <button class="crm-btn-primary shrink-0" (click)="abrirModal()">+ Novo Dispositivo</button>
   </app-page-header>
 
-  <div *ngIf="!loading" class="crm-card !p-4 flex flex-col sm:flex-row gap-3">
+  <div *ngIf="!loading" class="crm-sticky-toolbar">
+    <div class="crm-card !p-4 flex flex-col sm:flex-row gap-3">
     <input type="search" class="crm-input flex-1" placeholder="Buscar dispositivo..." [(ngModel)]="busca" />
     <select class="crm-input sm:max-w-[10rem]" [(ngModel)]="filtroAtivo">
       <option value="TODOS">Todos</option>
       <option value="ATIVO">Ativos</option>
       <option value="INATIVO">Inativos</option>
     </select>
+    </div>
   </div>
 
   <app-loading *ngIf="loading" variant="cards"></app-loading>
@@ -61,10 +63,18 @@
     </div>
   </div>
 
-  <app-empty-state *ngIf="!loading && dispositivos.length === 0" iconName="tv-outline"></app-empty-state>
+  <app-empty-state
+    *ngIf="!loading && dispositivos.length === 0"
+    title="Nenhum dispositivo cadastrado"
+    message="Cadastre tipos de aparelho para as telas dos clientes."
+    iconName="tv-outline"
+    actionLabel="+ Novo dispositivo"
+    (action)="abrirModal()"
+  ></app-empty-state>
   <app-empty-state
     *ngIf="!loading && dispositivos.length > 0 && dispositivosFiltrados.length === 0"
-    message="Nenhum dispositivo encontrado para os filtros."
+    title="Nenhum dispositivo encontrado"
+    message="Ajuste a busca ou o filtro de status."
     iconName="search-outline"
   ></app-empty-state>
 </div>

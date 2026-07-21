@@ -92,49 +92,21 @@
     </div>
   </div>
 
-  <div class="crm-info-banner">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <div>
-        <p class="text-white font-medium">Rotina diária de WhatsApp</p>
-        <p class="text-slate-400 text-sm mt-1">
-          Clientes <span class="text-red-300">atrasados</span> recebem cobrança;
-          quem vence em até {{ diasAntecedencia }} dias recebe lembrete.
-          O envio em lote abre uma <strong class="text-slate-300">fila assistida</strong>
-          (um clique por cliente — evita bloqueio do navegador).
-          Para registrar renovações, use
-          <a routerLink="/financeiro" class="text-violet-400 hover:underline">Financeiro</a>
-          ou o botão <strong class="text-slate-300">Renovar</strong> em cada linha.
-        </p>
-        <p *ngIf="rotinaFeitaHoje" class="text-green-400 text-xs mt-2">
-          Rotina concluída hoje · {{ progressoRotina }}
-        </p>
-        <p *ngIf="!rotinaFeitaHoje && itensContactaveis.length > 0" class="text-amber-400 text-xs mt-2">
-          Rotina em andamento · {{ progressoRotina }}
-        </p>
-        <p *ngIf="qtdSelecionados > 0" class="text-slate-400 text-xs mt-2">
-          Selecionados: {{ resumoEnvio }}
-        </p>
-        <p *ngIf="qtdSemTelefone > 0" class="text-amber-400 text-xs mt-2">
-          {{ qtdSemTelefone }} cliente(s) sem telefone válido — não entram no envio em lote.
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2 shrink-0">
-        <button
-          class="crm-btn-primary"
-          [disabled]="qtdSelecionadosValidos === 0 || enviando"
-          (click)="enviarSelecionados()"
-        >
-          {{
-            enviando
-              ? 'Abrindo WhatsApp...'
-              : 'Enviar rotina (' + qtdSelecionadosValidos + ')'
-          }}
-        </button>
-        <button type="button" class="crm-btn-ghost" (click)="selecionarElegiveis()">
-          Selecionar elegíveis
-        </button>
-      </div>
-    </div>
+  <div class="flex flex-col sm:flex-row flex-wrap gap-2">
+    <button
+      class="crm-btn-primary"
+      [disabled]="qtdSelecionadosValidos === 0 || enviando"
+      (click)="enviarSelecionados()"
+    >
+      {{
+        enviando
+          ? 'Abrindo WhatsApp...'
+          : 'Enviar rotina (' + qtdSelecionadosValidos + ')'
+      }}
+    </button>
+    <button type="button" class="crm-btn-ghost" (click)="selecionarElegiveis()">
+      Selecionar elegíveis
+    </button>
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -158,45 +130,64 @@
     ></app-stat-card>
   </div>
 
-  <div class="flex flex-wrap gap-2">
-    <button
-      type="button"
-      class="crm-btn-ghost !py-1.5 !text-xs"
-      [class.!border-violet-500]="filtroGrupo === 'TODOS'"
-      (click)="definirFiltroGrupo('TODOS')"
-    >
-      Todos
-    </button>
-    <button
-      type="button"
-      class="crm-btn-ghost !py-1.5 !text-xs"
-      [class.!border-red-500]="filtroGrupo === 'ATRASADO'"
-      (click)="definirFiltroGrupo('ATRASADO')"
-    >
-      Só atrasados
-    </button>
-    <button
-      type="button"
-      class="crm-btn-ghost !py-1.5 !text-xs"
-      [class.!border-amber-500]="filtroGrupo === 'A_VENCER'"
-      (click)="definirFiltroGrupo('A_VENCER')"
-    >
-      Só a vencer
-    </button>
-    <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('ATRASADO')">
-      Selecionar atrasados
-    </button>
-    <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('A_VENCER')">
-      Selecionar a vencer
-    </button>
-    <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarNaoContactados()">
-      Selecionar pendentes
-    </button>
+  <div class="crm-sticky-toolbar space-y-3">
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs"
+        [class.!border-violet-500]="filtroGrupo === 'TODOS'"
+        (click)="definirFiltroGrupo('TODOS')"
+      >
+        Todos
+      </button>
+      <button
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs"
+        [class.!border-red-500]="filtroGrupo === 'ATRASADO'"
+        (click)="definirFiltroGrupo('ATRASADO')"
+      >
+        Só atrasados
+      </button>
+      <button
+        type="button"
+        class="crm-btn-ghost !py-1.5 !text-xs"
+        [class.!border-amber-500]="filtroGrupo === 'A_VENCER'"
+        (click)="definirFiltroGrupo('A_VENCER')"
+      >
+        Só a vencer
+      </button>
+      <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('ATRASADO')">
+        Selecionar atrasados
+      </button>
+      <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarSomente('A_VENCER')">
+        Selecionar a vencer
+      </button>
+      <button type="button" class="crm-btn-ghost !py-1.5 !text-xs" (click)="selecionarNaoContactados()">
+        Selecionar pendentes
+      </button>
+    </div>
+
+    <div *ngIf="itensContactaveis.length > 0">
+      <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+        <span>{{ progressoRotina }}</span>
+        <span class="text-slate-300">{{ progressoRotinaPercent }}%</span>
+      </div>
+      <div class="crm-progress-track">
+        <div
+          class="crm-progress-fill crm-progress-fill--rotina"
+          [style.width.%]="progressoRotinaPercent"
+        ></div>
+      </div>
+    </div>
   </div>
 
   <app-empty-state
     *ngIf="itens.length === 0"
-    message="Nenhum cliente na rotina de hoje. Atrasados e vencimentos em até 5 dias aparecem aqui."
+    title="Rotina vazia hoje"
+    message="Atrasados e vencimentos em até 5 dias aparecem aqui."
+    iconName="chatbubbles-outline"
+    actionLabel="Ver vencimentos"
+    actionRoute="/vencimentos"
   ></app-empty-state>
 
   <ng-container *ngIf="itens.length > 0">
@@ -244,7 +235,10 @@
             </div>
             <div class="crm-mobile-card-row">
               <span class="crm-mobile-card-label">Contato</span>
-              <span class="crm-mobile-card-value text-xs" [ngClass]="classeContato(item)">{{ rotuloContato(item) }}</span>
+              <span class="crm-mobile-card-value text-xs inline-flex items-center gap-1.5 justify-end" [ngClass]="classeContato(item)">
+                <span [class]="classeDot(item)" aria-hidden="true"></span>
+                {{ rotuloContato(item) }}
+              </span>
             </div>
           </div>
 
@@ -312,6 +306,7 @@
               *ngFor="let item of itensVisiveisPorTipo('ATRASADO'); trackBy: trackByItem"
               class="border-b border-slate-800/50"
               [class.opacity-50]="!item.telefoneValido"
+              [class.crm-table-row--contacted]="contatoRegistradoHoje(item)"
             >
               <td class="py-3 px-2">
                 <input
@@ -323,7 +318,8 @@
                 />
               </td>
               <td class="py-3 px-2">
-                <a [routerLink]="['/clientes', item.clienteId]" class="text-violet-400 hover:underline">
+                <a [routerLink]="['/clientes', item.clienteId]" class="text-violet-400 hover:underline inline-flex items-center gap-2">
+                  <span [class]="classeDot(item)" aria-hidden="true"></span>
                   {{ item.nome }}
                 </a>
                 <p *ngIf="!item.telefoneValido" class="text-amber-500 text-xs mt-0.5">Telefone inválido</p>
@@ -340,9 +336,13 @@
                 </span>
               </td>
               <td class="py-3 px-2">
-                <p class="text-xs" [class]="classeContato(item)">{{ rotuloContato(item) }}</p>
+                <p class="text-xs inline-flex items-center gap-1.5" [class]="classeContato(item)">
+                  <span [class]="classeDot(item)" aria-hidden="true"></span>
+                  {{ rotuloContato(item) }}
+                </p>
               </td>
-              <td class="py-3 px-2 text-right space-x-1">
+              <td class="py-3 px-2 text-right">
+                <div class="crm-table-actions">
                 <app-whatsapp-cobranca-btn
                   [compact]="true"
                   [telefone]="item.telefone"
@@ -369,6 +369,7 @@
                 >
                   {{ estaRenovando(item) ? 'Renovando...' : 'Renovar' }}
                 </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -429,7 +430,10 @@
             </div>
             <div class="crm-mobile-card-row">
               <span class="crm-mobile-card-label">Contato</span>
-              <span class="crm-mobile-card-value text-xs" [ngClass]="classeContato(item)">{{ rotuloContato(item) }}</span>
+              <span class="crm-mobile-card-value text-xs inline-flex items-center gap-1.5 justify-end" [ngClass]="classeContato(item)">
+                <span [class]="classeDot(item)" aria-hidden="true"></span>
+                {{ rotuloContato(item) }}
+              </span>
             </div>
           </div>
 
@@ -486,6 +490,7 @@
               *ngFor="let item of itensVisiveisPorTipo('A_VENCER'); trackBy: trackByItem"
               class="border-b border-slate-800/50"
               [class.opacity-50]="!item.telefoneValido"
+              [class.crm-table-row--contacted]="contatoRegistradoHoje(item)"
             >
               <td class="py-3 px-2">
                 <input
@@ -497,7 +502,8 @@
                 />
               </td>
               <td class="py-3 px-2">
-                <a [routerLink]="['/clientes', item.clienteId]" class="text-violet-400 hover:underline">
+                <a [routerLink]="['/clientes', item.clienteId]" class="text-violet-400 hover:underline inline-flex items-center gap-2">
+                  <span [class]="classeDot(item)" aria-hidden="true"></span>
                   {{ item.nome }}
                 </a>
                 <p *ngIf="!item.telefoneValido" class="text-amber-500 text-xs mt-0.5">Telefone inválido</p>
@@ -514,9 +520,13 @@
                 </span>
               </td>
               <td class="py-3 px-2">
-                <p class="text-xs" [class]="classeContato(item)">{{ rotuloContato(item) }}</p>
+                <p class="text-xs inline-flex items-center gap-1.5" [class]="classeContato(item)">
+                  <span [class]="classeDot(item)" aria-hidden="true"></span>
+                  {{ rotuloContato(item) }}
+                </p>
               </td>
-              <td class="py-3 px-2 text-right space-x-1">
+              <td class="py-3 px-2 text-right">
+                <div class="crm-table-actions">
                 <app-whatsapp-cobranca-btn
                   [compact]="true"
                   [telefone]="item.telefone"
@@ -533,6 +543,7 @@
                 >
                   {{ estaRenovando(item) ? 'Renovando...' : 'Renovar' }}
                 </button>
+                </div>
               </td>
             </tr>
           </tbody>

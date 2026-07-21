@@ -44,6 +44,18 @@ export function classeIndicadorContato(
   return 'text-slate-500';
 }
 
+export function classeDotContato(ultimoContatoEm?: string | null): string {
+  if (contatoRegistradoHoje(ultimoContatoEm)) {
+    return 'crm-contact-dot crm-contact-dot--done';
+  }
+
+  if (!ultimoContatoEm) {
+    return 'crm-contact-dot crm-contact-dot--warn';
+  }
+
+  return 'crm-contact-dot crm-contact-dot--pending';
+}
+
 export function bloqueioEnviadoHoje(
   bloqueioEnviadoEm?: string | null
 ): boolean {

@@ -83,8 +83,8 @@
           (click)="alternarDensidadeTabela()"
           title="Alternar densidade da tabela"
         >
-          <ion-icon [name]="tabelaCompacta ? 'expand-outline' : 'contract-outline'"></ion-icon>
-          {{ tabelaCompacta ? 'Confortável' : 'Compacto' }}
+          <ion-icon [name]="tabelaCompacta ? 'contract-outline' : 'expand-outline'"></ion-icon>
+          {{ tabelaCompacta ? 'Compacto' : 'Confortável' }}
         </button>
         <button type="button" class="crm-btn-primary shrink-0" (click)="novoCliente()">
         + Novo Cliente
@@ -111,7 +111,8 @@
     </button>
   </div>
 
-  <div class="crm-card !p-4 md:!p-5 space-y-4">
+  <div class="crm-sticky-toolbar">
+    <div class="crm-card !p-4 md:!p-5 space-y-4">
     <div class="relative">
       <ion-icon
         name="search-outline"
@@ -212,6 +213,7 @@
         Limpar filtros
       </button>
     </div>
+    </div>
   </div>
 </div>
 
@@ -274,7 +276,14 @@
   >
     <div class="crm-mobile-card-header">
       <div class="min-w-0">
-        <h3 class="crm-mobile-card-title">{{ c.nome }}</h3>
+        <h3 class="crm-mobile-card-title">
+          <a
+            [routerLink]="['/clientes', c.id]"
+            class="text-violet-400 hover:underline no-underline block truncate"
+          >
+            {{ c.nome }}
+          </a>
+        </h3>
         <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
       </div>
       <app-status-badge
@@ -410,8 +419,13 @@
           'bg-amber-500/5': filtroCadastro && pendenciasCliente(c).length > 0
         }"
       >
-        <td class="py-3 px-2 text-white">
-          <div class="font-medium">{{ c.nome }}</div>
+        <td class="py-3 px-2">
+          <a
+            [routerLink]="['/clientes', c.id]"
+            class="text-violet-400 hover:underline font-medium no-underline block truncate max-w-[240px]"
+          >
+            {{ c.nome }}
+          </a>
           <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia mt-1 inline-flex">Cortesia</span>
           <app-status-badge
             *ngIf="!participaCobrancas(c) && !ehCortesia(c)"

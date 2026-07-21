@@ -31,6 +31,10 @@ import {
   VarianteFilterChip,
 } from '../../shared/utils/filter-chip.util';
 import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+import {
+  contatoRegistradoHoje,
+  classeDotContato,
+} from '../../shared/utils/contato';
 
 const CHAVE_DENSIDADE_VENCIMENTOS = 'crm.vencimentos.tabelaCompacta';
 
@@ -355,6 +359,14 @@ export class VencimentosPage implements OnInit, OnDestroy {
     link.download = `vencimentos-${this.filtro.toLowerCase()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  linhaContactada(m: Mensalidade): boolean {
+    return contatoRegistradoHoje(m.ultimoContatoEm);
+  }
+
+  classeDot(m: Mensalidade): string {
+    return classeDotContato(m.ultimoContatoEm);
   }
 
   fmtValor = formatarValor;

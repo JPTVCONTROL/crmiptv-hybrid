@@ -29,6 +29,7 @@ import {
   contatoRegistradoHoje,
   rotuloUltimoContato,
   classeIndicadorContato,
+  classeDotContato,
 } from '../../shared/utils/contato';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 
@@ -115,6 +116,13 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   get progressoRotina(): string {
     return `${this.contactadosHoje} de ${this.itensContactaveis.length} contactados hoje`;
+  }
+
+  get progressoRotinaPercent(): number {
+    if (this.itensContactaveis.length === 0) return 100;
+    return Math.round(
+      (this.contactadosHoje / this.itensContactaveis.length) * 100
+    );
   }
 
   get resumoEnvio(): string {
@@ -408,6 +416,10 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   classeContato(item: ItemCobrancaDiaria): string {
     return classeIndicadorContato(item.ultimoContatoEm);
+  }
+
+  classeDot(item: ItemCobrancaDiaria): string {
+    return classeDotContato(item.ultimoContatoEm);
   }
 
   onContatoRegistrado(mensalidadeId: number): void {

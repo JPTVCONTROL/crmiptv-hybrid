@@ -39,7 +39,8 @@
     ></app-stat-card>
   </div>
 
-  <div class="crm-card !p-4 md:!p-5 space-y-4">
+  <div class="crm-sticky-toolbar">
+    <div class="crm-card !p-4 md:!p-5 space-y-4">
     <div class="relative">
       <ion-icon
         name="search-outline"
@@ -95,10 +96,11 @@
           (click)="alternarDensidadeTabela()"
           title="Alternar densidade da tabela"
         >
-          <ion-icon [name]="tabelaCompacta ? 'expand-outline' : 'contract-outline'"></ion-icon>
-          {{ tabelaCompacta ? 'Confortável' : 'Compacto' }}
+          <ion-icon [name]="tabelaCompacta ? 'contract-outline' : 'expand-outline'"></ion-icon>
+          {{ tabelaCompacta ? 'Compacto' : 'Confortável' }}
         </button>
       </div>
+    </div>
     </div>
   </div>
 
@@ -150,7 +152,14 @@
     <article *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="crm-mobile-card">
       <div class="crm-mobile-card-header">
         <div class="min-w-0">
-          <h3 class="crm-mobile-card-title">{{ m.cliente?.nome }}</h3>
+          <h3 class="crm-mobile-card-title">
+            <a
+              [routerLink]="['/clientes', m.clienteId]"
+              class="text-violet-400 hover:underline no-underline block truncate"
+            >
+              {{ m.cliente?.nome }}
+            </a>
+          </h3>
           <p class="crm-mobile-card-subtitle">{{ m.referencia }}</p>
         </div>
         <span [ngClass]="classesStatusFinanceiro(m)">{{ rotuloStatus(m) }}</span>
@@ -203,8 +212,10 @@
     <app-empty-state
       *ngIf="filtradas.length === 0"
       title="Nenhuma cobrança encontrada"
-      message="Ajuste os filtros ou aguarde novos vencimentos."
+      message="Ajuste os filtros ou inicie a rotina de cobrança."
       iconName="cash-outline"
+      actionLabel="Abrir Cobrança Diária"
+      actionRoute="/cobranca-diaria"
     ></app-empty-state>
   </div>
 
@@ -229,7 +240,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="border-b border-slate-800/50">
+        <tr *ngFor="let m of paginadas; trackBy: trackByMensalidade" class="border-b border-slate-800/50" [class.crm-table-row--contacted]="linhaContactada(m)">
           <td class="py-3 px-2">
             <input
               type="checkbox"
@@ -238,14 +249,23 @@
               (change)="alternarSelecao(m)"
             />
           </td>
-          <td class="py-3 px-2 text-white">{{ m.cliente?.nome }}</td>
+          <td class="py-3 px-2">
+            <a
+              [routerLink]="['/clientes', m.clienteId]"
+              class="text-violet-400 hover:underline font-medium no-underline inline-flex items-center gap-2"
+            >
+              <span [class]="classeDot(m)" aria-hidden="true"></span>
+              {{ m.cliente?.nome }}
+            </a>
+          </td>
           <td class="py-3 px-2 text-slate-300">{{ m.referencia }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtValor(m.valor) }}</td>
           <td class="py-3 px-2 text-slate-300">{{ fmtData(m.vencimento) }}</td>
           <td class="py-3 px-2">
             <span [ngClass]="classesStatusFinanceiro(m)">{{ rotuloStatus(m) }}</span>
           </td>
-          <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
+          <td class="py-3 px-2 text-right whitespace-nowrap">
+            <div class="crm-table-actions">
             <a
               [routerLink]="['/clientes', m.clienteId]"
               class="crm-btn-ghost !py-1.5 !text-xs no-underline inline-block"
@@ -262,6 +282,7 @@
               (bloqueioRegistrado)="onBloqueioRegistrado($event)"
             ></app-whatsapp-bloqueio-btn>
             <button class="crm-btn-success crm-btn-action" (click)="renovar(m)">Renovar</button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -269,8 +290,10 @@
     <app-empty-state
       *ngIf="filtradas.length === 0"
       title="Nenhuma cobrança encontrada"
-      message="Ajuste os filtros ou aguarde novos vencimentos."
+      message="Ajuste os filtros ou inicie a rotina de cobrança."
       iconName="cash-outline"
+      actionLabel="Abrir Cobrança Diária"
+      actionRoute="/cobranca-diaria"
     ></app-empty-state>
   </div>
 

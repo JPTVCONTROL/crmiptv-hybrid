@@ -131,8 +131,15 @@
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="crm-card space-y-3">
-      <h2 class="crm-section-label !mb-0">Dados Pessoais</h2>
+    <details class="crm-collapse" open>
+      <summary class="crm-collapse-summary">
+        <div>
+          <h2 class="crm-collapse-title">Dados Pessoais</h2>
+          <p class="crm-collapse-hint">Telefone, status e valor</p>
+        </div>
+        <ion-icon name="chevron-down-outline" class="crm-collapse-chevron" aria-hidden="true"></ion-icon>
+      </summary>
+      <div class="crm-collapse-body space-y-3">
       <p class="text-slate-300"><span class="text-slate-500">Telefone:</span> {{ cliente.telefone }}</p>
       <p class="text-slate-300 flex items-center gap-2">
         <span class="text-slate-500">Status:</span>
@@ -142,11 +149,20 @@
       <p *ngIf="cliente.observacao?.trim()" class="text-slate-300 whitespace-pre-wrap">
         <span class="text-slate-500">Observação:</span> {{ cliente.observacao }}
       </p>
-    </div>
+      </div>
+    </details>
 
-    <div class="crm-card space-y-3">
+    <details class="crm-collapse" open>
+      <summary class="crm-collapse-summary">
+        <div>
+          <h2 class="crm-collapse-title">Credenciais IPTV</h2>
+          <p class="crm-collapse-hint">Servidor, usuário e conta ativada</p>
+        </div>
+        <ion-icon name="chevron-down-outline" class="crm-collapse-chevron" aria-hidden="true"></ion-icon>
+      </summary>
+      <div class="crm-collapse-body space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h2 class="crm-section-label !mb-0">Credenciais IPTV</h2>
+        <h2 class="crm-section-label !mb-0 sr-only">Credenciais IPTV</h2>
         <div class="flex flex-wrap gap-2">
           <button
             *ngIf="temCredenciais()"
@@ -186,10 +202,19 @@
       >
         Copiar PIX
       </button>
-    </div>
+      </div>
+    </details>
 
-    <div class="crm-card space-y-3">
-      <div class="flex items-center justify-between gap-2">
+    <details class="crm-collapse" [open]="qtdTelas() > 0">
+      <summary class="crm-collapse-summary">
+        <div>
+          <h2 class="crm-collapse-title">Dispositivos</h2>
+          <p class="crm-collapse-hint">{{ qtdTelas() }} tela(s)</p>
+        </div>
+        <ion-icon name="chevron-down-outline" class="crm-collapse-chevron" aria-hidden="true"></ion-icon>
+      </summary>
+      <div class="crm-collapse-body space-y-3">
+      <div class="flex items-center justify-between gap-2 sr-only">
         <h2 class="crm-section-label !mb-0">Dispositivos</h2>
         <span class="text-slate-400 text-sm">{{ qtdTelas() }} tela(s)</span>
       </div>
@@ -210,10 +235,19 @@
           ></app-whatsapp-cobranca-btn>
         </div>
       </div>
-    </div>
+      </div>
+    </details>
 
-    <div class="crm-card space-y-3">
-      <h2 class="crm-section-label !mb-0">Plano</h2>
+    <details class="crm-collapse" open>
+      <summary class="crm-collapse-summary">
+        <div>
+          <h2 class="crm-collapse-title">Plano</h2>
+          <p class="crm-collapse-hint">{{ cliente.plano?.nome || 'Sem plano' }}</p>
+        </div>
+        <ion-icon name="chevron-down-outline" class="crm-collapse-chevron" aria-hidden="true"></ion-icon>
+      </summary>
+      <div class="crm-collapse-body space-y-3">
+      <h2 class="crm-section-label !mb-0 sr-only">Plano</h2>
       <p class="text-slate-300"><span class="text-slate-500">Plano:</span> {{ cliente.plano?.nome || '—' }}</p>
       <p class="text-slate-300" *ngIf="cliente.plano"><span class="text-slate-500">Validade:</span> {{ rotuloValidadePlano(cliente.plano) }}</p>
       <p class="text-slate-300"><span class="text-slate-500">Expira em:</span> {{ cliente.expiraEm ? fmtData(cliente.expiraEm) : '—' }}</p>
@@ -254,11 +288,20 @@
           {{ estaRenovando(pendente) ? 'Renovando...' : 'Renovar' }}
         </button>
       </div>
-    </div>
+      </div>
+    </details>
   </div>
 
-  <div class="crm-card">
-    <h2 class="crm-section-label mb-4">Mensalidades</h2>
+  <details class="crm-collapse" open>
+    <summary class="crm-collapse-summary">
+      <div>
+        <h2 class="crm-collapse-title">Mensalidades</h2>
+        <p class="crm-collapse-hint">{{ cliente.mensalidades?.length || 0 }} registro(s)</p>
+      </div>
+      <ion-icon name="chevron-down-outline" class="crm-collapse-chevron" aria-hidden="true"></ion-icon>
+    </summary>
+    <div class="crm-collapse-body">
+    <h2 class="crm-section-label mb-4 sr-only">Mensalidades</h2>
 
     <div class="md:hidden crm-mobile-list">
       <article *ngFor="let m of cliente.mensalidades" class="crm-mobile-card">
@@ -383,5 +426,6 @@
       message="As cobranças e pagamentos deste cliente aparecerão aqui."
       iconName="calendar-outline"
     ></app-empty-state>
-  </div>
+    </div>
+  </details>
 </div>
