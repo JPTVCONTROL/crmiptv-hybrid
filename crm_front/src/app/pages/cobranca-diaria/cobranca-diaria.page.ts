@@ -121,6 +121,14 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     ).length;
   }
 
+  get qtdAtrasadosNaoContactados(): number {
+    return this.itensContactaveis.filter(
+      (item) =>
+        item.tipo === 'ATRASADO' &&
+        !contatoRegistradoHoje(item.ultimoContatoEm)
+    ).length;
+  }
+
   get itensFiltrados(): ItemCobrancaDiaria[] {
     return this.itens.filter((item) => this.itemPassaFiltroPendentes(item));
   }
@@ -153,7 +161,10 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     }
 
     this.route.queryParamMap.subscribe((params) => {
-      this.aplicarQueryParams(params.get('pendentes') === '1');
+      this.aplicarQueryParams(
+        params.get('pendentes') === '1',
+        params.get('atrasados') === '1'
+      );
     });
 
     this.carregar();
@@ -171,19 +182,31 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private aplicarQueryParams(selecionarPendentes: boolean): void {
-    if (selecionarPendentes) {
+  private aplicarQueryParams(
+    selecionarPendentes: boolean,
+    somenteAtrasados = false
+  ): void {
+    if (somenteAtrasados) {
+      this.filtroGrupo = 'ATRASADO';
+      this.filtroSomentePendentes = true;
+    } else if (selecionarPendentes) {
       this.filtroSomentePendentes = true;
     }
 
-    if (selecionarPendentes && this.itens.length > 0) {
-      this.selecionarNaoContactados();
+    if (this.itens.length > 0) {
+      if (somenteAtrasados) {
+        this.selecionarAtrasadosNaoContactados();
+      } else if (selecionarPendentes) {
+        this.selecionarNaoContactados();
+      }
     } else {
-      this.selecionarPendentesViaQuery = selecionarPendentes;
+      this.selecionarPendentesViaQuery = selecionarPendentes && !somenteAtrasados;
+      this.selecionarAtrasadosViaQuery = somenteAtrasados;
     }
   }
 
   private selecionarPendentesViaQuery = false;
+  private selecionarAtrasadosViaQuery = false;
 
   ionViewWillEnter(): void {
     if (!this.loading) {
@@ -289,7 +312,10 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
           );
         } else {
           this.selecionarElegiveis();
-          if (this.selecionarPendentesViaQuery) {
+          if (this.selecionarAtrasadosViaQuery) {
+            this.selecionarAtrasadosNaoContactados();
+            this.selecionarAtrasadosViaQuery = false;
+          } else if (this.selecionarPendentesViaQuery) {
             this.selecionarNaoContactados();
             this.selecionarPendentesViaQuery = false;
           }
@@ -355,6 +381,20 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     this.selecionados = new Set(
       this.itensContactaveis
         .filter((item) => !contatoRegistradoHoje(item.ultimoContatoEm))
+        .map((item) => item.mensalidadeId)
+    );
+  }
+
+  selecionarAtrasadosNaoContactados(): void {
+    this.filtroGrupo = 'ATRASADO';
+    this.filtroSomentePendentes = true;
+    this.selecionados = new Set(
+      this.itensContactaveis
+        .filter(
+          (item) =>
+            item.tipo === 'ATRASADO' &&
+            !contatoRegistradoHoje(item.ultimoContatoEm)
+        )
         .map((item) => item.mensalidadeId)
     );
   }

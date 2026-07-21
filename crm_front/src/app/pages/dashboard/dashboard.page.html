@@ -63,6 +63,14 @@
         >
           Atrasados
         </a>
+        <a
+          *ngIf="cobrancaAtrasadaQtd > 0"
+          routerLink="/cobranca-diaria"
+          [queryParams]="{ atrasados: 1 }"
+          class="crm-btn-ghost no-underline !border-red-500/40 !text-red-200"
+        >
+          Cobrar atrasados
+        </a>
       </div>
     </div>
 
@@ -100,8 +108,8 @@
         </span>
       </a>
       <a
-        routerLink="/financeiro"
-        [queryParams]="{ status: 'ATRASADO' }"
+        routerLink="/cobranca-diaria"
+        [queryParams]="cobrancaAtrasadaQtd > 0 ? { atrasados: 1 } : null"
         class="crm-dash-kpi crm-dash-kpi-link no-underline"
       >
         <span class="crm-dash-kpi-label">Cobrança atrasada</span>
