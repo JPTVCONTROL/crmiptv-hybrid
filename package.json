@@ -17,6 +17,9 @@
     "api:watchdog:install": "npm run api:watchdog:install --prefix crm_back",
     "api:watchdog:remove": "npm run api:watchdog:remove --prefix crm_back",
     "api:firewall": "npm run firewall:api --prefix crm_back",
+    "db:backup": "npm run db:backup --prefix crm_back",
+    "db:backup:install": "npm run db:backup:install --prefix crm_back",
+    "db:backup:remove": "npm run db:backup:remove --prefix crm_back",
     "app:publish": "npm run app:publish --prefix crm_front",
     "build": "npm run build --prefix crm_back && npm run build --prefix crm_front",
     "test": "npm run test --prefix crm_back && npm run test:unit --prefix crm_front"

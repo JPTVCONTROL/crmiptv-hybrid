@@ -173,6 +173,9 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | `npm run api:startup:install` | Agenda API ao logar no Windows |
 | `npm run api:watchdog:install` | Verifica a API a cada 10 min e reinicia se cair |
 | `npm run api:firewall` | Libera TCP 3001 no firewall (admin) |
+| `npm run db:backup` | Cópia manual do SQLite (`crm_back/backups/`) |
+| `npm run db:backup:install` | Agenda backup diário às 02:00 (admin) |
+| `npm run db:backup:remove` | Remove agendamento de backup |
 | `npm run build` | Build de backend e frontend |
 | `npm test` | Testes unitários de ambos |
 
@@ -235,7 +238,7 @@ npm run firewall:api
 |----------|---------|
 | App mostra "API offline" | `npm run api:ensure` (na raiz) |
 | Verificar se está online | `npm run api:status` |
-| Reiniciar API manualmente | `npm run api:restart` |
+| Reiniciar API manualmente | `npm run api:restart` (usa `cmd.exe` + `start-api-boot.ps1`) |
 | Desenvolvimento com hot-reload | `npm run dev:back` |
 | Remover startup automático | `npm run api:startup:remove` |
 | Remover watchdog | `npm run api:watchdog:remove` |
@@ -367,7 +370,7 @@ A tela está organizada em **quatro abas**: Conta (senha), Empresa (dados + PIX)
 |------|------|--------|
 | `/login` | Login | Autenticação (JWT) |
 | `/dashboard` | Dashboard | KPIs, gráfico de faturamento, links para Cobrança Diária |
-| `/clientes` | Clientes | Listagem com filtros (persistidos na sessão), busca por nome/telefone, CRUD |
+| `/clientes` | Clientes | Listagem com filtros, **cobrança WhatsApp em lote** (atrasados/inativos), CRUD |
 | `/clientes/:id` | Detalhe | Perfil completo, mensalidades, WhatsApp, pagamento |
 | `/financeiro` | Financeiro | Cobranças pendentes, paginação, pagamentos em lote e renovação WhatsApp em lote |
 | `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp manual + toggle de envio automático (API Meta) |
@@ -822,7 +825,8 @@ Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layou
 | 1 | Login | Entrar com admin do seed | Dashboard carrega sem 401 |
 | 2 | Novo cliente | Cadastrar com plano e app | Mensalidade criada; onboarding opcional |
 | 3 | Cadastro incompleto | Dashboard → alerta → filtro | Lista só clientes com pendência |
-| 4 | Pagamento | Financeiro → Pagar | Cobrança some da lista; recibo WhatsApp opcional |
+| 4 | Pagamento | Financeiro ou Detalhe → Pagar | Checklist “Renovou no painel?”; renovação e recibo WhatsApp opcionais |
+| 4b | Cobrança em Clientes | Clientes → Atrasados → Cobrar selecionados | Fila WhatsApp abre um chat por vez |
 | 5 | Sem cobrança | Cliente com `incluirCobrancas` off | Badge “Sem cobrança”; fora da cobrança diária |
 | 6 | CSV | Importar modelo + exportar | Contagem bate; duplicados rejeitados |
 | 7 | Cobrança diária | Registrar contato | Seleção mantida após reload |
@@ -833,8 +837,8 @@ Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layou
 ### Backup recomendado (produção)
 
 - Baixe o SQLite periodicamente em **Configurações → Backup** (`GET /api/sistema/backup`).
-- **Desenvolvimento (Windows):** cópia local com `npm run db:backup` em `crm_back` (salva em `crm_back/backups/`).
-- **Backup automático diário:** PowerShell **como Administrador** → `npm run db:backup:install` (02:00, retém 30 dias). Remover: `npm run db:backup:remove`.
+- **Desenvolvimento (Windows):** cópia local com `npm run db:backup` (raiz ou `crm_back`; salva em `crm_back/backups/`).
+- **Backup automático diário:** PowerShell **como Administrador** → `npm run db:backup:install` (raiz ou `crm_back`; 02:00, retém 30 dias). Remover: `npm run db:backup:remove`.
 - Antes de `db:push` ou alterações no schema, faça cópia de `crm_back/prisma/dev.db`.
 - Após mudança no schema: pare o backend, rode `npm run db:refresh` e reinicie.
 

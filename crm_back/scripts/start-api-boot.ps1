@@ -85,8 +85,8 @@ if (-not $npm) {
 Escrever-Log "Iniciando CRM JPTV API (start:boot) na porta $porta..."
 
 $proc = Start-Process `
-  -FilePath $npm.Source `
-  -ArgumentList "run", "start:boot" `
+  -FilePath "cmd.exe" `
+  -ArgumentList "/c", "npm run start:boot" `
   -WorkingDirectory $raizBack `
   -WindowStyle Hidden `
   -PassThru

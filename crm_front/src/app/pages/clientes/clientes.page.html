@@ -256,6 +256,50 @@
 
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
+<div *ngIf="!loading && exibirBarraCobranca" class="space-y-3 mb-4">
+  <div
+    *ngIf="qtdSelecionados > 0"
+    class="crm-card !p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-violet-500/25 bg-violet-500/5"
+  >
+    <div>
+      <p class="text-white font-medium">
+        {{ qtdSelecionados }}
+        {{ qtdSelecionados === 1 ? 'cliente selecionado' : 'clientes selecionados' }}
+      </p>
+      <p class="text-slate-400 text-sm mt-0.5">Cobrança via WhatsApp, um chat por vez.</p>
+    </div>
+  </div>
+
+  <div class="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+    <button
+      type="button"
+      class="crm-btn-success"
+      [disabled]="qtdSelecionados === 0 || cobrandoLote"
+      (click)="cobrarSelecionados()"
+    >
+      {{
+        cobrandoLote
+          ? 'Abrindo...'
+          : 'Cobrar selecionados (' + qtdSelecionados + ')'
+      }}
+    </button>
+    <button type="button" class="crm-btn-ghost" (click)="selecionarAtrasados()">
+      Selecionar atrasados
+    </button>
+    <button type="button" class="crm-btn-ghost" (click)="alternarTodosFiltrados()">
+      {{ todosFiltradosSelecionados ? 'Desmarcar filtrados' : 'Selecionar filtrados' }}
+    </button>
+    <button
+      type="button"
+      class="crm-btn-ghost"
+      [disabled]="qtdSelecionados === 0"
+      (click)="limparSelecao()"
+    >
+      Limpar seleção
+    </button>
+  </div>
+</div>
+
 <div *ngIf="!loading" class="md:hidden space-y-3">
   <div class="flex flex-wrap items-center gap-2">
     <span class="text-slate-500 text-xs shrink-0">Ordenar:</span>
@@ -309,9 +353,22 @@
   <article
     *ngFor="let c of clientesPaginados; trackBy: trackByClienteId"
     class="crm-mobile-card"
-    [ngClass]="{ 'border-amber-500/30 bg-amber-500/5': filtroCadastro && pendenciasCliente(c).length > 0 }"
+    [ngClass]="{
+      'border-amber-500/30 bg-amber-500/5': filtroCadastro && pendenciasCliente(c).length > 0,
+      'border-violet-500/30 bg-violet-500/5': clienteSelecionado(c)
+    }"
   >
-    <div class="crm-mobile-card-header">
+    <div class="flex items-start gap-3">
+      <input
+        *ngIf="exibirBarraCobranca"
+        type="checkbox"
+        class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 shrink-0"
+        [checked]="clienteSelecionado(c)"
+        [disabled]="!podeSelecionarCliente(c)"
+        (change)="alternarSelecaoCliente(c)"
+        [attr.aria-label]="'Selecionar ' + c.nome"
+      />
+      <div class="crm-mobile-card-header flex-1 min-w-0 !mb-0">
       <div class="min-w-0">
         <h3 class="crm-mobile-card-title">
           <a
@@ -329,6 +386,7 @@
         [label]="status(c)"
         [dot]="true"
       ></app-status-badge>
+      </div>
     </div>
 
     <div class="space-y-2">
@@ -396,6 +454,15 @@
   <table class="min-w-[920px]" [ngClass]="classesTabela">
     <thead>
       <tr class="text-slate-400 border-b border-slate-800">
+        <th *ngIf="exibirBarraCobranca" class="py-3 px-2 w-10">
+          <input
+            type="checkbox"
+            class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+            [checked]="todosPaginaSelecionados"
+            (change)="alternarPagina()"
+            aria-label="Selecionar página"
+          />
+        </th>
         <th class="text-left py-3 px-2">
           <button
             type="button"
@@ -461,6 +528,16 @@
           'bg-amber-500/5': filtroCadastro && pendenciasCliente(c).length > 0
         }"
       >
+        <td *ngIf="exibirBarraCobranca" class="py-3 px-2 align-top">
+          <input
+            type="checkbox"
+            class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+            [checked]="clienteSelecionado(c)"
+            [disabled]="!podeSelecionarCliente(c)"
+            (change)="alternarSelecaoCliente(c)"
+            [attr.aria-label]="'Selecionar ' + c.nome"
+          />
+        </td>
         <td class="py-3 px-2">
           <a
             [routerLink]="['/clientes', c.id]"

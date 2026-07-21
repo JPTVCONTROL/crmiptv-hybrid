@@ -8,7 +8,7 @@ import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Cliente, Aplicativo, ImportacaoClientesResultado } from '../../core/models';
+import { Cliente, Aplicativo, ImportacaoClientesResultado, Configuracao } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
 import { resolverStatusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
 import { oferecerOnboardingCompleto } from '../../shared/utils/onboarding';
@@ -42,6 +42,11 @@ import {
   persistirFiltrosClientes,
   restaurarFiltrosClientes,
 } from '../../shared/utils/clientes-filtros-persist.util';
+import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
+import {
+  clienteElegivelCobranca,
+  montarItensCobrancaClientes,
+} from '../../shared/utils/cliente-cobranca.util';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
 export type FiltroCobrancaCliente =
@@ -104,6 +109,8 @@ export class ClientesPage implements OnInit, OnDestroy {
   aplicativos: Aplicativo[] = [];
   tabelaCompacta = false;
   filtrosExtrasAbertos = false;
+  selecionados = new Set<number>();
+  cobrandoLote = false;
 
   readonly opcoesFiltroStatus: { valor: FiltroStatusCliente; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -331,8 +338,13 @@ export class ClientesPage implements OnInit, OnDestroy {
     private toast: ToastService,
     private confirmacao: ConfirmacaoService,
     private sync: DadosSyncService,
-    private pullRefresh: PullRefreshService
+    private pullRefresh: PullRefreshService,
+    private cobrancaLoteFila: CobrancaLoteFilaService
   ) {}
+
+  private get configuracao(): Configuracao | null {
+    return this.configuracaoService.getSnapshot();
+  }
 
   ngOnInit(): void {
     this.tabelaCompacta =
@@ -855,6 +867,135 @@ export class ClientesPage implements OnInit, OnDestroy {
   participaCobrancas = clienteParticipaCobrancas;
   ehCortesia = clienteEhCortesia;
   ehSomenteContato = clienteEhSomenteContato;
+
+  get qtdSelecionados(): number {
+    return this.selecionados.size;
+  }
+
+  get exibirBarraCobranca(): boolean {
+    return (
+      this.filtroStatus === 'ATRASADO' ||
+      this.filtroStatus === 'INATIVO' ||
+      this.qtdSelecionados > 0
+    );
+  }
+
+  clienteSelecionado(cliente: Cliente): boolean {
+    return this.selecionados.has(cliente.id);
+  }
+
+  alternarSelecaoCliente(cliente: Cliente): void {
+    if (!clienteElegivelCobranca(cliente)) {
+      return;
+    }
+
+    if (this.selecionados.has(cliente.id)) {
+      this.selecionados.delete(cliente.id);
+    } else {
+      this.selecionados.add(cliente.id);
+    }
+    this.selecionados = new Set(this.selecionados);
+  }
+
+  get todosFiltradosSelecionados(): boolean {
+    const elegiveis = this.clientesFiltrados.filter((cliente) =>
+      clienteElegivelCobranca(cliente)
+    );
+    return (
+      elegiveis.length > 0 &&
+      elegiveis.every((cliente) => this.selecionados.has(cliente.id))
+    );
+  }
+
+  get todosPaginaSelecionados(): boolean {
+    const elegiveis = this.clientesPaginados.filter((cliente) =>
+      clienteElegivelCobranca(cliente)
+    );
+    return (
+      elegiveis.length > 0 &&
+      elegiveis.every((cliente) => this.selecionados.has(cliente.id))
+    );
+  }
+
+  alternarTodosFiltrados(): void {
+    if (this.todosFiltradosSelecionados) {
+      this.selecionados = new Set();
+      return;
+    }
+
+    this.selecionados = new Set(
+      this.clientesFiltrados
+        .filter((cliente) => clienteElegivelCobranca(cliente))
+        .map((cliente) => cliente.id)
+    );
+  }
+
+  alternarPagina(): void {
+    const elegiveis = this.clientesPaginados.filter((cliente) =>
+      clienteElegivelCobranca(cliente)
+    );
+
+    if (this.todosPaginaSelecionados) {
+      for (const cliente of elegiveis) {
+        this.selecionados.delete(cliente.id);
+      }
+    } else {
+      for (const cliente of elegiveis) {
+        this.selecionados.add(cliente.id);
+      }
+    }
+
+    this.selecionados = new Set(this.selecionados);
+  }
+
+  selecionarAtrasados(): void {
+    this.filtroStatus = 'ATRASADO';
+    this.pagina = 1;
+    this.persistirFiltros();
+    this.selecionados = new Set(
+      this.clientesFiltrados
+        .filter((cliente) => clienteElegivelCobranca(cliente))
+        .map((cliente) => cliente.id)
+    );
+  }
+
+  limparSelecao(): void {
+    this.selecionados = new Set();
+  }
+
+  async cobrarSelecionados(): Promise<void> {
+    if (this.cobrandoLote || this.selecionados.size === 0) {
+      return;
+    }
+
+    this.cobrandoLote = true;
+
+    try {
+      const itens = montarItensCobrancaClientes(
+        this.clientesFiltrados,
+        this.selecionados,
+        this.configuracao
+      );
+
+      if (itens.length === 0) {
+        void this.toast.warning(
+          'Nenhum cliente selecionado possui dados para cobrança.'
+        );
+        return;
+      }
+
+      await this.cobrancaLoteFila.executar(itens, {
+        titulo: 'Cobrança · Clientes',
+        rotuloAbrir: 'Abrir WhatsApp',
+      });
+    } finally {
+      this.cobrandoLote = false;
+    }
+  }
+
+  podeSelecionarCliente(cliente: Cliente): boolean {
+    return clienteElegivelCobranca(cliente);
+  }
 
   abrirImportacaoCsv(input: HTMLInputElement): void {
     if (this.importando) {

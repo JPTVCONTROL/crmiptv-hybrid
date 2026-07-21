@@ -21,7 +21,7 @@
     "firewall:api": "powershell -ExecutionPolicy Bypass -File scripts/firewall-api.ps1",
     "api:status": "powershell -ExecutionPolicy Bypass -File scripts/api-health.ps1",
     "api:ensure": "powershell -ExecutionPolicy Bypass -File scripts/ensure-api.ps1",
-    "api:restart": "npx --yes kill-port 3001 && powershell -ExecutionPolicy Bypass -File scripts/ensure-api.ps1",
+    "api:restart": "powershell -ExecutionPolicy Bypass -File scripts/api-restart.ps1",
     "api:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-api-stability.ps1",
     "api:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/schedule-api-startup-task.ps1",
     "api:startup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-api-startup-task.ps1",
