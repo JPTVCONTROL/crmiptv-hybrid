@@ -13,6 +13,7 @@
     "mobile:prepare": "powershell -ExecutionPolicy Bypass -File scripts/prepare-mobile-env.ps1",
     "cap:home": "npm run mobile:prepare && npm run cap:sync",
     "cap:android": "npx cap open android",
+    "apk:debug": "npm run cap:home && powershell -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:unit": "node --import tsx --test src/app/shared/utils/**/*.test.ts",

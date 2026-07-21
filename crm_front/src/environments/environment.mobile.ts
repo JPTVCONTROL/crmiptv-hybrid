@@ -7,4 +7,5 @@
 export const environment = {
   production: true,
   apiUrl: 'http://192.168.20.2:3001/api',
+  healthUrl: 'http://192.168.20.2:3001/health',
 };

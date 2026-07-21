@@ -61,6 +61,9 @@ crm_front/android/.idea/
 crm_front/android/local.properties
 crm_front/android/captures/
 
+# APKs gerados localmente
+releases/*.apk
+
 # --- Build / cache (geral) ---
 dist/
 build/

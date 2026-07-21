@@ -50,12 +50,19 @@ $conteudoAtualizado = [regex]::Replace(
   "apiUrl:\s*'[^']+'",
   "apiUrl: '$apiUrl'"
 )
+$healthUrl = "http://${ipRede}:${Porta}/health"
+$conteudoAtualizado = [regex]::Replace(
+  $conteudoAtualizado,
+  "healthUrl:\s*'[^']+'",
+  "healthUrl: '$healthUrl'"
+)
 
 Set-Content -Path $arquivoEnv -Value $conteudoAtualizado -NoNewline
 
 Write-Host ""
 Write-Host "Mobile environment atualizado:" -ForegroundColor Green
 Write-Host "  apiUrl = $apiUrl"
+Write-Host "  healthUrl = $healthUrl"
 Write-Host ""
 Write-Host "Proximos passos:"
 Write-Host "  1. cd crm_back && npm run dev"
