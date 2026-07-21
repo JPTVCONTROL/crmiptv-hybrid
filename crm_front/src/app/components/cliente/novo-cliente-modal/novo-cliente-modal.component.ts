@@ -6,16 +6,12 @@ import { DispositivoService } from '../../../core/services/dispositivo.service';
 import { PlanoService } from '../../../core/services/plano.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Cliente, Aplicativo, Dispositivo, Plano } from '../../../core/models';
-import { aplicarMascaraTelefone, dataIsoParaInput } from '../../../shared/utils/formatters';
+import { dataIsoParaInput } from '../../../shared/utils/formatters';
 import {
-  agruparPlanos,
-  calcularExpiracaoPorPlano,
-  GrupoPlanos,
-  ordenarPlanos,
-  rotuloPlanoOpcao,
-  telasDoPlano,
-} from '../../../shared/utils/planos';
-import { telefoneValidoParaWhatsApp } from '../../../shared/utils/whatsapp';
+  normalizarTelefoneEntrada,
+  rotuloAjudaTelefone,
+  telefoneValidoParaWhatsApp,
+} from '../../../shared/utils/telefone.util';
 import {
   aplicativosCompativeisComDispositivo,
   AplicativoResumo,
@@ -27,6 +23,14 @@ import {
   serializarDispositivos,
   sincronizarCamposLegadoDispositivo,
 } from '../../../shared/utils/dispositivos';
+import {
+  agruparPlanos,
+  calcularExpiracaoPorPlano,
+  GrupoPlanos,
+  ordenarPlanos,
+  rotuloPlanoOpcao,
+  telasDoPlano,
+} from '../../../shared/utils/planos';
 
 @Component({
   selector: 'app-novo-cliente-modal',
@@ -58,8 +62,11 @@ export class NovoClienteModalComponent implements OnInit {
     valorMensal: 0,
     incluirCobrancas: true,
     cortesia: false,
+    somenteContato: false,
     observacao: '',
   };
+
+  readonly rotuloAjudaTelefone = rotuloAjudaTelefone;
 
   constructor(
     private modalCtrl: ModalController,
@@ -95,7 +102,7 @@ export class NovoClienteModalComponent implements OnInit {
 
       this.form = {
         nome: this.cliente.nome,
-        telefone: aplicarMascaraTelefone(this.cliente.telefone),
+        telefone: normalizarTelefoneEntrada(this.cliente.telefone),
         planoId: this.cliente.planoId ?? null,
         servidor: this.cliente.servidor ?? '',
         usuario: this.cliente.usuario ?? '',
@@ -106,6 +113,7 @@ export class NovoClienteModalComponent implements OnInit {
         valorMensal: this.cliente.valorMensal,
         incluirCobrancas: this.cliente.incluirCobrancas !== false,
         cortesia: this.cliente.cortesia === true,
+        somenteContato: this.cliente.somenteContato === true,
         observacao: this.cliente.observacao ?? '',
       };
     } else {
@@ -191,6 +199,18 @@ export class NovoClienteModalComponent implements OnInit {
   onCortesiaChange(): void {
     if (this.form.cortesia) {
       this.form.valorMensal = 0;
+      this.form.somenteContato = false;
+    }
+  }
+
+  onSomenteContatoChange(): void {
+    if (this.form.somenteContato) {
+      this.form.cortesia = false;
+      this.form.incluirCobrancas = false;
+      this.form.valorMensal = 0;
+      this.form.planoId = null;
+      this.form.expiraEm = '';
+      this.form.ativadoEm = '';
     }
   }
 
@@ -223,7 +243,7 @@ export class NovoClienteModalComponent implements OnInit {
 
   onTelefoneInput(valor: string): void {
     this.telefoneTocado = true;
-    this.form.telefone = aplicarMascaraTelefone(valor);
+    this.form.telefone = normalizarTelefoneEntrada(valor);
   }
 
   get telefoneInvalido(): boolean {
@@ -243,11 +263,16 @@ export class NovoClienteModalComponent implements OnInit {
 
     if (!telefoneValidoParaWhatsApp(this.form.telefone)) {
       void this.toast.warning(
-        'Informe um telefone válido com DDD, por exemplo: (62) 99999-9999.'
+        'Informe um telefone válido. Brasil: (62) 99999-9999. Internacional: +351 912 345 678.'
       );
       return;
     }
-    if (!this.form.cortesia && (!this.form.valorMensal || this.form.valorMensal <= 0)) {
+
+    if (
+      !this.form.somenteContato &&
+      !this.form.cortesia &&
+      (!this.form.valorMensal || this.form.valorMensal <= 0)
+    ) {
       void this.toast.warning('Informe o valor mensal.');
       return;
     }
@@ -256,6 +281,13 @@ export class NovoClienteModalComponent implements OnInit {
     const lista = this.dispositivos.slice(0, this.qtdTelas);
     const payload = {
       ...this.form,
+      expiraEm: this.form.somenteContato ? null : this.form.expiraEm || null,
+      ativadoEm: this.form.somenteContato ? null : this.form.ativadoEm || null,
+      planoId: this.form.somenteContato ? null : this.form.planoId,
+      valorMensal: this.form.somenteContato ? 0 : this.form.valorMensal,
+      incluirCobrancas: this.form.somenteContato
+        ? false
+        : this.form.incluirCobrancas,
       aplicativoId: resolverAplicativoIdPrincipal(lista),
       ...sincronizarCamposLegadoDispositivo(lista, this.dispositivosCatalogo),
       qtdTelas: this.qtdTelas,

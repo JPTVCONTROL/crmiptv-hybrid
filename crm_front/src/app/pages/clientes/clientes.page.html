@@ -307,8 +307,14 @@
 
     <div class="flex flex-wrap gap-1.5">
       <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia">Cortesia</span>
+      <span
+        *ngIf="ehSomenteContato(c)"
+        class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border border-sky-500/40 bg-sky-500/10 text-sky-300"
+      >
+        Somente contato
+      </span>
       <app-status-badge
-        *ngIf="!participaCobrancas(c) && !ehCortesia(c)"
+        *ngIf="!participaCobrancas(c) && !ehCortesia(c) && !ehSomenteContato(c)"
         tipo="SEM_COBRANCA"
         label="Sem cobrança"
       ></app-status-badge>
@@ -427,8 +433,14 @@
             {{ c.nome }}
           </a>
           <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia mt-1 inline-flex">Cortesia</span>
+          <span
+            *ngIf="ehSomenteContato(c)"
+            class="mt-1 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border border-sky-500/40 bg-sky-500/10 text-sky-300"
+          >
+            Somente contato
+          </span>
           <app-status-badge
-            *ngIf="!participaCobrancas(c) && !ehCortesia(c)"
+            *ngIf="!participaCobrancas(c) && !ehCortesia(c) && !ehSomenteContato(c)"
             class="mt-1 inline-flex"
             tipo="SEM_COBRANCA"
             label="Sem cobrança"

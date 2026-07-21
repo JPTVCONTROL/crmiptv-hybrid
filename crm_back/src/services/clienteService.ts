@@ -29,9 +29,11 @@ export class ClienteService {
   }
 
   async criar(dados: CreateClienteDto) {
+    const somenteContato = Boolean(dados.somenteContato);
     const cortesia = Boolean(dados.cortesia);
 
     if (
+      !somenteContato &&
       !cortesia &&
       (!dados.valorMensal || Number(dados.valorMensal) <= 0)
     ) {
@@ -43,10 +45,18 @@ export class ClienteService {
     const cliente = await clienteRepository.create({
       ...dados,
       cortesia,
-      valorMensal: cortesia ? 0 : Number(dados.valorMensal),
+      somenteContato,
+      incluirCobrancas: somenteContato
+        ? false
+        : dados.incluirCobrancas !== undefined
+          ? Boolean(dados.incluirCobrancas)
+          : true,
+      valorMensal: somenteContato || cortesia ? 0 : Number(dados.valorMensal),
+      expiraEm: somenteContato ? null : dados.expiraEm,
+      planoId: somenteContato ? null : dados.planoId,
     });
 
-    if (dados.expiraEm) {
+    if (!somenteContato && dados.expiraEm) {
       const dataVencimento = parseExpiraEm(dados.expiraEm);
       await mensalidadeRepository.create({
         clienteId: cliente.id,
@@ -69,7 +79,11 @@ export class ClienteService {
 
     const cliente = await clienteRepository.update(id, dados);
 
-    await this.sincronizarMensalidadesPendentes(id, dados, cliente);
+    const somenteContato = Boolean(dados.somenteContato ?? cliente.somenteContato);
+
+    if (!somenteContato) {
+      await this.sincronizarMensalidadesPendentes(id, dados, cliente);
+    }
 
     if (dados.cortesia !== undefined) {
       await this.sincronizarValorMensalidadeCortesia(id, Boolean(cliente.cortesia));
@@ -256,7 +270,12 @@ export class ClienteService {
     let mensalidadesAlinhadas = 0;
 
     for (const cliente of clientes) {
-      if (cliente.cortesia || !cliente.expiraEm || cliente.valorMensal <= 0) {
+      if (
+        cliente.somenteContato ||
+        cliente.cortesia ||
+        !cliente.expiraEm ||
+        cliente.valorMensal <= 0
+      ) {
         continue;
       }
 

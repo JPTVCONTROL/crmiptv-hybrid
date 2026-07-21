@@ -1,3 +1,9 @@
+import {
+  formatarTelefoneWhatsApp,
+  normalizarTelefoneEntrada,
+  telefoneValidoParaWhatsApp,
+} from './telefoneHelpers.js';
+
 export interface LinhaClienteImportacao {
   linha: number;
   nome: string;
@@ -259,45 +265,11 @@ function encontrarNomeNaLinha(
 }
 
 export function formatarTelefoneImportacao(valor: string): string {
-  let numeros = extrairDigitosTelefone(valor);
-
-  if (numeros.startsWith('55') && numeros.length > 11) {
-    numeros = numeros.slice(2);
-  }
-
-  numeros = numeros.slice(0, 11);
-
-  if (numeros.length <= 2) {
-    return numeros;
-  }
-
-  if (numeros.length <= 6) {
-    return numeros;
-  }
-
-  if (numeros.length <= 9) {
-    return numeros;
-  }
-
-  if (numeros.length <= 10) {
-    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 6)}-${numeros.slice(6)}`;
-  }
-
-  return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
+  return normalizarTelefoneEntrada(valor);
 }
 
 export function telefoneImportavel(valor: string): boolean {
-  const numeros = extrairDigitosTelefone(valor);
-  if (!numeros) {
-    return false;
-  }
-
-  const local =
-    numeros.startsWith('55') && numeros.length > 11
-      ? numeros.slice(2)
-      : numeros;
-
-  return local.length >= 8;
+  return telefoneValidoParaWhatsApp(valor);
 }
 
 export function parseCsvClientes(conteudo: string): ResultadoParseImportacao {
@@ -370,11 +342,5 @@ export function parseCsvClientes(conteudo: string): ResultadoParseImportacao {
 }
 
 export function normalizarTelefoneComparacao(telefone: string): string {
-  let numeros = extrairDigitosTelefone(telefone);
-
-  if (numeros.startsWith('55') && numeros.length > 11) {
-    numeros = numeros.slice(2);
-  }
-
-  return numeros;
+  return formatarTelefoneWhatsApp(telefone) ?? extrairDigitosTelefone(telefone);
 }

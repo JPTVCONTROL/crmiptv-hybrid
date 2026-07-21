@@ -16,6 +16,7 @@ export interface ClienteParaAuditoriaCadastro {
   planoId: number | null;
   valorMensal: number;
   cortesia?: boolean;
+  somenteContato?: boolean;
   expiraEm: Date | null;
   servidor: string | null;
   usuario: string | null;
@@ -91,6 +92,13 @@ export function pendenciasCadastroDoCliente(
   aplicativos: Map<number, AplicativoRequisitosCadastro> = new Map()
 ): TipoPendenciaCadastro[] {
   const pendencias: TipoPendenciaCadastro[] = [];
+
+  if (cliente.somenteContato) {
+    if (!telefoneValidoParaWhatsApp(cliente.telefone)) {
+      pendencias.push('SEM_TELEFONE');
+    }
+    return pendencias;
+  }
 
   if (!telefoneValidoParaWhatsApp(cliente.telefone)) {
     pendencias.push('SEM_TELEFONE');
@@ -184,6 +192,10 @@ export function clienteCadastroIncompleto(
   cliente: ClienteParaAuditoriaCadastro & { expiraEm: Date | null },
   aplicativos: Map<number, AplicativoRequisitosCadastro> = new Map()
 ): boolean {
+  if (cliente.somenteContato) {
+    return !telefoneValidoParaWhatsApp(cliente.telefone);
+  }
+
   if (
     !cliente.expiraEm ||
     (!cliente.cortesia && (!cliente.valorMensal || cliente.valorMensal <= 0))

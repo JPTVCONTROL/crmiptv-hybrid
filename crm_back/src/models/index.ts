@@ -52,6 +52,7 @@ export interface CreateClienteDto {
   valorMensal: number;
   incluirCobrancas?: boolean;
   cortesia?: boolean;
+  somenteContato?: boolean;
   observacao?: string | null;
 }
 

@@ -92,6 +92,7 @@ export interface Cliente {
   incluirCampanhas?: boolean;
   ativo?: boolean;
   cortesia?: boolean;
+  somenteContato?: boolean;
   status: string;
   observacao?: string | null;
   mensalidades?: Mensalidade[];

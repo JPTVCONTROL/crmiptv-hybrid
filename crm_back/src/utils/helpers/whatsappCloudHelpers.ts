@@ -1,17 +1,11 @@
 import { env } from '../../config/env.js';
+import { formatarTelefoneWhatsApp } from './telefoneHelpers.js';
 
 export function whatsappApiConfigurado(): boolean {
   return Boolean(env.whatsappPhoneNumberId && env.whatsappAccessToken);
 }
 
-export function formatarTelefoneWhatsApp(telefone: string): string | null {
-  const numeros = telefone.replace(/\D/g, '');
-  if (!numeros) return null;
-  if (numeros.startsWith('55') && numeros.length >= 12) return numeros;
-  if (numeros.length === 10 || numeros.length === 11) return `55${numeros}`;
-  if (numeros.length >= 12) return numeros;
-  return null;
-}
+export { formatarTelefoneWhatsApp };
 
 export interface EnvioTemplateResultado {
   messageId: string;

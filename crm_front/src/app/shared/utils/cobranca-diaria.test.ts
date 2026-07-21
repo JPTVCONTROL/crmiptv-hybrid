@@ -65,4 +65,8 @@ describe('clienteParticipaCobrancas', () => {
   it('exclui clientes cortesia', () => {
     assert.equal(clienteParticipaCobrancas({ cortesia: true }), false);
   });
+
+  it('exclui clientes somente contato', () => {
+    assert.equal(clienteParticipaCobrancas({ somenteContato: true }), false);
+  });
 });

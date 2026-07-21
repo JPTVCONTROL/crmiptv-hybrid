@@ -30,7 +30,7 @@ import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-pe
 
 const CHAVE_DENSIDADE_CLIENTES = 'crm.clientes.tabelaCompacta';
 import { exportarClientesCsv } from '../../shared/utils/cliente-export';
-import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
+import { clienteParticipaCobrancas, clienteEhCortesia, clienteEhSomenteContato } from '../../shared/utils/cobranca-diaria';
 import {
   classesFilterChip,
   classesFilterChipContagem,
@@ -793,6 +793,7 @@ export class ClientesPage implements OnInit, OnDestroy {
 
   participaCobrancas = clienteParticipaCobrancas;
   ehCortesia = clienteEhCortesia;
+  ehSomenteContato = clienteEhSomenteContato;
 
   abrirImportacaoCsv(input: HTMLInputElement): void {
     if (this.importando) {

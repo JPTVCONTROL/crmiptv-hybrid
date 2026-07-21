@@ -58,14 +58,24 @@ export function clienteEhCortesia(
   return cliente?.cortesia === true;
 }
 
+export function clienteEhSomenteContato(
+  cliente?: { somenteContato?: boolean | null } | null
+): boolean {
+  return cliente?.somenteContato === true;
+}
+
 export function clienteParticipaCobrancas(
   cliente?: {
     ativo?: boolean | null;
     incluirCobrancas?: boolean | null;
     cortesia?: boolean | null;
+    somenteContato?: boolean | null;
   } | null
 ): boolean {
   if (cliente?.ativo === false) {
+    return false;
+  }
+  if (cliente?.somenteContato === true) {
     return false;
   }
   if (clienteEhCortesia(cliente)) {

@@ -39,6 +39,8 @@ model Cliente {
   incluirCobrancas Boolean @default(true)
   incluirCampanhas Boolean @default(true)
   cortesia         Boolean @default(false)
+  /// Apenas contato — sem plano, vencimento ou cobrança.
+  somenteContato   Boolean @default(false)
   /// Ativo operacional (manual). Quando false, sai das cobranças.
   ativo        Boolean  @default(true)
   /// Legado — status exposto na API é calculado em clienteStatus.ts

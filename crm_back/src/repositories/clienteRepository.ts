@@ -49,8 +49,12 @@ export class ClienteRepository {
         incluirCobrancas:
           data.incluirCobrancas !== undefined
             ? Boolean(data.incluirCobrancas)
-            : true,
+            : data.somenteContato
+              ? false
+              : true,
         cortesia: data.cortesia !== undefined ? Boolean(data.cortesia) : false,
+        somenteContato:
+          data.somenteContato !== undefined ? Boolean(data.somenteContato) : false,
         observacao: data.observacao,
       },
       include: { aplicativo: true, plano: true },
@@ -101,6 +105,10 @@ export class ClienteRepository {
             : undefined,
         cortesia:
           data.cortesia !== undefined ? Boolean(data.cortesia) : undefined,
+        somenteContato:
+          data.somenteContato !== undefined
+            ? Boolean(data.somenteContato)
+            : undefined,
         observacao: data.observacao,
       },
       include: {

@@ -3,12 +3,18 @@ import { notificar } from './toast-notifier';
 import { confirmarUsuario } from './confirm-notifier';
 import { Mensalidade } from '../../core/models';
 import {
+  formatarTelefoneWhatsApp,
+  telefoneValidoParaWhatsApp,
+} from './telefone.util';
+import {
   MENSAGEM_BLOQUEIO_PADRAO,
   MENSAGEM_COBRANCA_LEMBRETE_PADRAO,
   MENSAGEM_COBRANCA_PADRAO,
   MENSAGEM_RECIBO_PADRAO,
   MENSAGEM_RENOVACAO_PADRAO,
 } from './mensagens-padrao';
+
+export { formatarTelefoneWhatsApp, telefoneValidoParaWhatsApp };
 
 export interface DadosMensagemWhatsApp {
   nome: string;
@@ -25,15 +31,6 @@ export interface DadosMensagemWhatsApp {
 
 export interface DadosMensagemCobranca extends DadosMensagemWhatsApp {
   atrasado: boolean;
-}
-
-export function formatarTelefoneWhatsApp(telefone: string): string | null {
-  const numeros = telefone.replace(/\D/g, '');
-  if (!numeros) return null;
-  if (numeros.startsWith('55') && numeros.length >= 12) return numeros;
-  if (numeros.length === 10 || numeros.length === 11) return `55${numeros}`;
-  if (numeros.length >= 12) return numeros;
-  return null;
 }
 
 function formatarValorMsg(valor: number): string {
@@ -178,7 +175,7 @@ export function abrirWhatsAppCobranca(telefone: string, mensagem: string): void 
   const url = urlWhatsAppCobranca(telefone, mensagem);
   if (!url) {
     notificar(
-      'Telefone inválido. Cadastre o número com DDD, por exemplo: (62) 99999-9999.',
+      'Telefone inválido. Brasil: (62) 99999-9999. Internacional: +351 912 345 678.',
       'warning'
     );
     return;
@@ -196,17 +193,12 @@ export function abrirWhatsAppContato(telefone: string): void {
   const url = urlWhatsAppContato(telefone);
   if (!url) {
     notificar(
-      'Telefone inválido. Cadastre o número com DDD, por exemplo: (62) 99999-9999.',
+      'Telefone inválido. Brasil: (62) 99999-9999. Internacional: +351 912 345 678.',
       'warning'
     );
     return;
   }
   window.open(url, '_blank', 'noopener,noreferrer');
-}
-
-export function telefoneValidoParaWhatsApp(telefone?: string | null): boolean {
-  if (!telefone?.trim()) return false;
-  return formatarTelefoneWhatsApp(telefone) !== null;
 }
 
 export interface ParamsPosPagamento {

@@ -19,22 +19,40 @@
         <input
           class="crm-input"
           type="tel"
-          inputmode="numeric"
           autocomplete="tel"
-          maxlength="15"
           [ngModel]="form.telefone"
           (ngModelChange)="onTelefoneInput($event)"
           (blur)="telefoneTocado = true"
-          placeholder="(62) 99999-9999"
+          placeholder="(62) 99999-9999 ou +351 912 345 678"
           [class.border-red-500]="telefoneInvalido"
         />
         <p *ngIf="telefoneInvalido" class="text-red-400 text-xs mt-1">
-          Informe o DDD e o número completo (10 ou 11 dígitos).
+          Informe um telefone válido para WhatsApp (Brasil ou internacional com +).
+        </p>
+        <p *ngIf="!telefoneInvalido" class="text-slate-500 text-xs mt-1">
+          {{ rotuloAjudaTelefone(form.telefone) }}
         </p>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="crm-card !p-4 border border-slate-800">
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900"
+          [(ngModel)]="form.somenteContato"
+          (ngModelChange)="onSomenteContatoChange()"
+        />
+        <span>
+          <span class="block text-slate-200 text-sm font-medium">Somente cadastro (sem plano/vencimento)</span>
+          <span class="block text-slate-500 text-xs mt-1">
+            Salva nome, telefone e dados opcionais sem plano, valor ou cobrança.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div *ngIf="!form.somenteContato" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-slate-300 mb-2 text-sm">Plano</label>
         <select class="crm-input" [(ngModel)]="form.planoId" (ngModelChange)="onPlanoChange()">
@@ -149,7 +167,7 @@
       </button>
     </div>
 
-    <div>
+    <div *ngIf="!form.somenteContato">
       <h3 class="text-white font-semibold mb-3">Datas</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -172,7 +190,7 @@
       <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.observacao"></textarea>
     </div>
 
-    <div class="crm-card !p-4 border border-slate-800">
+    <div *ngIf="!form.somenteContato" class="crm-card !p-4 border border-slate-800">
       <label class="flex items-start gap-3 cursor-pointer">
         <input
           type="checkbox"
@@ -189,7 +207,7 @@
       </label>
     </div>
 
-    <div class="crm-card !p-4 border border-slate-800">
+    <div *ngIf="!form.somenteContato" class="crm-card !p-4 border border-slate-800">
       <label class="flex items-start gap-3 cursor-pointer">
         <input
           type="checkbox"

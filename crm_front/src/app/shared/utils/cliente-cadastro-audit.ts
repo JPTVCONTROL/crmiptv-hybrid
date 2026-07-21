@@ -141,6 +141,13 @@ export function pendenciasCadastroDoCliente(
 ): TipoPendenciaCadastro[] {
   const pendencias: TipoPendenciaCadastro[] = [];
 
+  if (cliente.somenteContato) {
+    if (!telefoneValidoParaWhatsApp(cliente.telefone)) {
+      pendencias.push('SEM_TELEFONE');
+    }
+    return pendencias;
+  }
+
   if (!telefoneValidoParaWhatsApp(cliente.telefone)) {
     pendencias.push('SEM_TELEFONE');
   }
@@ -235,6 +242,10 @@ export function clienteCadastroIncompleto(
   cliente: Cliente,
   aplicativos?: AplicativoRequisitosCadastro[]
 ): boolean {
+  if (cliente.somenteContato) {
+    return !telefoneValidoParaWhatsApp(cliente.telefone);
+  }
+
   if (!cliente.expiraEm || (!cliente.cortesia && cliente.valorMensal <= 0)) {
     return true;
   }

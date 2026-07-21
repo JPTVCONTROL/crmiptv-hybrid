@@ -117,6 +117,10 @@ describe('clienteParticipaCobrancas', () => {
       false
     );
   });
+
+  it('exclui clientes somente contato', () => {
+    assert.equal(clienteParticipaCobrancas({ somenteContato: true }), false);
+  });
 });
 
 describe('calcularDiasVencimento', () => {
