@@ -78,8 +78,8 @@ export class DashboardPage implements OnInit, OnDestroy {
   retencaoPercentual = '';
   churnPercentual = '';
   inadimplenciaPercentual = '';
-  ltvEstimado = '';
-  permanenciaMediaMeses = '';
+  ganhosProximoAno = '';
+  ganhosProximoAnoRotulo = '';
 
   subtituloPagina = '';
 
@@ -294,8 +294,8 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.retencaoPercentual = `${m.retencaoPercentual}%`;
     this.churnPercentual = `${m.churnPercentual}%`;
     this.inadimplenciaPercentual = `${m.inadimplenciaPercentual}%`;
-    this.ltvEstimado = formatarValor(m.ltvEstimado);
-    this.permanenciaMediaMeses = `${m.permanenciaMediaMeses} meses`;
+    this.ganhosProximoAno = formatarValor(m.ganhosProximoAno);
+    this.ganhosProximoAnoRotulo = `jan–dez/${m.ganhosProximoAnoAno} · MRR × 12`;
   }
 
   async renovarCliente(cliente: ClienteAtencaoResumo): Promise<void> {

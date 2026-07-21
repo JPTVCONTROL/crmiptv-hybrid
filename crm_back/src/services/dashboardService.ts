@@ -113,8 +113,8 @@ export interface DashboardResumo {
     retencaoPercentual: number;
     churnPercentual: number;
     inadimplenciaPercentual: number;
-    permanenciaMediaMeses: number;
-    ltvEstimado: number;
+    ganhosProximoAno: number;
+    ganhosProximoAnoAno: number;
   };
 }
 
@@ -558,7 +558,7 @@ export class DashboardService {
         tipo: 'CADASTRO_INCOMPLETO',
         titulo: 'Cadastros incompletos',
         descricao:
-          'Clientes sem plano, valor, vencimento ou credenciais completas.',
+          'Clientes pagantes sem plano, valor, vencimento ou credenciais completas. Cortesias não exigem plano nem valor.',
         quantidade: clientesResumo.cadastrosIncompletos,
         rota: '/clientes?incompleto=1',
       });
@@ -678,16 +678,8 @@ export class DashboardService {
         ? Math.round((clientesResumo.inativos / totalClientes) * 1000) / 10
         : 0;
 
-    const permanenciaMediaMeses =
-      clientesAtivosComercial.length > 0
-        ? clientesAtivosComercial.reduce((total, cliente) => {
-            const meses =
-              (hoje.getTime() - cliente.createdAt.getTime()) /
-              (1000 * 60 * 60 * 24 * 30.44);
-            return total + Math.max(0, meses);
-          }, 0) / clientesAtivosComercial.length
-        : 0;
-    const ltvEstimado = ticketMedio * permanenciaMediaMeses;
+    const ganhosProximoAnoAno = arrAno + 1;
+    const ganhosProximoAno = Math.round(mrr * 12 * 100) / 100;
 
     return {
       clientes: clientesResumo,
@@ -728,8 +720,8 @@ export class DashboardService {
         retencaoPercentual,
         churnPercentual,
         inadimplenciaPercentual,
-        permanenciaMediaMeses: Math.round(permanenciaMediaMeses * 10) / 10,
-        ltvEstimado: Math.round(ltvEstimado * 100) / 100,
+        ganhosProximoAno,
+        ganhosProximoAnoAno,
       },
     };
   }

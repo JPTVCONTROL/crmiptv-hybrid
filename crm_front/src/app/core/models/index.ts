@@ -286,8 +286,8 @@ export interface DashboardResumo {
     retencaoPercentual: number;
     churnPercentual: number;
     inadimplenciaPercentual: number;
-    permanenciaMediaMeses: number;
-    ltvEstimado: number;
+    ganhosProximoAno: number;
+    ganhosProximoAnoAno: number;
   };
 }
 

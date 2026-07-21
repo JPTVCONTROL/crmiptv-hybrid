@@ -6,6 +6,10 @@ import {
 } from './cobrancaDiariaHelpers.js';
 import { parseCsvClientes } from './clienteImportHelpers.js';
 import {
+  clienteCadastroIncompleto,
+  contarCadastrosIncompletos,
+} from './clienteCadastroHelpers.js';
+import {
   addMonthsUtc,
   calcularExpiracao,
   calcularNovoVencimento,
@@ -120,6 +124,61 @@ describe('calcularDiasVencimento', () => {
     const hoje = new Date();
     const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
     assert.equal(calcularDiasVencimento(iso), 0);
+  });
+});
+
+describe('clienteCadastroIncompleto', () => {
+  const clienteBase = {
+    telefone: '62999998888',
+    planoId: 1,
+    valorMensal: 35,
+    cortesia: false,
+    expiraEm: new Date('2026-08-01T12:00:00.000Z'),
+    servidor: 'srv',
+    usuario: 'user',
+    senha: 'pass',
+    aplicativoId: 1,
+    dispositivos: null,
+    macAddress: null,
+  };
+
+  it('não marca cortesia com valor zero como incompleto quando cadastro está ok', () => {
+    assert.equal(
+      clienteCadastroIncompleto({
+        ...clienteBase,
+        cortesia: true,
+        valorMensal: 0,
+        planoId: null,
+      }),
+      false
+    );
+  });
+
+  it('marca cliente pagante sem valor como incompleto', () => {
+    assert.equal(
+      clienteCadastroIncompleto({
+        ...clienteBase,
+        valorMensal: 0,
+      }),
+      true
+    );
+  });
+
+  it('conta apenas cadastros realmente incompletos', () => {
+    const total = contarCadastrosIncompletos([
+      {
+        ...clienteBase,
+        cortesia: true,
+        valorMensal: 0,
+        planoId: null,
+      },
+      {
+        ...clienteBase,
+        valorMensal: 0,
+      },
+    ]);
+
+    assert.equal(total, 1);
   });
 });
 

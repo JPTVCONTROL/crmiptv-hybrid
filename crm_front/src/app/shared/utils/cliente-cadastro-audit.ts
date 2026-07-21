@@ -145,7 +145,7 @@ export function pendenciasCadastroDoCliente(
     pendencias.push('SEM_TELEFONE');
   }
 
-  if (!cliente.planoId) {
+  if (!cliente.cortesia && !cliente.planoId) {
     pendencias.push('SEM_PLANO');
   }
 

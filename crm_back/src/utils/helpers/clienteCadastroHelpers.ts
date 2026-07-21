@@ -96,7 +96,7 @@ export function pendenciasCadastroDoCliente(
     pendencias.push('SEM_TELEFONE');
   }
 
-  if (!cliente.planoId) {
+  if (!cliente.cortesia && !cliente.planoId) {
     pendencias.push('SEM_PLANO');
   }
 
@@ -184,7 +184,10 @@ export function clienteCadastroIncompleto(
   cliente: ClienteParaAuditoriaCadastro & { expiraEm: Date | null },
   aplicativos: Map<number, AplicativoRequisitosCadastro> = new Map()
 ): boolean {
-  if (!cliente.expiraEm || !cliente.valorMensal || cliente.valorMensal <= 0) {
+  if (
+    !cliente.expiraEm ||
+    (!cliente.cortesia && (!cliente.valorMensal || cliente.valorMensal <= 0))
+  ) {
     return true;
   }
 
