@@ -6,9 +6,9 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { AlertaOperacional } from '../../core/models';
 import {
   AlertasOperacionaisService,
@@ -21,9 +21,15 @@ import {
   styleUrls: ['./alertas-sino.component.scss'],
 })
 export class AlertasSinoComponent implements OnInit, OnDestroy {
+  private static nextId = 0;
+
   aberto = false;
+  layoutCompacto = false;
+  estaNoDashboard = false;
+  readonly painelId = `alertas-sino-painel-${++AlertasSinoComponent.nextId}`;
 
   @ViewChild('painelAlertas') painelRef?: ElementRef<HTMLElement>;
+  @ViewChild('overlayHost') overlayHost?: ElementRef<HTMLElement>;
   @ViewChild('botaoAlertas') botaoRef?: ElementRef<HTMLButtonElement>;
   estado: EstadoAlertasOperacionais = {
     alertas: [],
@@ -34,6 +40,17 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
   };
 
   private readonly destroy$ = new Subject<void>();
+  private readonly compactQuery = window.matchMedia('(max-width: 1023px)');
+  private ignorarCliqueDocumentoAte = 0;
+  private overlayParentOriginal: HTMLElement | null = null;
+  private readonly onCompactChange = (): void => {
+    const eraCompacto = this.layoutCompacto;
+    this.atualizarLayoutCompacto();
+
+    if (this.aberto && eraCompacto !== this.layoutCompacto) {
+      this.fecharPainel();
+    }
+  };
 
   constructor(
     private alertasService: AlertasOperacionaisService,
@@ -42,6 +59,17 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.atualizarLayoutCompacto();
+    this.atualizarRotaDashboard();
+    this.compactQuery.addEventListener('change', this.onCompactChange);
+
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => this.atualizarRotaDashboard());
+
     this.alertasService.estado$
       .pipe(takeUntil(this.destroy$))
       .subscribe((estado) => {
@@ -50,6 +78,9 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.compactQuery.removeEventListener('change', this.onCompactChange);
+    this.removerOverlayDoBody();
+    document.body.classList.remove('alertas-sino-scroll-lock');
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -82,18 +113,69 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
     return `${this.badge} pendência${this.badge === 1 ? '' : 's'}`;
   }
 
+  get mostrarLinkDashboard(): boolean {
+    return !this.estaNoDashboard;
+  }
+
   alternarPainel(event?: Event): void {
     event?.stopPropagation();
-    this.aberto = !this.aberto;
+    event?.preventDefault();
 
     if (this.aberto) {
-      queueMicrotask(() => this.focarPrimeiroItem());
+      this.fecharPainel();
+      return;
     }
+
+    this.aberto = true;
+    this.ignorarCliqueDocumentoAte = Date.now() + 350;
+    setTimeout(() => {
+      this.teleportarOverlaySeNecessario();
+      this.focarPrimeiroItem();
+    }, 0);
   }
 
   fecharPainel(): void {
+    this.removerOverlayDoBody();
+    document.body.classList.remove('alertas-sino-scroll-lock');
     this.aberto = false;
     this.botaoRef?.nativeElement.focus();
+  }
+
+  private atualizarLayoutCompacto(): void {
+    this.layoutCompacto = this.compactQuery.matches;
+  }
+
+  private atualizarRotaDashboard(): void {
+    const rota = this.router.url.split('?')[0].split('#')[0];
+    this.estaNoDashboard = rota === '/dashboard';
+  }
+
+  private teleportarOverlaySeNecessario(): void {
+    if (!this.aberto || !this.layoutCompacto) {
+      return;
+    }
+
+    const host = this.overlayHost?.nativeElement;
+    if (!host || host.parentElement === document.body) {
+      return;
+    }
+
+    this.overlayParentOriginal = host.parentElement;
+    document.body.appendChild(host);
+    document.body.classList.add('alertas-sino-scroll-lock');
+  }
+
+  private removerOverlayDoBody(): void {
+    const host = this.overlayHost?.nativeElement;
+    if (!host || !this.overlayParentOriginal) {
+      return;
+    }
+
+    if (host.parentElement === document.body) {
+      this.overlayParentOriginal.appendChild(host);
+    }
+
+    this.overlayParentOriginal = null;
   }
 
   private focarPrimeiroItem(): void {
@@ -228,8 +310,17 @@ export class AlertasSinoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (Date.now() < this.ignorarCliqueDocumentoAte) {
+      return;
+    }
+
     const alvo = event.target as Node | null;
-    if (alvo && this.elementRef.nativeElement.contains(alvo)) {
+    const dentroDoGatilho =
+      alvo != null && this.elementRef.nativeElement.contains(alvo);
+    const dentroDoOverlay =
+      alvo != null && this.overlayHost?.nativeElement.contains(alvo);
+
+    if (dentroDoGatilho || dentroDoOverlay) {
       return;
     }
 

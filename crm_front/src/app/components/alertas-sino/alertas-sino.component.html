@@ -6,7 +6,7 @@
     [class.alertas-sino-btn-ativo]="aberto"
     [attr.aria-expanded]="aberto"
     aria-haspopup="dialog"
-    aria-controls="alertas-sino-painel"
+    [attr.aria-controls]="painelId"
     aria-label="Alertas operacionais"
     (click)="alternarPainel($event)"
   >
@@ -20,93 +20,118 @@
     </span>
   </button>
 
-  <button
-    *ngIf="aberto"
-    type="button"
-    class="alertas-sino-backdrop lg:hidden"
-    aria-label="Fechar alertas"
-    (click)="fecharPainel()"
-  ></button>
-
   <div
-    *ngIf="aberto"
+    *ngIf="aberto && !layoutCompacto"
     #painelAlertas
-    id="alertas-sino-painel"
+    [id]="painelId"
     class="alertas-sino-painel"
     role="dialog"
     aria-modal="true"
     aria-label="Lista de alertas"
   >
-    <div class="alertas-sino-header">
-      <div>
-        <p class="alertas-sino-titulo">Alertas</p>
-        <p class="alertas-sino-subtitulo" *ngIf="estado.progressoRotina">
-          Rotina: {{ estado.progressoRotina }}
-        </p>
-      </div>
-      <span
-        *ngIf="estado.rotinaFeita && temUrgencias === false"
-        class="alertas-sino-ok"
-      >
-        Em dia
-      </span>
-    </div>
-
-    <div *ngIf="estado.carregando" class="alertas-sino-loading">
-      Carregando alertas...
-    </div>
-
-    <div *ngIf="!estado.carregando && estado.alertas.length === 0" class="alertas-sino-vazio">
-      <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
-      <p>Nenhum alerta no momento.</p>
-    </div>
-
-    <ng-container *ngIf="!estado.carregando && estado.alertas.length > 0">
-      <p *ngIf="alertasCadastro.length > 0" class="alertas-sino-secao">Cadastro incompleto</p>
-      <ul *ngIf="alertasCadastro.length > 0" class="alertas-sino-lista">
-        <li *ngFor="let alerta of alertasCadastro">
-          <button
-            type="button"
-            class="alertas-sino-item"
-            [ngClass]="classeAlerta(alerta)"
-            (click)="abrirAlerta(alerta)"
-          >
-            <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
-            <div class="alertas-sino-item-texto">
-              <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
-              <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
-            </div>
-            <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
-              {{ alerta.quantidade }}
-            </span>
-          </button>
-        </li>
-      </ul>
-
-      <p *ngIf="alertasOperacionais.length > 0" class="alertas-sino-secao">Operação do dia</p>
-      <ul *ngIf="alertasOperacionais.length > 0" class="alertas-sino-lista">
-        <li *ngFor="let alerta of alertasOperacionais">
-          <button
-            type="button"
-            class="alertas-sino-item"
-            [ngClass]="classeAlerta(alerta)"
-            (click)="abrirAlerta(alerta)"
-          >
-            <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
-            <div class="alertas-sino-item-texto">
-              <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
-              <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
-            </div>
-            <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
-              {{ alerta.quantidade }}
-            </span>
-          </button>
-        </li>
-      </ul>
-    </ng-container>
-
-    <button type="button" class="alertas-sino-footer" (click)="irParaDashboard()">
-      Ver resumo no Dashboard
-    </button>
+    <ng-container *ngTemplateOutlet="conteudoPainel"></ng-container>
   </div>
 </div>
+
+<div
+  *ngIf="aberto && layoutCompacto"
+  #overlayHost
+  class="alertas-sino-overlay-host"
+>
+  <button
+    type="button"
+    class="alertas-sino-backdrop"
+    aria-label="Fechar alertas"
+    (click)="fecharPainel()"
+  ></button>
+
+  <div
+    #painelAlertas
+    [id]="painelId"
+    class="alertas-sino-painel alertas-sino-painel--compact"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Lista de alertas"
+  >
+    <ng-container *ngTemplateOutlet="conteudoPainel"></ng-container>
+  </div>
+</div>
+
+<ng-template #conteudoPainel>
+  <div class="alertas-sino-header">
+    <div>
+      <p class="alertas-sino-titulo">Alertas</p>
+      <p class="alertas-sino-subtitulo" *ngIf="estado.progressoRotina">
+        Rotina: {{ estado.progressoRotina }}
+      </p>
+    </div>
+    <span
+      *ngIf="estado.rotinaFeita && temUrgencias === false"
+      class="alertas-sino-ok"
+    >
+      Em dia
+    </span>
+  </div>
+
+  <div *ngIf="estado.carregando" class="alertas-sino-loading">
+    Carregando alertas...
+  </div>
+
+  <div *ngIf="!estado.carregando && estado.alertas.length === 0" class="alertas-sino-vazio">
+    <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+    <p>Nenhum alerta no momento.</p>
+  </div>
+
+  <ng-container *ngIf="!estado.carregando && estado.alertas.length > 0">
+    <p *ngIf="alertasCadastro.length > 0" class="alertas-sino-secao">Cadastro incompleto</p>
+    <ul *ngIf="alertasCadastro.length > 0" class="alertas-sino-lista">
+      <li *ngFor="let alerta of alertasCadastro">
+        <button
+          type="button"
+          class="alertas-sino-item"
+          [ngClass]="classeAlerta(alerta)"
+          (click)="abrirAlerta(alerta)"
+        >
+          <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
+          <div class="alertas-sino-item-texto">
+            <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
+            <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
+          </div>
+          <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
+            {{ alerta.quantidade }}
+          </span>
+        </button>
+      </li>
+    </ul>
+
+    <p *ngIf="alertasOperacionais.length > 0" class="alertas-sino-secao">Operação do dia</p>
+    <ul *ngIf="alertasOperacionais.length > 0" class="alertas-sino-lista">
+      <li *ngFor="let alerta of alertasOperacionais">
+        <button
+          type="button"
+          class="alertas-sino-item"
+          [ngClass]="classeAlerta(alerta)"
+          (click)="abrirAlerta(alerta)"
+        >
+          <ion-icon [name]="iconeAlerta(alerta)" aria-hidden="true"></ion-icon>
+          <div class="alertas-sino-item-texto">
+            <span class="alertas-sino-item-titulo">{{ alerta.titulo }}</span>
+            <span class="alertas-sino-item-descricao">{{ alerta.descricao }}</span>
+          </div>
+          <span *ngIf="alerta.quantidade > 0" class="alertas-sino-item-qtd">
+            {{ alerta.quantidade }}
+          </span>
+        </button>
+      </li>
+    </ul>
+  </ng-container>
+
+  <button
+    *ngIf="mostrarLinkDashboard"
+    type="button"
+    class="alertas-sino-footer"
+    (click)="irParaDashboard()"
+  >
+    Ver resumo no Dashboard
+  </button>
+</ng-template>

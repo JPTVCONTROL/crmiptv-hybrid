@@ -154,6 +154,11 @@ ion-buttons[slot='end'] {
   overflow: visible;
 }
 
+ion-header {
+  overflow: visible;
+  contain: none;
+}
+
 ion-content {
   --background: var(--crm-bg);
 }
@@ -175,11 +180,16 @@ ion-toolbar {
 
 ion-header ion-toolbar {
   --background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   padding-top: env(safe-area-inset-top, 0px);
   overflow: visible;
   contain: none;
+}
+
+@media (max-width: 1023px) {
+  ion-header ion-toolbar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .mobile-logo-title {

@@ -1,3 +1,8 @@
+:host {
+  display: inline-flex;
+  position: relative;
+}
+
 .alertas-sino {
   position: relative;
 }
@@ -47,6 +52,13 @@
   text-align: center;
 }
 
+.alertas-sino-overlay-host {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: auto;
+}
+
 .alertas-sino-painel {
   position: absolute;
   top: calc(100% + 0.5rem);
@@ -60,25 +72,24 @@
   overflow: hidden;
 }
 
+.alertas-sino-painel--compact {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 3.25rem);
+  right: 0.75rem;
+  left: auto;
+  width: min(22rem, calc(100vw - 1.5rem));
+  z-index: 1;
+}
+
 .alertas-sino-backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 9999;
+  z-index: 0;
   margin: 0;
   padding: 0;
   border: 0;
   background: rgba(2, 6, 23, 0.45);
   cursor: default;
-}
-
-@media (max-width: 1023px) {
-  .alertas-sino-painel {
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 3.25rem);
-    right: 0.75rem;
-    left: auto;
-    width: min(22rem, calc(100vw - 1.5rem));
-  }
 }
 
 .alertas-sino-header {
