@@ -381,6 +381,7 @@ export class MarketPage implements OnInit, OnDestroy {
       VENCENDO: 'amber',
       ATRASADOS: 'red',
       INATIVOS: 'red',
+      SOMENTE_CONTATO: 'sky',
     };
     return classesFilterChip(this.segmentoPublico === segmento, variantes[segmento]);
   }
@@ -392,6 +393,7 @@ export class MarketPage implements OnInit, OnDestroy {
       VENCENDO: 'amber',
       ATRASADOS: 'red',
       INATIVOS: 'red',
+      SOMENTE_CONTATO: 'sky',
     };
     return classesFilterChipContagem(this.segmentoPublico === segmento, variantes[segmento]);
   }
