@@ -1,22 +1,16 @@
 $ErrorActionPreference = "Continue"
 
-$raizBack = Split-Path -Parent $PSScriptRoot
-$logDir = Join-Path $raizBack "logs"
+. "$PSScriptRoot\_api-common.ps1"
+
+$raizBack = Get-CrmApiRaizBack
+$logDir = Ensure-CrmApiLogDir -RaizBack $raizBack
 $logFile = Join-Path $logDir "api-startup.log"
 $pidFile = Join-Path $logDir "api.pid"
-
-New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+$porta = Get-CrmApiPort -RaizBack $raizBack
 
 function Escrever-Log {
   param([string]$Mensagem)
-  $linha = "{0} {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Mensagem
-  Add-Content -Path $logFile -Value $linha
-}
-
-function Test-ApiEscutando {
-  $conexao = Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue |
-    Select-Object -First 1
-  return [bool]$conexao
+  Write-CrmApiStartupLog -Mensagem $Mensagem -LogFile $logFile
 }
 
 function Aguardar-Tailscale {
@@ -41,16 +35,25 @@ function Aguardar-Tailscale {
   Escrever-Log "Tailscale ainda nao conectou; iniciando API mesmo assim."
 }
 
-if (Test-ApiEscutando) {
-  Escrever-Log "API ja escutando na porta 3001; nada a fazer."
+if (Test-CrmApiHealth -Porta $porta) {
+  Escrever-Log "API ja online em $(Get-CrmApiHealthUrl -Porta $porta)."
   exit 0
+}
+
+if (Test-CrmApiPortListening -Porta $porta) {
+  Escrever-Log "Porta $porta em uso, mas /health falhou; abortando boot automatico."
+  exit 2
 }
 
 if (Test-Path $pidFile) {
   $pidSalvo = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($pidSalvo -and (Get-Process -Id $pidSalvo -ErrorAction SilentlyContinue)) {
-    Escrever-Log "Processo da API ja registrado (PID $pidSalvo)."
-    exit 0
+    Escrever-Log "Processo da API ja registrado (PID $pidSalvo); aguardando /health..."
+    if (Wait-CrmApiHealth -Porta $porta -SegundosMax 60) {
+      Escrever-Log "API respondeu em /health apos PID existente."
+      exit 0
+    }
+    Escrever-Log "PID $pidSalvo ativo, mas /health nao respondeu; continuando tentativa de boot."
   }
 }
 
@@ -58,9 +61,14 @@ Escrever-Log "Aguardando rede e Tailscale..."
 Start-Sleep -Seconds 15
 Aguardar-Tailscale -SegundosMax 90
 
-if (Test-ApiEscutando) {
-  Escrever-Log "API iniciada por outro processo durante a espera."
+if (Test-CrmApiHealth -Porta $porta) {
+  Escrever-Log "API ficou online durante a espera."
   exit 0
+}
+
+if (Test-CrmApiPortListening -Porta $porta) {
+  Escrever-Log "Porta $porta ocupada apos espera; abortando."
+  exit 2
 }
 
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
@@ -74,7 +82,7 @@ if (-not $npm) {
   exit 1
 }
 
-Escrever-Log "Iniciando CRM JPTV API (start:boot)..."
+Escrever-Log "Iniciando CRM JPTV API (start:boot) na porta $porta..."
 
 $proc = Start-Process `
   -FilePath $npm.Source `
@@ -89,4 +97,12 @@ if (-not $proc) {
 }
 
 Set-Content -Path $pidFile -Value $proc.Id
-Escrever-Log "API iniciada em background (PID $($proc.Id)). Log: $logFile"
+Escrever-Log "Processo iniciado (PID $($proc.Id)). Aguardando /health..."
+
+if (Wait-CrmApiHealth -Porta $porta -SegundosMax 90) {
+  Escrever-Log "API online em $(Get-CrmApiHealthUrl -Porta $porta) (PID $($proc.Id))."
+  exit 0
+}
+
+Escrever-Log "ERRO: processo $($proc.Id) iniciado, mas /health nao respondeu em 90s."
+exit 1

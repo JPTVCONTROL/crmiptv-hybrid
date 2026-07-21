@@ -15,28 +15,28 @@ export function textoBannerApiOffline(): string {
   const origem = origemApi();
 
   if (apiUsaLocalhost()) {
-    return `O backend não responde em ${origem}. Na raiz do projeto, execute npm run dev ou npm run dev:back.`;
+    return `O backend não responde em ${origem}. Na raiz: npm run api:ensure ou npm run dev:back. Auto ao logar: npm run api:setup.`;
   }
 
-  return `O backend não responde em ${origem}. Confirme: PC com npm run dev:back, celular/tablet na mesma Wi-Fi e firewall liberado (crm_back: npm run firewall:api).`;
+  return `O backend não responde em ${origem}. No PC: npm run api:ensure (ou npm run api:setup uma vez). Tailscale ligado no celular; firewall: npm run api:firewall como admin.`;
 }
 
 export function textoErroLoginIndisponivel(): string {
   const origem = origemApi();
 
   if (apiUsaLocalhost()) {
-    return `Servidor indisponível. Em outro terminal: cd crm_back → npm run dev. Teste ${origem}/health no navegador.`;
+    return `Servidor indisponível. Na raiz: npm run api:ensure. Teste ${origem}/health no navegador.`;
   }
 
-  return `Servidor indisponível em ${origem}. No PC: npm run dev:back. No celular, abra ${origem}/health no navegador (mesma Wi-Fi). Se falhar, rode npm run firewall:api no crm_back como administrador.`;
+  return `Servidor indisponível em ${origem}. No PC: npm run api:ensure. No celular, abra ${origem}/health (Tailscale ou mesma Wi-Fi). Se persistir: npm run api:firewall como admin.`;
 }
 
 export function textoHintDashboardApiOffline(): string {
   const origem = origemApi();
 
   if (apiUsaLocalhost()) {
-    return `Confirme se o backend está ativo em ${origem} (npm run dev na raiz do projeto).`;
+    return `Confirme se o backend está ativo em ${origem} (npm run api:ensure na raiz).`;
   }
 
-  return `Confirme se o backend está ativo em ${origem} (npm run dev:back no PC) e se o tablet está na mesma Wi-Fi.`;
+  return `Confirme se o backend está ativo em ${origem} (npm run api:ensure no PC) e Tailscale/rede OK no tablet.`;
 }

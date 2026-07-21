@@ -164,8 +164,15 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | Comando | Descrição |
 |---------|-----------|
 | `npm run dev` | Libera portas 4200/3001 e sobe backend + frontend juntos |
-| `npm run dev:back` | Apenas a API |
+| `npm run dev:back` | Apenas a API (modo dev, terminal visível) |
 | `npm run dev:front` | Apenas o CRM |
+| `npm run api:status` | Verifica se `/health` responde |
+| `npm run api:ensure` | Sobe a API em background se estiver offline |
+| `npm run api:restart` | Encerra porta 3001 e sobe a API de novo |
+| `npm run api:setup` | Configura startup ao logon + watchdog (ver abaixo) |
+| `npm run api:startup:install` | Agenda API ao logar no Windows |
+| `npm run api:watchdog:install` | Verifica a API a cada 10 min e reinicia se cair |
+| `npm run api:firewall` | Libera TCP 3001 no firewall (admin) |
 | `npm run build` | Build de backend e frontend |
 | `npm test` | Testes unitários de ambos |
 
@@ -182,6 +189,12 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | `npm run db:migrate` | Cria migration versionada (recomendado em produção) |
 | `npm run db:seed` | Cria/atualiza admin e planos padrão JPTV |
 | `npm run db:studio` | Abre Prisma Studio (GUI do banco) |
+| `npm run api:status` | Testa `http://127.0.0.1:3001/health` |
+| `npm run api:ensure` | Inicia API em background se offline |
+| `npm run api:setup` | Wizard: status + startup + watchdog |
+| `npm run api:startup:install` | Tarefa agendada ao logon (45s) |
+| `npm run api:watchdog:install` | Tarefa a cada 10 min (reinício automático) |
+| `npm run firewall:api` | Regra firewall TCP 3001 (admin) |
 | `npm test` | Testes unitários dos helpers (datas, cobrança, importação) |
 
 ### Frontend (`crm_front`)
@@ -192,6 +205,56 @@ O frontend abrirá em **http://localhost:4200** (porta padrão do Angular).
 | `npm run build` | Build de produção em `www/` |
 | `npm test` | Testes unitários (Karma/Jasmine) |
 | `npm run lint` | ESLint |
+
+---
+
+## 4.1 Estabilidade da API (Windows + APK)
+
+Para o APK e o Tailscale funcionarem, a API precisa estar **sempre** rodando no PC. Use este fluxo **uma vez**:
+
+```bash
+cd c:\Projetos\crm-jptv
+npm run api:setup
+```
+
+O `api:setup` faz:
+
+1. Testa `/health` e tenta subir a API se estiver offline
+2. Instala **CRM JPTV API ao Logon** (sobe ~45s após login no Windows)
+3. Instala **CRM JPTV API Watchdog** (verifica a cada 10 min e reinicia se cair)
+4. Mostra o comando do firewall (precisa de PowerShell **como Administrador**)
+
+```bash
+cd crm_back
+npm run firewall:api
+```
+
+### Comandos do dia a dia
+
+| Situação | Comando |
+|----------|---------|
+| App mostra "API offline" | `npm run api:ensure` (na raiz) |
+| Verificar se está online | `npm run api:status` |
+| Reiniciar API manualmente | `npm run api:restart` |
+| Desenvolvimento com hot-reload | `npm run dev:back` |
+| Remover startup automático | `npm run api:startup:remove` |
+| Remover watchdog | `npm run api:watchdog:remove` |
+
+### Logs
+
+| Arquivo | Conteúdo |
+|---------|----------|
+| `crm_back/logs/api-startup.log` | Boot ao logon / Tailscale |
+| `crm_back/logs/api-ensure.log` | Tentativas do ensure e watchdog |
+| `crm_back/logs/api.pid` | PID do processo em background |
+
+### Checklist rápido (APK não loga)
+
+1. PC ligado e logado no Windows
+2. `npm run api:status` → **API online**
+3. Tailscale ligado no PC e no celular (mesma conta)
+4. Navegador no celular: `http://100.x.x.x:3001/health` → JSON online
+5. Se falhar na rede: `npm run api:firewall` como admin
 
 ---
 
@@ -319,7 +382,7 @@ Rotas internas (exceto `/login`) exigem sessão ativa. O botão **Sair** no menu
 
 ### Banner API offline
 
-Quando `http://localhost:3001/health` não responde, um aviso amarelo aparece no topo (login e telas internas) orientando a executar `npm run dev` ou `npm run dev:back`. O serviço `ApiHealthService` verifica a API a cada 25 segundos.
+Quando `/health` não responde, um aviso amarelo aparece no topo (login e telas internas). O texto orienta `npm run api:ensure` ou `npm run api:setup`. O `ApiHealthService` verifica a API a cada 25 segundos.
 
 ### Persistência na sessão do navegador
 
@@ -513,8 +576,13 @@ No Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**. Inst
 | `npm run cap:home` | `crm_front` | IP + build mobile + sync Android |
 | `npm run cap:sync` | `crm_front` | Build mobile + sync (sem alterar IP) |
 | `npm run firewall:api` | `crm_back` | Regra de firewall TCP 3001 (rede privada) |
+| `npm run api:setup` | raiz ou `crm_back` | Startup + watchdog + checklist firewall |
+| `npm run api:status` | raiz | Verifica `/health` |
+| `npm run api:ensure` | raiz | Sobe API se offline |
 | `npm run api:startup:install` | `crm_back` | API sobe ao logar no Windows |
+| `npm run api:watchdog:install` | `crm_back` | Reinicia API se cair (10 min) |
 | `npm run api:startup:remove` | `crm_back` | Remove tarefa de inicializacao da API |
+| `npm run api:watchdog:remove` | `crm_back` | Remove watchdog |
 | `npm run db:backup` | `crm_back` | Cópia manual do SQLite |
 | `npm run db:backup:install` | `crm_back` | Agenda backup diário (admin) |
 | `npm run db:backup:remove` | `crm_back` | Remove agendamento |
@@ -579,11 +647,20 @@ Ou na raiz: `npm run dev:back`
 **Automatico ao ligar o PC** (recomendado para APK + Tailscale):
 
 ```bash
-cd crm_back
-npm run api:startup:install
+npm run api:setup
 ```
 
-Isso agenda a tarefa **CRM JPTV API ao Logon** (45s apos login no Windows). A API sobe em segundo plano; log em `crm_back/logs/api-startup.log`.
+Ou só o startup ao logon:
+
+```bash
+cd crm_back
+npm run api:startup:install
+npm run api:watchdog:install
+```
+
+Isso agenda **CRM JPTV API ao Logon** (45s após login) e **CRM JPTV API Watchdog** (verifica a cada 10 min). Logs em `crm_back/logs/`.
+
+Se o app mostrar API offline durante o dia: `npm run api:ensure` (na raiz).
 
 Teste imediato:
 
@@ -764,6 +841,14 @@ Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layou
 ---
 
 ## 11. Solução de Problemas
+
+### App / APK mostra "API offline"
+
+1. No PC: `npm run api:status` — se offline, `npm run api:ensure`
+2. Se nunca configurou auto-start: `npm run api:setup` (uma vez)
+3. Firewall: PowerShell admin → `cd crm_back` → `npm run firewall:api`
+4. Tailscale ligado nos dois dispositivos; teste `http://100.x.x.x:3001/health` no celular
+5. Logs: `crm_back/logs/api-startup.log` e `api-ensure.log`
 
 ### Frontend não carrega dados / redireciona para login
 

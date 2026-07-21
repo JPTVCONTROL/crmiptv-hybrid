@@ -19,8 +19,14 @@
     "db:backup:install": "powershell -ExecutionPolicy Bypass -File scripts/schedule-backup-task.ps1",
     "db:backup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-backup-task.ps1",
     "firewall:api": "powershell -ExecutionPolicy Bypass -File scripts/firewall-api.ps1",
+    "api:status": "powershell -ExecutionPolicy Bypass -File scripts/api-health.ps1",
+    "api:ensure": "powershell -ExecutionPolicy Bypass -File scripts/ensure-api.ps1",
+    "api:restart": "npx --yes kill-port 3001 && powershell -ExecutionPolicy Bypass -File scripts/ensure-api.ps1",
+    "api:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-api-stability.ps1",
     "api:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/schedule-api-startup-task.ps1",
     "api:startup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-api-startup-task.ps1",
+    "api:watchdog:install": "powershell -ExecutionPolicy Bypass -File scripts/schedule-api-watchdog-task.ps1",
+    "api:watchdog:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-api-watchdog-task.ps1",
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
