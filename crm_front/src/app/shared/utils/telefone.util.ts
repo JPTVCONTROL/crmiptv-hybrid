@@ -86,3 +86,83 @@ export function rotuloAjudaTelefone(valor: string): string {
 
   return 'Brasil: (62) 99999-9999. Internacional: comece com + e o código do país.';
 }
+
+function resolverCodigoPaisExibicao(digitos: string): string {
+  const codigos3 = ['351', '353', '352', '354', '358', '420', '421'];
+  for (const codigo of codigos3) {
+    if (digitos.startsWith(codigo) && digitos.length >= codigo.length + 8) {
+      return codigo;
+    }
+  }
+
+  if (digitos.startsWith('1') && digitos.length >= 11) {
+    return '1';
+  }
+
+  if (digitos.startsWith('55') && digitos.length >= 12) {
+    return '55';
+  }
+
+  if (digitos.startsWith('44') && digitos.length >= 11) {
+    return '44';
+  }
+
+  if (digitos.startsWith('49') && digitos.length >= 11) {
+    return '49';
+  }
+
+  if (digitos.length >= 12) {
+    return digitos.slice(0, 3);
+  }
+
+  if (digitos.length >= 11) {
+    return digitos.slice(0, 2);
+  }
+
+  return digitos.slice(0, 1);
+}
+
+function formatarInternacionalExibicao(digitos: string): string {
+  const codigoPais = resolverCodigoPaisExibicao(digitos);
+  const resto = digitos.slice(codigoPais.length);
+  const blocos = resto.match(/.{1,3}/g) ?? [];
+
+  if (blocos.length === 0) {
+    return `+${codigoPais}`;
+  }
+
+  return `+${codigoPais} ${blocos.join(' ')}`;
+}
+
+/** Formata telefone para exibição na UI (BR ou internacional). */
+export function formatarTelefoneExibicao(telefone?: string | null): string {
+  if (!telefone?.trim()) {
+    return '';
+  }
+
+  const trimmed = telefone.trim();
+  const digitos = extrairDigitosTelefone(trimmed);
+  if (!digitos) {
+    return trimmed;
+  }
+
+  if (digitos.length === 10 || digitos.length === 11) {
+    return aplicarMascaraTelefoneBr(digitos);
+  }
+
+  if (
+    digitos.startsWith('55') &&
+    (digitos.length === 12 || digitos.length === 13)
+  ) {
+    return `+55 ${aplicarMascaraTelefoneBr(digitos.slice(2))}`;
+  }
+
+  if (
+    digitos.length >= 12 ||
+    (digitos.length >= 8 && telefonePareceInternacional(trimmed))
+  ) {
+    return formatarInternacionalExibicao(digitos);
+  }
+
+  return trimmed;
+}

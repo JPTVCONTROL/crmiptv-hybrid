@@ -302,7 +302,7 @@
             {{ c.nome }}
           </a>
         </h3>
-        <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
+        <p class="crm-mobile-card-subtitle">{{ fmtTelefone(c.telefone) || c.telefone }}</p>
       </div>
       <app-status-badge
         class="shrink-0"
@@ -469,7 +469,7 @@
             Falta: {{ rotuloPendenciaCurto(filtroCadastro!) }}
           </p>
         </td>
-        <td class="py-3 px-2 text-slate-300">{{ c.telefone }}</td>
+        <td class="py-3 px-2 text-slate-300">{{ fmtTelefone(c.telefone) || c.telefone }}</td>
         <td class="py-3 px-2 text-slate-300 hidden md:table-cell">{{ c.aplicativo?.nome ?? '—' }}</td>
         <td class="py-3 px-2 text-slate-300 whitespace-nowrap">
           {{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}

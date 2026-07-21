@@ -7,7 +7,8 @@ export type SegmentoPublicoCampanha =
   | 'ATIVOS'
   | 'VENCENDO'
   | 'ATRASADOS'
-  | 'INATIVOS';
+  | 'INATIVOS'
+  | 'SOMENTE_CONTATO';
 
 export interface FiltroPublicoCampanha {
   segmento: SegmentoPublicoCampanha;
@@ -22,6 +23,7 @@ export const ROTULOS_SEGMENTO_PUBLICO: Record<SegmentoPublicoCampanha, string> =
   VENCENDO: 'Vencendo',
   ATRASADOS: 'Atrasados',
   INATIVOS: 'Inativos',
+  SOMENTE_CONTATO: 'Somente contato',
 };
 
 export function rotuloSegmentoPublico(segmento: SegmentoPublicoCampanha): string {
@@ -82,6 +84,8 @@ export function clientePassouFiltroPublico(
       return status === 'ATRASADO';
     case 'INATIVOS':
       return status === 'INATIVO';
+    case 'SOMENTE_CONTATO':
+      return cliente.somenteContato === true;
     default:
       return true;
   }

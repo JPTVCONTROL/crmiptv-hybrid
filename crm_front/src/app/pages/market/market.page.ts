@@ -31,6 +31,7 @@ import {
   CobrancaLoteItem,
   telefoneValidoParaWhatsApp,
 } from '../../shared/utils/whatsapp';
+import { formatarTelefoneExibicao } from '../../shared/utils/telefone.util';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { confirmarUsuario } from '../../shared/utils/confirm-notifier';
 import { CampanhaFormModalComponent } from '../../components/campanha/campanha-form-modal.component';
@@ -55,7 +56,9 @@ export interface ClienteCampanhaLinha {
   id: number;
   nome: string;
   telefone: string;
+  telefoneExibicao: string;
   telefoneValido: boolean;
+  somenteContato: boolean;
   enviado: boolean;
   enviadoEm?: string;
   status: StatusCliente;
@@ -132,6 +135,7 @@ export class MarketPage implements OnInit, OnDestroy {
     { valor: 'VENCENDO', rotulo: 'Vencendo' },
     { valor: 'ATRASADOS', rotulo: 'Atrasados' },
     { valor: 'INATIVOS', rotulo: 'Inativos' },
+    { valor: 'SOMENTE_CONTATO', rotulo: 'Somente contato' },
   ];
   readonly opcoesFiltroStatusLista: OpcaoFiltroStatusLista[] = [
     { valor: 'TODAS', rotulo: 'Todas' },
@@ -146,6 +150,7 @@ export class MarketPage implements OnInit, OnDestroy {
   ];
   readonly rotuloSegmentoPublico = rotuloSegmentoPublico;
   readonly rotuloStatusPublico = rotuloStatusPublico;
+  readonly formatarTelefoneExibicao = formatarTelefoneExibicao;
   readonly trackByLinhaId = (_: number, linha: ClienteCampanhaLinha) => linha.id;
 
   private readonly destroy$ = new Subject<void>();
@@ -950,7 +955,9 @@ export class MarketPage implements OnInit, OnDestroy {
       id: cliente.id,
       nome: cliente.nome,
       telefone: cliente.telefone,
+      telefoneExibicao: formatarTelefoneExibicao(cliente.telefone),
       telefoneValido: telefoneValidoParaWhatsApp(cliente.telefone),
+      somenteContato: cliente.somenteContato === true,
       enviado: this.enviosPorCliente.has(cliente.id),
       enviadoEm: this.enviosPorCliente.get(cliente.id),
       status: resolverStatusCliente(cliente),

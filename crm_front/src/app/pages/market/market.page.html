@@ -490,12 +490,13 @@
                   }}</span>
                   <span *ngIf="linha.planoNome" class="text-slate-500 text-xs">{{ linha.planoNome }}</span>
                   <span *ngIf="linha.cortesia" class="crm-badge-cortesia">Cortesia</span>
+                  <span *ngIf="linha.somenteContato" class="crm-badge-somente-contato">Somente contato</span>
                   <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs">
-                    Telefone inválido
+                    Sem WhatsApp — cadastre com + e código do país
                   </p>
                 </div>
               </td>
-              <td class="text-slate-400">{{ linha.telefone }}</td>
+              <td class="text-slate-400">{{ linha.telefoneExibicao || linha.telefone }}</td>
               <td class="pr-4" (click)="$event.stopPropagation()">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span *ngIf="linha.enviado" class="crm-badge-pago">
@@ -553,7 +554,7 @@
                     {{ linha.nome }}
                   </a>
                 </p>
-                <p class="crm-mobile-card-subtitle">{{ linha.telefone }}</p>
+                <p class="crm-mobile-card-subtitle">{{ linha.telefoneExibicao || linha.telefone }}</p>
               </div>
             </label>
             <span *ngIf="linha.enviado" class="crm-badge-pago shrink-0">Enviado</span>
@@ -578,12 +579,13 @@
           </div>
 
           <div
-            *ngIf="linha.cortesia || !linha.telefoneValido || podeReenviar(linha)"
+            *ngIf="linha.cortesia || linha.somenteContato || !linha.telefoneValido || podeReenviar(linha)"
             class="crm-mobile-card-actions flex-wrap !justify-start"
             (click)="$event.stopPropagation()"
           >
             <span *ngIf="linha.cortesia" class="crm-badge-cortesia">Cortesia</span>
-            <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs">Telefone inválido</p>
+            <span *ngIf="linha.somenteContato" class="crm-badge-somente-contato">Somente contato</span>
+            <p *ngIf="!linha.telefoneValido" class="text-amber-400 text-xs">Sem WhatsApp — use +código do país</p>
             <button
               *ngIf="podeReenviar(linha)"
               type="button"
