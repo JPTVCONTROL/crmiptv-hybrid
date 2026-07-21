@@ -1,4 +1,3 @@
-import { TipoPendenciaCadastro } from './cliente-cadastro-audit';
 import {
   lerSessionJson,
   removerSession,
@@ -43,9 +42,7 @@ export interface FiltrosClientesPersistidos {
   filtroStatus: FiltroStatusClientePersist;
   filtroAplicativoId: number | null;
   filtroPlanoId: number | null;
-  filtroCadastro: TipoPendenciaCadastro | null;
   filtroCobranca: FiltroCobrancaClientePersist;
-  filtroCadastroIncompleto: boolean;
   pagina: number;
   ordenacaoColuna: ColunaOrdenacaoClientePersist;
   ordenacaoDirecao: DirecaoOrdenacaoPersist;
@@ -120,7 +117,6 @@ export function restaurarFiltrosClientes(): FiltrosClientesPersistidos | null {
       salvo.modoOrdenacaoAplicativo as ModoOrdenacaoAplicativoPersist
     ) ||
     !MODOS_STATUS.has(salvo.modoOrdenacaoStatus as ModoOrdenacaoStatusPersist) ||
-    typeof salvo.filtroCadastroIncompleto !== 'boolean' ||
     typeof salvo.pagina !== 'number' ||
     salvo.pagina < 1
   ) {
@@ -136,10 +132,7 @@ export function restaurarFiltrosClientes(): FiltrosClientesPersistidos | null {
         : null,
     filtroPlanoId:
       typeof salvo.filtroPlanoId === 'number' ? salvo.filtroPlanoId : null,
-    filtroCadastro:
-      typeof salvo.filtroCadastro === 'string' ? salvo.filtroCadastro : null,
     filtroCobranca: salvo.filtroCobranca as FiltroCobrancaClientePersist,
-    filtroCadastroIncompleto: salvo.filtroCadastroIncompleto,
     pagina: Math.floor(salvo.pagina),
     ordenacaoColuna: salvo.ordenacaoColuna as ColunaOrdenacaoClientePersist,
     ordenacaoDirecao: salvo.ordenacaoDirecao,

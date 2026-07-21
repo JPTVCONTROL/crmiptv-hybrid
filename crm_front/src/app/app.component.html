@@ -1,4 +1,4 @@
-<ion-app class="bg-slate-950">
+<ion-app class="crm-app">
   <ion-split-pane contentId="main-content" when="lg">
     <ion-menu
       *ngIf="!isLoginRoute"
@@ -91,7 +91,7 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-content class="bg-slate-950">
+      <ion-content class="crm-main-content">
         <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
           <ion-refresher-content
             pullingIcon="chevron-down-circle-outline"
@@ -124,7 +124,7 @@
           </button>
         </div>
 
-        <div [class]="isLoginRoute ? 'login-shell' : 'app-content-shell p-4 md:p-6 lg:p-8'">
+        <div [class]="isLoginRoute ? 'login-shell' : 'app-content-shell p-4 md:p-6 lg:p-8 animate-fade-in'">
           <router-outlet></router-outlet>
         </div>
       </ion-content>

@@ -389,10 +389,10 @@ Quando `/health` não responde, um aviso amarelo aparece no topo (login e telas 
 | Tela | O que é lembrado |
 |------|------------------|
 | **Configurações** | Última aba aberta (Conta, Empresa, Mensagens, Sistema) |
-| **Clientes** | Busca, filtros, ordenação e página atual |
+| **Clientes** | Busca, status, cobrança, catálogo (app/plano), ordenação e página atual |
 | **Financeiro** | Busca, filtro de status e página atual |
 
-Links do dashboard com query params (`?status=`, `?cadastro=`, `?incompleto=`) **têm prioridade** sobre os filtros salvos em Clientes. Em Financeiro, `?status=` também sobrescreve o filtro salvo.
+Links do dashboard ou alertas com query params (`?status=`, `?cadastro=`, `?incompleto=`) **têm prioridade** na visita e **não são salvos** na sessão (ao reabrir Clientes pelo menu, a lista volta ao normal). Em Financeiro, `?status=` também sobrescreve o filtro salvo.
 
 ### Mobile-first
 

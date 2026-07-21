@@ -103,6 +103,7 @@ export class ClientesPage implements OnInit, OnDestroy {
   opcoesPlanos: OpcaoFiltroCatalogo[] = [];
   aplicativos: Aplicativo[] = [];
   tabelaCompacta = false;
+  filtrosExtrasAbertos = false;
 
   readonly opcoesFiltroStatus: { valor: FiltroStatusCliente; rotulo: string }[] = [
     { valor: 'TODOS', rotulo: 'Todos' },
@@ -213,10 +214,35 @@ export class ClientesPage implements OnInit, OnDestroy {
     );
   }
 
+  get qtdFiltrosExtrasAtivos(): number {
+    let total = 0;
+    if (this.filtroAplicativoId !== null) total += 1;
+    if (this.filtroPlanoId !== null) total += 1;
+    if (this.filtroCobranca !== 'TODOS') total += 1;
+    if (this.filtroCadastroIncompleto) total += 1;
+    return total;
+  }
+
+  alternarFiltrosExtras(): void {
+    this.filtrosExtrasAbertos = !this.filtrosExtrasAbertos;
+  }
+
   get rotuloFiltroCadastroAtivo(): string {
     return this.filtroCadastro
       ? rotuloFiltroCadastro(this.filtroCadastro)
       : '';
+  }
+
+  limparFiltroCadastro(): void {
+    this.filtroCadastro = null;
+    this.filtroCadastroIncompleto = false;
+    this.pagina = 1;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { cadastro: null, incompleto: null },
+      queryParamsHandling: 'merge',
+    });
+    this.persistirFiltros();
   }
 
   limparFiltros(): void {
@@ -320,25 +346,33 @@ export class ClientesPage implements OnInit, OnDestroy {
     });
 
     this.route.queryParamMap.subscribe((params) => {
-      const temParamsUrl =
+      const temParamsNavegacao =
         params.has('status') ||
         params.has('cadastro') ||
         params.has('incompleto');
 
-      if (temParamsUrl) {
-        const status = params.get('status');
-        this.filtroStatus =
-          status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO'
-            ? status
-            : 'TODOS';
+      if (temParamsNavegacao) {
+        if (params.has('status')) {
+          const status = params.get('status');
+          this.filtroStatus =
+            status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO'
+              ? status
+              : 'TODOS';
+        }
 
-        this.filtroCadastro = resolverFiltroCadastro(params.get('cadastro'));
-        this.filtroCadastroIncompleto = params.get('incompleto') === '1';
+        this.filtroCadastro = params.has('cadastro')
+          ? resolverFiltroCadastro(params.get('cadastro'))
+          : null;
+        this.filtroCadastroIncompleto =
+          params.has('incompleto') && params.get('incompleto') === '1';
         this.pagina = 1;
       } else {
         this.aplicarFiltrosPersistidos();
+        this.filtroCadastro = null;
+        this.filtroCadastroIncompleto = false;
       }
 
+      this.sincronizarFiltrosExtrasAbertos();
       this.persistirFiltros();
     });
     this.carregar();
@@ -469,9 +503,7 @@ export class ClientesPage implements OnInit, OnDestroy {
     this.filtroStatus = salvo.filtroStatus;
     this.filtroAplicativoId = salvo.filtroAplicativoId;
     this.filtroPlanoId = salvo.filtroPlanoId;
-    this.filtroCadastro = salvo.filtroCadastro;
     this.filtroCobranca = salvo.filtroCobranca;
-    this.filtroCadastroIncompleto = salvo.filtroCadastroIncompleto;
     this.pagina = salvo.pagina;
     this.ordenacaoColuna = salvo.ordenacaoColuna;
     this.ordenacaoDirecao = salvo.ordenacaoDirecao;
@@ -485,15 +517,19 @@ export class ClientesPage implements OnInit, OnDestroy {
       filtroStatus: this.filtroStatus,
       filtroAplicativoId: this.filtroAplicativoId,
       filtroPlanoId: this.filtroPlanoId,
-      filtroCadastro: this.filtroCadastro,
       filtroCobranca: this.filtroCobranca,
-      filtroCadastroIncompleto: this.filtroCadastroIncompleto,
       pagina: this.pagina,
       ordenacaoColuna: this.ordenacaoColuna,
       ordenacaoDirecao: this.ordenacaoDirecao,
       modoOrdenacaoAplicativo: this.modoOrdenacaoAplicativo,
       modoOrdenacaoStatus: this.modoOrdenacaoStatus,
     });
+  }
+
+  private sincronizarFiltrosExtrasAbertos(): void {
+    if (this.qtdFiltrosExtrasAtivos > 0) {
+      this.filtrosExtrasAbertos = true;
+    }
   }
 
   rotuloModoOrdenacao(coluna: ColunaOrdenacaoCliente): string {

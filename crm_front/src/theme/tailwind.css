@@ -3,32 +3,52 @@
 @tailwind utilities;
 
 :root {
-  --crm-primary: #7c3aed;
-  --crm-primary-hover: #6d28d9;
-  --crm-primary-soft: rgba(124, 58, 237, 0.12);
-  --crm-primary-soft-strong: rgba(124, 58, 237, 0.22);
-  --crm-primary-border: rgba(124, 58, 237, 0.35);
-  --crm-primary-text: #ddd6fe;
+  --crm-primary: #8b5cf6;
+  --crm-primary-hover: #7c3aed;
+  --crm-primary-soft: rgba(139, 92, 246, 0.14);
+  --crm-primary-soft-strong: rgba(139, 92, 246, 0.26);
+  --crm-primary-border: rgba(167, 139, 250, 0.38);
+  --crm-primary-text: #e9d5ff;
   --crm-primary-icon: #c4b5fd;
-  --crm-primary-glow: rgba(124, 58, 237, 0.18);
+  --crm-primary-glow: rgba(139, 92, 246, 0.28);
+  --crm-accent: #22d3ee;
+  --crm-accent-soft: rgba(34, 211, 238, 0.12);
 
-  --crm-bg: #020617;
-  --crm-bg-subtle: #030712;
-  --crm-surface: #0f172a;
-  --crm-surface-elevated: #111827;
+  --crm-bg: #030712;
+  --crm-bg-subtle: #020617;
+  --crm-surface: rgba(15, 23, 42, 0.88);
+  --crm-surface-elevated: rgba(17, 24, 39, 0.92);
+  --crm-glass: rgba(15, 23, 42, 0.65);
+  --crm-glass-border: rgba(255, 255, 255, 0.07);
   --crm-border: #1e293b;
-  --crm-border-subtle: rgba(148, 163, 184, 0.14);
-  --crm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
-  --crm-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --crm-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --crm-border-subtle: rgba(148, 163, 184, 0.12);
+  --crm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --crm-shadow-md: 0 12px 40px rgba(0, 0, 0, 0.38);
+  --crm-shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.48);
+  --crm-shadow-glow: 0 0 48px rgba(139, 92, 246, 0.12);
+  --crm-radius-lg: 1rem;
+  --crm-radius-xl: 1.25rem;
+  --crm-blur: 16px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background: rgba(139, 92, 246, 0.35);
+    color: #f8fafc;
+  }
 }
 
 @layer components {
   .crm-input {
     @apply w-full rounded-xl px-4 py-3 text-white outline-none transition-all duration-200;
-    background: rgba(15, 23, 42, 0.85);
-    border: 1px solid var(--crm-border-subtle);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid var(--crm-glass-border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
   }
 
   .crm-input::placeholder {
@@ -45,13 +65,17 @@
   .crm-card {
     @apply rounded-2xl p-4 md:p-6;
     background: linear-gradient(
-      165deg,
-      rgba(30, 41, 59, 0.35) 0%,
-      rgba(15, 23, 42, 0.92) 55%,
-      rgba(2, 6, 23, 0.98) 100%
+      155deg,
+      rgba(255, 255, 255, 0.045) 0%,
+      rgba(30, 41, 59, 0.38) 28%,
+      rgba(15, 23, 42, 0.82) 62%,
+      rgba(3, 7, 18, 0.94) 100%
     );
-    border: 1px solid var(--crm-border-subtle);
-    box-shadow: var(--crm-shadow-sm);
+    border: 1px solid var(--crm-glass-border);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--crm-shadow-sm);
+    backdrop-filter: blur(var(--crm-blur));
   }
 
   .crm-card-interactive {
@@ -59,42 +83,64 @@
   }
 
   .crm-card-interactive:hover {
-    border-color: rgba(148, 163, 184, 0.22);
-    box-shadow: var(--crm-shadow-md);
-    transform: translateY(-1px);
+    border-color: rgba(167, 139, 250, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--crm-shadow-md),
+      var(--crm-shadow-glow);
+    transform: translateY(-2px);
   }
 
   .crm-hero-card {
-    @apply rounded-2xl p-4 md:p-6;
+    @apply rounded-2xl p-4 md:p-6 relative overflow-hidden;
     background: linear-gradient(
       135deg,
-      var(--crm-primary-soft) 0%,
-      rgba(15, 23, 42, 0.95) 48%,
-      rgba(2, 6, 23, 0.98) 100%
+      rgba(139, 92, 246, 0.18) 0%,
+      rgba(15, 23, 42, 0.88) 42%,
+      rgba(3, 7, 18, 0.96) 100%
     );
     border: 1px solid var(--crm-primary-border);
     box-shadow:
       var(--crm-shadow-md),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      var(--crm-shadow-glow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(var(--crm-blur));
+  }
+
+  .crm-hero-card::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 55%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.12) 0%, transparent 68%);
+    pointer-events: none;
   }
 
   .crm-btn-primary {
-    @apply text-white px-4 py-2.5 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-white px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
     background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--crm-primary) 92%, white 8%) 0%,
-      var(--crm-primary) 100%
+      135deg,
+      color-mix(in srgb, var(--crm-primary) 88%, white 12%) 0%,
+      var(--crm-primary) 48%,
+      color-mix(in srgb, var(--crm-primary) 90%, #4c1d95 10%) 100%
     );
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.12) inset,
-      0 4px 14px var(--crm-primary-glow);
+      0 1px 0 rgba(255, 255, 255, 0.14) inset,
+      0 8px 24px var(--crm-primary-glow);
   }
 
   .crm-btn-primary:hover:not(:disabled) {
-    background-color: var(--crm-primary-hover);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--crm-primary-hover) 92%, white 8%) 0%,
+      var(--crm-primary-hover) 100%
+    );
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.1) inset,
-      0 6px 20px var(--crm-primary-glow);
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 10px 28px var(--crm-primary-glow);
+    transform: translateY(-1px);
   }
 
   .crm-btn-primary:focus-visible {
@@ -129,14 +175,16 @@
   }
 
   .crm-btn-ghost {
-    @apply text-slate-200 px-3 py-2 rounded-xl text-sm transition-all duration-200;
-    background: rgba(30, 41, 59, 0.65);
-    border: 1px solid var(--crm-border-subtle);
+    @apply text-slate-200 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200;
+    background: rgba(30, 41, 59, 0.45);
+    border: 1px solid var(--crm-glass-border);
+    backdrop-filter: blur(8px);
   }
 
   .crm-btn-ghost:hover {
-    background: rgba(51, 65, 85, 0.75);
-    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(51, 65, 85, 0.55);
+    border-color: rgba(167, 139, 250, 0.22);
+    color: #f8fafc;
   }
 
   .crm-contador-clientes {
@@ -159,8 +207,33 @@
   }
 
   .crm-page-header {
-    @apply block mb-5 md:mb-6 pb-4 md:pb-5;
+    @apply block mb-5 md:mb-7 pb-4 md:pb-5 relative;
     border-bottom: 1px solid var(--crm-border-subtle);
+  }
+
+  .crm-page-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: min(12rem, 42%);
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--crm-primary) 0%, var(--crm-accent) 55%, transparent 100%);
+    opacity: 0.9;
+  }
+
+  .crm-page-title {
+    @apply text-2xl md:text-[2rem] font-extrabold text-white m-0 leading-tight;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 55%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .crm-page-subtitle {
+    @apply text-slate-400 mt-2 mb-0 text-sm md:text-[0.9375rem] leading-relaxed;
   }
 
   .crm-btn-voltar {
@@ -184,15 +257,6 @@
     box-shadow: 0 0 0 3px var(--crm-primary-soft-strong);
   }
 
-  .crm-page-title {
-    @apply text-2xl md:text-3xl font-bold text-white m-0 leading-tight tracking-tight;
-    letter-spacing: -0.02em;
-  }
-
-  .crm-page-subtitle {
-    @apply text-slate-400 mt-1.5 mb-0 text-sm md:text-base leading-snug;
-  }
-
   .crm-section-label {
     @apply text-slate-400 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] mb-3;
   }
@@ -202,7 +266,9 @@
   }
 
   .crm-table-wrap {
-    @apply overflow-x-auto;
+    @apply overflow-x-auto rounded-2xl border border-slate-800/50;
+    background: rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(8px);
   }
 
   .crm-table-scroll {
@@ -290,27 +356,27 @@
   }
 
   .crm-badge-ativo {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30;
   }
 
   .crm-badge-atrasado {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/25;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/30;
   }
 
   .crm-badge-inativo {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-red-500/15 text-red-300 ring-1 ring-red-500/25;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-300 ring-1 ring-red-400/30;
   }
 
   .crm-badge-pendente {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/25;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/30;
   }
 
   .crm-badge-neutral {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-700/50 text-slate-300 ring-1 ring-slate-600/40;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-700/40 text-slate-300 ring-1 ring-slate-500/35;
   }
 
   .crm-badge-pago {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30;
   }
 
   .crm-badge-cortesia {
@@ -441,15 +507,15 @@
   }
 
   .crm-filter-chip {
-    @apply inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors;
+    @apply inline-flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-medium transition-all duration-200;
   }
 
   .crm-filter-chip--idle {
-    @apply border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600 hover:text-slate-300;
+    @apply border-slate-700/80 bg-slate-900/35 text-slate-400 hover:border-violet-500/25 hover:text-slate-200 hover:bg-violet-500/5;
   }
 
   .crm-filter-chip--selected-violet {
-    @apply border-violet-500 bg-violet-600/15 text-violet-200 shadow-sm shadow-violet-900/20;
+    @apply border-violet-400/50 bg-violet-500/15 text-violet-100 shadow-md shadow-violet-900/25 ring-1 ring-violet-400/20;
   }
 
   .crm-filter-chip--selected-emerald {
@@ -532,8 +598,21 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: var(--stat-accent, var(--crm-primary));
-    opacity: 0.85;
+    background: var(--stat-accent, linear-gradient(90deg, var(--crm-primary), var(--crm-accent)));
+    opacity: 0.95;
+  }
+
+  .crm-stat-card::after {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -20%;
+    width: 8rem;
+    height: 8rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, var(--stat-accent, var(--crm-primary-soft)) 0%, transparent 70%);
+    opacity: 0.35;
+    pointer-events: none;
   }
 
   .crm-stat-card-label {
@@ -579,7 +658,8 @@
   }
 
   .crm-dash-kpi {
-    @apply rounded-xl p-3 md:p-4 border border-slate-800/80 bg-slate-950/40;
+    @apply rounded-xl p-3 md:p-4 border border-slate-700/50 bg-slate-950/25 backdrop-blur-sm;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .crm-dash-kpi-link {
@@ -794,13 +874,14 @@
     @apply flex-col justify-center gap-6 p-8 rounded-3xl relative overflow-hidden;
     background: linear-gradient(
       145deg,
-      var(--crm-primary-soft) 0%,
-      rgba(15, 23, 42, 0.92) 45%,
-      rgba(2, 6, 23, 0.98) 100%
+      rgba(139, 92, 246, 0.22) 0%,
+      rgba(15, 23, 42, 0.88) 42%,
+      rgba(3, 7, 18, 0.98) 100%
     );
     border: 1px solid var(--crm-primary-border);
-    box-shadow: var(--crm-shadow-lg);
+    box-shadow: var(--crm-shadow-lg), var(--crm-shadow-glow);
     min-height: 28rem;
+    backdrop-filter: blur(var(--crm-blur));
   }
 
   .crm-auth-brand-logo {
@@ -899,20 +980,36 @@
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
   }
 
-  .crm-mobile-list {
-    @apply flex flex-col gap-3;
+  .app-content-shell::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 90% 60% at 8% -5%, rgba(139, 92, 246, 0.14), transparent 52%),
+      radial-gradient(ellipse 70% 50% at 96% 8%, rgba(34, 211, 238, 0.08), transparent 48%),
+      radial-gradient(ellipse 55% 45% at 50% 108%, rgba(124, 58, 237, 0.1), transparent 55%),
+      var(--crm-bg);
   }
 
   .crm-mobile-card {
     @apply rounded-2xl p-4 space-y-3 transition-all duration-200;
     background: linear-gradient(
-      165deg,
-      rgba(30, 41, 59, 0.42) 0%,
-      rgba(15, 23, 42, 0.94) 55%,
-      rgba(2, 6, 23, 0.98) 100%
+      155deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(30, 41, 59, 0.42) 30%,
+      rgba(15, 23, 42, 0.9) 100%
     );
-    border: 1px solid var(--crm-border-subtle);
-    box-shadow: var(--crm-shadow-sm);
+    border: 1px solid var(--crm-glass-border);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      var(--crm-shadow-sm);
+    backdrop-filter: blur(12px);
+  }
+
+  .crm-mobile-list {
+    @apply flex flex-col gap-3;
   }
 
   .crm-mobile-card--atrasado {
