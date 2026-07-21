@@ -38,6 +38,7 @@ import {
 })
 export class NovoClienteModalComponent implements OnInit {
   @Input() cliente: Cliente | null = null;
+  @Input() ativarPlano = false;
 
   aplicativos: Aplicativo[] = [];
   dispositivosCatalogo: Dispositivo[] = [];
@@ -116,6 +117,14 @@ export class NovoClienteModalComponent implements OnInit {
         somenteContato: this.cliente.somenteContato === true,
         observacao: this.cliente.observacao ?? '',
       };
+
+      if (this.ativarPlano) {
+        this.form.somenteContato = false;
+        this.form.incluirCobrancas = true;
+        if (!this.form.ativadoEm) {
+          this.form.ativadoEm = this.formatarDataInput(new Date());
+        }
+      }
     } else {
       this.form.ativadoEm = this.formatarDataInput(new Date());
     }

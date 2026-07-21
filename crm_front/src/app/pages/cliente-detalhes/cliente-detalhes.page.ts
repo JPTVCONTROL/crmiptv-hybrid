@@ -27,7 +27,7 @@ import {
   temAppParaEnviar,
   resolverAplicativoDaTela,
 } from '../../shared/utils/onboarding';
-import { clienteParticipaCobrancas, clienteEhCortesia } from '../../shared/utils/cobranca-diaria';
+import { clienteParticipaCobrancas, clienteEhCortesia, clienteEhSomenteContato } from '../../shared/utils/cobranca-diaria';
 import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import { StatusBadgeTipo } from '../../components/status-badge/status-badge.component';
@@ -146,6 +146,10 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
 
   get ehCortesia(): boolean {
     return clienteEhCortesia(this.cliente);
+  }
+
+  get ehSomenteContato(): boolean {
+    return clienteEhSomenteContato(this.cliente);
   }
 
   get clienteEstaAtivo(): boolean {
@@ -467,6 +471,32 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     const modal = await this.modalCtrl.create({
       component: NovoClienteModalComponent,
       componentProps: { cliente: this.cliente },
+      cssClass: 'crm-modal crm-modal-cliente',
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data && this.cliente) this.carregar(this.cliente.id);
+  }
+
+  async ativarPlano(): Promise<void> {
+    if (!this.cliente || !this.ehSomenteContato) {
+      return;
+    }
+
+    const confirmado = await this.confirmacao.confirmar({
+      header: 'Ativar plano',
+      message:
+        'Informe plano, valor e datas de vencimento. O cliente passará a participar do fluxo normal de assinatura.',
+      confirmText: 'Continuar',
+    });
+
+    if (!confirmado) {
+      return;
+    }
+
+    const modal = await this.modalCtrl.create({
+      component: NovoClienteModalComponent,
+      componentProps: { cliente: this.cliente, ativarPlano: true },
       cssClass: 'crm-modal crm-modal-cliente',
     });
     await modal.present();

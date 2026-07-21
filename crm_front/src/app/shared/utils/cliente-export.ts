@@ -22,6 +22,7 @@ export function exportarClientesCsv(
       'Expira em',
       'Status',
       'Cortesia',
+      'Somente contato',
       'Incluir cobranças',
     ].join(';'),
     ...clientes.map((cliente) =>
@@ -33,6 +34,7 @@ export function exportarClientesCsv(
         cliente.expiraEm ? formatarData(cliente.expiraEm) : '',
         cliente.status,
         cliente.cortesia ? 'Sim' : 'Nao',
+        cliente.somenteContato ? 'Sim' : 'Nao',
         cliente.incluirCobrancas === false ? 'Nao' : 'Sim',
       ].join(';')
     ),

@@ -16,7 +16,8 @@ export type FiltroStatusClientePersist =
 export type FiltroCobrancaClientePersist =
   | 'TODOS'
   | 'COM_COBRANCA'
-  | 'SEM_COBRANCA';
+  | 'SEM_COBRANCA'
+  | 'SOMENTE_CONTATO';
 
 export type ColunaOrdenacaoClientePersist =
   | 'nome'
@@ -63,6 +64,7 @@ const COBRANCA_VALIDOS = new Set<FiltroCobrancaClientePersist>([
   'TODOS',
   'COM_COBRANCA',
   'SEM_COBRANCA',
+  'SOMENTE_CONTATO',
 ]);
 
 const COLUNAS_VALIDAS = new Set<ColunaOrdenacaoClientePersist>([

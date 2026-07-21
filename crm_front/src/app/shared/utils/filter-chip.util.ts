@@ -1,4 +1,4 @@
-export type VarianteFilterChip = 'violet' | 'emerald' | 'amber' | 'red';
+export type VarianteFilterChip = 'violet' | 'emerald' | 'amber' | 'red' | 'sky';
 
 export function classesFilterChip(
   selecionado: boolean,

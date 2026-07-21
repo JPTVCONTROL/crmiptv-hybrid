@@ -10,18 +10,34 @@
           <p class="crm-cliente-hero-meta mt-1">
             {{ cliente.telefone }}
             <span class="text-slate-600 mx-1">·</span>
-            {{ cliente.expiraEm ? 'Vence ' + fmtData(cliente.expiraEm) : 'Sem vencimento' }}
+            {{
+              ehSomenteContato
+                ? 'Somente contato'
+                : cliente.expiraEm
+                  ? 'Vence ' + fmtData(cliente.expiraEm)
+                  : 'Sem vencimento'
+            }}
           </p>
           <div class="flex flex-wrap items-center gap-2 mt-3">
-            <app-status-badge [tipo]="tipoStatusBadge" [label]="status()" [dot]="true"></app-status-badge>
+            <app-status-badge
+              *ngIf="ehSomenteContato"
+              tipo="SOMENTE_CONTATO"
+              label="Somente contato"
+            ></app-status-badge>
+            <app-status-badge
+              *ngIf="!ehSomenteContato"
+              [tipo]="tipoStatusBadge"
+              [label]="status()"
+              [dot]="true"
+            ></app-status-badge>
             <app-status-badge *ngIf="ehCortesia" tipo="CORTESIA" label="Cortesia"></app-status-badge>
             <app-status-badge
-              *ngIf="!participaCampanhas"
+              *ngIf="!participaCampanhas && !ehSomenteContato"
               tipo="SEM_COBRANCA"
               label="Sem campanhas"
             ></app-status-badge>
             <app-status-badge
-              *ngIf="!participaCobrancas && !ehCortesia && clienteEstaAtivo"
+              *ngIf="!participaCobrancas && !ehCortesia && !ehSomenteContato && clienteEstaAtivo"
               tipo="SEM_COBRANCA"
               label="Sem cobrança"
             ></app-status-badge>
@@ -32,6 +48,15 @@
       <div class="flex flex-wrap gap-2 shrink-0">
         <app-whatsapp-contato-btn [telefone]="cliente.telefone"></app-whatsapp-contato-btn>
         <button
+          *ngIf="ehSomenteContato"
+          type="button"
+          class="crm-btn-primary"
+          (click)="ativarPlano()"
+        >
+          Ativar plano
+        </button>
+        <button
+          *ngIf="!ehSomenteContato"
           type="button"
           class="crm-btn-ghost"
           [ngClass]="{
@@ -50,6 +75,7 @@
           }}
         </button>
         <button
+          *ngIf="!ehSomenteContato"
           type="button"
           class="crm-btn-ghost"
           [ngClass]="{
@@ -68,6 +94,7 @@
           }}
         </button>
         <button
+          *ngIf="!ehSomenteContato"
           type="button"
           class="crm-btn-ghost"
           [ngClass]="{
@@ -100,7 +127,18 @@
   </app-page-header>
 
   <div
-    *ngIf="!clienteEstaAtivo"
+    *ngIf="ehSomenteContato"
+    class="crm-card border border-sky-500/25 bg-sky-500/5"
+  >
+    <p class="text-sky-200 text-sm">
+      Cliente <span class="font-medium">somente contato</span>: cadastro de nome e telefone
+      sem plano, vencimento ou cobrança. Use <span class="font-medium">Ativar plano</span>
+      quando fechar assinatura.
+    </p>
+  </div>
+
+  <div
+    *ngIf="!clienteEstaAtivo && !ehSomenteContato"
     class="crm-card border border-red-500/25 bg-red-500/5"
   >
     <p class="text-red-200 text-sm">
@@ -111,7 +149,7 @@
   </div>
 
   <div
-    *ngIf="ehCortesia"
+    *ngIf="ehCortesia && !ehSomenteContato"
     class="crm-card border border-violet-500/25 bg-violet-500/5"
   >
     <p class="text-violet-200 text-sm">
@@ -121,7 +159,7 @@
   </div>
 
   <div
-    *ngIf="!participaCobrancas && !ehCortesia"
+    *ngIf="!participaCobrancas && !ehCortesia && !ehSomenteContato"
     class="crm-card border border-amber-500/25 bg-amber-500/5"
   >
     <p class="text-amber-200 text-sm">
@@ -145,7 +183,15 @@
         <span class="text-slate-500">Status:</span>
         <app-status-badge [tipo]="tipoStatusBadge" [label]="status()" [dot]="true"></app-status-badge>
       </p>
-      <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span> {{ ehCortesia ? 'Cortesia' : fmtValor(cliente.valorMensal) }}</p>
+      <p class="text-slate-300"><span class="text-slate-500">Valor mensal:</span>
+        {{
+          ehSomenteContato
+            ? '—'
+            : ehCortesia
+              ? 'Cortesia'
+              : fmtValor(cliente.valorMensal)
+        }}
+      </p>
       <p *ngIf="cliente.observacao?.trim()" class="text-slate-300 whitespace-pre-wrap">
         <span class="text-slate-500">Observação:</span> {{ cliente.observacao }}
       </p>
@@ -238,7 +284,7 @@
       </div>
     </details>
 
-    <details class="crm-collapse" open>
+    <details *ngIf="!ehSomenteContato" class="crm-collapse" open>
       <summary class="crm-collapse-summary">
         <div>
           <h2 class="crm-collapse-title">Plano</h2>
@@ -292,7 +338,7 @@
     </details>
   </div>
 
-  <details class="crm-collapse" open>
+  <details *ngIf="!ehSomenteContato" class="crm-collapse" open>
     <summary class="crm-collapse-summary">
       <div>
         <h2 class="crm-collapse-title">Mensalidades</h2>

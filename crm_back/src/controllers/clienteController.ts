@@ -185,7 +185,8 @@ export class ClienteController {
   async importar(req: Request, res: Response): Promise<void> {
     try {
       const csv = String(req.body?.csv ?? '');
-      const resultado = await clienteService.importarCsv(csv);
+      const somenteContato = req.body?.somenteContato === true;
+      const resultado = await clienteService.importarCsv(csv, somenteContato);
       sendSuccess(
         res,
         resultado,

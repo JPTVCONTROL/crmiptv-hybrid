@@ -194,7 +194,10 @@ export class ClienteService {
     return aplicarStatusCliente(cliente);
   }
 
-  async importarCsv(conteudo: string): Promise<ImportacaoClientesResultado> {
+  async importarCsv(
+    conteudo: string,
+    somenteContato = false
+  ): Promise<ImportacaoClientesResultado> {
     if (!conteudo?.trim()) {
       throw new ValidationError('Envie um arquivo CSV com nome e telefone.');
     }
@@ -230,6 +233,8 @@ export class ClienteService {
         telefone: linha.telefone,
         vencimento: 1,
         valorMensal: 0,
+        somenteContato,
+        incluirCobrancas: !somenteContato,
       });
 
       telefonesImportados.add(chave);

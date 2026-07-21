@@ -1,7 +1,7 @@
 <ion-header class="ion-no-border crm-modal-header">
   <app-crm-modal-toolbar
-    [titulo]="cliente ? 'Editar cliente' : 'Novo cliente'"
-    subtitulo="Cadastro completo — ao voltar você permanece na lista"
+    [titulo]="cliente ? (ativarPlano ? 'Ativar plano' : 'Editar cliente') : 'Novo cliente'"
+    [subtitulo]="ativarPlano ? 'Informe plano, valor e vencimento' : 'Cadastro completo — ao voltar você permanece na lista'"
     (voltar)="fechar()"
   ></app-crm-modal-toolbar>
 </ion-header>

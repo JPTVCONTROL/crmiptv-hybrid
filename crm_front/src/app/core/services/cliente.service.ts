@@ -65,9 +65,15 @@ export class ClienteService {
       .pipe(tap(() => this.sync.notificarClientes()));
   }
 
-  importarCsv(csv: string): Observable<ImportacaoClientesResultado> {
+  importarCsv(
+    csv: string,
+    somenteContato = false
+  ): Observable<ImportacaoClientesResultado> {
     return this.api
-      .post<ImportacaoClientesResultado>('/clientes/importar', { csv })
+      .post<ImportacaoClientesResultado>('/clientes/importar', {
+        csv,
+        somenteContato,
+      })
       .pipe(tap(() => this.sync.notificarClientes()));
   }
 }

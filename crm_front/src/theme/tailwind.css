@@ -321,6 +321,10 @@
     @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-200;
   }
 
+  .crm-badge-somente-contato {
+    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border border-sky-500/40 bg-sky-500/10 text-sky-300;
+  }
+
   .crm-badge-promocao {
     @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/25;
   }
@@ -460,6 +464,10 @@
     @apply border-red-500 bg-red-600/15 text-red-200 shadow-sm shadow-red-900/20;
   }
 
+  .crm-filter-chip--selected-sky {
+    @apply border-sky-500 bg-sky-600/15 text-sky-200 shadow-sm shadow-sky-900/20;
+  }
+
   .crm-filter-chip-count {
     @apply min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-xs font-semibold tabular-nums;
   }
@@ -482,6 +490,10 @@
 
   .crm-filter-chip-count--red {
     @apply bg-red-500/25;
+  }
+
+  .crm-filter-chip-count--sky {
+    @apply bg-sky-500/25;
   }
 
   .crm-checkbox {

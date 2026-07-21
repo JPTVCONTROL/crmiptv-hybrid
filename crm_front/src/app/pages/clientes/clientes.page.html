@@ -26,6 +26,16 @@
         >
           {{ importando ? 'Importando...' : 'Importar CSV' }}
         </button>
+        <label
+          class="hidden md:flex items-center gap-2 text-slate-400 text-xs cursor-pointer select-none"
+        >
+          <input
+            type="checkbox"
+            class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+            [(ngModel)]="importarComoSomenteContato"
+          />
+          Importar como somente contato
+        </label>
       </div>
 
       <div class="relative md:hidden">
@@ -167,6 +177,14 @@
         </span>
       </button>
     </div>
+    <label class="md:hidden flex items-center gap-2 text-slate-400 text-xs px-1 pb-1">
+      <input
+        type="checkbox"
+        class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+        [(ngModel)]="importarComoSomenteContato"
+      />
+      Importar CSV como somente contato
+    </label>
 
     <div class="flex flex-wrap gap-2">
       <button
@@ -307,12 +325,11 @@
 
     <div class="flex flex-wrap gap-1.5">
       <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia">Cortesia</span>
-      <span
+      <app-status-badge
         *ngIf="ehSomenteContato(c)"
-        class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border border-sky-500/40 bg-sky-500/10 text-sky-300"
-      >
-        Somente contato
-      </span>
+        tipo="SOMENTE_CONTATO"
+        label="Somente contato"
+      ></app-status-badge>
       <app-status-badge
         *ngIf="!participaCobrancas(c) && !ehCortesia(c) && !ehSomenteContato(c)"
         tipo="SEM_COBRANCA"
@@ -433,12 +450,12 @@
             {{ c.nome }}
           </a>
           <span *ngIf="ehCortesia(c)" class="crm-badge-cortesia mt-1 inline-flex">Cortesia</span>
-          <span
+          <app-status-badge
             *ngIf="ehSomenteContato(c)"
-            class="mt-1 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border border-sky-500/40 bg-sky-500/10 text-sky-300"
-          >
-            Somente contato
-          </span>
+            class="mt-1 inline-flex"
+            tipo="SOMENTE_CONTATO"
+            label="Somente contato"
+          ></app-status-badge>
           <app-status-badge
             *ngIf="!participaCobrancas(c) && !ehCortesia(c) && !ehSomenteContato(c)"
             class="mt-1 inline-flex"

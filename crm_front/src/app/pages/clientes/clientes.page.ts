@@ -43,7 +43,11 @@ import {
 } from '../../shared/utils/clientes-filtros-persist.util';
 
 export type FiltroStatusCliente = 'TODOS' | StatusCliente;
-export type FiltroCobrancaCliente = 'TODOS' | 'COM_COBRANCA' | 'SEM_COBRANCA';
+export type FiltroCobrancaCliente =
+  | 'TODOS'
+  | 'COM_COBRANCA'
+  | 'SEM_COBRANCA'
+  | 'SOMENTE_CONTATO';
 export type ColunaOrdenacaoCliente = 'nome' | 'aplicativo' | 'vencimento' | 'status';
 export type DirecaoOrdenacao = 'asc' | 'desc';
 export type ModoOrdenacaoAplicativo = 'az' | 'za' | 'sem_primeiro' | 'sem_ultimo';
@@ -78,6 +82,7 @@ export class ClientesPage implements OnInit, OnDestroy {
   clientes: Cliente[] = [];
   loading = true;
   importando = false;
+  importarComoSomenteContato = true;
   private readonly destroy$ = new Subject<void>();
   busca = '';
   filtroStatus: FiltroStatusCliente = 'TODOS';
@@ -112,6 +117,7 @@ export class ClientesPage implements OnInit, OnDestroy {
     { valor: 'TODOS', rotulo: 'Todas cobranças' },
     { valor: 'COM_COBRANCA', rotulo: 'Com cobrança' },
     { valor: 'SEM_COBRANCA', rotulo: 'Sem cobrança' },
+    { valor: 'SOMENTE_CONTATO', rotulo: 'Somente contato' },
   ];
 
   definirFiltroCobranca(filtro: FiltroCobrancaCliente): void {
@@ -135,7 +141,13 @@ export class ClientesPage implements OnInit, OnDestroy {
       return this.clientes.filter((c) => clienteParticipaCobrancas(c)).length;
     }
 
-    return this.clientes.filter((c) => !clienteParticipaCobrancas(c)).length;
+    if (filtro === 'SOMENTE_CONTATO') {
+      return this.clientes.filter((c) => clienteEhSomenteContato(c)).length;
+    }
+
+    return this.clientes.filter(
+      (c) => !clienteParticipaCobrancas(c) && !clienteEhSomenteContato(c)
+    ).length;
   }
 
   contagemCadastroIncompleto(): number {
@@ -146,16 +158,24 @@ export class ClientesPage implements OnInit, OnDestroy {
 
   classesChipCobranca(filtro: FiltroCobrancaCliente): string {
     const ativo = this.filtroCobranca === filtro;
-    const variante: VarianteFilterChip =
-      filtro === 'SEM_COBRANCA' ? 'amber' : 'violet';
-    return classesFilterChip(ativo, variante);
+    const variantes: Record<FiltroCobrancaCliente, VarianteFilterChip> = {
+      TODOS: 'violet',
+      COM_COBRANCA: 'violet',
+      SEM_COBRANCA: 'amber',
+      SOMENTE_CONTATO: 'sky',
+    };
+    return classesFilterChip(ativo, variantes[filtro]);
   }
 
   classesChipContagemCobranca(filtro: FiltroCobrancaCliente): string {
     const ativo = this.filtroCobranca === filtro;
-    const variante: VarianteFilterChip =
-      filtro === 'SEM_COBRANCA' ? 'amber' : 'violet';
-    return classesFilterChipContagem(ativo, variante);
+    const variantes: Record<FiltroCobrancaCliente, VarianteFilterChip> = {
+      TODOS: 'violet',
+      COM_COBRANCA: 'violet',
+      SEM_COBRANCA: 'amber',
+      SOMENTE_CONTATO: 'sky',
+    };
+    return classesFilterChipContagem(ativo, variantes[filtro]);
   }
 
   fecharMenuAcoes(): void {
@@ -380,7 +400,10 @@ export class ClientesPage implements OnInit, OnDestroy {
         (this.filtroCobranca === 'COM_COBRANCA' &&
           clienteParticipaCobrancas(c)) ||
         (this.filtroCobranca === 'SEM_COBRANCA' &&
-          !clienteParticipaCobrancas(c));
+          !clienteParticipaCobrancas(c) &&
+          !clienteEhSomenteContato(c)) ||
+        (this.filtroCobranca === 'SOMENTE_CONTATO' &&
+          clienteEhSomenteContato(c));
 
       const matchIncompleto =
         !this.filtroCadastroIncompleto ||
@@ -837,7 +860,9 @@ export class ClientesPage implements OnInit, OnDestroy {
 
     try {
       const csv = await arquivo.text();
-      this.clienteService.importarCsv(csv).subscribe({
+      this.clienteService
+        .importarCsv(csv, this.importarComoSomenteContato)
+        .subscribe({
         next: (resultado) => {
           this.importando = false;
           this.carregar();

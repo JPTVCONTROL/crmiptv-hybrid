@@ -8,7 +8,8 @@ export type StatusBadgeTipo =
   | 'PENDENTE'
   | 'NEUTRAL'
   | 'CORTESIA'
-  | 'SEM_COBRANCA';
+  | 'SEM_COBRANCA'
+  | 'SOMENTE_CONTATO';
 
 const CLASSES: Record<StatusBadgeTipo, string> = {
   ATIVO: 'crm-badge-ativo',
@@ -19,6 +20,7 @@ const CLASSES: Record<StatusBadgeTipo, string> = {
   NEUTRAL: 'crm-badge-neutral',
   CORTESIA: 'crm-badge-cortesia',
   SEM_COBRANCA: 'crm-badge-sem-cobranca',
+  SOMENTE_CONTATO: 'crm-badge-somente-contato',
 };
 
 @Component({
