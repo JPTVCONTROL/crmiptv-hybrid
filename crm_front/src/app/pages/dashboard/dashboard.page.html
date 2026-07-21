@@ -129,6 +129,58 @@
     </div>
   </section>
 
+  <section class="crm-dash-meta-panel" aria-labelledby="dash-meta-titulo">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-5">
+      <div>
+        <p class="crm-kicker mb-1">Captação</p>
+        <h2 id="dash-meta-titulo" class="text-white text-lg md:text-xl font-bold tracking-tight">
+          Meta de clientes
+        </h2>
+        <p class="text-slate-400 text-sm mt-1">
+          Conta sua base comercial atual até o prazo — exclui cortesia e clientes marcados como somente cadastro/contato.
+        </p>
+        <p class="text-slate-500 text-xs mt-1">{{ metaClientesBaseRotulo }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <span class="crm-dash-meta-chip" [ngClass]="classeStatusMeta">
+          {{ metaNovosClientesStatusRotulo }}
+        </span>
+        <a
+          routerLink="/configuracoes"
+          [queryParams]="{ aba: 'metas' }"
+          class="crm-btn-ghost crm-btn-sm no-underline"
+        >
+          Configurar meta
+        </a>
+        <a routerLink="/clientes" class="crm-btn-ghost crm-btn-sm no-underline">
+          Ver clientes
+        </a>
+      </div>
+    </div>
+
+    <div class="max-w-3xl">
+      <div class="flex items-end gap-1 mb-3">
+        <span class="crm-dash-meta-score">{{ metaClientesAtual }}</span>
+        <span class="crm-dash-meta-score-sep">/</span>
+        <span class="crm-dash-meta-score-meta">{{ metaNovosClientesQtd }}</span>
+        <span class="text-slate-500 text-sm font-medium ml-2 mb-1">clientes</span>
+      </div>
+
+      <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+        <span>{{ metaNovosClientesRotulo }}</span>
+        <span class="text-slate-200 font-medium">{{ metaNovosClientesPercentual }}%</span>
+      </div>
+      <div class="crm-progress-track h-2.5">
+        <div
+          class="crm-progress-fill crm-progress-fill--meta"
+          [class.crm-progress-fill--meta-atingida]="metaNovosClientesAtingida"
+          [style.width.%]="metaNovosClientesPercentual"
+        ></div>
+      </div>
+      <p class="text-slate-500 text-xs mt-2">{{ metaNovosClientesSubtitulo }}</p>
+    </div>
+  </section>
+
   <section *ngIf="alertasVisiveis.length > 0">
     <div class="flex items-center justify-between gap-3 mb-3">
       <h2 class="crm-section-label !mb-0">Atenção agora</h2>
@@ -257,14 +309,6 @@
           variant="info"
           [subtitle]="ganhosProximoAnoRotulo"
         ></app-stat-card>
-        <a routerLink="/clientes" class="crm-stat-card-link">
-          <app-stat-card
-            title="Novos (30 dias)"
-            [value]="'+' + novosClientes30d"
-            [variant]="variacaoNovosPositiva ? 'success' : 'danger'"
-            [subtitle]="variacaoNovosRotulo"
-          ></app-stat-card>
-        </a>
         <app-stat-card
           *ngIf="qtdCortesia > 0"
           title="Cortesia"
@@ -289,25 +333,7 @@
     </div>
   </section>
 
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
-    <div class="crm-card xl:col-span-2">
-      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
-        <div>
-          <h2 class="crm-section-label !mb-0">Faturamento</h2>
-          <p class="crm-card-subtitle">Últimos 6 meses · pagamentos registrados</p>
-        </div>
-        <span
-          class="text-xs font-medium"
-          [class.text-emerald-400]="variacaoFaturamentoPositiva"
-          [class.text-red-400]="!variacaoFaturamentoPositiva"
-        >
-          {{ variacaoFaturamentoRotulo }}
-        </span>
-      </div>
-      <app-faturamento-chart [data]="faturamentoMensal" [height]="260"></app-faturamento-chart>
-    </div>
-
-    <div class="crm-card crm-dash-vencimentos-panel">
+  <div class="crm-card crm-dash-vencimentos-panel">
       <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div class="min-w-0">
           <h2 class="crm-section-label !mb-0">Próximos vencimentos</h2>
@@ -359,17 +385,16 @@
         </a>
       </div>
     </div>
-  </div>
 
-  <div class="crm-card">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-      <div>
+  <div class="crm-card crm-dash-vencimentos-panel">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+      <div class="min-w-0">
         <h2 class="crm-section-label !mb-0">Precisam de atenção</h2>
-        <p class="crm-card-subtitle">
+        <p class="crm-card-subtitle mt-1">
           Expiração do plano · {{ qtdAtencaoAtrasados }} atrasado(s) · {{ qtdAtencaoInativos }} inativo(s)
         </p>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 shrink-0">
         <a
           routerLink="/clientes"
           [queryParams]="{ status: 'ATRASADO' }"
@@ -387,165 +412,76 @@
       </div>
     </div>
 
-    <div *ngIf="clientesAtencaoVisiveis.length > 0" class="md:hidden crm-mobile-list">
+    <div *ngIf="clientesAtencaoVisiveis.length > 0" class="crm-dash-vencimentos-list">
       <article
         *ngFor="let c of clientesAtencaoVisiveis"
-        class="crm-mobile-card"
-        [ngClass]="{
-          'crm-mobile-card--atrasado': c.status === 'ATRASADO',
-          'crm-mobile-card--inativo': c.status === 'INATIVO'
-        }"
+        class="crm-dash-vencimento-item"
+        [ngClass]="classeAtencaoItem(c)"
       >
-        <div class="crm-mobile-card-header">
-          <div class="min-w-0">
-            <p class="crm-mobile-card-title">
-              <a
-                [routerLink]="['/clientes', c.id]"
-                class="crm-link block truncate"
-              >
-                {{ c.nome }}
-              </a>
-            </p>
-            <p class="crm-mobile-card-subtitle">{{ c.telefone }}</p>
+        <div class="crm-dash-vencimento-data" aria-hidden="true">
+          <span class="crm-dash-vencimento-dia">{{ partesDataExpiracao(c.expiraEm).dia }}</span>
+          <span class="crm-dash-vencimento-mes">{{ partesDataExpiracao(c.expiraEm).mes }}</span>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <p class="crm-dash-vencimento-nome">
+            <a [routerLink]="['/clientes', c.id]" class="no-underline">{{ c.nome }}</a>
+          </p>
+          <p class="crm-dash-vencimento-meta">{{ metaAtencao(c) }}</p>
+          <p class="crm-dash-vencimento-contato">{{ rotuloExpiracao(c.expiraEm) }}</p>
+
+          <div class="crm-dash-atencao-acoes">
+            <a
+              [routerLink]="['/clientes', c.id]"
+              class="crm-btn-ghost crm-btn-xs no-underline inline-block"
+            >
+              Ver
+            </a>
+            <app-whatsapp-bloqueio-btn
+              *ngIf="podeAvisarBloqueio(c)"
+              [compact]="true"
+              [telefone]="c.telefone"
+              [mensagem]="mensagemBloqueio(c)"
+              [mensalidadeId]="c.mensalidadePendenteId!"
+              [bloqueioEnviadoEm]="c.bloqueioEnviadoEm"
+              (bloqueioRegistrado)="onBloqueioRegistrado($event)"
+            ></app-whatsapp-bloqueio-btn>
+            <button
+              *ngIf="c.mensalidadePendenteId"
+              type="button"
+              class="crm-btn-primary crm-btn-xs"
+              [disabled]="estaPagando(c)"
+              (click)="renovarCliente(c)"
+            >
+              {{ estaPagando(c) ? 'Renovando...' : 'Renovar' }}
+            </button>
           </div>
+        </div>
+
+        <div class="crm-dash-atencao-lateral">
           <app-status-badge
-            class="shrink-0"
             [tipo]="c.status"
             [label]="c.status"
             [dot]="true"
           ></app-status-badge>
-        </div>
-        <div class="crm-mobile-card-row">
-          <span class="crm-mobile-card-label">Situação</span>
-          <span
-            class="crm-mobile-card-value text-xs font-medium"
-            [class.text-amber-400]="c.status === 'ATRASADO'"
-            [class.text-red-400]="c.status === 'INATIVO'"
-          >
-            {{ rotuloExpiracao(c.expiraEm) }}
-          </span>
-        </div>
-        <div class="crm-mobile-card-actions flex-wrap gap-2">
-          <a
-            [routerLink]="['/clientes', c.id]"
-            class="crm-btn-ghost flex-1 !py-1.5 !text-xs no-underline text-center"
-          >
-            Ver
-          </a>
-          <app-whatsapp-bloqueio-btn
-            *ngIf="podeAvisarBloqueio(c)"
-            class="flex-1"
-            [compact]="true"
-            [telefone]="c.telefone"
-            [mensagem]="mensagemBloqueio(c)"
-            [mensalidadeId]="c.mensalidadePendenteId!"
-            [bloqueioEnviadoEm]="c.bloqueioEnviadoEm"
-            (bloqueioRegistrado)="onBloqueioRegistrado($event)"
-          ></app-whatsapp-bloqueio-btn>
-          <button
-            *ngIf="c.mensalidadePendenteId"
-            type="button"
-            class="crm-btn-primary flex-1 !py-1.5 !text-xs"
-            [disabled]="estaPagando(c)"
-            (click)="renovarCliente(c)"
-          >
-            {{ estaPagando(c) ? 'Renovando...' : 'Renovar' }}
-          </button>
+          <span class="crm-dash-vencimento-prazo">{{ rotuloPrazoAtencao(c) }}</span>
         </div>
       </article>
     </div>
-
-    <div *ngIf="clientesAtencaoVisiveis.length > 0" class="overflow-x-auto hidden md:block">
-      <table class="crm-table min-w-[560px]">
-        <thead>
-          <tr class="text-slate-500 text-xs border-b border-slate-800">
-            <th class="text-left py-2 px-2 font-medium">Cliente</th>
-            <th class="text-left py-2 px-2 font-medium">Expira em</th>
-            <th class="text-left py-2 px-2 font-medium">Situação</th>
-            <th class="text-left py-2 px-2 font-medium">Status</th>
-            <th class="text-right py-2 px-2 font-medium">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="let c of clientesAtencaoVisiveis"
-            class="border-b border-slate-800/50 hover:bg-slate-800/20 border-l-2"
-            [class.border-l-amber-500]="c.status === 'ATRASADO'"
-            [class.border-l-red-500]="c.status === 'INATIVO'"
-          >
-            <td class="py-2.5 px-2">
-              <a
-                [routerLink]="['/clientes', c.id]"
-                class="crm-link font-medium truncate max-w-[200px] no-underline block"
-              >
-                {{ c.nome }}
-              </a>
-              <p class="text-slate-500 text-xs">{{ c.telefone }}</p>
-            </td>
-            <td class="py-2.5 px-2 text-slate-300 whitespace-nowrap">
-              {{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}
-            </td>
-            <td class="py-2.5 px-2 whitespace-nowrap">
-              <span
-                class="text-xs font-medium"
-                [class.text-amber-400]="c.status === 'ATRASADO'"
-                [class.text-red-400]="c.status === 'INATIVO'"
-              >
-                {{ rotuloExpiracao(c.expiraEm) }}
-              </span>
-            </td>
-            <td class="py-2.5 px-2">
-              <app-status-badge
-                [tipo]="c.status"
-                [label]="c.status"
-                [dot]="true"
-              ></app-status-badge>
-            </td>
-            <td class="py-2.5 px-2 text-right whitespace-nowrap">
-              <div class="inline-flex flex-wrap justify-end gap-1">
-                <a
-                  [routerLink]="['/clientes', c.id]"
-                  class="crm-btn-ghost crm-btn-xs no-underline inline-block"
-                >
-                  Ver
-                </a>
-                <app-whatsapp-bloqueio-btn
-                  *ngIf="podeAvisarBloqueio(c)"
-                  [compact]="true"
-                  [telefone]="c.telefone"
-                  [mensagem]="mensagemBloqueio(c)"
-                  [mensalidadeId]="c.mensalidadePendenteId!"
-                  [bloqueioEnviadoEm]="c.bloqueioEnviadoEm"
-                  (bloqueioRegistrado)="onBloqueioRegistrado($event)"
-                ></app-whatsapp-bloqueio-btn>
-                <button
-                  *ngIf="c.mensalidadePendenteId"
-                  type="button"
-                  class="crm-btn-primary crm-btn-xs"
-                  [disabled]="estaPagando(c)"
-                  (click)="renovarCliente(c)"
-                >
-                  {{ estaPagando(c) ? 'Renovando...' : 'Renovar' }}
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <a
-      *ngIf="clientesAtencao.length > limiteLista"
-      routerLink="/clientes"
-      [queryParams]="{ status: 'ATRASADO' }"
-      class="block text-center crm-link crm-link-sm mt-4"
-    >
-      + {{ clientesAtencao.length - limiteLista }} cliente(s) precisam de atenção
-    </a>
 
     <app-empty-state
       *ngIf="clientesAtencao.length === 0"
       message="Nenhum cliente atrasado ou inativo nas cobranças."
     ></app-empty-state>
+
+    <div *ngIf="clientesAtencao.length > limiteLista" class="crm-dash-vencimentos-footer">
+      <a
+        routerLink="/clientes"
+        [queryParams]="{ status: 'ATRASADO' }"
+        class="crm-link crm-link-sm font-medium"
+      >
+        + {{ clientesAtencao.length - limiteLista }} cliente(s) · abrir Clientes
+      </a>
+    </div>
   </div>
 </div>

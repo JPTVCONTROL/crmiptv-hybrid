@@ -31,7 +31,10 @@ import {
   classeIndicadorContato,
   classeDotContato,
 } from '../../shared/utils/contato';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_OPERACAO,
+} from '../../shared/utils/page-sync.util';
 
 export type FiltroGrupoCobranca = 'TODOS' | TipoCobrancaDiaria;
 
@@ -172,7 +175,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'configuracoes'],
+      DOMINIOS_SYNC_OPERACAO,
       () => this.carregar(true)
     );
   }

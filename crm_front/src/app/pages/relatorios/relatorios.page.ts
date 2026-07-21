@@ -33,7 +33,10 @@ import {
   mensalidadeEhCobravel,
 } from '../../shared/utils/relatorio-financeiro.util';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_RELATORIOS,
+} from '../../shared/utils/page-sync.util';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 
 interface PagamentoRelatorio {
@@ -90,6 +93,11 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   ticketMedio = '';
 
   faturamentoMensal: DadoFaturamento[] = [];
+  faturamentoRecente: DadoFaturamento[] = [];
+  faturamentoRecenteUltimoMes = '';
+  faturamentoRecenteMedia = '';
+  faturamentoRecenteVariacao = '';
+  faturamentoRecenteVariacaoPositiva = true;
   faturamentoProjecao: DadoFaturamento[] = [];
   projecaoAno = 0;
   projecaoMrr = '';
@@ -121,7 +129,7 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'dashboard', 'catalogos'],
+      DOMINIOS_SYNC_RELATORIOS,
       () => this.carregar(true)
     );
   }
@@ -400,6 +408,68 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     } else {
       this.calcularModoMensal();
     }
+
+    this.montarFaturamentoRecente();
+  }
+
+  private montarFaturamentoRecente(): void {
+    const MESES = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
+    ];
+    const hoje = new Date();
+    const faturamentoRecente: DadoFaturamento[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const referencia = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const rotulo = `${MESES[referencia.getMonth()]}/${String(referencia.getFullYear()).slice(-2)}`;
+      const total = this.mensalidades
+        .filter((mensalidade) => {
+          if (mensalidade.status !== 'PAGO' || !mensalidade.pagoEm) {
+            return false;
+          }
+
+          const pago = dataIsoParaDateUtc(mensalidade.pagoEm);
+          return (
+            pago.getUTCMonth() === referencia.getMonth() &&
+            pago.getUTCFullYear() === referencia.getFullYear()
+          );
+        })
+        .reduce((acc, mensalidade) => acc + mensalidade.valor, 0);
+
+      faturamentoRecente.push({ mes: rotulo, total });
+    }
+
+    this.faturamentoRecente = faturamentoRecente;
+
+    const ultimo = faturamentoRecente[faturamentoRecente.length - 1]?.total ?? 0;
+    const anterior = faturamentoRecente[faturamentoRecente.length - 2]?.total ?? 0;
+    const soma = faturamentoRecente.reduce((acc, item) => acc + item.total, 0);
+
+    this.faturamentoRecenteUltimoMes = formatarValor(ultimo);
+    this.faturamentoRecenteMedia = formatarValor(soma / 6);
+
+    if (faturamentoRecente.length < 2 || anterior <= 0) {
+      this.faturamentoRecenteVariacao =
+        ultimo > 0 ? 'Primeiro mês com receita' : 'Sem receita no último mês';
+      this.faturamentoRecenteVariacaoPositiva = ultimo >= anterior;
+      return;
+    }
+
+    const variacao = Math.round(((ultimo - anterior) / anterior) * 100);
+    const sinal = variacao > 0 ? '+' : '';
+    this.faturamentoRecenteVariacao = `${sinal}${variacao}% vs. mês anterior`;
+    this.faturamentoRecenteVariacaoPositiva = ultimo >= anterior;
   }
 
   private calcularModoMensal(): void {

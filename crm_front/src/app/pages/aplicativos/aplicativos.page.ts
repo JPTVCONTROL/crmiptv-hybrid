@@ -8,7 +8,10 @@ import { ToastService } from '../../core/services/toast.service';
 import { Aplicativo } from '../../core/models';
 import { NovoAplicativoModalComponent } from '../../components/aplicativo/novo-aplicativo-modal/novo-aplicativo-modal.component';
 import { AplicativoClientesModalComponent } from '../../components/aplicativo/aplicativo-clientes-modal/aplicativo-clientes-modal.component';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_CATALOGO,
+} from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-aplicativos',
@@ -36,7 +39,7 @@ export class AplicativosPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['catalogos', 'clientes'],
+      DOMINIOS_SYNC_CATALOGO,
       () => this.carregar(true)
     );
   }

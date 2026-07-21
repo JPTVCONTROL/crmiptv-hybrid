@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { SistemaService } from '../../core/services/sistema.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
@@ -14,6 +15,19 @@ import {
   resolverTextoMensagem,
 } from '../../shared/utils/mensagens-padrao';
 import { DIAS_ANTECEDENCIA_LEMBRETE_PADRAO } from '../../shared/utils/cobranca-diaria';
+import {
+  META_NOVOS_CLIENTES_DIAS_PADRAO,
+  META_NOVOS_CLIENTES_QTD_PADRAO,
+  dataIsoParaInput,
+  formatarDataCurta,
+  metaNovosClientesPadrao,
+  normalizarMetaNovosClientesFimEm,
+  normalizarMetaNovosClientesInicioEm,
+  normalizarMetaNovosClientesQtd,
+  rotuloJanelaMetaNovosClientes,
+  rotuloPrazoMetaNovosClientes,
+  formatarDataInput,
+} from '../../shared/utils/meta-novos-clientes.util';
 import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
 import {
   lerSessionJson,
@@ -21,7 +35,7 @@ import {
 } from '../../shared/utils/session-persist.util';
 import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 
-type AbaConfiguracao = 'conta' | 'empresa' | 'mensagens' | 'sistema';
+type AbaConfiguracao = 'conta' | 'empresa' | 'metas' | 'mensagens' | 'sistema';
 type SubAbaMensagens = 'manual' | 'automatico';
 
 const CHAVE_ABA_CONFIG = 'crm.config.abaAtiva';
@@ -29,6 +43,7 @@ const CHAVE_SUB_ABA_MENSAGENS = 'crm.config.subAbaMensagens';
 const ABAS_VALIDAS = new Set<AbaConfiguracao>([
   'conta',
   'empresa',
+  'metas',
   'mensagens',
   'sistema',
 ]);
@@ -48,6 +63,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
   subAbaMensagens: SubAbaMensagens = 'manual';
   private readonly destroy$ = new Subject<void>();
   salvando = false;
+  salvandoMeta = false;
   baixandoBackup = false;
   sincronizandoCobrancas = false;
   ultimaSincronizacao = '';
@@ -68,6 +84,10 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     favorecidoPix: '',
     corPrincipal: COR_TEMA_PADRAO,
     diasAntecedenciaLembrete: DIAS_ANTECEDENCIA_LEMBRETE_PADRAO,
+    metaNovosClientesQtd: META_NOVOS_CLIENTES_QTD_PADRAO,
+    metaNovosClientesDias: META_NOVOS_CLIENTES_DIAS_PADRAO,
+    metaNovosClientesInicioEm: metaNovosClientesPadrao().inicioEm,
+    metaNovosClientesFimEm: metaNovosClientesPadrao().fimEm,
     mensagemBoasVindas: MENSAGENS_PADRAO.mensagemBoasVindas,
     mensagemCobranca: MENSAGENS_PADRAO.mensagemCobranca,
     mensagemLembrete: MENSAGENS_PADRAO.mensagemLembrete,
@@ -95,6 +115,11 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       id: 'empresa',
       rotulo: 'Empresa',
       subtitulo: 'Dados da empresa e PIX.',
+    },
+    {
+      id: 'metas',
+      rotulo: 'Metas',
+      subtitulo: 'Meta da base comercial (sem cortesia e somente cadastro).',
     },
     {
       id: 'mensagens',
@@ -142,6 +167,25 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     }
 
     return this.abas.find((aba) => aba.id === this.abaAtiva)?.subtitulo ?? 'Configurações do CRM.';
+  }
+
+  get metaPreviewRotulo(): string {
+    return rotuloJanelaMetaNovosClientes(
+      this.form.metaNovosClientesInicioEm,
+      this.form.metaNovosClientesFimEm
+    );
+  }
+
+  get metaPreviewPrazo(): string {
+    const fim = this.form.metaNovosClientesFimEm;
+    if (!fim) {
+      return 'Defina a data final da meta';
+    }
+
+    const hoje = formatarDataInput(new Date());
+    const encerrada = fim < hoje;
+
+    return rotuloPrazoMetaNovosClientes(fim, encerrada, encerrada ? 0 : 1);
   }
 
   readonly variaveisContaAtivada = [
@@ -211,18 +255,28 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     '{favorecido}',
   ];
 
+  formatarDataCurta = formatarDataCurta;
+  formatarDataInput = formatarDataInput;
+
   constructor(
     private configuracaoService: ConfiguracaoService,
     private sistemaService: SistemaService,
     private authService: AuthService,
     private tema: TemaService,
     private toast: ToastService,
-    private sync: DadosSyncService
+    private sync: DadosSyncService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.restaurarAba();
     this.restaurarSubAbaMensagens();
+    this.route.queryParamMap.subscribe((params) => {
+      const aba = params.get('aba');
+      if (aba && ABAS_VALIDAS.has(aba as AbaConfiguracao)) {
+        this.definirAba(aba as AbaConfiguracao, false);
+      }
+    });
     this.carregarConfig();
     vincularSincronizacaoPagina(
       this.sync,
@@ -249,6 +303,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     }
     this.configuracaoService.carregar().subscribe({
       next: (dados) => {
+        const metaPadrao = metaNovosClientesPadrao();
         this.form = {
           nomeEmpresa: dados.nomeEmpresa ?? 'JPTV',
           whatsapp: dados.whatsapp ?? '',
@@ -261,6 +316,16 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
           corPrincipal: dados.corPrincipal ?? COR_TEMA_PADRAO,
           diasAntecedenciaLembrete:
             dados.diasAntecedenciaLembrete ?? DIAS_ANTECEDENCIA_LEMBRETE_PADRAO,
+          metaNovosClientesQtd: normalizarMetaNovosClientesQtd(
+            dados.metaNovosClientesQtd
+          ),
+          metaNovosClientesDias:
+            dados.metaNovosClientesDias ?? META_NOVOS_CLIENTES_DIAS_PADRAO,
+          metaNovosClientesInicioEm:
+            dataIsoParaInput(dados.metaNovosClientesInicioEm) ||
+            metaPadrao.inicioEm,
+          metaNovosClientesFimEm:
+            dataIsoParaInput(dados.metaNovosClientesFimEm) || metaPadrao.fimEm,
           mensagemBoasVindas: resolverTextoMensagem(
             dados.mensagemBoasVindas,
             MENSAGENS_PADRAO.mensagemBoasVindas
@@ -298,9 +363,11 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     this.tema.aplicar(cor);
   }
 
-  definirAba(aba: AbaConfiguracao): void {
+  definirAba(aba: AbaConfiguracao, persistir = true): void {
     this.abaAtiva = aba;
-    salvarSessionJson(CHAVE_ABA_CONFIG, aba);
+    if (persistir) {
+      salvarSessionJson(CHAVE_ABA_CONFIG, aba);
+    }
   }
 
   definirSubAbaMensagens(subAba: SubAbaMensagens): void {
@@ -362,6 +429,11 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
   }
 
   salvar(): void {
+    if (this.abaAtiva === 'metas') {
+      this.salvarMeta();
+      return;
+    }
+
     this.salvando = true;
     this.configuracaoService.salvar(this.form).subscribe({
       next: () => {
@@ -374,6 +446,41 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
         void this.toast.error(err.message ?? 'Erro ao salvar.');
       },
     });
+  }
+
+  private normalizarFormMeta(): void {
+    this.form.metaNovosClientesQtd = normalizarMetaNovosClientesQtd(
+      this.form.metaNovosClientesQtd
+    );
+    this.form.metaNovosClientesInicioEm = normalizarMetaNovosClientesInicioEm(
+      this.form.metaNovosClientesInicioEm
+    );
+    this.form.metaNovosClientesFimEm = normalizarMetaNovosClientesFimEm(
+      this.form.metaNovosClientesFimEm,
+      this.form.metaNovosClientesInicioEm
+    );
+  }
+
+  salvarMeta(): void {
+    this.normalizarFormMeta();
+    this.salvandoMeta = true;
+
+    this.configuracaoService
+      .salvar({
+        metaNovosClientesQtd: this.form.metaNovosClientesQtd,
+        metaNovosClientesInicioEm: this.form.metaNovosClientesInicioEm,
+        metaNovosClientesFimEm: this.form.metaNovosClientesFimEm,
+      })
+      .subscribe({
+        next: () => {
+          this.salvandoMeta = false;
+          void this.toast.success('Meta de clientes salva!');
+        },
+        error: (err) => {
+          this.salvandoMeta = false;
+          void this.toast.error(err.message ?? 'Erro ao salvar meta.');
+        },
+      });
   }
 
   baixarBackup(): void {

@@ -854,6 +854,94 @@
     background: linear-gradient(90deg, #059669 0%, #34d399 100%);
   }
 
+  .crm-progress-fill--meta-atingida {
+    background: linear-gradient(90deg, #059669 0%, #22c55e 100%);
+  }
+
+  .crm-dash-meta-panel {
+    @apply rounded-2xl border p-5 md:p-6 relative overflow-hidden;
+    border-color: rgba(139, 92, 246, 0.35);
+    background:
+      radial-gradient(ellipse 80% 60% at 100% 0%, rgba(139, 92, 246, 0.16), transparent 55%),
+      radial-gradient(ellipse 60% 50% at 0% 100%, rgba(34, 197, 94, 0.08), transparent 50%),
+      rgba(15, 23, 42, 0.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .crm-dash-meta-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #7c3aed 0%, #22c55e 100%);
+    opacity: 0.9;
+  }
+
+  .crm-dash-meta-score {
+    @apply text-4xl md:text-5xl font-bold tracking-tight leading-none;
+    color: var(--crm-primary-text);
+  }
+
+  .crm-dash-meta-score-sep {
+    @apply text-2xl md:text-3xl font-semibold text-slate-600 mx-1;
+  }
+
+  .crm-dash-meta-score-meta {
+    @apply text-2xl md:text-3xl font-bold text-slate-300;
+  }
+
+  .crm-dash-meta-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide border;
+  }
+
+  .crm-dash-meta-chip--ativa {
+    @apply border-violet-500/40 text-violet-200;
+    background: rgba(139, 92, 246, 0.12);
+  }
+
+  .crm-dash-meta-chip--atingida {
+    @apply border-emerald-500/40 text-emerald-200;
+    background: rgba(34, 197, 94, 0.12);
+  }
+
+  .crm-dash-meta-chip--encerrada {
+    @apply border-slate-600/60 text-slate-400;
+    background: rgba(30, 41, 59, 0.5);
+  }
+
+  .crm-dash-meta-stat {
+    @apply rounded-xl border border-slate-800/80 bg-slate-950/40 px-3 py-2.5;
+  }
+
+  .crm-dash-meta-stat-label {
+    @apply text-[10px] uppercase tracking-wide text-slate-500;
+  }
+
+  .crm-dash-meta-stat-value {
+    @apply text-sm font-semibold text-slate-100 mt-0.5;
+  }
+
+  .crm-config-meta-panel {
+    @apply rounded-2xl border p-5 md:p-6 space-y-5;
+    border-color: rgba(139, 92, 246, 0.35);
+    background:
+      radial-gradient(ellipse 70% 55% at 100% 0%, rgba(139, 92, 246, 0.14), transparent 55%),
+      rgba(15, 23, 42, 0.55);
+  }
+
+  .crm-config-meta-preview {
+    @apply rounded-xl border border-dashed p-4;
+    border-color: rgba(139, 92, 246, 0.35);
+    background: rgba(2, 6, 23, 0.45);
+  }
+
+  .crm-progress-fill--meta {
+    background: linear-gradient(90deg, #7c3aed 0%, #a855f7 55%, #22c55e 100%);
+  }
+
   .crm-dash-kpi {
     @apply rounded-xl p-3 md:p-4 border border-slate-700/50 bg-slate-950/25 backdrop-blur-sm;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -1081,6 +1169,46 @@
 
   .crm-dash-vencimentos-footer {
     @apply mt-3 pt-3 border-t border-slate-800/80 text-center;
+  }
+
+  .crm-dash-atencao-lateral {
+    @apply shrink-0 self-stretch flex flex-col items-end justify-between gap-2;
+  }
+
+  .crm-dash-atencao-acoes {
+    @apply flex flex-wrap items-center gap-1.5 mt-2;
+  }
+
+  .crm-dash-vencimento--atrasado {
+    border-left: 3px solid #f59e0b;
+  }
+
+  .crm-dash-vencimento--atrasado .crm-dash-vencimento-data {
+    @apply border-amber-500/30 bg-amber-500/10;
+  }
+
+  .crm-dash-vencimento--atrasado .crm-dash-vencimento-dia {
+    @apply text-amber-200;
+  }
+
+  .crm-dash-vencimento--atrasado .crm-dash-vencimento-prazo {
+    @apply text-amber-200 border-amber-500/30 bg-amber-500/10;
+  }
+
+  .crm-dash-vencimento--inativo {
+    border-left: 3px solid #ef4444;
+  }
+
+  .crm-dash-vencimento--inativo .crm-dash-vencimento-data {
+    @apply border-red-500/30 bg-red-500/10;
+  }
+
+  .crm-dash-vencimento--inativo .crm-dash-vencimento-dia {
+    @apply text-red-200;
+  }
+
+  .crm-dash-vencimento--inativo .crm-dash-vencimento-prazo {
+    @apply text-red-200 border-red-500/30 bg-red-500/10;
   }
 
   .crm-loading {

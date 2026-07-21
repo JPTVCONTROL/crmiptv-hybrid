@@ -29,7 +29,10 @@ import {
   oferecerMensagemRenovacao,
 } from '../../shared/utils/whatsapp';
 import { resolverDiasAntecedencia, clienteEhCortesia, clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_OPERACAO,
+} from '../../shared/utils/page-sync.util';
 import {
   persistirFiltrosFinanceiro,
   restaurarFiltrosFinanceiro,
@@ -127,7 +130,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'configuracoes'],
+      DOMINIOS_SYNC_OPERACAO,
       () => this.carregar(true)
     );
   }

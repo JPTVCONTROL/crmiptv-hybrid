@@ -9,7 +9,10 @@ import { Dispositivo } from '../../core/models';
 import { NovoDispositivoModalComponent } from '../../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
 import { DispositivoClientesModalComponent } from '../../components/dispositivo/dispositivo-clientes-modal/dispositivo-clientes-modal.component';
 import { rotuloDispositivo } from '../../shared/utils/dispositivos';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_CATALOGO,
+} from '../../shared/utils/page-sync.util';
 
 @Component({
   selector: 'app-dispositivos',
@@ -36,7 +39,7 @@ export class DispositivosPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['catalogos', 'clientes'],
+      DOMINIOS_SYNC_CATALOGO,
       () => this.carregar(true)
     );
   }

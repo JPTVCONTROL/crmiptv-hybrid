@@ -193,6 +193,10 @@ model Configuracao {
   favorecidoPix      String?
   corPrincipal       String   @default("#7C3AED")
   diasAntecedenciaLembrete Int @default(5)
+  metaNovosClientesQtd Int @default(10)
+  metaNovosClientesDias Int @default(30)
+  metaNovosClientesInicioEm DateTime?
+  metaNovosClientesFimEm DateTime?
   mensagemBoasVindas String?
   mensagemCobranca   String?
   mensagemLembrete   String?

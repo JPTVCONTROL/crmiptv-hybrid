@@ -116,6 +116,10 @@ export interface Configuracao {
   favorecidoPix?: string | null;
   corPrincipal?: string;
   diasAntecedenciaLembrete?: number;
+  metaNovosClientesQtd?: number;
+  metaNovosClientesDias?: number;
+  metaNovosClientesInicioEm?: string | null;
+  metaNovosClientesFimEm?: string | null;
   mensagemBoasVindas?: string | null;
   mensagemCobranca?: string | null;
   mensagemLembrete?: string | null;
@@ -228,6 +232,7 @@ export interface DashboardResumo {
     atrasados: number;
     inativos: number;
     cortesia: number;
+    somenteContato: number;
     cadastrosIncompletos: number;
   };
   financeiro: {
@@ -278,7 +283,16 @@ export interface DashboardResumo {
     arrAno: number;
     ticketMedio: number;
     conexoes: number;
-    novosClientes30d: number;
+    novosClientesPeriodo: number;
+    metaClientesAtual: number;
+    metaNovosClientesQtd: number;
+    metaNovosClientesInicioEm: string;
+    metaNovosClientesFimEm: string;
+    metaNovosClientesDias: number;
+    metaNovosClientesDiasRestantes: number;
+    metaNovosClientesEncerrada: boolean;
+    metaNovosClientesPercentual: number;
+    metaNovosClientesAtingida: boolean;
     variacaoNovosClientes: number;
     vencendoQtd: number;
     vencendoValor: number;

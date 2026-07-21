@@ -15,13 +15,18 @@ import {
   formatarData,
   formatarValor,
 } from '../../shared/utils/formatters';
-import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
+import {
+  META_NOVOS_CLIENTES_QTD_PADRAO,
+  resolverDatasMetaNovosClientes,
+  rotuloJanelaMetaNovosClientes,
+  rotuloPrazoMetaNovosClientes,
+} from '../../shared/utils/meta-novos-clientes.util';
 import { rotuloUltimoContato } from '../../shared/utils/contato';
 import { montarMensagemBloqueioMensalidade } from '../../shared/utils/cobranca-lote';
 import { Mensalidade } from '../../core/models';
 import { PullRefreshService } from '../../core/services/pull-refresh.service';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import { vincularSincronizacaoPagina, DOMINIOS_SYNC_OPERACAO } from '../../shared/utils/page-sync.util';
 import {
   classesAlertaOperacional,
   iconeAlertaOperacional,
@@ -48,12 +53,12 @@ export class DashboardPage implements OnInit, OnDestroy {
   qtdAtrasados = 0;
   qtdInativos = 0;
   qtdCortesia = 0;
+  qtdSomenteContato = 0;
   recebidoHoje = '';
   recebidoMes = '';
   aReceberEsteMes = '';
   qtdEsteMes = 0;
   vencemHoje = 0;
-  faturamentoMensal: DadoFaturamento[] = [];
   proximosVencimentos: ProximoVencimentoResumo[] = [];
   clientesAtencao: ClienteAtencaoResumo[] = [];
   alertas: AlertaOperacional[] = [];
@@ -70,9 +75,14 @@ export class DashboardPage implements OnInit, OnDestroy {
   arrRotulo = '';
   ticketMedio = '';
   conexoes = 0;
-  novosClientes30d = 0;
-  variacaoNovosRotulo = '';
-  variacaoNovosPositiva = true;
+  metaClientesAtual = 0;
+  metaNovosClientesQtd = 0;
+  metaNovosClientesInicioEm = '';
+  metaNovosClientesFimEm = '';
+  metaNovosClientesDiasRestantes = 0;
+  metaNovosClientesEncerrada = false;
+  metaNovosClientesPercentual = 0;
+  metaNovosClientesAtingida = false;
   vencendoQtd = 0;
   vencendoValor = '';
   cobrancaAtrasadaQtd = 0;
@@ -124,6 +134,77 @@ export class DashboardPage implements OnInit, OnDestroy {
     return `${Math.round((this.qtdAtivos / this.totalClientes) * 100)}%`;
   }
 
+  get metaClientesBaseRotulo(): string {
+    const excluidos = this.qtdCortesia + this.qtdSomenteContato;
+    if (excluidos <= 0) {
+      return `${this.totalClientes} cadastrados`;
+    }
+
+    const partes: string[] = [];
+    if (this.qtdCortesia > 0) {
+      partes.push(
+        this.qtdCortesia === 1 ? '1 cortesia' : `${this.qtdCortesia} cortesias`
+      );
+    }
+    if (this.qtdSomenteContato > 0) {
+      partes.push(
+        this.qtdSomenteContato === 1
+          ? '1 somente cadastro'
+          : `${this.qtdSomenteContato} somente cadastro`
+      );
+    }
+
+    return `${this.totalClientes} cadastrados · fora da meta: ${partes.join(' e ')}`;
+  }
+
+  get metaNovosClientesRotulo(): string {
+    return `${this.metaClientesAtual} de ${this.metaNovosClientesQtd} · ${rotuloJanelaMetaNovosClientes(this.metaNovosClientesInicioEm, this.metaNovosClientesFimEm)}`;
+  }
+
+  get metaNovosClientesSubtitulo(): string {
+    const prazo = rotuloPrazoMetaNovosClientes(
+      this.metaNovosClientesFimEm,
+      this.metaNovosClientesEncerrada,
+      this.metaNovosClientesDiasRestantes
+    );
+
+    if (this.metaNovosClientesAtingida) {
+      return `Meta atingida · ${prazo} · ${this.metaClientesBaseRotulo}`;
+    }
+
+    const faltam = Math.max(0, this.metaNovosClientesQtd - this.metaClientesAtual);
+    const progresso =
+      faltam === 1
+        ? 'Falta 1 cliente comercial'
+        : `Faltam ${faltam} clientes comerciais`;
+
+    return `${progresso} · ${prazo} · ${this.metaClientesBaseRotulo}`;
+  }
+
+  get metaNovosClientesStatusRotulo(): string {
+    if (this.metaNovosClientesAtingida) {
+      return 'Meta atingida';
+    }
+
+    if (this.metaNovosClientesEncerrada) {
+      return 'Prazo encerrado';
+    }
+
+    return 'Em andamento';
+  }
+
+  get classeStatusMeta(): string {
+    if (this.metaNovosClientesAtingida) {
+      return 'crm-dash-meta-chip--atingida';
+    }
+
+    if (this.metaNovosClientesEncerrada) {
+      return 'crm-dash-meta-chip--encerrada';
+    }
+
+    return 'crm-dash-meta-chip--ativa';
+  }
+
   get rotinaPercentual(): number {
     if (this.cobrancaTotalElegiveis <= 0) {
       return this.cobrancaRotinaFeita ? 100 : 0;
@@ -134,32 +215,6 @@ export class DashboardPage implements OnInit, OnDestroy {
         (this.cobrancaContactadosHoje / this.cobrancaTotalElegiveis) * 100
       )
     );
-  }
-
-  get variacaoFaturamentoRotulo(): string {
-    if (this.faturamentoMensal.length < 2) {
-      return 'Sem histórico anterior';
-    }
-
-    const atual = this.faturamentoMensal[this.faturamentoMensal.length - 1]?.total ?? 0;
-    const anterior =
-      this.faturamentoMensal[this.faturamentoMensal.length - 2]?.total ?? 0;
-
-    if (anterior <= 0) {
-      return atual > 0 ? 'Primeiro mês com receita' : 'Sem receita no período';
-    }
-
-    const variacao = Math.round(((atual - anterior) / anterior) * 100);
-    const sinal = variacao > 0 ? '+' : '';
-    return `${sinal}${variacao}% vs. mês anterior`;
-  }
-
-  get variacaoFaturamentoPositiva(): boolean {
-    if (this.faturamentoMensal.length < 2) return true;
-    const atual = this.faturamentoMensal[this.faturamentoMensal.length - 1]?.total ?? 0;
-    const anterior =
-      this.faturamentoMensal[this.faturamentoMensal.length - 2]?.total ?? 0;
-    return atual >= anterior;
   }
 
   get alertasVisiveis(): AlertaOperacional[] {
@@ -199,7 +254,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'dashboard', 'configuracoes'],
+      DOMINIOS_SYNC_OPERACAO,
       () => this.carregar(true)
     );
     this.pullRefresh.registrar((concluir) => this.carregar(true, concluir));
@@ -260,12 +315,12 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.qtdAtrasados = resumo.clientes.atrasados;
     this.qtdInativos = resumo.clientes.inativos;
     this.qtdCortesia = resumo.clientes.cortesia ?? 0;
+    this.qtdSomenteContato = resumo.clientes.somenteContato ?? 0;
     this.recebidoHoje = formatarValor(resumo.financeiro.recebidoHoje ?? 0);
     this.recebidoMes = formatarValor(resumo.financeiro.recebidoMes);
     this.aReceberEsteMes = formatarValor(resumo.financeiro.aReceberEsteMes);
     this.qtdEsteMes = resumo.financeiro.qtdEsteMes;
     this.vencemHoje = resumo.financeiro.vencemHoje;
-    this.faturamentoMensal = resumo.faturamentoMensal;
     this.proximosVencimentos = resumo.proximosVencimentos;
     this.clientesAtencao = resumo.clientesAtencao;
     this.alertas = resumo.alertas ?? [];
@@ -277,27 +332,43 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.cadastrosIncompletos = resumo.clientes.cadastrosIncompletos;
 
     const m = resumo.metricas;
-    this.mrr = formatarValor(m.mrr);
+    const metaDatas = resolverDatasMetaNovosClientes(
+      m.metaNovosClientesInicioEm,
+      m.metaNovosClientesFimEm
+    );
+
+    this.mrr = formatarValor(m.mrr ?? 0);
     const mesesRestantes =
       m.arrMesesRestantes ?? 12 - new Date().getMonth();
     const anoArr = m.arrAno ?? new Date().getFullYear();
-    this.arr = formatarValor(m.arr ?? m.mrr * mesesRestantes);
+    this.arr = formatarValor(m.arr ?? (m.mrr ?? 0) * mesesRestantes);
     this.arrRotulo = `Até dez/${anoArr} · ${mesesRestantes} mes(es)`;
-    this.ticketMedio = formatarValor(m.ticketMedio);
-    this.conexoes = m.conexoes;
-    this.novosClientes30d = m.novosClientes30d;
-    this.variacaoNovosPositiva = m.variacaoNovosClientes >= 0;
-    const sinalNovos = m.variacaoNovosClientes > 0 ? '+' : '';
-    this.variacaoNovosRotulo = `${sinalNovos}${m.variacaoNovosClientes}% vs. 30d ant.`;
-    this.vencendoQtd = m.vencendoQtd;
-    this.vencendoValor = formatarValor(m.vencendoValor);
-    this.cobrancaAtrasadaQtd = m.cobrancaAtrasadaQtd;
-    this.cobrancaAtrasadaValor = formatarValor(m.cobrancaAtrasadaValor);
-    this.retencaoPercentual = `${m.retencaoPercentual}%`;
-    this.churnPercentual = `${m.churnPercentual}%`;
-    this.inadimplenciaPercentual = `${m.inadimplenciaPercentual}%`;
-    this.ganhosProximoAno = formatarValor(m.ganhosProximoAno);
-    this.ganhosProximoAnoRotulo = `jan–dez/${m.ganhosProximoAnoAno} · MRR × 12`;
+    this.ticketMedio = formatarValor(m.ticketMedio ?? 0);
+    this.conexoes = m.conexoes ?? 0;
+    this.metaClientesAtual =
+      typeof m.metaClientesAtual === 'number'
+        ? m.metaClientesAtual
+        : Math.max(
+            0,
+            this.totalClientes - this.qtdCortesia - this.qtdSomenteContato
+          );
+    this.metaNovosClientesQtd =
+      m.metaNovosClientesQtd ?? META_NOVOS_CLIENTES_QTD_PADRAO;
+    this.metaNovosClientesInicioEm = metaDatas.inicioEm;
+    this.metaNovosClientesFimEm = metaDatas.fimEm;
+    this.metaNovosClientesDiasRestantes = m.metaNovosClientesDiasRestantes ?? 0;
+    this.metaNovosClientesEncerrada = m.metaNovosClientesEncerrada ?? false;
+    this.metaNovosClientesPercentual = m.metaNovosClientesPercentual ?? 0;
+    this.metaNovosClientesAtingida = m.metaNovosClientesAtingida ?? false;
+    this.vencendoQtd = m.vencendoQtd ?? 0;
+    this.vencendoValor = formatarValor(m.vencendoValor ?? 0);
+    this.cobrancaAtrasadaQtd = m.cobrancaAtrasadaQtd ?? 0;
+    this.cobrancaAtrasadaValor = formatarValor(m.cobrancaAtrasadaValor ?? 0);
+    this.retencaoPercentual = `${m.retencaoPercentual ?? 0}%`;
+    this.churnPercentual = `${m.churnPercentual ?? 0}%`;
+    this.inadimplenciaPercentual = `${m.inadimplenciaPercentual ?? 0}%`;
+    this.ganhosProximoAno = formatarValor(m.ganhosProximoAno ?? 0);
+    this.ganhosProximoAnoRotulo = `jan–dez/${m.ganhosProximoAnoAno ?? new Date().getFullYear() + 1} · MRR × 12`;
   }
 
   async renovarCliente(cliente: ClienteAtencaoResumo): Promise<void> {
@@ -406,6 +477,57 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   rotuloContato(ultimoContatoEm?: string | null): string {
     return rotuloUltimoContato(ultimoContatoEm);
+  }
+
+  metaAtencao(cliente: ClienteAtencaoResumo): string {
+    const partes = [cliente.telefone];
+
+    if (cliente.mensalidadeReferencia && cliente.mensalidadeValor != null) {
+      partes.push(
+        `${cliente.mensalidadeReferencia} · ${formatarValor(cliente.mensalidadeValor)}`
+      );
+    }
+
+    return partes.filter(Boolean).join(' · ');
+  }
+
+  rotuloPrazoAtencao(cliente: ClienteAtencaoResumo): string {
+    if (cliente.status === 'INATIVO') {
+      return 'Inativo';
+    }
+
+    if (!cliente.expiraEm) {
+      return 'Sem data';
+    }
+
+    const dias = calcularDias(cliente.expiraEm);
+    if (dias === 0) {
+      return 'Vence hoje';
+    }
+    if (dias === 1) {
+      return 'Amanhã';
+    }
+    if (dias > 0) {
+      return `Em ${dias} dias`;
+    }
+
+    return `${Math.abs(dias)} dia(s) atrasado`;
+  }
+
+  classeAtencaoItem(cliente: ClienteAtencaoResumo): string {
+    if (cliente.status === 'INATIVO') {
+      return 'crm-dash-vencimento--inativo';
+    }
+
+    return 'crm-dash-vencimento--atrasado';
+  }
+
+  partesDataExpiracao(expiraEm?: string | null): { dia: string; mes: string } {
+    if (!expiraEm) {
+      return { dia: '—', mes: 'SEM' };
+    }
+
+    return this.partesDataVencimento(expiraEm);
   }
 
   classeVencimentoItem(vencimento: string): string {

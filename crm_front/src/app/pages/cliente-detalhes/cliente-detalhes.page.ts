@@ -29,7 +29,10 @@ import {
 } from '../../shared/utils/onboarding';
 import { clienteParticipaCobrancas, clienteEhCortesia, clienteEhSomenteContato } from '../../shared/utils/cobranca-diaria';
 import { DispositivoCliente, parseDispositivos, resolverDispositivoCliente, resolverAplicativoCliente, rotuloDispositivo } from '../../shared/utils/dispositivos';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_CLIENTE_DETALHE,
+} from '../../shared/utils/page-sync.util';
 import { StatusBadgeTipo } from '../../components/status-badge/status-badge.component';
 
 @Component({
@@ -86,7 +89,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'catalogos'],
+      DOMINIOS_SYNC_CLIENTE_DETALHE,
       () => {
         this.carregarCatalogos();
         if (this.clienteId) {

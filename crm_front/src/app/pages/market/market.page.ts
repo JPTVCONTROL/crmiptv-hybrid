@@ -32,7 +32,10 @@ import {
   telefoneValidoParaWhatsApp,
 } from '../../shared/utils/whatsapp';
 import { formatarTelefoneExibicao } from '../../shared/utils/telefone.util';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_CAMPANHAS,
+} from '../../shared/utils/page-sync.util';
 import { confirmarUsuario } from '../../shared/utils/confirm-notifier';
 import { CampanhaFormModalComponent } from '../../components/campanha/campanha-form-modal.component';
 import { exportarCampanhaCsv } from '../../shared/utils/campanha-export';
@@ -188,7 +191,7 @@ export class MarketPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'campanhas', 'catalogos', 'configuracoes'],
+      DOMINIOS_SYNC_CAMPANHAS,
       () => {
         void this.carregar(true);
       }

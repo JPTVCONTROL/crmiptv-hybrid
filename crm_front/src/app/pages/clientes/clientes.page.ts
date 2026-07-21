@@ -24,7 +24,10 @@ import {
   TipoPendenciaCadastro,
 } from '../../shared/utils/cliente-cadastro-audit';
 import { PullRefreshService } from '../../core/services/pull-refresh.service';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_CATALOGO,
+} from '../../shared/utils/page-sync.util';
 import { StatusBadgeTipo } from '../../components/status-badge/status-badge.component';
 import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
 
@@ -391,7 +394,7 @@ export class ClientesPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'catalogos'],
+      DOMINIOS_SYNC_CATALOGO,
       () => {
         this.carregar(true);
         this.aplicativoService.listar().subscribe({

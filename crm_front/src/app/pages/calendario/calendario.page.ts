@@ -8,7 +8,10 @@ import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Configuracao, Cliente, Mensalidade } from '../../core/models';
 import { formatarValor } from '../../shared/utils/formatters';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_OPERACAO,
+} from '../../shared/utils/page-sync.util';
 import {
   CelulaCalendario,
   ClienteCalendarioDia,
@@ -82,7 +85,7 @@ export class CalendarioPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades'],
+      DOMINIOS_SYNC_OPERACAO,
       () => this.carregar(true)
     );
   }

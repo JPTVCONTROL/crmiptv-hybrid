@@ -18,7 +18,10 @@
     </button>
   </nav>
 
-  <div class="crm-card space-y-8 max-w-4xl">
+  <div
+    class="max-w-4xl"
+    [ngClass]="abaAtiva === 'metas' ? '' : 'crm-card space-y-8'"
+  >
     <!-- Conta -->
     <ng-container *ngIf="abaAtiva === 'conta'">
       <div>
@@ -116,6 +119,68 @@
       <button class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
         {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
       </button>
+    </ng-container>
+
+    <!-- Metas -->
+    <ng-container *ngIf="abaAtiva === 'metas'">
+      <div class="crm-config-meta-panel">
+        <div>
+          <p class="crm-kicker mb-1">Captação</p>
+          <h2 class="text-white font-semibold text-lg">Meta de clientes</h2>
+          <p class="text-slate-400 text-sm mt-1">
+            Quantidade alvo da sua base comercial até a data final. Exclui cortesia e clientes marcados como somente cadastro/contato.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Meta (quantidade de clientes)</label>
+            <input
+              type="number"
+              min="1"
+              max="999"
+              class="crm-input"
+              [(ngModel)]="form.metaNovosClientesQtd"
+            />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Desde</label>
+            <input
+              type="date"
+              class="crm-input"
+              [(ngModel)]="form.metaNovosClientesInicioEm"
+            />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-2 text-sm">Até</label>
+            <input
+              type="date"
+              class="crm-input"
+              [(ngModel)]="form.metaNovosClientesFimEm"
+              [min]="form.metaNovosClientesInicioEm"
+            />
+          </div>
+        </div>
+
+        <div class="crm-config-meta-preview">
+          <p class="text-violet-300 text-[10px] font-semibold uppercase tracking-wide mb-2">
+            Prévia no Dashboard
+          </p>
+          <p class="text-white font-semibold">
+            {{ form.metaNovosClientesQtd }} clientes · {{ metaPreviewRotulo }}
+          </p>
+          <p class="text-slate-500 text-xs mt-1">{{ metaPreviewPrazo }}</p>
+        </div>
+
+        <button
+          type="button"
+          class="crm-btn-primary"
+          [disabled]="salvandoMeta"
+          (click)="salvarMeta()"
+        >
+          {{ salvandoMeta ? 'Salvando...' : 'Salvar meta' }}
+        </button>
+      </div>
     </ng-container>
 
     <!-- Mensagens -->

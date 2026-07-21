@@ -10,7 +10,10 @@ import {
   ResultadoExecucaoAutomacao,
 } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import {
+  vincularSincronizacaoPagina,
+  DOMINIOS_SYNC_OPERACAO,
+} from '../../shared/utils/page-sync.util';
 import {
   CRONOGRAMA_COBRANCAS_AUTOMACAO,
   CRONOGRAMA_LEMBRETES_AUTOMACAO,
@@ -100,7 +103,7 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['clientes', 'mensalidades', 'configuracoes'],
+      DOMINIOS_SYNC_OPERACAO,
       () => this.carregar(true)
     );
   }

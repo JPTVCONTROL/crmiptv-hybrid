@@ -24,6 +24,10 @@ import {
   whereClienteParticipaCobranca,
   whereMensalidadeCobrancaCliente,
 } from '../utils/helpers/dashboardStatusLimits.js';
+import {
+  resolverMetaNovosClientes,
+  whereClienteContaMeta,
+} from '../utils/helpers/metaNovosClientesHelpers.js';
 
 export interface AlertaOperacional {
   tipo:
@@ -54,6 +58,7 @@ export interface DashboardResumo {
     atrasados: number;
     inativos: number;
     cortesia: number;
+    somenteContato: number;
     cadastrosIncompletos: number;
   };
   financeiro: {
@@ -104,7 +109,16 @@ export interface DashboardResumo {
     arrAno: number;
     ticketMedio: number;
     conexoes: number;
-    novosClientes30d: number;
+    novosClientesPeriodo: number;
+    metaClientesAtual: number;
+    metaNovosClientesQtd: number;
+    metaNovosClientesInicioEm: string;
+    metaNovosClientesFimEm: string;
+    metaNovosClientesDias: number;
+    metaNovosClientesDiasRestantes: number;
+    metaNovosClientesEncerrada: boolean;
+    metaNovosClientesPercentual: number;
+    metaNovosClientesAtingida: boolean;
     variacaoNovosClientes: number;
     vencendoQtd: number;
     vencendoValor: number;
@@ -197,6 +211,7 @@ export class DashboardService {
     fimHoje.setHours(23, 59, 59, 999);
 
     const limites = calcularLimitesDashboard(hoje, diasAntecedencia);
+    const metaNovosClientes = resolverMetaNovosClientes(configuracao, hoje);
     const whereAtivo = whereClienteAtivo(limites.inicioHoje);
     const whereAtrasado = whereClienteAtrasado(
       limites.inicioHoje,
@@ -228,9 +243,9 @@ export class DashboardService {
       atrasadosCount,
       inativosCount,
       cortesiaCount,
+      somenteContatoCount,
       clientesGerenciados,
-      novosClientes30d,
-      novosPeriodoAnterior,
+      metaClientesAtual,
       clientesAtivosComercial,
       expiradosSemMensalidade,
       recebidoHojeAgg,
@@ -249,6 +264,7 @@ export class DashboardService {
       prisma.cliente.count({ where: whereAtrasado }),
       prisma.cliente.count({ where: whereInativo }),
       prisma.cliente.count({ where: { cortesia: true } }),
+      prisma.cliente.count({ where: { somenteContato: true } }),
       prisma.cliente.findMany({
         where: whereGerenciado,
         select: {
@@ -266,17 +282,7 @@ export class DashboardService {
           macAddress: true,
         },
       }),
-      prisma.cliente.count({
-        where: { createdAt: { gte: limites.trintaDiasAtras } },
-      }),
-      prisma.cliente.count({
-        where: {
-          createdAt: {
-            gte: limites.sessentaDiasAtras,
-            lt: limites.trintaDiasAtras,
-          },
-        },
-      }),
+      prisma.cliente.count({ where: whereClienteContaMeta }),
       prisma.cliente.findMany({
         where: whereAtivoComercial,
         select: { valorMensal: true, qtdTelas: true, createdAt: true },
@@ -386,6 +392,7 @@ export class DashboardService {
       atrasados: atrasadosCount,
       inativos: inativosCount,
       cortesia: cortesiaCount,
+      somenteContato: somenteContatoCount,
       cadastrosIncompletos: contarCadastrosIncompletos(
         clientesGerenciados,
         aplicativosRequisitos
@@ -649,15 +656,17 @@ export class DashboardService {
       0
     );
 
-    const variacaoNovosClientes =
-      novosPeriodoAnterior === 0
-        ? novosClientes30d > 0
-          ? 100
-          : 0
-        : Math.round(
-            ((novosClientes30d - novosPeriodoAnterior) / novosPeriodoAnterior) *
-              100
-          );
+    const variacaoNovosClientes = 0;
+
+    const metaNovosClientesPercentual =
+      metaNovosClientes.qtd > 0
+        ? Math.min(
+            100,
+            Math.round((metaClientesAtual / metaNovosClientes.qtd) * 100)
+          )
+        : 0;
+    const metaNovosClientesAtingida =
+      metaClientesAtual >= metaNovosClientes.qtd;
 
     const vencendoQtd = vencendoLista.length;
     const vencendoValor = vencendoLista.reduce((total, m) => total + m.valor, 0);
@@ -712,7 +721,16 @@ export class DashboardService {
         arrAno,
         ticketMedio,
         conexoes,
-        novosClientes30d,
+        novosClientesPeriodo: metaClientesAtual,
+        metaClientesAtual,
+        metaNovosClientesQtd: metaNovosClientes.qtd,
+        metaNovosClientesInicioEm: metaNovosClientes.inicioEm,
+        metaNovosClientesFimEm: metaNovosClientes.fimEm,
+        metaNovosClientesDias: metaNovosClientes.diasPeriodo,
+        metaNovosClientesDiasRestantes: metaNovosClientes.diasRestantes,
+        metaNovosClientesEncerrada: metaNovosClientes.encerrada,
+        metaNovosClientesPercentual,
+        metaNovosClientesAtingida,
         variacaoNovosClientes,
         vencendoQtd,
         vencendoValor,
