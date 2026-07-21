@@ -54,9 +54,38 @@
         type="search"
         class="crm-input !pl-11"
         [(ngModel)]="buscaCampanhas"
+        (ngModelChange)="onBuscaCampanhasChange()"
         placeholder="Buscar campanha por título, tipo ou mensagem..."
         autocomplete="off"
       />
+    </div>
+
+    <div class="flex flex-wrap gap-1.5">
+      <button
+        *ngFor="let op of opcoesFiltroStatusLista"
+        type="button"
+        [class]="classesChipStatusLista(op.valor)"
+        (click)="definirFiltroStatusLista(op.valor)"
+      >
+        <span>{{ op.rotulo }}</span>
+        <span [class]="classesChipContagemStatusLista(op.valor)">{{
+          contagemStatusLista(op.valor)
+        }}</span>
+      </button>
+    </div>
+
+    <div class="flex flex-wrap gap-1.5">
+      <button
+        *ngFor="let op of opcoesFiltroTipoLista"
+        type="button"
+        [class]="classesChipTipoLista(op.valor)"
+        (click)="definirFiltroTipoLista(op.valor)"
+      >
+        <span>{{ op.rotulo }}</span>
+        <span [class]="classesChipContagemTipoLista(op.valor)">{{
+          contagemTipoLista(op.valor)
+        }}</span>
+      </button>
     </div>
 
     <div *ngIf="campanhasFiltradas.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -77,9 +106,14 @@
         </div>
 
         <div class="space-y-2 pt-1">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-400">Progresso de envio</span>
-            <span class="text-slate-300 font-medium tabular-nums">{{ resumoEnviosCampanha(c) }}</span>
+          <div class="flex items-center justify-between text-xs gap-2">
+            <span class="text-slate-400">{{ resumoEnviosCampanha(c) }}</span>
+            <span
+              *ngIf="campanhaTemEnviosPendentes(c)"
+              class="crm-badge-pendente shrink-0"
+            >
+              Nova
+            </span>
           </div>
           <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
             <div
@@ -87,6 +121,7 @@
               [style.width.%]="percentualEnviosCampanha(c)"
             ></div>
           </div>
+          <p class="text-slate-500 text-[11px]">{{ legendaProgressoCampanha(c) }}</p>
         </div>
 
         <p class="text-violet-400 text-xs font-medium pt-1">Abrir campanha →</p>
@@ -105,7 +140,7 @@
     <app-empty-state
       *ngIf="campanhas.length > 0 && campanhasFiltradas.length === 0"
       title="Nenhuma campanha encontrada"
-      message="Tente outro termo na busca."
+      message="Ajuste a busca ou os filtros de status e tipo."
       iconName="search-outline"
     ></app-empty-state>
   </div>
@@ -113,6 +148,57 @@
 
 <!-- Detalhe / nova campanha -->
 <div *ngIf="!loading && emModoCampanha" class="space-y-6">
+  <div *ngIf="campanhaId" class="crm-hero-card !p-4 md:!p-5">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-violet-300/90 text-xs font-semibold uppercase tracking-[0.14em] mb-1.5">
+          Progresso da campanha
+        </p>
+        <h2 class="text-white text-lg md:text-xl font-bold">
+          {{
+            campanhaConcluida
+              ? 'Todos os elegíveis foram contactados'
+              : totalPendentes + ' pendente(s) no público atual'
+          }}
+        </h2>
+        <p class="text-slate-400 text-sm mt-1">
+          {{ totalEnviados }} enviado(s) · {{ qtdPublicoComTelefone }} com WhatsApp no público
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <button
+          type="button"
+          class="crm-btn-success !py-2 !text-sm"
+          [disabled]="totalPendentes === 0"
+          (click)="selecionarPendentes()"
+        >
+          Selecionar pendentes ({{ totalPendentes }})
+        </button>
+        <button
+          type="button"
+          class="crm-btn-ghost !py-2 !text-sm"
+          [class.!border-violet-500]="filtroEnvio === 'PENDENTES'"
+          (click)="focarPendentes()"
+        >
+          Ver só pendentes
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="qtdPublicoComTelefone > 0" class="mt-4">
+      <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+        <span>Envios registrados no público</span>
+        <span class="text-slate-300">{{ percentualEnvioCampanha }}%</span>
+      </div>
+      <div class="crm-progress-track">
+        <div
+          class="crm-progress-fill crm-progress-fill--rotina"
+          [style.width.%]="percentualEnvioCampanha"
+        ></div>
+      </div>
+    </div>
+  </div>
+
   <div class="crm-info-banner">
     <p>
       O link <code class="text-violet-300">wa.me</code> envia só texto. Na fila, use
@@ -147,7 +233,14 @@
 
         <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
           <p class="text-slate-500 text-xs font-medium uppercase tracking-wide">Mensagem</p>
-          <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-40 overflow-y-auto">{{ formMensagem }}</pre>
+          <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-32 overflow-y-auto">{{ formMensagem }}</pre>
+        </div>
+
+        <div class="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3 space-y-2">
+          <p class="text-violet-300/90 text-xs font-medium uppercase tracking-wide">
+            Prévia com nome
+          </p>
+          <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-32 overflow-y-auto">{{ previewMensagemCampanha }}</pre>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2 pt-1">
@@ -211,7 +304,7 @@
         </div>
 
         <div class="rounded-xl border border-slate-800 overflow-hidden">
-          <div class="p-3 md:p-4 space-y-3 border-b border-slate-800/80 bg-slate-900/20">
+          <div class="crm-sticky-toolbar p-3 md:p-4 space-y-3 border-b border-slate-800/80 bg-slate-900/20">
             <div>
               <p class="text-white text-sm font-medium">Quem entra no público</p>
               <p class="text-slate-500 text-xs mt-0.5">
@@ -266,7 +359,7 @@
             </div>
           </div>
 
-          <div class="p-3 md:p-4 space-y-3 border-b border-slate-800/80">
+          <div class="crm-sticky-toolbar p-3 md:p-4 space-y-3 border-b border-slate-800/80">
             <div>
               <p class="text-white text-sm font-medium">Busca e status na tabela</p>
               <p class="text-slate-500 text-xs mt-0.5">

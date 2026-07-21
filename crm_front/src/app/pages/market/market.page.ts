@@ -9,6 +9,7 @@ import { PlanoService } from '../../core/services/plano.service';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
+import { PullRefreshService } from '../../core/services/pull-refresh.service';
 import { Campanha, Cliente, Plano, TipoCampanha } from '../../core/models';
 import { formatarData, resolverStatusCliente, StatusCliente } from '../../shared/utils/formatters';
 import {
@@ -40,6 +41,13 @@ import {
   VarianteFilterChip,
 } from '../../shared/utils/filter-chip.util';
 import { lerSessionJson, salvarSessionJson } from '../../shared/utils/session-persist.util';
+import {
+  FiltroStatusListaCampanha,
+  FiltroTipoListaCampanha,
+  persistirFiltrosMarketCampanha,
+  persistirFiltrosMarketLista,
+  restaurarFiltrosMarket,
+} from '../../shared/utils/market-filtros-persist.util';
 
 const CHAVE_DENSIDADE_MARKET = 'crm.market.tabelaCompacta';
 
@@ -62,6 +70,16 @@ interface OpcaoFiltroEnvio {
 
 interface OpcaoSegmentoPublico {
   valor: SegmentoPublicoCampanha;
+  rotulo: string;
+}
+
+interface OpcaoFiltroStatusLista {
+  valor: FiltroStatusListaCampanha;
+  rotulo: string;
+}
+
+interface OpcaoFiltroTipoLista {
+  valor: FiltroTipoListaCampanha;
   rotulo: string;
 }
 
@@ -96,6 +114,8 @@ export class MarketPage implements OnInit, OnDestroy {
   filtroEnvio: FiltroEnvioCampanha = 'PENDENTES';
   busca = '';
   buscaCampanhas = '';
+  filtroStatusLista: FiltroStatusListaCampanha = 'TODAS';
+  filtroTipoLista: FiltroTipoListaCampanha = 'TODOS';
   visualizacao: 'lista' | 'campanha' = 'lista';
   tabelaCompacta = true;
 
@@ -113,6 +133,17 @@ export class MarketPage implements OnInit, OnDestroy {
     { valor: 'ATRASADOS', rotulo: 'Atrasados' },
     { valor: 'INATIVOS', rotulo: 'Inativos' },
   ];
+  readonly opcoesFiltroStatusLista: OpcaoFiltroStatusLista[] = [
+    { valor: 'TODAS', rotulo: 'Todas' },
+    { valor: 'COM_ENVIOS', rotulo: 'Com envios' },
+    { valor: 'SEM_ENVIOS', rotulo: 'Sem envios' },
+  ];
+  readonly opcoesFiltroTipoLista: OpcaoFiltroTipoLista[] = [
+    { valor: 'TODOS', rotulo: 'Todos tipos' },
+    { valor: 'AVISO', rotulo: 'Aviso' },
+    { valor: 'PROMOCAO', rotulo: 'Promoção' },
+    { valor: 'DATA_COMEMORATIVA', rotulo: 'Comemorativa' },
+  ];
   readonly rotuloSegmentoPublico = rotuloSegmentoPublico;
   readonly rotuloStatusPublico = rotuloStatusPublico;
   readonly trackByLinhaId = (_: number, linha: ClienteCampanhaLinha) => linha.id;
@@ -127,12 +158,27 @@ export class MarketPage implements OnInit, OnDestroy {
     private cobrancaLoteFila: CobrancaLoteFilaService,
     private toast: ToastService,
     private sync: DadosSyncService,
+    private pullRefresh: PullRefreshService,
     private modalCtrl: ModalController
   ) {}
 
   ngOnInit(): void {
     this.tabelaCompacta =
       lerSessionJson<boolean>(CHAVE_DENSIDADE_MARKET) !== false;
+
+    const filtrosSalvos = restaurarFiltrosMarket();
+    if (filtrosSalvos?.lista) {
+      this.buscaCampanhas = filtrosSalvos.lista.buscaCampanhas ?? '';
+      this.filtroStatusLista = filtrosSalvos.lista.filtroStatusLista ?? 'TODAS';
+      this.filtroTipoLista = filtrosSalvos.lista.filtroTipoLista ?? 'TODOS';
+    }
+    if (filtrosSalvos?.campanha) {
+      this.segmentoPublico = filtrosSalvos.campanha.segmentoPublico ?? 'ATIVOS';
+      this.filtroPlanoId = filtrosSalvos.campanha.filtroPlanoId ?? null;
+      this.incluirCortesia = filtrosSalvos.campanha.incluirCortesia ?? false;
+      this.filtroEnvio = filtrosSalvos.campanha.filtroEnvio ?? 'PENDENTES';
+      this.busca = filtrosSalvos.campanha.busca ?? '';
+    }
 
     vincularSincronizacaoPagina(
       this.sync,
@@ -142,6 +188,9 @@ export class MarketPage implements OnInit, OnDestroy {
         void this.carregar(true);
       }
     );
+    this.pullRefresh.registrar((concluir) => {
+      void this.carregar(true).finally(() => concluir());
+    });
     void this.carregar();
   }
 
@@ -152,8 +201,40 @@ export class MarketPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.pullRefresh.limpar();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  get qtdClientesComWhatsApp(): number {
+    return this.clientes.filter((c) =>
+      telefoneValidoParaWhatsApp(c.telefone)
+    ).length;
+  }
+
+  get percentualEnvioCampanha(): number {
+    const base = this.qtdPublicoComTelefone;
+    if (base <= 0) {
+      return this.totalEnviados > 0 ? 100 : 0;
+    }
+    return Math.min(100, Math.round((this.totalEnviados / base) * 100));
+  }
+
+  get campanhaConcluida(): boolean {
+    return (
+      this.qtdPublicoComTelefone > 0 &&
+      this.totalEnviados >= this.qtdPublicoComTelefone
+    );
+  }
+
+  get previewMensagemCampanha(): string {
+    const amostra =
+      this.linhasFiltradas.find((l) => l.telefoneValido)?.nome ??
+      this.clientesNoPublico.find((c) =>
+        telefoneValidoParaWhatsApp(c.telefone)
+      )?.nome ??
+      'Cliente';
+    return montarMensagemCampanha(this.formMensagem, amostra);
   }
 
   get totalEnviados(): number {
@@ -228,13 +309,32 @@ export class MarketPage implements OnInit, OnDestroy {
 
   get campanhasFiltradas(): Campanha[] {
     const termo = this.buscaCampanhas.trim().toLowerCase();
-    if (!termo) return this.campanhas;
-    return this.campanhas.filter(
-      (c) =>
-        c.titulo.toLowerCase().includes(termo) ||
-        c.mensagem.toLowerCase().includes(termo) ||
-        rotuloTipoCampanha(c.tipo).toLowerCase().includes(termo)
-    );
+
+    return this.campanhas.filter((campanha) => {
+      const enviados = campanha._count?.envios ?? 0;
+
+      if (this.filtroTipoLista !== 'TODOS' && campanha.tipo !== this.filtroTipoLista) {
+        return false;
+      }
+
+      if (this.filtroStatusLista === 'SEM_ENVIOS' && enviados > 0) {
+        return false;
+      }
+
+      if (this.filtroStatusLista === 'COM_ENVIOS' && enviados === 0) {
+        return false;
+      }
+
+      if (!termo) {
+        return true;
+      }
+
+      return (
+        campanha.titulo.toLowerCase().includes(termo) ||
+        campanha.mensagem.toLowerCase().includes(termo) ||
+        rotuloTipoCampanha(campanha.tipo).toLowerCase().includes(termo)
+      );
+    });
   }
 
   get tituloModoCampanha(): string {
@@ -296,9 +396,82 @@ export class MarketPage implements OnInit, OnDestroy {
     this.onPublicoChange();
   }
 
+  definirFiltroStatusLista(filtro: FiltroStatusListaCampanha): void {
+    this.filtroStatusLista = filtro;
+    this.persistirFiltrosLista();
+  }
+
+  definirFiltroTipoLista(filtro: FiltroTipoListaCampanha): void {
+    this.filtroTipoLista = filtro;
+    this.persistirFiltrosLista();
+  }
+
+  onBuscaCampanhasChange(): void {
+    this.persistirFiltrosLista();
+  }
+
+  classesChipStatusLista(filtro: FiltroStatusListaCampanha): string {
+    const variantes: Record<FiltroStatusListaCampanha, VarianteFilterChip> = {
+      TODAS: 'violet',
+      COM_ENVIOS: 'emerald',
+      SEM_ENVIOS: 'amber',
+    };
+    return classesFilterChip(this.filtroStatusLista === filtro, variantes[filtro]);
+  }
+
+  classesChipTipoLista(filtro: FiltroTipoListaCampanha): string {
+    const variantes: Record<FiltroTipoListaCampanha, VarianteFilterChip> = {
+      TODOS: 'violet',
+      AVISO: 'violet',
+      PROMOCAO: 'amber',
+      DATA_COMEMORATIVA: 'emerald',
+    };
+    return classesFilterChip(this.filtroTipoLista === filtro, variantes[filtro]);
+  }
+
+  contagemStatusLista(filtro: FiltroStatusListaCampanha): number {
+    return this.campanhas.filter((campanha) => {
+      const enviados = campanha._count?.envios ?? 0;
+      if (filtro === 'SEM_ENVIOS') return enviados === 0;
+      if (filtro === 'COM_ENVIOS') return enviados > 0;
+      return true;
+    }).length;
+  }
+
+  contagemTipoLista(filtro: FiltroTipoListaCampanha): number {
+    if (filtro === 'TODOS') return this.campanhas.length;
+    return this.campanhas.filter((campanha) => campanha.tipo === filtro).length;
+  }
+
+  classesChipContagemStatusLista(filtro: FiltroStatusListaCampanha): string {
+    const variantes: Record<FiltroStatusListaCampanha, VarianteFilterChip> = {
+      TODAS: 'violet',
+      COM_ENVIOS: 'emerald',
+      SEM_ENVIOS: 'amber',
+    };
+    return classesFilterChipContagem(
+      this.filtroStatusLista === filtro,
+      variantes[filtro]
+    );
+  }
+
+  classesChipContagemTipoLista(filtro: FiltroTipoListaCampanha): string {
+    const variantes: Record<FiltroTipoListaCampanha, VarianteFilterChip> = {
+      TODOS: 'violet',
+      AVISO: 'violet',
+      PROMOCAO: 'amber',
+      DATA_COMEMORATIVA: 'emerald',
+    };
+    return classesFilterChipContagem(
+      this.filtroTipoLista === filtro,
+      variantes[filtro]
+    );
+  }
+
   onPublicoChange(): void {
     this.podarSelecaoForaDoPublico();
     this.atualizarLinhasFiltradas();
+    this.persistirFiltrosCampanha();
   }
 
   classesChipFiltro(filtro: FiltroEnvioCampanha): string {
@@ -344,10 +517,27 @@ export class MarketPage implements OnInit, OnDestroy {
   definirFiltro(filtro: FiltroEnvioCampanha): void {
     this.filtroEnvio = filtro;
     this.atualizarLinhasFiltradas();
+    this.persistirFiltrosCampanha();
   }
 
   onBuscaChange(): void {
     this.atualizarLinhasFiltradas();
+    this.persistirFiltrosCampanha();
+  }
+
+  selecionarPendentes(): void {
+    this.filtroEnvio = 'PENDENTES';
+    this.atualizarLinhasFiltradas();
+    this.selecionadosIds = this.linhasFiltradas
+      .filter((linha) => this.podeSelecionar(linha))
+      .map((linha) => linha.id);
+    this.persistirFiltrosCampanha();
+  }
+
+  focarPendentes(): void {
+    this.filtroEnvio = 'PENDENTES';
+    this.atualizarLinhasFiltradas();
+    this.persistirFiltrosCampanha();
   }
 
   podeSelecionar(linha: ClienteCampanhaLinha): boolean {
@@ -494,14 +684,28 @@ export class MarketPage implements OnInit, OnDestroy {
 
   resumoEnviosCampanha(campanha: Campanha): string {
     const enviados = campanha._count?.envios ?? 0;
-    const total = this.clientes.length;
-    return `${enviados} de ${total} cliente(s)`;
+    if (enviados === 0) {
+      return 'Nenhum envio';
+    }
+    return enviados === 1 ? '1 envio registrado' : `${enviados} envios registrados`;
   }
 
   percentualEnviosCampanha(campanha: Campanha): number {
-    if (this.clientes.length === 0) return 0;
     const enviados = campanha._count?.envios ?? 0;
-    return Math.min(100, Math.round((enviados / this.clientes.length) * 100));
+    const base = Math.max(this.qtdClientesComWhatsApp, enviados, 1);
+    return Math.min(100, Math.round((enviados / base) * 100));
+  }
+
+  legendaProgressoCampanha(campanha: Campanha): string {
+    const enviados = campanha._count?.envios ?? 0;
+    if (enviados === 0) {
+      return 'Aguardando primeiro envio';
+    }
+    return `${this.percentualEnviosCampanha(campanha)}% da base WhatsApp`;
+  }
+
+  campanhaTemEnviosPendentes(campanha: Campanha): boolean {
+    return (campanha._count?.envios ?? 0) === 0;
   }
 
   classesTipoCampanha(tipo: TipoCampanha): string {
@@ -778,6 +982,24 @@ export class MarketPage implements OnInit, OnDestroy {
         linha.nome.toLowerCase().includes(termo) ||
         linha.telefone.replace(/\D/g, '').includes(termo.replace(/\D/g, ''))
       );
+    });
+  }
+
+  private persistirFiltrosCampanha(): void {
+    persistirFiltrosMarketCampanha({
+      segmentoPublico: this.segmentoPublico,
+      filtroPlanoId: this.filtroPlanoId,
+      incluirCortesia: this.incluirCortesia,
+      filtroEnvio: this.filtroEnvio,
+      busca: this.busca,
+    });
+  }
+
+  private persistirFiltrosLista(): void {
+    persistirFiltrosMarketLista({
+      buscaCampanhas: this.buscaCampanhas,
+      filtroStatusLista: this.filtroStatusLista,
+      filtroTipoLista: this.filtroTipoLista,
     });
   }
 }
