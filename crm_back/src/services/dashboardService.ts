@@ -256,6 +256,7 @@ export class DashboardService {
           planoId: true,
           valorMensal: true,
           cortesia: true,
+          somenteContato: true,
           expiraEm: true,
           servidor: true,
           usuario: true,

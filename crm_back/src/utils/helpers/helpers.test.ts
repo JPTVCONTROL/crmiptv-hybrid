@@ -8,6 +8,7 @@ import { parseCsvClientes } from './clienteImportHelpers.js';
 import {
   clienteCadastroIncompleto,
   contarCadastrosIncompletos,
+  resumirPendenciasCadastro,
 } from './clienteCadastroHelpers.js';
 import {
   addMonthsUtc,
@@ -183,6 +184,28 @@ describe('clienteCadastroIncompleto', () => {
     ]);
 
     assert.equal(total, 1);
+  });
+
+  it('ignora pendencias de plano para cliente somente contato', () => {
+    const resumo = resumirPendenciasCadastro([
+      {
+        ...clienteBase,
+        somenteContato: true,
+        planoId: null,
+        valorMensal: 0,
+        expiraEm: null,
+        aplicativoId: null,
+        servidor: null,
+        usuario: null,
+        senha: null,
+      },
+    ]);
+
+    assert.equal(resumo.semPlano, 0);
+    assert.equal(resumo.semValor, 0);
+    assert.equal(resumo.semExpiracao, 0);
+    assert.equal(resumo.semMac, 0);
+    assert.equal(resumo.semTelefone, 0);
   });
 });
 
