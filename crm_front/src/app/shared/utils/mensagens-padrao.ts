@@ -1,18 +1,18 @@
-export const MENSAGEM_BOAS_VINDAS_PADRAO = `Olá {nome}! Bem-vindo(a) à {empresa}! 🎉
+export const MENSAGEM_CONTA_ATIVADA_PADRAO = `✅ Sua conta foi ativada com sucesso!
 
-Seguem seus dados de acesso:
+Acabamos de confirmar o seu pagamento e o acesso completo já está liberado.
 
-Servidor: {servidor}
-Usuário: {usuario}
-Senha: {senha}
-App: {app}
+A partir de agora, você pode aproveitar todos os benefícios do nosso serviço sem limitações! 🎉
 
-Validade até: {expiraEm}
-Valor mensal: {valor}
+📅 Próxima cobrança: {expiraEm}
+💡 Dúvidas ou suporte: Estamos aqui para ajudar!
 
-Qualquer dúvida, estamos à disposição!
+Agradecemos pela confiança.
+Atenciosamente,
+{empresa}.`;
 
-— {empresa}`;
+/** Campo legado `mensagemBoasVindas` — hoje usado como mensagem de conta ativada. */
+export const MENSAGEM_BOAS_VINDAS_PADRAO = MENSAGEM_CONTA_ATIVADA_PADRAO;
 
 export const MENSAGEM_APP_PADRAO = `Olá {nome}! Seguem as orientações para o {app}:
 

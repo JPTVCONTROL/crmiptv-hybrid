@@ -78,6 +78,7 @@ function mapaVariaveisBoasVindas(
     '{senha}': cliente.senha?.trim() || '—',
     '{app}': cliente.aplicativo?.nome?.trim() || '—',
     '{expiraEm}': formatarDataMsg(cliente.expiraEm),
+    '{proximaRenovacao}': formatarDataMsg(cliente.expiraEm),
     '{valor}': formatarValorMsg(cliente.valorMensal ?? 0),
     '{pix}': pix,
     '{tipoPix}': tipoPix,
@@ -193,8 +194,8 @@ export async function oferecerMensagemBoasVindas(
 
   if (
     await confirmarUsuario(
-      `Enviar mensagem de boas-vindas para ${cliente.nome}?`,
-      'Cliente cadastrado',
+      `Enviar mensagem de conta ativada para ${cliente.nome}?`,
+      'Conta ativada',
       'Enviar'
     )
   ) {

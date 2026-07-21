@@ -410,7 +410,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     );
   }
 
-  mensagemBoasVindas(): string {
+  mensagemContaAtivada(): string {
     if (!this.cliente) return '';
     return montarMensagemBoasVindas(this.cliente, this.configuracao);
   }

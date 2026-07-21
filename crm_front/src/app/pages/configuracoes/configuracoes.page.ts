@@ -119,7 +119,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       id: 'manual',
       rotulo: 'Manual (WhatsApp Web)',
       descricao:
-        'Textos abertos ao clicar em Cobrar, Boas-vindas, Renovar, Bloqueio etc. Abre o WhatsApp no navegador com a mensagem pronta.',
+        'Textos abertos ao clicar em Cobrar, Conta ativada, Renovar, Bloqueio etc. Abre o WhatsApp no navegador com a mensagem pronta.',
     },
     {
       id: 'automatico',
@@ -144,14 +144,15 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     return this.abas.find((aba) => aba.id === this.abaAtiva)?.subtitulo ?? 'Configurações do CRM.';
   }
 
-  readonly variaveisBoasVindas = [
+  readonly variaveisContaAtivada = [
     '{nome}',
     '{empresa}',
+    '{expiraEm}',
+    '{proximaRenovacao}',
     '{servidor}',
     '{usuario}',
     '{senha}',
     '{app}',
-    '{expiraEm}',
     '{valor}',
     '{pix}',
     '{tipoPix}',
