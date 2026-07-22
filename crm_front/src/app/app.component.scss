@@ -146,7 +146,38 @@ ion-menu.crm-menu ion-content.menu-content::part(scroll) {
 }
 
 .login-shell {
-  min-height: calc(100vh - 2rem);
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-shell > app-login {
+  flex: 1;
+  min-height: 0;
+  display: block;
+  overflow: hidden;
+}
+
+#main-content.ion-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+ion-content.crm-main-content--login {
+  --overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+ion-content.crm-main-content--login::part(scroll) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
 }
 
 ion-buttons[slot='end'] {

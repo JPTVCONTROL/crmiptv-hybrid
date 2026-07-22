@@ -15,10 +15,14 @@ import {
   persistirCredenciaisLogin,
   salvarPreferenciasLogin,
 } from '../../shared/utils/login-persist.util';
+import { DESTAQUES_LOGIN } from '../../shared/utils/login-destaques.util';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
+  host: {
+    class: 'block h-full min-h-0 overflow-hidden',
+  },
 })
 export class LoginPage implements OnInit, OnDestroy {
   erro = '';
@@ -30,6 +34,20 @@ export class LoginPage implements OnInit, OnDestroy {
   versaoAppLabel = '';
   salvarDados = true;
   manterConectado = true;
+
+  readonly destaques = DESTAQUES_LOGIN;
+
+  /** Arco inferior: cards abaixo do login; coroa permanece no topo. */
+  anguloOrbita(index: number): string {
+    const total = this.destaques.length;
+    const inicio = 4;
+    const fim = 176;
+    if (total <= 1) {
+      return `${(inicio + fim) / 2}deg`;
+    }
+    const passo = (fim - inicio) / (total - 1);
+    return `${inicio + index * passo}deg`;
+  }
 
   private readonly destroy$ = new Subject<void>();
   private ultimaVerificacao?: ResultadoVerificacaoApp;

@@ -1,114 +1,139 @@
-<div class="crm-auth-shell crm-auth-shell--split">
-  <aside class="crm-auth-brand hidden lg:flex" aria-hidden="false">
-    <img
-      src="assets/logo-crm-jptv.png"
-      alt="CRM JPTV"
-      class="crm-auth-brand-logo"
-    />
-    <div>
-      <h2 class="crm-auth-brand-title">CRM JPTV</h2>
-    </div>
-  </aside>
+<div class="crm-auth-page">
+  <div class="crm-auth-ambient" aria-hidden="true">
+    <span class="crm-auth-glow crm-auth-glow--violet"></span>
+    <span class="crm-auth-glow crm-auth-glow--cyan"></span>
+    <span class="crm-auth-glow crm-auth-glow--rose"></span>
+  </div>
 
-  <div class="crm-auth-form-wrap">
-    <div class="text-center space-y-3 lg:text-left">
-      <img
-        src="assets/logo-crm-jptv.png"
-        alt="CRM JPTV"
-        class="h-14 w-auto mx-auto lg:mx-0 drop-shadow-lg lg:hidden"
-      />
-      <div>
-        <h1 class="crm-page-title">Entrar</h1>
-      </div>
-    </div>
+  <div class="crm-auth-body">
+    <div class="crm-auth-orbit-scene hidden lg:flex">
+      <div class="crm-auth-orbit" aria-label="Recursos do CRM JPTV">
+        <div class="crm-auth-orbit-arc">
+          <div class="crm-auth-orbit-ring crm-auth-orbit-ring--arc" aria-hidden="true"></div>
+          <div class="crm-auth-orbit-ring crm-auth-orbit-ring--inner crm-auth-orbit-ring--arc" aria-hidden="true"></div>
 
-    <form class="crm-auth-card" [formGroup]="form" (ngSubmit)="entrar()">
-      <div>
-        <label class="block text-slate-400 text-sm mb-1.5 font-medium" for="email">E-mail</label>
-        <input
-          id="email"
-          type="email"
-          class="crm-input"
-          formControlName="email"
-          autocomplete="username"
-          placeholder="admin@jptv.com.br"
-        />
-      </div>
-
-      <div>
-        <label class="block text-slate-400 text-sm mb-1.5 font-medium" for="senha">Senha</label>
-        <div class="relative">
-          <input
-            id="senha"
-            [type]="mostrarSenha ? 'text' : 'password'"
-            class="crm-input pr-24"
-            formControlName="senha"
-            autocomplete="current-password"
-            placeholder="••••••••"
-          />
-          <button
-            type="button"
-            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs px-2 py-1 rounded-lg hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
-            (click)="alternarSenha()"
+          <article
+            *ngFor="let item of destaques; let i = index"
+            class="crm-auth-feature crm-auth-feature--orbit"
+            [attr.data-tone]="item.tom"
+            [style.--auth-angle]="anguloOrbita(i)"
+            [style.--auth-delay]="i * 0.35 + 's'"
           >
-            {{ mostrarSenha ? 'Ocultar' : 'Mostrar' }}
-          </button>
+            <div class="crm-auth-feature-icon" aria-hidden="true">
+              <ion-icon [name]="item.icon"></ion-icon>
+            </div>
+            <div class="crm-auth-feature-body">
+              <h3 class="crm-auth-feature-title">{{ item.titulo }}</h3>
+              <p class="crm-auth-feature-text">{{ item.descricao }}</p>
+            </div>
+          </article>
         </div>
       </div>
+    </div>
 
-      <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
-          <input
-            type="checkbox"
-            class="crm-checkbox"
-            [(ngModel)]="salvarDados"
-            [ngModelOptions]="{ standalone: true }"
-          />
-          Salvar dados
-        </label>
-        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
-          <input
-            type="checkbox"
-            class="crm-checkbox"
-            [(ngModel)]="manterConectado"
-            [ngModelOptions]="{ standalone: true }"
-          />
-          Manter conectado
-        </label>
+    <div class="crm-auth-crown-scene hidden lg:flex" aria-hidden="true">
+      <div class="crm-auth-orbit">
+        <header class="crm-auth-orbit-logo crm-auth-orbit-logo--crown">
+          <img src="assets/logo-crm-jptv.png" alt="" class="crm-auth-orbit-logo-img" />
+          <p class="crm-auth-orbit-logo-tagline">Gestão IPTV completa</p>
+        </header>
       </div>
+    </div>
 
-      <p *ngIf="erro" class="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{{ erro }}</p>
+    <main class="crm-auth-stage">
+      <header class="crm-auth-hero lg:hidden">
+        <img src="assets/logo-crm-jptv.png" alt="CRM JPTV" class="crm-auth-hero-logo" />
+        <p class="crm-auth-hero-tagline">Gestão IPTV completa</p>
+      </header>
 
-      <button
-        type="submit"
-        class="crm-btn-primary w-full !py-3"
-        [disabled]="carregando"
-      >
-        {{ carregando ? 'Entrando...' : 'Entrar' }}
-      </button>
+      <form class="crm-auth-card" [formGroup]="form" (ngSubmit)="entrar()">
+        <div class="crm-auth-card-head">
+          <h1 class="crm-auth-card-title">Entrar</h1>
+          <p class="crm-auth-card-subtitle">Use seu e-mail e senha de acesso</p>
+        </div>
 
-      <div
-        *ngIf="mostrarAtualizacaoApp"
-        class="pt-3 mt-1 border-t border-slate-800 space-y-2"
-      >
-        <p *ngIf="statusApp" class="text-slate-400 text-xs leading-relaxed m-0">
-          {{ statusApp }}
-        </p>
+        <div>
+          <label class="crm-auth-label" for="email">E-mail</label>
+          <input
+            id="email"
+            type="email"
+            class="crm-input"
+            formControlName="email"
+            autocomplete="username"
+            placeholder="admin@jptv.com.br"
+          />
+        </div>
+
+        <div>
+          <label class="crm-auth-label" for="senha">Senha</label>
+          <div class="relative">
+            <input
+              id="senha"
+              [type]="mostrarSenha ? 'text' : 'password'"
+              class="crm-input pr-24"
+              formControlName="senha"
+              autocomplete="current-password"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              class="crm-auth-toggle-senha"
+              (click)="alternarSenha()"
+            >
+              {{ mostrarSenha ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="crm-auth-opcoes">
+          <label class="crm-auth-check">
+            <input
+              type="checkbox"
+              class="crm-checkbox"
+              [(ngModel)]="salvarDados"
+              [ngModelOptions]="{ standalone: true }"
+            />
+            Salvar dados
+          </label>
+          <label class="crm-auth-check">
+            <input
+              type="checkbox"
+              class="crm-checkbox"
+              [(ngModel)]="manterConectado"
+              [ngModelOptions]="{ standalone: true }"
+            />
+            Manter conectado
+          </label>
+        </div>
+
+        <p *ngIf="erro" class="crm-auth-erro">{{ erro }}</p>
+
         <button
-          type="button"
-          class="crm-btn-ghost w-full !py-2.5 text-sm"
-          [disabled]="atualizandoApp"
-          (click)="atualizarApp()"
+          type="submit"
+          class="crm-btn-primary w-full !py-3"
+          [disabled]="carregando"
         >
-          {{
-            atualizandoApp
-              ? 'Atualizando...'
-              : novaVersaoApp
-                ? 'Atualizar app (nova versao)'
-                : 'Atualizar app'
-          }}
+          {{ carregando ? 'Entrando...' : 'Entrar' }}
         </button>
-      </div>
-    </form>
+
+        <div *ngIf="mostrarAtualizacaoApp" class="crm-auth-app-update">
+          <p *ngIf="statusApp" class="crm-auth-app-update-text">{{ statusApp }}</p>
+          <button
+            type="button"
+            class="crm-btn-ghost w-full !py-2.5 text-sm"
+            [disabled]="atualizandoApp"
+            (click)="atualizarApp()"
+          >
+            {{
+              atualizandoApp
+                ? 'Atualizando...'
+                : novaVersaoApp
+                  ? 'Atualizar app (nova versao)'
+                  : 'Atualizar app'
+            }}
+          </button>
+        </div>
+      </form>
+    </main>
   </div>
 </div>

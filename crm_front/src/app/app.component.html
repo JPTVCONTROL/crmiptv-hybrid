@@ -91,7 +91,11 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-content class="crm-main-content">
+      <ion-content
+        class="crm-main-content"
+        [class.crm-main-content--login]="isLoginRoute"
+        [scrollY]="!isLoginRoute"
+      >
         <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
           <ion-refresher-content
             pullingIcon="chevron-down-circle-outline"

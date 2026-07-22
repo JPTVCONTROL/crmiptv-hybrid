@@ -749,7 +749,8 @@
   }
 
   .crm-api-offline-banner--login {
-    @apply mx-4 mt-4 max-w-md;
+    @apply absolute z-20 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md mx-0;
+    top: max(0.75rem, env(safe-area-inset-top, 0px));
   }
 
   .crm-filter-chip {
@@ -1474,55 +1475,607 @@
     @apply text-slate-500 text-sm max-w-sm m-0 leading-relaxed;
   }
 
-  .crm-auth-shell {
-    @apply relative min-h-[calc(100vh-2rem)] flex items-center justify-center py-8 px-4;
-  }
-
-  .crm-auth-shell--split {
-    @apply lg:grid lg:grid-cols-2 lg:gap-12 lg:max-w-6xl lg:mx-auto lg:items-center lg:min-h-[calc(100vh-3rem)] lg:px-8;
-  }
-
-  .crm-auth-brand {
-    @apply flex-col justify-center gap-6 p-8 rounded-3xl relative overflow-hidden;
-    background: linear-gradient(
-      145deg,
-      rgba(139, 92, 246, 0.22) 0%,
-      rgba(15, 23, 42, 0.88) 42%,
-      rgba(3, 7, 18, 0.98) 100%
+  .crm-auth-page {
+    @apply relative flex flex-col h-full min-h-0 overflow-hidden;
+    background: var(--crm-bg);
+    --auth-orbit-card: clamp(6.5rem, 7vmin, 7.75rem);
+    --auth-orbit-logo-width: clamp(7.75rem, 8.2vmin, 9.5rem);
+    --auth-orbit-logo-gap: 0.5rem;
+    --auth-orbit-logo-lift: 0.375rem;
+    --auth-login-card-half-h: 10.25rem;
+    --auth-orbit-crown-half-h: calc(var(--auth-orbit-logo-width) * 0.5);
+    --auth-orbit-shift-y: 1.25rem;
+    --auth-login-half-w: 7.75rem;
+    --auth-login-half-h: 8rem;
+    --auth-orbit-gap: 3.25rem;
+    --auth-orbit-min-radius: max(
+      calc(var(--auth-login-half-w) + var(--auth-orbit-card) / 2 + var(--auth-orbit-gap)),
+      calc(var(--auth-login-half-h) + var(--auth-orbit-card) / 2 + var(--auth-orbit-gap))
     );
-    border: 1px solid var(--crm-primary-border);
-    box-shadow: var(--crm-shadow-lg), var(--crm-shadow-glow);
-    min-height: 28rem;
-    backdrop-filter: blur(var(--crm-blur));
+    --auth-orbit-radius: min(
+      max(22.5rem, var(--auth-orbit-min-radius)),
+      calc(50vh - var(--auth-orbit-logo-width) * 0.35),
+      calc(50vw - var(--auth-orbit-card) - 0.75rem)
+    );
+    --auth-orbit-logo-radius: calc(
+      var(--auth-login-card-half-h) + var(--auth-orbit-crown-half-h) + var(--auth-orbit-logo-gap) + var(--auth-orbit-logo-lift)
+    );
   }
 
-  .crm-auth-brand-logo {
-    @apply w-full max-w-[12rem] h-auto;
-    filter: drop-shadow(0 12px 28px rgba(124, 58, 237, 0.35));
+  .crm-auth-body {
+    @apply relative flex flex-1 flex-col items-center justify-center min-h-0 w-full;
   }
 
-  .crm-auth-brand-title {
+  @media (min-width: 1024px) {
+    .crm-auth-body {
+      @apply block;
+    }
+  }
+
+  .crm-auth-orbit-scene {
+    @apply absolute inset-0 z-[1] flex items-center justify-center pointer-events-none overflow-visible;
+  }
+
+  .crm-auth-crown-scene {
+    @apply absolute inset-0 z-[3] flex items-center justify-center pointer-events-none overflow-visible;
+  }
+
+  .crm-auth-orbit {
+    @apply relative z-[1] pointer-events-none overflow-visible;
+    width: calc(var(--auth-orbit-radius) * 2 + var(--auth-orbit-card) + 2rem);
+    height: calc(var(--auth-orbit-radius) * 2 + var(--auth-orbit-card) + 2rem);
+  }
+
+  @media (min-width: 1024px) {
+    .crm-auth-orbit-arc {
+      transform: translateY(var(--auth-orbit-shift-y));
+    }
+  }
+
+  .crm-auth-orbit-arc {
+    @apply absolute inset-0 pointer-events-none overflow-visible;
+  }
+
+  .crm-auth-orbit-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--auth-orbit-radius) * 2 + var(--auth-orbit-card));
+    height: calc(var(--auth-orbit-radius) * 2 + var(--auth-orbit-card));
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    box-shadow:
+      0 0 48px rgba(139, 92, 246, 0.1),
+      inset 0 0 32px rgba(139, 92, 246, 0.05);
+  }
+
+  .crm-auth-orbit-ring--inner {
+    width: calc(var(--auth-orbit-radius) * 2 - var(--auth-orbit-card) * 0.35);
+    height: calc(var(--auth-orbit-radius) * 2 - var(--auth-orbit-card) * 0.35);
+    border: 1px dashed rgba(139, 92, 246, 0.1);
+    box-shadow: none;
+  }
+
+  .crm-auth-orbit-ring--arc {
+    clip-path: inset(36% 0 0 0);
+  }
+
+  .crm-auth-orbit-logo--crown {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.375rem;
+    width: var(--auth-orbit-logo-width);
+    padding: 0.875rem 1rem 0.75rem;
+    border-radius: 1.375rem;
+    background: linear-gradient(
+      165deg,
+      rgba(167, 139, 250, 0.28) 0%,
+      rgba(30, 27, 75, 0.82) 38%,
+      rgba(8, 12, 24, 0.94) 100%
+    );
+    box-shadow:
+      0 0 0 1px rgba(196, 181, 253, 0.5),
+      0 22px 56px rgba(124, 58, 237, 0.42),
+      0 0 72px rgba(139, 92, 246, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    transform:
+      rotate(-90deg)
+      translateX(var(--auth-orbit-logo-radius))
+      rotate(90deg)
+      translate(-50%, -50%);
+    animation: crm-auth-crown-glow 5s ease-in-out infinite;
+  }
+
+  .crm-auth-orbit-logo--crown::before {
+    content: '';
+    position: absolute;
+    inset: -0.625rem;
+    border-radius: 1.625rem;
+    background: linear-gradient(
+      135deg,
+      rgba(167, 139, 250, 0.55),
+      rgba(236, 72, 153, 0.15),
+      rgba(139, 92, 246, 0.45)
+    );
+    z-index: -1;
+    opacity: 0.55;
+    filter: blur(10px);
+  }
+
+  .crm-auth-orbit-logo--crown::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(233, 213, 255, 0.95), transparent);
+  }
+
+  @keyframes crm-auth-crown-glow {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(196, 181, 253, 0.5),
+        0 22px 56px rgba(124, 58, 237, 0.42),
+        0 0 72px rgba(139, 92, 246, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(221, 214, 254, 0.65),
+        0 26px 64px rgba(124, 58, 237, 0.52),
+        0 0 88px rgba(139, 92, 246, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+  }
+
+  .crm-auth-orbit-logo-img {
+    width: 100%;
+    max-width: 7.75rem;
+    height: auto;
+    filter: drop-shadow(0 12px 32px rgba(124, 58, 237, 0.6));
+  }
+
+  .crm-auth-orbit-logo-tagline {
+    @apply text-violet-100/90 text-xs font-medium m-0 tracking-wide;
+  }
+
+  .crm-auth-feature--orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--auth-orbit-card);
+    z-index: 2;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.375rem;
+    padding: 0.625rem 0.5rem;
+    opacity: 0.94;
+    animation: crm-auth-orbit-float 8s ease-in-out infinite;
+    animation-delay: var(--auth-delay, 0s);
+    transform:
+      rotate(var(--auth-angle))
+      translateX(var(--auth-orbit-radius))
+      rotate(calc(-1 * var(--auth-angle)))
+      translate(-50%, -50%);
+  }
+
+  @keyframes crm-auth-orbit-float {
+    0%,
+    100% {
+      transform:
+        rotate(var(--auth-angle))
+        translateX(var(--auth-orbit-radius))
+        rotate(calc(-1 * var(--auth-angle)))
+        translate(-50%, -50%)
+        translateY(0);
+    }
+
+    50% {
+      transform:
+        rotate(var(--auth-angle))
+        translateX(var(--auth-orbit-radius))
+        rotate(calc(-1 * var(--auth-angle)))
+        translate(-50%, -50%)
+        translateY(-4px);
+    }
+  }
+
+  .crm-auth-ambient {
+    @apply absolute inset-0 overflow-hidden pointer-events-none;
+  }
+
+  .crm-auth-glow {
+    @apply absolute rounded-full blur-3xl opacity-60;
+    animation: crm-auth-glow-drift 18s ease-in-out infinite;
+  }
+
+  .crm-auth-glow--violet {
+    width: 42rem;
+    height: 42rem;
+    top: -12rem;
+    left: -8rem;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.35), transparent 68%);
+  }
+
+  .crm-auth-glow--cyan {
+    width: 36rem;
+    height: 36rem;
+    right: -10rem;
+    bottom: -14rem;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.18), transparent 68%);
+    animation-delay: -6s;
+  }
+
+  .crm-auth-glow--rose {
+    width: 28rem;
+    height: 28rem;
+    top: 38%;
+    left: 58%;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.12), transparent 70%);
+    animation-delay: -12s;
+  }
+
+  @keyframes crm-auth-glow-drift {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    50% {
+      transform: translate3d(1.5rem, -1rem, 0) scale(1.06);
+    }
+  }
+
+  .crm-auth-stage {
+    @apply relative z-[2] flex flex-col items-center justify-center shrink-0 gap-4 sm:gap-5 pointer-events-none;
+    padding:
+      max(1rem, env(safe-area-inset-top, 0px))
+      1.25rem
+      max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .crm-auth-body {
+      @apply flex items-center justify-center;
+    }
+
+    .crm-auth-stage {
+      position: absolute;
+      inset: 0;
+      padding: 0;
+    }
+
+    .crm-auth-card {
+      @apply relative max-w-[15.5rem] space-y-2 p-3 pointer-events-auto;
+    }
+
+    .crm-auth-card-head {
+      @apply pb-0;
+    }
+
+    .crm-auth-card-title {
+      @apply text-lg;
+    }
+
+    .crm-auth-card-subtitle {
+      @apply text-[0.6875rem] mt-0.5;
+    }
+
+    .crm-auth-label {
+      @apply mb-1 text-xs;
+    }
+
+    .crm-auth-card .crm-input {
+      @apply py-2 text-sm;
+    }
+
+    .crm-auth-opcoes {
+      @apply gap-x-3 gap-y-1;
+    }
+
+    .crm-auth-check {
+      @apply text-xs;
+    }
+
+    .crm-auth-card .crm-btn-primary {
+      @apply !py-2.5 text-sm;
+    }
+  }
+
+  .crm-auth-hero {
+    @apply flex flex-col items-center text-center shrink-0;
+  }
+
+  .crm-auth-hero-logo {
+    @apply h-12 sm:h-14 w-auto;
+    filter: drop-shadow(0 12px 32px rgba(124, 58, 237, 0.42));
+  }
+
+  .crm-auth-hero-tagline {
+    @apply text-slate-400 text-sm m-0 mt-2;
+  }
+
+  .crm-auth-feature {
+    @apply flex rounded-2xl border border-white/5 min-h-0;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(10px);
+    box-shadow:
+      0 10px 28px rgba(2, 6, 23, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .crm-auth-feature:not(.crm-auth-feature--orbit) {
+    @apply items-start gap-2.5 p-3;
+    animation: crm-auth-feature-float 7s ease-in-out infinite;
+    animation-delay: var(--auth-delay, 0s);
+  }
+
+  @keyframes crm-auth-feature-float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+
+    50% {
+      transform: translate3d(0, -5px, 0);
+    }
+  }
+
+  .crm-auth-feature-icon {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-xl text-white shrink-0;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  }
+
+  .crm-auth-feature-icon ion-icon {
+    @apply text-[1.15rem];
+  }
+
+  .crm-auth-feature--orbit .crm-auth-feature-icon {
+    @apply w-8 h-8;
+  }
+
+  .crm-auth-feature--orbit .crm-auth-feature-title {
+    @apply text-xs;
+  }
+
+  .crm-auth-feature--orbit .crm-auth-feature-text {
+    @apply text-[0.65rem] line-clamp-3;
+  }
+
+  .crm-auth-feature-body {
+    @apply min-w-0 flex-1;
+  }
+
+  .crm-auth-feature-title {
+    @apply text-white text-sm font-semibold m-0 mb-0.5 leading-snug;
+  }
+
+  .crm-auth-feature-text {
+    @apply text-slate-400 text-xs m-0 leading-snug line-clamp-2;
+  }
+
+  .crm-auth-feature[data-tone='violet'] {
+    background: linear-gradient(145deg, rgba(124, 58, 237, 0.22), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='violet'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #6366f1, #4338ca);
+  }
+
+  .crm-auth-feature[data-tone='rose'] {
+    background: linear-gradient(145deg, rgba(236, 72, 153, 0.18), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='rose'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #ec4899, #9333ea);
+  }
+
+  .crm-auth-feature[data-tone='emerald'] {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.18), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='emerald'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #22c55e, #059669);
+  }
+
+  .crm-auth-feature[data-tone='amber'] {
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.18), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='amber'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #f97316, #dc2626);
+  }
+
+  .crm-auth-feature[data-tone='cyan'] {
+    background: linear-gradient(145deg, rgba(6, 182, 212, 0.18), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='cyan'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+  }
+
+  .crm-auth-feature[data-tone='blue'] {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.18), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='blue'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+
+  .crm-auth-feature[data-tone='yellow'] {
+    background: linear-gradient(145deg, rgba(234, 179, 8, 0.16), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='yellow'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #eab308, #d97706);
+  }
+
+  .crm-auth-feature[data-tone='red'] {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.18), rgba(15, 23, 42, 0.55));
+  }
+
+  .crm-auth-feature[data-tone='red'] .crm-auth-feature-icon {
+    background: linear-gradient(135deg, #ef4444, #db2777);
+  }
+
+  .crm-auth-card {
+    @apply relative w-full max-w-[22rem] space-y-3.5 p-5 sm:p-6 rounded-2xl;
+    background: rgba(8, 12, 24, 0.78);
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    backdrop-filter: blur(22px);
+    box-shadow:
+      0 28px 80px rgba(2, 6, 23, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 0 48px rgba(139, 92, 246, 0.12);
+  }
+
+  .crm-auth-card-head {
+    @apply text-center pb-1;
+  }
+
+  .crm-auth-card-title {
     @apply text-white text-2xl font-bold m-0 tracking-tight;
   }
 
-  .crm-auth-brand-text {
-    @apply text-slate-400 text-sm m-0 leading-relaxed max-w-md;
+  .crm-auth-card-subtitle {
+    @apply text-slate-400 text-sm mt-1 mb-0;
   }
 
-  .crm-auth-brand-list {
-    @apply list-none m-0 p-0 flex flex-col gap-3;
+  .crm-auth-label {
+    @apply block text-sm font-medium text-slate-300 mb-1.5;
   }
 
-  .crm-auth-brand-list li {
-    @apply flex items-center gap-2.5 text-slate-300 text-sm;
+  .crm-auth-toggle-senha {
+    @apply absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors bg-transparent border-0 cursor-pointer px-1;
   }
 
-  .crm-auth-brand-list ion-icon {
-    @apply text-violet-400 text-lg shrink-0;
+  .crm-auth-opcoes {
+    @apply flex flex-wrap items-center justify-center gap-x-4 gap-y-2;
   }
 
-  .crm-auth-form-wrap {
-    @apply w-full max-w-md mx-auto space-y-6 relative z-[1];
+  .crm-auth-check {
+    @apply inline-flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none;
+  }
+
+  .crm-auth-erro {
+    @apply text-red-400 text-sm m-0 leading-snug text-center;
+  }
+
+  .crm-auth-app-update {
+    @apply pt-3 border-t border-slate-800/80 space-y-2;
+  }
+
+  .crm-auth-app-update-text {
+    @apply text-xs text-slate-500 m-0 leading-relaxed text-center;
+  }
+
+  @media (max-height: 820px) and (min-width: 1024px) {
+    .crm-auth-page {
+      --auth-orbit-card: clamp(6rem, 6.5vmin, 7rem);
+      --auth-orbit-logo-width: clamp(7rem, 7.5vmin, 8.5rem);
+      --auth-login-card-half-h: 9.625rem;
+      --auth-orbit-logo-gap: 0.4rem;
+      --auth-orbit-logo-lift: 0.25rem;
+      --auth-orbit-shift-y: 1rem;
+      --auth-login-half-h: 7.25rem;
+      --auth-orbit-gap: 2.75rem;
+    }
+
+    .crm-auth-orbit-logo-img {
+      max-width: 6.75rem;
+    }
+  }
+
+  @media (max-height: 760px) {
+    .crm-auth-page {
+      --auth-orbit-card: clamp(5.75rem, 6vmin, 6.75rem);
+      --auth-orbit-logo-width: clamp(6.75rem, 7vmin, 8rem);
+      --auth-login-card-half-h: 9rem;
+      --auth-orbit-logo-gap: 0.35rem;
+      --auth-orbit-logo-lift: 0.25rem;
+      --auth-orbit-shift-y: 0.75rem;
+      --auth-login-half-h: 6.75rem;
+      --auth-orbit-gap: 2.25rem;
+    }
+
+    .crm-auth-feature--orbit {
+      @apply p-2 gap-1.5;
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-icon {
+      @apply w-7 h-7;
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-title {
+      @apply text-[0.6875rem];
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-text {
+      @apply text-[0.6rem];
+    }
+
+    .crm-auth-orbit-logo--crown {
+      padding: 0.625rem 0.75rem 0.5rem;
+    }
+
+    .crm-auth-orbit-logo-img {
+      max-width: 6.25rem;
+    }
+
+    .crm-auth-orbit-logo-tagline {
+      @apply text-[0.625rem];
+    }
+
+    .crm-auth-hero-logo {
+      @apply h-10;
+    }
+
+    .crm-auth-stage {
+      @apply gap-3;
+    }
+
+    .crm-auth-card {
+      @apply space-y-3 p-4;
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .crm-auth-page {
+      --auth-orbit-card: clamp(6.5rem, 7vmin, 7.75rem);
+      --auth-orbit-logo-width: clamp(7.75rem, 8.2vmin, 9.25rem);
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .crm-auth-page {
+      --auth-orbit-card: clamp(7.25rem, 7.8vmin, 8.75rem);
+      --auth-orbit-logo-width: clamp(8.75rem, 9.2vmin, 10.5rem);
+    }
+
+    .crm-auth-orbit-logo-img {
+      max-width: 8.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crm-auth-glow,
+    .crm-auth-feature,
+    .crm-auth-feature--orbit,
+    .crm-auth-orbit-logo--crown {
+      animation: none;
+    }
   }
 
   .crm-cliente-hero {
@@ -1566,23 +2119,6 @@
     border-color: var(--crm-primary-border);
     background: var(--crm-primary-soft);
     color: var(--crm-primary-text);
-  }
-
-  .crm-auth-shell::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, var(--crm-primary-glow), transparent 55%),
-      radial-gradient(ellipse 50% 40% at 100% 100%, rgba(34, 197, 94, 0.06), transparent 50%);
-  }
-
-  .crm-auth-card {
-    @apply crm-card relative w-full max-w-md space-y-4;
-    box-shadow:
-      var(--crm-shadow-lg),
-      0 0 0 1px var(--crm-primary-border);
   }
 
   .app-content-shell {
