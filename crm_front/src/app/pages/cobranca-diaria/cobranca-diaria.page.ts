@@ -16,13 +16,17 @@ import {
 import {
   resolverDiasAntecedencia,
   ItemCobrancaDiaria,
+  EtapaCobrancaDiaria,
   montarItensCobrancaDiaria,
+  agruparItensPorEtapaFunil,
+  resumoEtapasFunilHoje,
   rotuloDiasCobrancaDiaria,
   rotuloTipoCobrancaDiaria,
   TipoCobrancaDiaria,
   trackByItemCobrancaDiaria,
   rotuloPontoDisparo,
 } from '../../shared/utils/cobranca-diaria';
+import { PontoDisparoAutomacao } from '../../shared/utils/automacao-disparo';
 import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
@@ -65,7 +69,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   horariosAutomacao = '08:00–09:00';
   renovandoMensalidadeId: number | null = null;
   readonly limitePorSecao = 30;
-  private secoesExpandidas = new Set<TipoCobrancaDiaria>();
+  private secoesExpandidas = new Set<PontoDisparoAutomacao>();
 
   constructor(
     private route: ActivatedRoute,
@@ -143,8 +147,25 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     ).length;
   }
 
+  get resumoEtapasHoje(): string {
+    return resumoEtapasFunilHoje(this.itens);
+  }
+
+  get itensBaseLista(): ItemCobrancaDiaria[] {
+    return this.itens.filter((item) => {
+      if (this.filtroGrupo !== 'TODOS' && item.tipo !== this.filtroGrupo) {
+        return false;
+      }
+      return this.itemPassaFiltroPendentes(item);
+    });
+  }
+
+  get etapasAtivas(): EtapaCobrancaDiaria[] {
+    return agruparItensPorEtapaFunil(this.itensBaseLista);
+  }
+
   get itensFiltrados(): ItemCobrancaDiaria[] {
-    return this.itens.filter((item) => this.itemPassaFiltroPendentes(item));
+    return this.itensBaseLista;
   }
 
   get listaFiltradaVazia(): boolean {
@@ -345,26 +366,56 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     });
   }
 
-  itensVisiveisPorTipo(tipo: TipoCobrancaDiaria): ItemCobrancaDiaria[] {
-    if (this.filtroGrupo !== 'TODOS' && this.filtroGrupo !== tipo) {
-      return [];
+  itensVisiveisPorEtapa(etapa: EtapaCobrancaDiaria): ItemCobrancaDiaria[] {
+    if (this.secoesExpandidas.has(etapa.ponto)) {
+      return etapa.itens;
     }
-    const lista = this.itensPorTipo(tipo);
-    if (this.secoesExpandidas.has(tipo)) {
-      return lista;
-    }
-    return lista.slice(0, this.limitePorSecao);
+    return etapa.itens.slice(0, this.limitePorSecao);
   }
 
-  temMaisItens(tipo: TipoCobrancaDiaria): boolean {
+  temMaisItensEtapa(etapa: EtapaCobrancaDiaria): boolean {
     return (
-      !this.secoesExpandidas.has(tipo) &&
-      this.itensPorTipo(tipo).length > this.limitePorSecao
+      !this.secoesExpandidas.has(etapa.ponto) &&
+      etapa.itens.length > this.limitePorSecao
     );
   }
 
-  expandirSecao(tipo: TipoCobrancaDiaria): void {
-    this.secoesExpandidas.add(tipo);
+  expandirSecaoEtapa(ponto: PontoDisparoAutomacao): void {
+    this.secoesExpandidas.add(ponto);
+  }
+
+  trackByEtapa(_index: number, etapa: EtapaCobrancaDiaria): string {
+    return etapa.ponto;
+  }
+
+  todosEtapaSelecionados(etapa: EtapaCobrancaDiaria): boolean {
+    return (
+      etapa.itens.length > 0 &&
+      etapa.itens.every((item) => this.selecionados.has(item.mensalidadeId))
+    );
+  }
+
+  alternarEtapa(etapa: EtapaCobrancaDiaria): void {
+    if (this.todosEtapaSelecionados(etapa)) {
+      for (const item of etapa.itens) {
+        this.selecionados.delete(item.mensalidadeId);
+      }
+    } else {
+      for (const item of etapa.itens) {
+        this.selecionados.add(item.mensalidadeId);
+      }
+    }
+    this.selecionados = new Set(this.selecionados);
+  }
+
+  classeBadgeEtapa(tipo: TipoCobrancaDiaria): string {
+    return tipo === 'ATRASADO'
+      ? 'bg-red-600/20 text-red-300'
+      : 'bg-amber-600/20 text-amber-200';
+  }
+
+  classeVencimentoEtapa(tipo: TipoCobrancaDiaria): string {
+    return tipo === 'ATRASADO' ? 'text-red-300' : 'text-amber-300';
   }
 
   definirFiltroGrupo(filtro: FiltroGrupoCobranca): void {

@@ -1,6 +1,13 @@
 import { Configuracao, Mensalidade } from '../../core/models';
 import { calcularDias, resolverValorMensalidade, rotuloPrazoVencimento } from './formatters';
-import { resolverPontoDisparo, elegivelRotinaProgressiva, rotuloPontoDisparo } from './automacao-disparo';
+import {
+  CRONOGRAMA_COBRANCAS_AUTOMACAO,
+  CRONOGRAMA_LEMBRETES_AUTOMACAO,
+  PontoDisparoAutomacao,
+  resolverPontoDisparo,
+  elegivelRotinaProgressiva,
+  rotuloPontoDisparo,
+} from './automacao-disparo';
 import {
   montarMensagemBloqueioMensalidade,
   montarMensagemCobrancaMensalidade,
@@ -55,7 +62,8 @@ export function elegivelCobrancaDiaria(
 
 /** Rotina diária: apenas dias fixos do funil progressivo (5, 3, 1, 0, -1, -2, -3, -7). */
 export function elegivelRotinaCobrancaDiaria(vencimento: string): boolean {
-  return elegivelRotinaProgressiva(calcularDias(vencimento));
+  const dias = calcularDias(vencimento);
+  return resolverPontoDisparo(dias) !== null && elegivelRotinaProgressiva(dias);
 }
 
 export function clienteEhCortesia(
@@ -115,20 +123,71 @@ export function rotuloTipoCobrancaDiaria(tipo: TipoCobrancaDiaria): string {
   return tipo === 'ATRASADO' ? 'Cobrança' : 'Lembrete';
 }
 
+export const ORDEM_PONTOS_FUNIL: PontoDisparoAutomacao[] = [
+  ...CRONOGRAMA_LEMBRETES_AUTOMACAO.map(
+    (e) => `LEMBRETE_D${e.dias}` as PontoDisparoAutomacao
+  ),
+  ...CRONOGRAMA_COBRANCAS_AUTOMACAO.map(
+    (e) => `COBRANCA_D${e.dias}` as PontoDisparoAutomacao
+  ),
+];
+
+export function mensalidadeElegivelCobrancaDiaria(
+  mensalidade: Pick<Mensalidade, 'status' | 'vencimento' | 'cliente'>
+): boolean {
+  if (mensalidade.status !== 'PENDENTE') {
+    return false;
+  }
+  if (!clienteParticipaCobrancas(mensalidade.cliente)) {
+    return false;
+  }
+  const dias = calcularDias(mensalidade.vencimento);
+  return resolverPontoDisparo(dias) !== null && elegivelRotinaProgressiva(dias);
+}
+
 export function filtrarMensalidadesCobrancaDiaria(
   mensalidades: Mensalidade[]
 ): Mensalidade[] {
   return mensalidades
-    .filter(
-      (m) =>
-        m.status === 'PENDENTE' &&
-        elegivelRotinaCobrancaDiaria(m.vencimento) &&
-        clienteParticipaCobrancas(m.cliente)
-    )
+    .filter((m) => mensalidadeElegivelCobrancaDiaria(m))
     .sort(
       (a, b) =>
         new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime()
     );
+}
+
+export interface EtapaCobrancaDiaria {
+  ponto: PontoDisparoAutomacao;
+  rotulo: string;
+  tipo: TipoCobrancaDiaria;
+  itens: ItemCobrancaDiaria[];
+}
+
+export function agruparItensPorEtapaFunil(
+  itens: ItemCobrancaDiaria[]
+): EtapaCobrancaDiaria[] {
+  return ORDEM_PONTOS_FUNIL.map((ponto) => {
+    const lista = itens.filter((item) => item.pontoDisparo === ponto);
+    if (lista.length === 0) {
+      return null;
+    }
+    return {
+      ponto,
+      rotulo: rotuloPontoDisparo(ponto),
+      tipo: lista[0]?.tipo ?? 'A_VENCER',
+      itens: lista,
+    };
+  }).filter((etapa): etapa is EtapaCobrancaDiaria => etapa !== null);
+}
+
+export function resumoEtapasFunilHoje(itens: ItemCobrancaDiaria[]): string {
+  const etapas = agruparItensPorEtapaFunil(itens);
+  if (etapas.length === 0) {
+    return 'Nenhuma etapa do funil ativa hoje';
+  }
+  return etapas
+    .map((etapa) => `${etapa.rotulo} (${etapa.itens.length})`)
+    .join(' · ');
 }
 
 export function montarItensCobrancaDiaria(

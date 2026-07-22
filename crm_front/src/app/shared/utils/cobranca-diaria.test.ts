@@ -5,6 +5,7 @@ import {
   clienteParticipaCobrancas,
   elegivelCobrancaDiaria,
   elegivelRotinaCobrancaDiaria,
+  mensalidadeElegivelCobrancaDiaria,
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
   tipoCobrancaDiaria,
@@ -60,6 +61,9 @@ describe('elegivelRotinaCobrancaDiaria', () => {
     const daqui2 = new Date(
       Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 2)
     );
+    const daqui4 = new Date(
+      Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 4)
+    );
 
     assert.equal(
       elegivelRotinaCobrancaDiaria(daqui3.toISOString().slice(0, 10)),
@@ -69,8 +73,57 @@ describe('elegivelRotinaCobrancaDiaria', () => {
       elegivelRotinaCobrancaDiaria(daqui2.toISOString().slice(0, 10)),
       false
     );
+    assert.equal(
+      elegivelRotinaCobrancaDiaria(daqui4.toISOString().slice(0, 10)),
+      false
+    );
     assert.equal(elegivelRotinaProgressiva(5), true);
     assert.equal(elegivelRotinaProgressiva(4), false);
+  });
+});
+
+describe('mensalidadeElegivelCobrancaDiaria', () => {
+  it('exige pendente, cliente elegível e dia do funil', () => {
+    const hoje = new Date();
+    const daqui3 = new Date(
+      Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 3)
+    );
+    const daqui2 = new Date(
+      Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 2)
+    );
+
+    assert.equal(
+      mensalidadeElegivelCobrancaDiaria({
+        status: 'PENDENTE',
+        vencimento: daqui3.toISOString().slice(0, 10),
+        cliente: {},
+      }),
+      true
+    );
+    assert.equal(
+      mensalidadeElegivelCobrancaDiaria({
+        status: 'PENDENTE',
+        vencimento: daqui2.toISOString().slice(0, 10),
+        cliente: {},
+      }),
+      false
+    );
+    assert.equal(
+      mensalidadeElegivelCobrancaDiaria({
+        status: 'PAGO',
+        vencimento: daqui3.toISOString().slice(0, 10),
+        cliente: {},
+      }),
+      false
+    );
+    assert.equal(
+      mensalidadeElegivelCobrancaDiaria({
+        status: 'PENDENTE',
+        vencimento: daqui3.toISOString().slice(0, 10),
+        cliente: { somenteContato: true },
+      }),
+      false
+    );
   });
 });
 

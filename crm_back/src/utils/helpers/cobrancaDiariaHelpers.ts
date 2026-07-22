@@ -1,5 +1,8 @@
 import { parseDataSomenteDia } from './dateHelpers.js';
-import { elegivelRotinaProgressiva } from './automacaoDisparoHelpers.js';
+import {
+  elegivelRotinaProgressiva,
+  resolverPontoDisparo,
+} from './automacaoDisparoHelpers.js';
 
 export const DIAS_ANTECEDENCIA_LEMBRETE_PADRAO = 5;
 
@@ -32,7 +35,8 @@ export function elegivelCobrancaDiaria(
 
 /** Rotina diária / automação: apenas dias fixos do funil progressivo. */
 export function elegivelRotinaCobrancaDiaria(vencimento: Date | string): boolean {
-  return elegivelRotinaProgressiva(calcularDiasVencimento(vencimento));
+  const dias = calcularDiasVencimento(vencimento);
+  return resolverPontoDisparo(dias) !== null && elegivelRotinaProgressiva(dias);
 }
 
 export { elegivelRotinaProgressiva } from './automacaoDisparoHelpers.js';
