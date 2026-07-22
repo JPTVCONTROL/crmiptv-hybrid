@@ -1506,18 +1506,42 @@
     @apply relative flex flex-1 flex-col items-center justify-center min-h-0 w-full;
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 768px) {
     .crm-auth-body {
       @apply block;
     }
   }
 
   .crm-auth-orbit-scene {
-    @apply absolute inset-0 z-[1] flex items-center justify-center pointer-events-none overflow-visible;
+    @apply absolute inset-0 z-[1] items-center justify-center pointer-events-none overflow-visible;
+    display: none;
   }
 
   .crm-auth-crown-scene {
-    @apply absolute inset-0 z-[3] flex items-center justify-center pointer-events-none overflow-visible;
+    @apply absolute inset-0 z-[3] items-center justify-center pointer-events-none overflow-visible;
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .crm-auth-orbit-scene,
+    .crm-auth-crown-scene {
+      display: flex;
+    }
+
+    .crm-auth-hero {
+      display: none;
+    }
+  }
+
+  @media (orientation: portrait) and (min-height: 880px) and (min-width: 600px) {
+    .crm-auth-orbit-scene,
+    .crm-auth-crown-scene {
+      display: flex;
+    }
+
+    .crm-auth-hero {
+      display: none;
+    }
   }
 
   .crm-auth-orbit {
@@ -1526,7 +1550,8 @@
     height: calc(var(--auth-orbit-radius) * 2 + var(--auth-orbit-card) + 2rem);
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 768px),
+    (orientation: portrait) and (min-height: 880px) and (min-width: 600px) {
     .crm-auth-orbit-arc {
       transform: translateY(var(--auth-orbit-shift-y));
     }
@@ -1746,7 +1771,8 @@
       max(1rem, env(safe-area-inset-bottom, 0px));
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 768px),
+    (orientation: portrait) and (min-height: 880px) and (min-width: 600px) {
     .crm-auth-body {
       @apply flex items-center justify-center;
     }
@@ -1791,6 +1817,38 @@
 
     .crm-auth-card .crm-btn-primary {
       @apply !py-2.5 text-sm;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait),
+    (orientation: portrait) and (min-height: 880px) and (min-width: 600px) and (max-width: 767px) {
+    .crm-auth-page {
+      --auth-orbit-card: clamp(5.5rem, 6.2vmin, 6.25rem);
+      --auth-orbit-logo-width: clamp(6.75rem, 7.5vmin, 8rem);
+      --auth-orbit-gap: 2.25rem;
+      --auth-login-card-half-h: 9rem;
+      --auth-orbit-shift-y: 0.875rem;
+      --auth-orbit-radius: min(
+        max(17.5rem, var(--auth-orbit-min-radius)),
+        calc(50vh - var(--auth-orbit-logo-width) * 0.42),
+        calc(50vw - var(--auth-orbit-card) - 0.35rem)
+      );
+    }
+
+    .crm-auth-orbit-logo-img {
+      max-width: 6.25rem;
+    }
+
+    .crm-auth-feature--orbit {
+      @apply p-2 gap-1;
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-title {
+      @apply text-[0.6875rem];
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-text {
+      @apply text-[0.6rem] leading-snug;
     }
   }
 
@@ -1981,7 +2039,7 @@
     @apply text-xs text-slate-500 m-0 leading-relaxed text-center;
   }
 
-  @media (max-height: 820px) and (min-width: 1024px) {
+  @media (max-height: 820px) and (min-width: 768px) {
     .crm-auth-page {
       --auth-orbit-card: clamp(6rem, 6.5vmin, 7rem);
       --auth-orbit-logo-width: clamp(7rem, 7.5vmin, 8.5rem);
