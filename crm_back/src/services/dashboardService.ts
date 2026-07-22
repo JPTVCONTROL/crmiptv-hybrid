@@ -472,12 +472,12 @@ export class DashboardService {
       telefoneValidoParaWhatsApp(m.cliente.telefone)
     );
     const semTelefone = elegiveis.length - contactaveis.length;
-    const contactadosHoje = contactaveis.filter((m) =>
+    const contactadosHoje = elegiveis.filter((m) =>
       contatoRegistradoHoje(m.ultimoContatoEm)
     ).length;
-    const naoContactados = contactaveis.length - contactadosHoje;
+    const naoContactados = elegiveis.length - contactadosHoje;
     const rotinaFeita =
-      contactaveis.length === 0 || contactadosHoje === contactaveis.length;
+      elegiveis.length === 0 || contactadosHoje === elegiveis.length;
     const semTelefoneRotina = elegiveis.filter(
       (m) => !telefoneValidoParaWhatsApp(m.cliente.telefone)
     ).length;
@@ -572,7 +572,7 @@ export class DashboardService {
       });
     }
 
-    if (!rotinaFeita && contactaveis.length > 0) {
+    if (!rotinaFeita && elegiveis.length > 0) {
       alertas.push({
         tipo: 'ROTINA_PENDENTE',
         titulo: 'Rotina diária pendente',
@@ -629,7 +629,7 @@ export class DashboardService {
       });
     }
 
-    if (alertas.length === 0 && rotinaFeita && contactaveis.length > 0) {
+    if (alertas.length === 0 && rotinaFeita && elegiveis.length > 0) {
       alertas.push({
         tipo: 'ROTINA_CONCLUIDA',
         titulo: 'Rotina concluída',

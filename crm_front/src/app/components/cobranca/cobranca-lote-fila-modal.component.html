@@ -44,6 +44,14 @@
           {{ rotuloAbrir }}
         </button>
         <button
+          *ngIf="exibirMarcarCobrado"
+          type="button"
+          class="crm-btn-ghost flex-1"
+          (click)="marcarCobrado()"
+        >
+          {{ rotuloMarcarCobrado }}
+        </button>
+        <button
           *ngIf="modoManual"
           type="button"
           class="crm-btn-primary flex-1"

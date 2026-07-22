@@ -132,10 +132,23 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   get metaNovosClientesRotulo(): string {
-    return rotuloJanelaMetaNovosClientes(
+    const janela = rotuloJanelaMetaNovosClientes(
       this.metaNovosClientesInicioEm,
       this.metaNovosClientesFimEm
     );
+
+    if (this.metaNovosClientesAtingida) {
+      return `Meta atingida · ${janela}`;
+    }
+
+    if (this.metaNovosClientesEncerrada) {
+      return janela;
+    }
+
+    const faltam = Math.max(0, this.metaNovosClientesQtd - this.metaClientesAtual);
+    const rotuloFaltam = faltam === 1 ? 'Falta 1' : `Faltam ${faltam}`;
+
+    return `${rotuloFaltam} · ${janela}`;
   }
 
   get metaNovosClientesStatusRotulo(): string {

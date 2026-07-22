@@ -102,6 +102,18 @@
         <button
           type="button"
           class="crm-btn-ghost crm-btn-md"
+          [disabled]="qtdPendentesHoje === 0 || marcandoCobrados"
+          (click)="marcarPendentesComoCobrado()"
+        >
+          {{
+            marcandoCobrados
+              ? 'Marcando...'
+              : 'Marcar pendentes (' + qtdPendentesHoje + ')'
+          }}
+        </button>
+        <button
+          type="button"
+          class="crm-btn-ghost crm-btn-md"
           [class.crm-btn-ghost--active]="filtroSomentePendentes"
           (click)="alternarFiltroSomentePendentes()"
         >
@@ -110,7 +122,7 @@
       </div>
     </div>
 
-    <div *ngIf="itensContactaveis.length > 0" class="mt-4">
+    <div *ngIf="itensElegiveis.length > 0" class="mt-4">
       <div class="flex justify-between text-xs text-slate-400 mb-1.5">
         <span>Progresso da rotina WhatsApp</span>
         <span class="text-slate-300">{{ progressoRotinaPercent }}%</span>
@@ -134,6 +146,18 @@
         enviando
           ? 'Abrindo WhatsApp...'
           : 'Enviar rotina (' + qtdSelecionadosValidos + ')'
+      }}
+    </button>
+    <button
+      type="button"
+      class="crm-btn-ghost"
+      [disabled]="qtdSelecionadosPendentes === 0 || marcandoCobrados"
+      (click)="marcarCobradosSelecionados()"
+    >
+      {{
+        marcandoCobrados
+          ? 'Marcando...'
+          : 'Marcar cobrado (' + qtdSelecionadosPendentes + ')'
       }}
     </button>
     <button type="button" class="crm-btn-ghost" (click)="selecionarElegiveis()">
@@ -206,7 +230,7 @@
       </button>
     </div>
 
-    <div *ngIf="itensContactaveis.length > 0">
+    <div *ngIf="itensElegiveis.length > 0">
       <div class="flex justify-between text-xs text-slate-400 mb-1.5">
         <span>{{ progressoRotina }}</span>
         <span class="text-slate-300">{{ progressoRotinaPercent }}%</span>
@@ -312,6 +336,13 @@
               [disabled]="!item.telefoneValido"
               (contatoRegistrado)="onContatoRegistrado($event)"
             ></app-whatsapp-cobranca-btn>
+            <app-marcar-cobrado-btn
+              class="flex-1"
+              [compact]="true"
+              [mensalidadeId]="item.mensalidadeId"
+              [ultimoContatoEm]="item.ultimoContatoEm"
+              (contatoRegistrado)="onContatoRegistrado($event)"
+            ></app-marcar-cobrado-btn>
             <app-whatsapp-bloqueio-btn
               *ngIf="item.mensagemBloqueio"
               class="flex-1"
@@ -399,6 +430,12 @@
                   [disabled]="!item.telefoneValido"
                   (contatoRegistrado)="onContatoRegistrado($event)"
                 ></app-whatsapp-cobranca-btn>
+                <app-marcar-cobrado-btn
+                  [compact]="true"
+                  [mensalidadeId]="item.mensalidadeId"
+                  [ultimoContatoEm]="item.ultimoContatoEm"
+                  (contatoRegistrado)="onContatoRegistrado($event)"
+                ></app-marcar-cobrado-btn>
                 <app-whatsapp-bloqueio-btn
                   *ngIf="item.mensagemBloqueio"
                   [compact]="true"
@@ -507,6 +544,13 @@
               [disabled]="!item.telefoneValido"
               (contatoRegistrado)="onContatoRegistrado($event)"
             ></app-whatsapp-cobranca-btn>
+            <app-marcar-cobrado-btn
+              class="flex-1"
+              [compact]="true"
+              [mensalidadeId]="item.mensalidadeId"
+              [ultimoContatoEm]="item.ultimoContatoEm"
+              (contatoRegistrado)="onContatoRegistrado($event)"
+            ></app-marcar-cobrado-btn>
             <button
               type="button"
               class="crm-btn-success crm-btn-action flex-1"
@@ -583,6 +627,12 @@
                   [disabled]="!item.telefoneValido"
                   (contatoRegistrado)="onContatoRegistrado($event)"
                 ></app-whatsapp-cobranca-btn>
+                <app-marcar-cobrado-btn
+                  [compact]="true"
+                  [mensalidadeId]="item.mensalidadeId"
+                  [ultimoContatoEm]="item.ultimoContatoEm"
+                  (contatoRegistrado)="onContatoRegistrado($event)"
+                ></app-marcar-cobrado-btn>
                 <button
                   type="button"
                   class="crm-btn-success crm-btn-action"

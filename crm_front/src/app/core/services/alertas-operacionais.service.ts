@@ -85,7 +85,7 @@ export class AlertasOperacionaisService {
         0
       ),
       rotinaFeita: resumo.cobrancaDiaria.rotinaFeita,
-      progressoRotina: `${resumo.cobrancaDiaria.contactadosHoje} de ${resumo.cobrancaDiaria.contactaveis} contactados hoje`,
+      progressoRotina: `${resumo.cobrancaDiaria.contactadosHoje} de ${resumo.cobrancaDiaria.totalElegiveis} contactados hoje`,
       carregando: false,
     };
   }

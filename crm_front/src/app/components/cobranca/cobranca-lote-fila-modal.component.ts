@@ -20,6 +20,8 @@ export class CobrancaLoteFilaModalComponent {
   @Input() rotuloAbrir = 'Abrir WhatsApp';
   @Input() modoManual = false;
   @Input() rotuloMarcar = 'Marcar enviado e próximo';
+  @Input() exibirMarcarCobrado = false;
+  @Input() rotuloMarcarCobrado = 'Marcar cobrado';
 
   indice = 0;
   abertos = 0;
@@ -91,6 +93,16 @@ export class CobrancaLoteFilaModalComponent {
   }
 
   pular(): void {
+    this.avancar();
+  }
+
+  marcarCobrado(): void {
+    const item = this.atual;
+    if (!item) return;
+
+    if (!this.idsEnviados.includes(item.id)) {
+      this.idsEnviados.push(item.id);
+    }
     this.avancar();
   }
 

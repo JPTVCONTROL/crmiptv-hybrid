@@ -49,6 +49,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   itens: ItemCobrancaDiaria[] = [];
   selecionados = new Set<number>();
   enviando = false;
+  marcandoCobrados = false;
   filtroGrupo: FiltroGrupoCobranca = 'TODOS';
   filtroSomentePendentes = false;
   automacaoAtiva = false;
@@ -101,25 +102,29 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     return `Rotina de ${hoje} · atrasados e vencimentos em até ${this.diasAntecedencia} dias`;
   }
 
+  get itensElegiveis(): ItemCobrancaDiaria[] {
+    return this.itens;
+  }
+
   get itensContactaveis(): ItemCobrancaDiaria[] {
     return this.itens.filter((item) => item.telefoneValido);
   }
 
   get contactadosHoje(): number {
-    return this.itensContactaveis.filter((item) =>
+    return this.itensElegiveis.filter((item) =>
       contatoRegistradoHoje(item.ultimoContatoEm)
     ).length;
   }
 
   get rotinaFeitaHoje(): boolean {
     return (
-      this.itensContactaveis.length === 0 ||
-      this.contactadosHoje === this.itensContactaveis.length
+      this.itensElegiveis.length === 0 ||
+      this.contactadosHoje === this.itensElegiveis.length
     );
   }
 
   get qtdPendentesHoje(): number {
-    return this.itensContactaveis.filter(
+    return this.itensElegiveis.filter(
       (item) => !contatoRegistradoHoje(item.ultimoContatoEm)
     ).length;
   }
@@ -141,13 +146,13 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   }
 
   get progressoRotina(): string {
-    return `${this.contactadosHoje} de ${this.itensContactaveis.length} contactados hoje`;
+    return `${this.contactadosHoje} de ${this.itensElegiveis.length} contactados hoje`;
   }
 
   get progressoRotinaPercent(): number {
-    if (this.itensContactaveis.length === 0) return 100;
+    if (this.itensElegiveis.length === 0) return 100;
     return Math.round(
-      (this.contactadosHoje / this.itensContactaveis.length) * 100
+      (this.contactadosHoje / this.itensElegiveis.length) * 100
     );
   }
 
@@ -435,6 +440,14 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     ).length;
   }
 
+  get qtdSelecionadosPendentes(): number {
+    return this.itens.filter(
+      (item) =>
+        this.selecionados.has(item.mensalidadeId) &&
+        !contatoRegistradoHoje(item.ultimoContatoEm)
+    ).length;
+  }
+
   estaSelecionado(item: ItemCobrancaDiaria): boolean {
     return this.selecionados.has(item.mensalidadeId);
   }
@@ -551,7 +564,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
         telefone: item.telefone,
         mensagem: item.mensagem,
       })),
-      { titulo: 'Cobrança diária', rotuloAbrir: 'Abrir WhatsApp' }
+      { titulo: 'Cobrança diária', rotuloAbrir: 'Abrir WhatsApp', exibirMarcarCobrado: true }
     );
 
     if (resultado.idsEnviados.length > 0) {
@@ -571,6 +584,56 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     }
 
     this.enviando = false;
+  }
+
+  marcarPendentesComoCobrado(): void {
+    const ids = this.itensElegiveis
+      .filter((item) => !contatoRegistradoHoje(item.ultimoContatoEm))
+      .map((item) => item.mensalidadeId);
+
+    if (ids.length === 0) {
+      void this.toast.warning('Não há clientes pendentes de contato hoje.');
+      return;
+    }
+
+    this.marcandoCobrados = true;
+    this.mensalidadeService.registrarContatos(ids).subscribe({
+      next: () => {
+        this.atualizarContatosLocais(ids);
+        this.marcandoCobrados = false;
+      },
+      error: () => {
+        this.marcandoCobrados = false;
+        void this.toast.warning('Não foi possível marcar os pendentes como cobrado.');
+      },
+    });
+  }
+
+  marcarCobradosSelecionados(): void {
+    const ids = this.itens
+      .filter(
+        (item) =>
+          this.selecionados.has(item.mensalidadeId) &&
+          !contatoRegistradoHoje(item.ultimoContatoEm)
+      )
+      .map((item) => item.mensalidadeId);
+
+    if (ids.length === 0) {
+      void this.toast.warning('Selecione clientes ainda não contactados hoje.');
+      return;
+    }
+
+    this.marcandoCobrados = true;
+    this.mensalidadeService.registrarContatos(ids).subscribe({
+      next: () => {
+        this.atualizarContatosLocais(ids);
+        this.marcandoCobrados = false;
+      },
+      error: () => {
+        this.marcandoCobrados = false;
+        void this.toast.warning('Não foi possível marcar os selecionados como cobrado.');
+      },
+    });
   }
 
   private atualizarContatosLocais(ids: number[]): void {

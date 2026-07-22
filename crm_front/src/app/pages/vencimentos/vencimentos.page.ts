@@ -303,6 +303,13 @@ export class VencimentosPage implements OnInit, OnDestroy {
     );
   }
 
+  onContatoRegistrado(mensalidadeId: number): void {
+    const agora = new Date().toISOString();
+    this.mensalidades = this.mensalidades.map((m) =>
+      m.id === mensalidadeId ? { ...m, ultimoContatoEm: agora } : m
+    );
+  }
+
   async renovar(m: Mensalidade): Promise<void> {
     if (this.renovandoMensalidadeId !== null) return;
 

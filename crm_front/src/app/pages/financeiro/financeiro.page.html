@@ -175,6 +175,14 @@
         >
           Ver
         </a>
+        <app-marcar-cobrado-btn
+          *ngIf="participaCobrancas(m)"
+          class="flex-1"
+          [compact]="true"
+          [mensalidadeId]="m.id"
+          [ultimoContatoEm]="m.ultimoContatoEm"
+          (contatoRegistrado)="onContatoRegistrado($event)"
+        ></app-marcar-cobrado-btn>
         <app-whatsapp-bloqueio-btn
           *ngIf="participaCobrancas(m) && mensalidadeAtrasada(m)"
           class="flex-1"
@@ -254,6 +262,13 @@
             >
               Ver
             </a>
+            <app-marcar-cobrado-btn
+              *ngIf="participaCobrancas(m)"
+              [compact]="true"
+              [mensalidadeId]="m.id"
+              [ultimoContatoEm]="m.ultimoContatoEm"
+              (contatoRegistrado)="onContatoRegistrado($event)"
+            ></app-marcar-cobrado-btn>
             <app-whatsapp-bloqueio-btn
               *ngIf="participaCobrancas(m) && mensalidadeAtrasada(m)"
               [compact]="true"

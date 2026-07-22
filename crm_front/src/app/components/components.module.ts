@@ -10,6 +10,7 @@ import { DispositivoClientesModalComponent } from '../components/dispositivo/dis
 import { WhatsappCobrancaBtnComponent } from '../components/cobranca/whatsapp-cobranca-btn.component';
 import { WhatsappBloqueioBtnComponent } from '../components/cobranca/whatsapp-bloqueio-btn.component';
 import { WhatsappContatoBtnComponent } from '../components/cobranca/whatsapp-contato-btn.component';
+import { MarcarCobradoBtnComponent } from '../components/cobranca/marcar-cobrado-btn.component';
 import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-lote-fila-modal.component';
 import { CampanhaFormModalComponent } from '../components/campanha/campanha-form-modal.component';
 import { CrmModalShellComponent } from '../components/modal/crm-modal-shell.component';
@@ -27,6 +28,7 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     WhatsappCobrancaBtnComponent,
     WhatsappBloqueioBtnComponent,
     WhatsappContatoBtnComponent,
+    MarcarCobradoBtnComponent,
     CobrancaLoteFilaModalComponent,
     CampanhaFormModalComponent,
     CrmModalShellComponent,
@@ -44,6 +46,7 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     WhatsappCobrancaBtnComponent,
     WhatsappBloqueioBtnComponent,
     WhatsappContatoBtnComponent,
+    MarcarCobradoBtnComponent,
     CobrancaLoteFilaModalComponent,
     CampanhaFormModalComponent,
     CrmModalShellComponent,

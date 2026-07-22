@@ -15,6 +15,8 @@ export interface OpcoesCobrancaLoteFila {
   rotuloAbrir?: string;
   modoManual?: boolean;
   rotuloMarcar?: string;
+  exibirMarcarCobrado?: boolean;
+  rotuloMarcarCobrado?: string;
   onMarcarEnviado?: MarcadorEnvioCampanhaFn;
 }
 
@@ -59,6 +61,8 @@ export class CobrancaLoteFilaService {
           rotuloAbrir: opcoes?.rotuloAbrir ?? 'Abrir WhatsApp',
           modoManual: opcoes?.modoManual ?? false,
           rotuloMarcar: opcoes?.rotuloMarcar ?? 'Marcar enviado e próximo',
+          exibirMarcarCobrado: opcoes?.exibirMarcarCobrado ?? false,
+          rotuloMarcarCobrado: opcoes?.rotuloMarcarCobrado ?? 'Marcar cobrado',
         },
         cssClass: 'crm-modal crm-modal-cobranca-lote',
         backdropDismiss: false,
