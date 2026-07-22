@@ -1,4 +1,4 @@
-<div class="crm-auth-page">
+<div class="crm-auth-page" [class.crm-auth-page--app]="ehAppNativo">
   <div class="crm-auth-ambient" aria-hidden="true">
     <span class="crm-auth-glow crm-auth-glow--violet"></span>
     <span class="crm-auth-glow crm-auth-glow--cyan"></span>
@@ -6,7 +6,7 @@
   </div>
 
   <div class="crm-auth-body">
-    <div class="crm-auth-orbit-scene">
+    <div class="crm-auth-orbit-scene" *ngIf="!ehAppNativo">
       <div class="crm-auth-orbit" aria-label="Recursos do CRM JPTV">
         <div class="crm-auth-orbit-arc">
           <div class="crm-auth-orbit-ring crm-auth-orbit-ring--arc" aria-hidden="true"></div>
@@ -41,7 +41,7 @@
     </div>
 
     <main class="crm-auth-stage">
-      <header class="crm-auth-hero">
+      <header class="crm-auth-hero crm-auth-hero--mobile">
         <img src="assets/logo-crm-jptv.png" alt="CRM JPTV" class="crm-auth-hero-logo" />
         <p class="crm-auth-hero-tagline">Gestão IPTV completa</p>
       </header>
@@ -110,7 +110,7 @@
 
         <button
           type="submit"
-          class="crm-btn-primary w-full !py-3"
+          class="crm-btn-primary crm-auth-submit w-full"
           [disabled]="carregando"
         >
           {{ carregando ? 'Entrando...' : 'Entrar' }}

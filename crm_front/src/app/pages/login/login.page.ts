@@ -69,6 +69,10 @@ export class LoginPage implements OnInit, OnDestroy {
     return this.appAtualizacao.ehAppNativo;
   }
 
+  get ehAppNativo(): boolean {
+    return this.appAtualizacao.ehAppNativo;
+  }
+
   ngOnInit(): void {
     this.salvarDados = lerSalvarDadosLogin();
     this.manterConectado = lerManterConectadoLogin();

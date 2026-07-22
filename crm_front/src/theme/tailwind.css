@@ -1502,6 +1502,66 @@
     );
   }
 
+  .crm-auth-page--app .crm-auth-crown-scene {
+    display: flex;
+  }
+
+  .crm-auth-page--app .crm-auth-hero--mobile {
+    display: none !important;
+  }
+
+  .crm-auth-page--app .crm-auth-body {
+    @apply flex items-center justify-center;
+  }
+
+  .crm-auth-page--app .crm-auth-stage {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+  }
+
+  .crm-auth-page--app .crm-auth-card {
+    @apply relative max-w-[15.5rem] space-y-2 p-3 pointer-events-auto;
+  }
+
+  .crm-auth-page--app .crm-auth-card-head {
+    @apply pb-0;
+  }
+
+  .crm-auth-page--app .crm-auth-card-title {
+    @apply text-lg;
+  }
+
+  .crm-auth-page--app .crm-auth-card-subtitle {
+    @apply text-[0.6875rem] mt-0.5;
+  }
+
+  .crm-auth-page--app .crm-auth-label {
+    @apply mb-1 text-xs;
+  }
+
+  .crm-auth-page--app .crm-auth-card .crm-input {
+    @apply py-2 text-sm;
+  }
+
+  .crm-auth-page--app .crm-auth-opcoes {
+    @apply gap-x-3 gap-y-1;
+  }
+
+  .crm-auth-page--app .crm-auth-check {
+    @apply text-xs;
+  }
+
+  .crm-auth-page--app .crm-auth-submit {
+    @apply !py-2.5 text-sm;
+  }
+
+  .crm-auth-page--app {
+    --auth-orbit-logo-width: clamp(6rem, 7vmin, 7.25rem);
+    --auth-orbit-logo-gap: 0.75rem;
+    --auth-login-card-half-h: 12.5rem;
+  }
+
   .crm-auth-body {
     @apply relative flex flex-1 flex-col items-center justify-center min-h-0 w-full;
   }
@@ -1528,19 +1588,114 @@
       display: flex;
     }
 
-    .crm-auth-hero {
+    .crm-auth-hero--mobile {
       display: none;
     }
   }
 
-  @media (orientation: portrait) and (min-height: 880px) and (min-width: 600px) {
+  @media (orientation: portrait) and (min-width: 600px) and (min-height: 700px) {
     .crm-auth-orbit-scene,
     .crm-auth-crown-scene {
       display: flex;
     }
 
-    .crm-auth-hero {
+    .crm-auth-hero--mobile {
       display: none;
+    }
+  }
+
+  /* Tablet retrato: orbita compacta, coroa acima do login sem sobrepor */
+  @media (orientation: portrait) and (min-width: 600px) and (min-height: 700px) {
+    .crm-auth-page {
+      --auth-orbit-card: clamp(4.5rem, 5vmin, 5.25rem);
+      --auth-orbit-logo-width: clamp(6rem, 6.8vmin, 7rem);
+      --auth-orbit-logo-gap: 1rem;
+      --auth-orbit-logo-lift: 0.25rem;
+      --auth-orbit-crown-half-h: calc(var(--auth-orbit-logo-width) * 0.48);
+      --auth-login-card-half-h: 12.75rem;
+      --auth-orbit-gap: 1.5rem;
+      --auth-orbit-shift-y: 0.625rem;
+      --auth-orbit-min-radius: calc(
+        var(--auth-login-half-w) + var(--auth-orbit-card) / 2 + var(--auth-orbit-gap)
+      );
+      --auth-orbit-radius: min(
+        calc(50vw - var(--auth-orbit-card) - 1.25rem),
+        calc(44vh - var(--auth-login-card-half-h) - var(--auth-orbit-crown-half-h)),
+        14.5rem
+      );
+    }
+
+    .crm-auth-orbit-scene,
+    .crm-auth-crown-scene {
+      transform: translateY(-0.75rem);
+    }
+
+    .crm-auth-orbit-logo--crown {
+      padding: 0.625rem 0.75rem 0.5rem;
+    }
+
+    .crm-auth-orbit-logo-img {
+      max-width: 5.5rem;
+    }
+
+    .crm-auth-orbit-logo-tagline {
+      @apply text-[0.625rem];
+    }
+
+    .crm-auth-feature--orbit {
+      @apply p-1.5 gap-1;
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-icon {
+      @apply w-7 h-7;
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-title {
+      @apply text-[0.625rem] leading-tight;
+    }
+
+    .crm-auth-feature--orbit .crm-auth-feature-text {
+      display: none;
+    }
+
+    .crm-auth-orbit-ring--arc {
+      clip-path: inset(40% 0 0 0);
+    }
+
+    .crm-auth-card {
+      @apply max-w-[15.5rem] space-y-2 p-3;
+    }
+
+    .crm-auth-card-title {
+      @apply text-lg;
+    }
+
+    .crm-auth-card-subtitle {
+      @apply text-[0.6875rem] mt-0.5;
+    }
+
+    .crm-auth-label {
+      @apply mb-1 text-xs;
+    }
+
+    .crm-auth-card .crm-input {
+      @apply py-2 text-sm;
+    }
+
+    .crm-auth-submit {
+      @apply !py-2.5 text-sm;
+    }
+
+    .crm-auth-app-update {
+      @apply pt-2 space-y-1.5;
+    }
+
+    .crm-auth-app-update-text {
+      @apply text-[0.625rem] leading-snug;
+    }
+
+    .crm-auth-hero--mobile {
+      display: none !important;
     }
   }
 
@@ -1551,7 +1706,7 @@
   }
 
   @media (min-width: 768px),
-    (orientation: portrait) and (min-height: 880px) and (min-width: 600px) {
+    (orientation: portrait) and (min-width: 600px) and (min-height: 700px) {
     .crm-auth-orbit-arc {
       transform: translateY(var(--auth-orbit-shift-y));
     }
@@ -1772,7 +1927,7 @@
   }
 
   @media (min-width: 768px),
-    (orientation: portrait) and (min-height: 880px) and (min-width: 600px) {
+    (orientation: portrait) and (min-width: 600px) and (min-height: 700px) {
     .crm-auth-body {
       @apply flex items-center justify-center;
     }
@@ -1818,37 +1973,19 @@
     .crm-auth-card .crm-btn-primary {
       @apply !py-2.5 text-sm;
     }
+
+    .crm-auth-submit {
+      @apply !py-2.5 text-sm;
+    }
   }
 
-  @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait),
-    (orientation: portrait) and (min-height: 880px) and (min-width: 600px) and (max-width: 767px) {
-    .crm-auth-page {
-      --auth-orbit-card: clamp(5.5rem, 6.2vmin, 6.25rem);
-      --auth-orbit-logo-width: clamp(6.75rem, 7.5vmin, 8rem);
-      --auth-orbit-gap: 2.25rem;
-      --auth-login-card-half-h: 9rem;
-      --auth-orbit-shift-y: 0.875rem;
-      --auth-orbit-radius: min(
-        max(17.5rem, var(--auth-orbit-min-radius)),
-        calc(50vh - var(--auth-orbit-logo-width) * 0.42),
-        calc(50vw - var(--auth-orbit-card) - 0.35rem)
-      );
-    }
+  .crm-auth-submit {
+    @apply !py-3;
+  }
 
-    .crm-auth-orbit-logo-img {
-      max-width: 6.25rem;
-    }
-
-    .crm-auth-feature--orbit {
-      @apply p-2 gap-1;
-    }
-
-    .crm-auth-feature--orbit .crm-auth-feature-title {
-      @apply text-[0.6875rem];
-    }
-
-    .crm-auth-feature--orbit .crm-auth-feature-text {
-      @apply text-[0.6rem] leading-snug;
+  @media (min-width: 768px) {
+    .crm-auth-submit {
+      @apply !py-2.5 text-sm;
     }
   }
 
