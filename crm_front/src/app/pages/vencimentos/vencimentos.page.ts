@@ -133,7 +133,10 @@ export class VencimentosPage implements OnInit, OnDestroy {
     ]).subscribe({
       next: ([mensalidades]) => {
         this.mensalidades = mensalidades
-          .filter((m) => m.status === 'PENDENTE')
+          .filter(
+            (m) =>
+              m.status === 'PENDENTE' && clienteParticipaCobrancas(m.cliente)
+          )
           .sort(
             (a, b) =>
               new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime()

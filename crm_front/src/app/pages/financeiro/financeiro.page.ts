@@ -28,7 +28,7 @@ import {
   montarItensRenovacaoLote,
   oferecerMensagemRenovacao,
 } from '../../shared/utils/whatsapp';
-import { resolverDiasAntecedencia, clienteEhCortesia, clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
+import { resolverDiasAntecedencia, clienteParticipaCobrancas } from '../../shared/utils/cobranca-diaria';
 import {
   vincularSincronizacaoPagina,
   DOMINIOS_SYNC_OPERACAO,
@@ -157,7 +157,7 @@ export class FinanceiroPage implements OnInit, OnDestroy {
     ]).subscribe({
       next: ([mensalidades, clientes]) => {
         this.mensalidades = mensalidades.filter(
-          (m) => m.status !== 'PAGO' && !clienteEhCortesia(m.cliente)
+          (m) => m.status !== 'PAGO' && clienteParticipaCobrancas(m.cliente)
         );
         this.telefones = criarMapaTelefones(clientes);
         this.nomesClientes = new Map(clientes.map((c) => [c.id, c.nome]));

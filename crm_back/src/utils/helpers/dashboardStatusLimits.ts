@@ -83,6 +83,7 @@ export function whereClienteGerenciado(
 export function whereClienteParticipaCobranca(): Prisma.ClienteWhereInput {
   return {
     cortesia: false,
+    somenteContato: false,
     NOT: { incluirCobrancas: false },
   };
 }

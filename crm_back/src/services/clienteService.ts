@@ -81,7 +81,9 @@ export class ClienteService {
 
     const somenteContato = Boolean(dados.somenteContato ?? cliente.somenteContato);
 
-    if (!somenteContato) {
+    if (somenteContato) {
+      await mensalidadeRepository.removerPendentesDoCliente(id);
+    } else {
       await this.sincronizarMensalidadesPendentes(id, dados, cliente);
     }
 
@@ -270,6 +272,8 @@ export class ClienteService {
   }
 
   async sincronizarCobrancasPendentes() {
+    const limpeza = await mensalidadeRepository.removerPendentesDeClientesSemCobranca();
+
     const clientes = await clienteRepository.findAll();
     let clientesAlinhados = 0;
     let mensalidadesAlinhadas = 0;
@@ -308,7 +312,11 @@ export class ClienteService {
       mensalidadesAlinhadas += 1;
     }
 
-    return { clientes: clientesAlinhados, mensalidades: mensalidadesAlinhadas };
+    return {
+      clientes: clientesAlinhados,
+      mensalidades: mensalidadesAlinhadas,
+      removidas: limpeza.count,
+    };
   }
 }
 

@@ -17,9 +17,10 @@ export class SistemaService {
   sincronizarCobrancas(): Observable<{
     clientes: number;
     mensalidades: number;
+    removidas?: number;
   }> {
     return this.api
-      .post<{ clientes: number; mensalidades: number }>(
+      .post<{ clientes: number; mensalidades: number; removidas?: number }>(
         '/sistema/sincronizar-cobrancas',
         {}
       )

@@ -126,17 +126,6 @@
   </app-page-header>
 
   <div
-    *ngIf="ehSomenteContato"
-    class="crm-card border border-sky-500/25 bg-sky-500/5"
-  >
-    <p class="text-sky-200 text-sm">
-      Cliente <span class="font-medium">somente contato</span>: cadastro de nome e telefone
-      sem plano, vencimento ou cobrança. Use <span class="font-medium">Ativar plano</span>
-      quando fechar assinatura.
-    </p>
-  </div>
-
-  <div
     *ngIf="!clienteEstaAtivo && !ehSomenteContato"
     class="crm-card border border-red-500/25 bg-red-500/5"
   >
