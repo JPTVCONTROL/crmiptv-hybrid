@@ -181,7 +181,7 @@
         aria-label="Tipo de mensagem WhatsApp"
       >
         <button
-          *ngFor="let sub of subAbasMensagensVisiveis"
+          *ngFor="let sub of subAbasMensagens"
           type="button"
           [class]="classesSubAbaMensagens(sub.id)"
           [attr.aria-current]="subAbaMensagens === sub.id ? 'page' : null"
@@ -360,46 +360,6 @@
               ></ng-container>
             </div>
           </section>
-        </div>
-      </ng-container>
-
-      <!-- Automático (API Meta) -->
-      <ng-container *ngIf="automacaoMetaHabilitada && subAbaMensagens === 'automatico'">
-        <p class="text-slate-500 text-sm">
-          O envio automático usa as mensagens do
-          <button type="button" class="crm-link" (click)="definirSubAbaMensagens('funil')">
-            Funil progressivo
-          </button>
-          no preview. Os campos abaixo servem só como fallback se uma etapa não estiver definida.
-        </p>
-        <div>
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="crm-section-title">Lembrete automático</h2>
-            <button
-              type="button"
-              class="crm-btn-ghost crm-btn-sm self-start"
-              (click)="restaurarMensagem('mensagemLembrete')"
-            >
-              Restaurar padrão
-            </button>
-          </div>
-          <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
-          <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
-        </div>
-
-        <div>
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="crm-section-title">Cobrança automática</h2>
-            <button
-              type="button"
-              class="crm-btn-ghost crm-btn-sm self-start"
-              (click)="restaurarMensagem('mensagemCobranca')"
-            >
-              Restaurar padrão
-            </button>
-          </div>
-          <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
-          <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>
         </div>
       </ng-container>
 

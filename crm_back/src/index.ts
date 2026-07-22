@@ -4,10 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { env, validarConfiguracaoProducao } from './config/env.js';
 import apiRoutes from './routes/index.js';
-import whatsappWebhookRoutes from './routes/whatsappWebhookRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { listarIpsRedeLocal } from './utils/networkHelpers.js';
-import { iniciarAgendadorAutomacao } from './jobs/automacaoScheduler.js';
 
 validarConfiguracaoProducao();
 
@@ -23,17 +21,6 @@ app.use(
 app.get('/health', (_req, res) => {
   res.json({ success: true, message: 'CRM JPTV API online' });
 });
-
-app.use(
-  '/api/webhook/whatsapp',
-  express.json({
-    limit: '1mb',
-    verify: (req, _res, buf) => {
-      (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
-    },
-  }),
-  whatsappWebhookRoutes
-);
 
 app.use(express.json({ limit: '2mb' }));
 
@@ -120,8 +107,6 @@ app.listen(env.port, '0.0.0.0', () => {
   } else {
     console.log('Rede local: nenhum IPv4 detectado (verifique Wi-Fi/Ethernet).');
   }
-
-  iniciarAgendadorAutomacao();
 });
 
 export default app;

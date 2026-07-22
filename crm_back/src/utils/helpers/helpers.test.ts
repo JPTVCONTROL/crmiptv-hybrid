@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  agruparResumoEtapasFunil,
   calcularDiasVencimento,
+  calcularDiasVencimentoNaData,
   clienteParticipaCobrancas,
   rotuloPrazoVencimento,
 } from './cobrancaDiariaHelpers.js';
-import { parametrosTemplateWhatsApp } from './mensagemWhatsAppHelpers.js';
 import { parseCsvClientes } from './clienteImportHelpers.js';
 import {
   clienteCadastroIncompleto,
@@ -142,32 +143,34 @@ describe('rotuloPrazoVencimento', () => {
   });
 });
 
-describe('parametrosTemplateWhatsApp', () => {
-  it('usa prazo relativo no lembrete e data no atraso', () => {
+describe('calcularDiasVencimentoNaData', () => {
+  it('calcula dias relativos a uma data de referência', () => {
+    const ref = new Date(2026, 6, 22);
+    assert.equal(calcularDiasVencimentoNaData('2026-07-25', ref), 3);
+    assert.equal(calcularDiasVencimentoNaData('2026-07-20', ref), -2);
+  });
+});
+
+describe('agruparResumoEtapasFunil', () => {
+  it('agrupa elegíveis por etapa do funil', () => {
     const hoje = new Date();
-    const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+    const daqui3 = new Date(
+      Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 3)
+    );
+    const resumo = agruparResumoEtapasFunil(
+      [
+        {
+          vencimento: daqui3.toISOString().slice(0, 10),
+          ultimoContatoEm: null,
+        },
+      ],
+      () => false
+    );
 
-    const lembrete = parametrosTemplateWhatsApp({
-      nome: 'João',
-      referencia: 'Jul/2026',
-      valor: 35,
-      vencimento: iso,
-      empresa: 'JPTV',
-      atrasado: false,
-    });
-
-    assert.equal(lembrete[3], 'Vence hoje');
-
-    const atraso = parametrosTemplateWhatsApp({
-      nome: 'João',
-      referencia: 'Jun/2026',
-      valor: 35,
-      vencimento: '2026-06-01',
-      empresa: 'JPTV',
-      atrasado: true,
-    });
-
-    assert.equal(atraso[3], '01/06/2026');
+    assert.equal(resumo.length, 1);
+    assert.equal(resumo[0]?.ponto, 'LEMBRETE_D3');
+    assert.equal(resumo[0]?.total, 1);
+    assert.equal(resumo[0]?.pendentes, 1);
   });
 });
 

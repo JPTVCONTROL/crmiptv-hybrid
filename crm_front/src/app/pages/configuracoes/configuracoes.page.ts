@@ -33,7 +33,6 @@ import {
   lerSessionJson,
   salvarSessionJson,
 } from '../../shared/utils/session-persist.util';
-import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 import { PontoDisparoAutomacao } from '../../shared/utils/automacao-disparo';
 import {
   ETAPAS_FUNIL_PROGRESSIVO,
@@ -47,7 +46,7 @@ import { montarPreviaMensagemFunil, dadosExemploMensagemFunil } from '../../shar
 import { calcularDias, rotuloPrazoVencimento } from '../../shared/utils/formatters';
 
 type AbaConfiguracao = 'conta' | 'empresa' | 'metas' | 'mensagens' | 'sistema';
-type SubAbaMensagens = 'manual' | 'funil' | 'automatico';
+type SubAbaMensagens = 'manual' | 'funil';
 
 const CHAVE_ABA_CONFIG = 'crm.config.abaAtiva';
 const CHAVE_SUB_ABA_MENSAGENS = 'crm.config.subAbaMensagens';
@@ -61,7 +60,6 @@ const ABAS_VALIDAS = new Set<AbaConfiguracao>([
 const SUB_ABAS_MENSAGENS_VALIDAS = new Set<SubAbaMensagens>([
   'manual',
   'funil',
-  'automatico',
 ]);
 
 @Component({
@@ -69,7 +67,6 @@ const SUB_ABAS_MENSAGENS_VALIDAS = new Set<SubAbaMensagens>([
   templateUrl: './configuracoes.page.html',
 })
 export class ConfiguracoesPage implements OnInit, OnDestroy {
-  readonly automacaoMetaHabilitada = AUTOMACAO_META_HABILITADA;
   loading = true;
   abaAtiva: AbaConfiguracao = 'empresa';
   subAbaMensagens: SubAbaMensagens = 'manual';
@@ -151,9 +148,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     {
       id: 'mensagens',
       rotulo: 'Mensagens',
-      subtitulo: AUTOMACAO_META_HABILITADA
-        ? 'Templates do WhatsApp manual e da API oficial (Meta).'
-        : 'Templates do WhatsApp manual (WhatsApp Web).',
+      subtitulo: 'Templates do WhatsApp manual (WhatsApp Web).',
     },
     {
       id: 'sistema',
@@ -177,28 +172,15 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       id: 'funil',
       rotulo: 'Funil progressivo',
       descricao:
-        'Mensagens da Cobrança Diária e Automações — uma por etapa (5, 3, 1, 0 dias antes · 1, 2, 3 e 7 atrasados).',
-    },
-    {
-      id: 'automatico',
-      rotulo: 'Automático (API Meta)',
-      descricao:
-        'Fallback legado para modelos Meta genéricos. O preview usa preferencialmente o Funil progressivo.',
+        'Mensagens da Cobrança Diária — uma por etapa (5, 3, 1, 0 dias antes · 1, 2, 3 e 7 atrasados).',
     },
   ];
 
   get subAbaMensagensDescricao(): string {
     return (
-      this.subAbasMensagensVisiveis.find((s) => s.id === this.subAbaMensagens)
+      this.subAbasMensagens.find((s) => s.id === this.subAbaMensagens)
         ?.descricao ?? ''
     );
-  }
-
-  get subAbasMensagensVisiveis(): typeof this.subAbasMensagens {
-    if (AUTOMACAO_META_HABILITADA) {
-      return this.subAbasMensagens;
-    }
-    return this.subAbasMensagens.filter((s) => s.id !== 'automatico');
   }
 
   get metaPreviewRotulo(): string {
@@ -421,10 +403,6 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
   private restaurarSubAbaMensagens(): void {
     const salva = lerSessionJson<string>(CHAVE_SUB_ABA_MENSAGENS);
     if (salva && SUB_ABAS_MENSAGENS_VALIDAS.has(salva as SubAbaMensagens)) {
-      if (salva === 'automatico' && !AUTOMACAO_META_HABILITADA) {
-        this.subAbaMensagens = 'funil';
-        return;
-      }
       this.subAbaMensagens = salva as SubAbaMensagens;
     }
   }

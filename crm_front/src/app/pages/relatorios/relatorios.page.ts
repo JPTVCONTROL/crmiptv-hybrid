@@ -38,6 +38,13 @@ import {
   DOMINIOS_SYNC_RELATORIOS,
 } from '../../shared/utils/page-sync.util';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
+import {
+  EtapaFunilEfetividade,
+  calcularEfetividadeFunilPeriodo,
+  classeBadgeTipoFunil,
+  fimPeriodoRelatorio,
+  inicioPeriodoRelatorio,
+} from '../../shared/utils/funil-cobranca.util';
 
 interface PagamentoRelatorio {
   id: number;
@@ -109,6 +116,10 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   distribuicaoPlanos: DadoCatalogoDistribuicao[] = [];
   distribuicaoAplicativos: DadoCatalogoDistribuicao[] = [];
   distribuicaoDispositivos: DadoCatalogoDistribuicao[] = [];
+
+  etapasFunilEfetividade: EtapaFunilEfetividade[] = [];
+  totalContatosFunil = 0;
+  readonly classeBadgeFunil = classeBadgeTipoFunil;
 
   fmtData = formatarData;
   fmtValor = formatarValor;
@@ -376,6 +387,18 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     this.ticketMedio = pendentes.length
       ? formatarValor(pendenteValor / pendentes.length)
       : formatarValor(0);
+
+    const inicioFunil = inicioPeriodoRelatorio(this.modo, this.periodo, this.ano);
+    const fimFunil = fimPeriodoRelatorio(this.modo, this.periodo, this.ano);
+    this.etapasFunilEfetividade = calcularEfetividadeFunilPeriodo(
+      this.mensalidades,
+      inicioFunil,
+      fimFunil
+    );
+    this.totalContatosFunil = this.etapasFunilEfetividade.reduce(
+      (total, etapa) => total + etapa.contatos,
+      0
+    );
 
     this.todasCobrancasAtrasadas = this.montarCobrancasAtrasadas(pendentes);
 

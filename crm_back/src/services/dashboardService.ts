@@ -2,6 +2,7 @@ import prisma from '../config/database.js';
 import { configuracaoRepository } from '../repositories/configuracaoRepository.js';
 import { calcularStatusCliente } from '../utils/helpers/clienteStatus.js';
 import {
+  agruparResumoEtapasFunil,
   calcularDiasVencimento,
   elegivelCobrancaDiaria,
   elegivelRotinaCobrancaDiaria,
@@ -101,6 +102,14 @@ export interface DashboardResumo {
     semTelefone: number;
     naoContactados: number;
     rotinaFeita: boolean;
+    etapasFunil: Array<{
+      ponto: string;
+      rotulo: string;
+      tipo: 'LEMBRETE' | 'COBRANCA';
+      total: number;
+      contactadosHoje: number;
+      pendentes: number;
+    }>;
   };
   alertas: AlertaOperacional[];
   metricas: {
@@ -482,6 +491,10 @@ export class DashboardService {
     const semTelefoneRotina = elegiveis.filter(
       (m) => !telefoneValidoParaWhatsApp(m.cliente.telefone)
     ).length;
+    const etapasFunil = agruparResumoEtapasFunil(
+      elegiveis,
+      contatoRegistradoHoje
+    );
 
     const alertas: AlertaOperacional[] = [];
     const pendenciasCadastro = resumirPendenciasCadastro(
@@ -713,6 +726,7 @@ export class DashboardService {
         semTelefone,
         naoContactados,
         rotinaFeita,
+        etapasFunil,
       },
       alertas,
       metricas: {

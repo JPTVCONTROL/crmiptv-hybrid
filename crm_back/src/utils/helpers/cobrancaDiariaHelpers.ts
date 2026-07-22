@@ -2,7 +2,85 @@ import { parseDataSomenteDia } from './dateHelpers.js';
 import {
   elegivelRotinaProgressiva,
   resolverPontoDisparo,
+  rotuloPontoDisparo,
+  tipoRotinaProgressiva,
+  type PontoDisparoAutomacao,
 } from './automacaoDisparoHelpers.js';
+
+export const ORDEM_PONTOS_FUNIL: PontoDisparoAutomacao[] = [
+  'LEMBRETE_D5',
+  'LEMBRETE_D3',
+  'LEMBRETE_D1',
+  'LEMBRETE_D0',
+  'COBRANCA_D1',
+  'COBRANCA_D2',
+  'COBRANCA_D3',
+  'COBRANCA_D7',
+];
+
+export interface ResumoEtapaFunil {
+  ponto: PontoDisparoAutomacao;
+  rotulo: string;
+  tipo: 'LEMBRETE' | 'COBRANCA';
+  total: number;
+  contactadosHoje: number;
+  pendentes: number;
+}
+
+export function agruparResumoEtapasFunil(
+  mensalidades: Array<{ vencimento: Date | string; ultimoContatoEm?: Date | null }>,
+  contatoHoje: (ultimoContatoEm?: Date | null) => boolean
+): ResumoEtapaFunil[] {
+  const porPonto = new Map<PontoDisparoAutomacao, ResumoEtapaFunil>();
+
+  for (const mensalidade of mensalidades) {
+    const dias = calcularDiasVencimento(mensalidade.vencimento);
+    const ponto = resolverPontoDisparo(dias);
+    if (!ponto) {
+      continue;
+    }
+
+    const atual = porPonto.get(ponto) ?? {
+      ponto,
+      rotulo: rotuloPontoDisparo(ponto),
+      tipo: tipoRotinaProgressiva(ponto),
+      total: 0,
+      contactadosHoje: 0,
+      pendentes: 0,
+    };
+
+    atual.total += 1;
+    if (contatoHoje(mensalidade.ultimoContatoEm)) {
+      atual.contactadosHoje += 1;
+    } else {
+      atual.pendentes += 1;
+    }
+
+    porPonto.set(ponto, atual);
+  }
+
+  return ORDEM_PONTOS_FUNIL.filter((ponto) => porPonto.has(ponto)).map(
+    (ponto) => porPonto.get(ponto)!
+  );
+}
+
+export function calcularDiasVencimentoNaData(
+  vencimento: Date | string,
+  referencia: Date = new Date()
+): number {
+  const refUtc = Date.UTC(
+    referencia.getFullYear(),
+    referencia.getMonth(),
+    referencia.getDate()
+  );
+  const data = parseDataSomenteDia(vencimento);
+  const vencUtc = Date.UTC(
+    data.getUTCFullYear(),
+    data.getUTCMonth(),
+    data.getUTCDate()
+  );
+  return Math.ceil((vencUtc - refUtc) / (1000 * 60 * 60 * 24));
+}
 
 export const DIAS_ANTECEDENCIA_LEMBRETE_PADRAO = 5;
 

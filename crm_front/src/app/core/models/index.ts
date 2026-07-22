@@ -130,75 +130,6 @@ export interface Configuracao {
   mensagensProgressivas?: string | null;
 }
 
-export interface AutomacaoConfig {
-  id?: number;
-  lembretesAtivos: boolean;
-  cobrancaAtrasadosAtiva: boolean;
-  horariosEnvio: string;
-  horarioInicioManha?: string;
-  horarioFimManha?: string;
-  intervaloAtrasadosDias: number;
-  templateLembreteNome: string;
-  templateCobrancaNome: string;
-  templateLinguagem: string;
-  templatesMetaAtivos?: boolean;
-  ultimaExecucaoEm?: string | null;
-  ultimoHorarioExecutado?: string | null;
-}
-
-export interface WhatsAppPerfilApi {
-  phoneNumberId: string;
-  displayPhoneNumber: string | null;
-  verifiedName: string | null;
-  apiVersion: string;
-  tokenValido: boolean;
-  erro: string | null;
-}
-
-export interface EnvioAutomatico {
-  id: number;
-  mensalidadeId?: number | null;
-  clienteId: number;
-  clienteNome: string;
-  tipo: 'LEMBRETE' | 'COBRANCA';
-  pontoDisparo?: string | null;
-  telefone: string;
-  status: 'ENVIADO' | 'FALHA' | 'PENDENTE';
-  erro?: string | null;
-  mensagemPreview?: string | null;
-  enviadoEm: string;
-}
-
-export interface AutomacaoPainel {
-  config: AutomacaoConfig;
-  whatsappConfigurado: boolean;
-  whatsappPerfil?: WhatsAppPerfilApi | null;
-  pixConfigurado: boolean;
-  nomeEmpresa: string;
-  envioComSucesso: boolean;
-  templatesProntos: boolean;
-  diasAntecedencia: number;
-  janelaManha: { inicio: string; fim: string };
-  filaHoje: { pendentes: number; enviados: number; falhas: number };
-  simulacao: { lembretes: number; cobrancas: number; porPonto?: Record<string, number> };
-  envios: EnvioAutomatico[];
-}
-
-export interface ResultadoExecucaoAutomacao {
-  horario: string;
-  enviados: number;
-  falhas: number;
-  ignorados: number;
-  detalhes: Array<{
-    mensalidadeId: number;
-    clienteNome: string;
-    tipo: 'LEMBRETE' | 'COBRANCA';
-    pontoDisparo?: string;
-    status: 'ENVIADO' | 'FALHA' | 'IGNORADO';
-    erro?: string;
-  }>;
-}
-
 export type CreateClienteDto = Omit<Cliente, 'id' | 'aplicativo' | 'mensalidades' | 'status'>;
 export type CreateAplicativoDto = Omit<Aplicativo, 'id' | '_count'>;
 export type CreateDispositivoDto = Omit<Dispositivo, 'id' | '_count'>;
@@ -276,6 +207,14 @@ export interface DashboardResumo {
     semTelefone: number;
     naoContactados: number;
     rotinaFeita: boolean;
+    etapasFunil: Array<{
+      ponto: string;
+      rotulo: string;
+      tipo: 'LEMBRETE' | 'COBRANCA';
+      total: number;
+      contactadosHoje: number;
+      pendentes: number;
+    }>;
   };
   alertas: AlertaOperacional[];
   metricas: {

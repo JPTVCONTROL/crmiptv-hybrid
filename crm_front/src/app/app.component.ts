@@ -16,7 +16,6 @@ import { ApiHealthService } from './core/services/api-health.service';
 import { SincronizacaoRedeService } from './core/services/sincronizacao-rede.service';
 import { AppAtualizacaoService } from './core/services/app-atualizacao.service';
 import { AlertaOperacional, Usuario } from './core/models';
-import { AUTOMACAO_META_HABILITADA } from './shared/utils/automacao-meta';
 import { origemApi, textoBannerApiOffline } from './shared/utils/api-endereco';
 
 interface MenuItem {
@@ -56,9 +55,6 @@ export class AppComponent implements OnInit, OnDestroy {
         { nome: 'Vencimentos', rota: '/vencimentos', icon: 'calendar-outline' },
         { nome: 'Calendário', rota: '/calendario', icon: 'calendar-number-outline' },
         { nome: 'Cobrança Diária', rota: '/cobranca-diaria', icon: 'send-outline' },
-        ...(AUTOMACAO_META_HABILITADA
-          ? [{ nome: 'Automações', rota: '/automacoes', icon: 'timer-outline' as const }]
-          : []),
       ],
     },
     {

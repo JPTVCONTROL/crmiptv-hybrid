@@ -68,6 +68,29 @@
       </div>
     </div>
 
+    <div *ngIf="etapasFunil.length > 0" class="mt-5 pt-5 border-t border-slate-800/80">
+      <p class="text-slate-400 text-xs uppercase tracking-wide mb-3">
+        Funil de cobrança hoje
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <a
+          *ngFor="let etapa of etapasFunil"
+          routerLink="/cobranca-diaria"
+          [queryParams]="queryParamsCobrancaEtapa(etapa)"
+          class="crm-filter-chip crm-filter-chip--idle no-underline !py-2"
+          [ngClass]="{ '!border-violet-500/40': etapa.pendentes > 0 }"
+        >
+          <span>{{ etapa.rotulo }}</span>
+          <span
+            class="px-1.5 py-0.5 rounded text-[11px] font-medium"
+            [ngClass]="classeBadgeFunil(etapa.tipo)"
+          >
+            {{ etapa.contactadosHoje }}/{{ etapa.total }}
+          </span>
+        </a>
+      </div>
+    </div>
+
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
       <a routerLink="/financeiro" class="crm-dash-kpi crm-dash-kpi-link no-underline">
         <span class="crm-dash-kpi-label">Recebido hoje</span>

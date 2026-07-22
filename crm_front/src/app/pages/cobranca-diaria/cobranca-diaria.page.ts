@@ -4,7 +4,6 @@ import { Subject, forkJoin } from 'rxjs';
 import { ClienteService } from '../../core/services/cliente.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
-import { AutomacaoService } from '../../core/services/automacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { Configuracao } from '../../core/models';
@@ -20,6 +19,7 @@ import {
   montarItensCobrancaDiaria,
   agruparItensPorEtapaFunil,
   resumoEtapasFunilHoje,
+  ORDEM_PONTOS_FUNIL,
   rotuloDiasCobrancaDiaria,
   rotuloTipoCobrancaDiaria,
   TipoCobrancaDiaria,
@@ -27,7 +27,6 @@ import {
   rotuloPontoDisparo,
 } from '../../shared/utils/cobranca-diaria';
 import { PontoDisparoAutomacao } from '../../shared/utils/automacao-disparo';
-import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
 import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
 import {
@@ -53,7 +52,6 @@ export type FiltroGrupoCobranca = 'TODOS' | TipoCobrancaDiaria;
   templateUrl: './cobranca-diaria.page.html',
 })
 export class CobrancaDiariaPage implements OnInit, OnDestroy {
-  readonly automacaoMetaHabilitada = AUTOMACAO_META_HABILITADA;
   loading = true;
   private readonly destroy$ = new Subject<void>();
   itens: ItemCobrancaDiaria[] = [];
@@ -62,11 +60,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   marcandoCobrados = false;
   filtroGrupo: FiltroGrupoCobranca = 'TODOS';
   filtroSomentePendentes = false;
-  automacaoAtiva = false;
-  salvandoAutomacao = false;
-  whatsappApiConfigurado = false;
-  templatesMetaProntos = false;
-  horariosAutomacao = '08:00–09:00';
+  filtroEtapa: PontoDisparoAutomacao | null = null;
   renovandoMensalidadeId: number | null = null;
   readonly limitePorSecao = 30;
   private secoesExpandidas = new Set<PontoDisparoAutomacao>();
@@ -76,7 +70,6 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
-    private automacaoService: AutomacaoService,
     private toast: ToastService,
     private sync: DadosSyncService,
     private cobrancaLoteFila: CobrancaLoteFilaService,
@@ -89,18 +82,6 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   get diasAntecedencia(): number {
     return resolverDiasAntecedencia(this.configuracao);
-  }
-
-  get aguardandoTemplatesMeta(): boolean {
-    return this.whatsappApiConfigurado && !this.templatesMetaProntos;
-  }
-
-  get automacaoToggleDesabilitado(): boolean {
-    return (
-      this.salvandoAutomacao ||
-      !this.whatsappApiConfigurado ||
-      this.aguardandoTemplatesMeta
-    );
   }
 
   get subtitulo(): string {
@@ -153,6 +134,9 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   get itensBaseLista(): ItemCobrancaDiaria[] {
     return this.itens.filter((item) => {
+      if (this.filtroEtapa && item.pontoDisparo !== this.filtroEtapa) {
+        return false;
+      }
       if (this.filtroGrupo !== 'TODOS' && item.tipo !== this.filtroGrupo) {
         return false;
       }
@@ -198,12 +182,12 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
     this.route.queryParamMap.subscribe((params) => {
       this.aplicarQueryParams(
         params.get('pendentes') === '1',
-        params.get('atrasados') === '1'
+        params.get('atrasados') === '1',
+        params.get('etapa')
       );
     });
 
     this.carregar();
-    this.carregarAutomacao();
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
@@ -219,8 +203,10 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   private aplicarQueryParams(
     selecionarPendentes: boolean,
-    somenteAtrasados = false
+    somenteAtrasados = false,
+    etapa: string | null = null
   ): void {
+    this.filtroEtapa = this.etapaValida(etapa);
     if (somenteAtrasados) {
       this.filtroGrupo = 'ATRASADO';
       this.filtroSomentePendentes = true;
@@ -243,77 +229,19 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   private selecionarPendentesViaQuery = false;
   private selecionarAtrasadosViaQuery = false;
 
+  private etapaValida(valor: string | null): PontoDisparoAutomacao | null {
+    if (!valor) {
+      return null;
+    }
+    return ORDEM_PONTOS_FUNIL.includes(valor as PontoDisparoAutomacao)
+      ? (valor as PontoDisparoAutomacao)
+      : null;
+  }
+
   ionViewWillEnter(): void {
     if (!this.loading) {
       this.carregar(true);
     }
-    this.carregarAutomacao(true);
-  }
-
-  carregarAutomacao(silencioso = false): void {
-    if (!AUTOMACAO_META_HABILITADA) {
-      return;
-    }
-
-    this.automacaoService.obterPainel().subscribe({
-      next: (painel) => {
-        this.automacaoAtiva =
-          painel.config.lembretesAtivos || painel.config.cobrancaAtrasadosAtiva;
-        this.whatsappApiConfigurado = painel.whatsappConfigurado;
-        this.templatesMetaProntos = painel.templatesProntos;
-        const inicio = painel.janelaManha?.inicio ?? '08:00';
-        const fim = painel.janelaManha?.fim ?? '09:00';
-        this.horariosAutomacao = `${inicio}–${fim}`;
-      },
-      error: () => {
-        if (!silencioso) {
-          void this.toast.error('Erro ao carregar status da automação.');
-        }
-      },
-    });
-  }
-
-  alternarAutomacao(ativo: boolean): void {
-    if (ativo && !this.whatsappApiConfigurado) {
-      this.automacaoAtiva = false;
-      void this.toast.warning(
-        'Configure a WhatsApp API no backend antes de ativar o envio automático.'
-      );
-      return;
-    }
-
-    if (ativo && this.aguardandoTemplatesMeta) {
-      this.automacaoAtiva = false;
-      void this.toast.warning(
-        'Confirme os templates aprovados em Automações antes de ativar o envio automático.'
-      );
-      return;
-    }
-
-    const anterior = this.automacaoAtiva;
-    this.automacaoAtiva = ativo;
-    this.salvandoAutomacao = true;
-
-    this.automacaoService
-      .salvar({
-        lembretesAtivos: ativo,
-        cobrancaAtrasadosAtiva: ativo,
-      })
-      .subscribe({
-        next: () => {
-          this.salvandoAutomacao = false;
-          void this.toast.success(
-            ativo
-              ? 'Cobrança diária automática ativada.'
-              : 'Cobrança diária automática desativada.'
-          );
-        },
-        error: (err: Error) => {
-          this.automacaoAtiva = anterior;
-          this.salvandoAutomacao = false;
-          void this.toast.error(err.message ?? 'Erro ao salvar automação.');
-        },
-      });
   }
 
   carregar(silencioso = false): void {

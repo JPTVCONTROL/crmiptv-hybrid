@@ -59,13 +59,6 @@ const routes: Routes = [
           import('./pages/market/market.module').then((m) => m.MarketPageModule),
       },
       {
-        path: 'automacoes',
-        loadChildren: () =>
-          import('./pages/automacoes/automacoes.module').then(
-            (m) => m.AutomacoesPageModule
-          ),
-      },
-      {
         path: 'catalogos',
         loadChildren: () =>
           import('./pages/catalogos/catalogos.module').then(

@@ -31,6 +31,11 @@ import {
   iconeAlertaOperacional,
   ordenarAlertasOperacionais,
 } from '../../shared/utils/alertas-operacionais.util';
+import {
+  ResumoEtapaFunil,
+  classeBadgeTipoFunil,
+} from '../../shared/utils/funil-cobranca.util';
+import { PontoDisparoAutomacao } from '../../shared/utils/automacao-disparo';
 
 type ProximoVencimentoResumo = DashboardResumo['proximosVencimentos'][number];
 type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
@@ -66,6 +71,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   cobrancaContactadosHoje = 0;
   cobrancaTotalElegiveis = 0;
   cobrancaRotinaFeita = false;
+  etapasFunil: ResumoEtapaFunil[] = [];
   cadastrosIncompletos = 0;
   pagandoMensalidadeId: number | null = null;
 
@@ -94,6 +100,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   iconeAlerta = iconeAlertaOperacional;
   classesAlerta = classesAlertaOperacional;
+  classeBadgeFunil = classeBadgeTipoFunil;
 
   constructor(
     private dashboardService: DashboardService,
@@ -207,6 +214,14 @@ export class DashboardPage implements OnInit, OnDestroy {
     return this.clientesAtencao.slice(0, this.limiteLista);
   }
 
+  queryParamsCobrancaEtapa(etapa: ResumoEtapaFunil): Record<string, string | number> {
+    const params: Record<string, string | number> = { etapa: etapa.ponto };
+    if (etapa.pendentes > 0) {
+      params['pendentes'] = 1;
+    }
+    return params;
+  }
+
   get qtdAtencaoAtrasados(): number {
     return this.clientesAtencao.filter((c) => c.status === 'ATRASADO').length;
   }
@@ -298,6 +313,14 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.cobrancaContactadosHoje = resumo.cobrancaDiaria.contactadosHoje;
     this.cobrancaTotalElegiveis = resumo.cobrancaDiaria.totalElegiveis;
     this.cobrancaRotinaFeita = resumo.cobrancaDiaria.rotinaFeita;
+    this.etapasFunil = (resumo.cobrancaDiaria.etapasFunil ?? []).map((etapa) => ({
+      ponto: etapa.ponto as PontoDisparoAutomacao,
+      rotulo: etapa.rotulo,
+      tipo: etapa.tipo,
+      total: etapa.total,
+      contactadosHoje: etapa.contactadosHoje,
+      pendentes: etapa.pendentes,
+    }));
     this.cadastrosIncompletos = resumo.clientes.cadastrosIncompletos;
 
     const m = resumo.metricas;

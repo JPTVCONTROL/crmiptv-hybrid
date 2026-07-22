@@ -38,6 +38,14 @@ export function resolverPontoDisparo(
   return MAPA_PONTO_POR_DIAS[diasAteVencer] ?? null;
 }
 
+export type TipoRotinaProgressiva = 'LEMBRETE' | 'COBRANCA';
+
+export function tipoRotinaProgressiva(
+  ponto: PontoDisparoAutomacao
+): TipoRotinaProgressiva {
+  return ponto.startsWith('COBRANCA_') ? 'COBRANCA' : 'LEMBRETE';
+}
+
 export const CRONOGRAMA_LEMBRETES_AUTOMACAO = [
   { dias: 5, rotulo: '5 dias antes — lembrete amigável + PIX' },
   { dias: 3, rotulo: '3 dias antes — lembrete amigável + PIX' },

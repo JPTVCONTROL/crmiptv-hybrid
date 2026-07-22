@@ -124,32 +124,6 @@ export const CONFIGURACAO_CAMPOS_PERMITIDOS = [
   'mensagensProgressivas',
 ] as const;
 
-export interface UpdateAutomacaoConfigDto {
-  lembretesAtivos?: boolean;
-  cobrancaAtrasadosAtiva?: boolean;
-  horariosEnvio?: string;
-  horarioInicioManha?: string;
-  horarioFimManha?: string;
-  intervaloAtrasadosDias?: number;
-  templateLembreteNome?: string;
-  templateCobrancaNome?: string;
-  templateLinguagem?: string;
-  templatesMetaAtivos?: boolean;
-}
-
-export const AUTOMACAO_CAMPOS_PERMITIDOS = [
-  'lembretesAtivos',
-  'cobrancaAtrasadosAtiva',
-  'horariosEnvio',
-  'horarioInicioManha',
-  'horarioFimManha',
-  'intervaloAtrasadosDias',
-  'templateLembreteNome',
-  'templateCobrancaNome',
-  'templateLinguagem',
-  'templatesMetaAtivos',
-] as const;
-
 export type TipoCampanha = 'AVISO' | 'PROMOCAO' | 'DATA_COMEMORATIVA';
 
 export interface CreateCampanhaDto {

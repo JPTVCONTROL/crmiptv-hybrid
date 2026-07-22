@@ -373,7 +373,7 @@ A tela está organizada em **quatro abas**: Conta (senha), Empresa (dados + PIX)
 | `/clientes` | Clientes | Listagem com filtros, **cobrança WhatsApp em lote** (atrasados/inativos), CRUD |
 | `/clientes/:id` | Detalhe | Perfil completo, mensalidades, WhatsApp, pagamento |
 | `/financeiro` | Financeiro | Cobranças pendentes, paginação, pagamentos em lote e renovação WhatsApp em lote |
-| `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp manual + toggle de envio automático (API Meta) |
+| `/cobranca-diaria` | Cobrança Diária | Rotina WhatsApp manual por etapas do funil progressivo |
 | `/vencimentos` | Vencimentos | Consulta de pendentes por data (sem lote duplicado) |
 | `/aplicativos` | Aplicativos | Catálogo de apps IPTV |
 | `/planos` | Planos | Catálogo de planos (valor e validade) |
@@ -418,7 +418,7 @@ Classes utilitárias em `src/theme/tailwind.css`: `.crm-input`, `.crm-card`, `.c
 
 Utilitários em `src/app/shared/utils/whatsapp.ts` e `cobranca-lote.ts`:
 
-- Abre `wa.me` com mensagem pré-preenchida (não usa API oficial da Meta).
+- Abre `wa.me` com mensagem pré-preenchida (WhatsApp Web / app).
 - Variáveis de template: `{nome}`, `{referencia}`, `{valor}`, `{vencimento}`, `{expiraEm}`, `{pagoEm}`, `{empresa}`, `{pix}`, `{tipoPix}`, `{favorecido}`
 - Template customizado de **cobrança** só para clientes **atrasados**; pendente/vencendo usa lembrete amigável.
 - Cobrança em lote com confirmação cliente a cliente (Financeiro, Vencimentos, Dashboard).
@@ -763,23 +763,6 @@ No celular: abra o app → login → **Atualizar app**.
 
 Para servidor sempre online sem depender do PC: VPS, domínio, HTTPS e `apiUrl` com `https://seudominio.com/api`.
 
-### Automações WhatsApp (Meta Cloud API)
-
-1. Crie app em [Meta for Developers](https://developers.facebook.com/) e configure WhatsApp Cloud API.
-2. Aprove templates **Utility** `crm_lembrete` e `crm_cobranca` com 5 variáveis no corpo (nome, referência, valor, vencimento, PIX).
-3. Em `crm_back/.env`:
-
-```env
-WHATSAPP_PHONE_NUMBER_ID="..."
-WHATSAPP_ACCESS_TOKEN="..."
-WHATSAPP_WEBHOOK_VERIFY_TOKEN="crm-jptv-webhook"
-AUTOMACAO_SCHEDULER="true"
-```
-
-4. Exponha o webhook com túnel HTTPS (ex.: Cloudflare Tunnel) apontando para `http://localhost:3001/api/webhook/whatsapp`.
-5. No CRM: **Automações** → teste com **Executar agora** (não exige toggles ligados). Depois ative lembretes/cobrança, horários e **Salvar** para o agendador.
-6. Mantenha o PC ligado com `npm run dev` nos horários de envio.
-
 ---
 
 ## 10. Manutenção do Código
@@ -892,16 +875,6 @@ ng serve --port 4300
 ```
 
 Atualize `apiUrl` no frontend se a porta do backend mudar.
-
-### Automações WhatsApp não enviam
-
-- Confirme `WHATSAPP_PHONE_NUMBER_ID` e `WHATSAPP_ACCESS_TOKEN` em `crm_back/.env`.
-- Reinicie o backend após alterar o `.env`.
-- Templates Meta aprovados como **Utility** com nomes `crm_lembrete` e `crm_cobranca` (ou os configurados em Automações).
-- Cada template precisa de **5 variáveis** no corpo (nome, referência, valor, vencimento, PIX).
-- Webhook Meta: `https://SEU-TUNNEL/api/webhook/whatsapp` com verify token do `.env`.
-- PC ligado nos horários configurados; agendador interno ativo (`AUTOMACAO_SCHEDULER=true`).
-- Teste manual: Automações → **Executar agora**.
 
 ### Build Angular falha após upgrade de dependências
 

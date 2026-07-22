@@ -5,7 +5,6 @@ dotenv.config();
 const DEFAULTS_INSEGUROS = {
   jwtSecret: 'crm-jptv-dev-secret',
   adminPassword: 'admin123',
-  webhookToken: 'crm-jptv-webhook',
 };
 
 const ORIGENS_CAPACITOR = [
@@ -38,14 +37,6 @@ export const env = {
   adminPassword: process.env.ADMIN_PASSWORD || DEFAULTS_INSEGUROS.adminPassword,
   adminNome: process.env.ADMIN_NOME || 'Administrador',
   corsOrigins: parseCorsOrigins(process.env.CORS_ORIGINS),
-  whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() || '',
-  whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN?.trim() || '',
-  whatsappWebhookVerifyToken:
-    process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN?.trim() ||
-    DEFAULTS_INSEGUROS.webhookToken,
-  whatsappAppSecret: process.env.WHATSAPP_APP_SECRET?.trim() || '',
-  whatsappApiVersion: process.env.WHATSAPP_API_VERSION?.trim() || 'v21.0',
-  automacaoSchedulerAtivo: process.env.AUTOMACAO_SCHEDULER !== 'false',
 };
 
 export function validarConfiguracaoProducao(): void {
@@ -61,10 +52,6 @@ export function validarConfiguracaoProducao(): void {
 
   if (env.adminPassword === DEFAULTS_INSEGUROS.adminPassword) {
     problemas.push('ADMIN_PASSWORD está com valor padrão inseguro');
-  }
-
-  if (env.whatsappWebhookVerifyToken === DEFAULTS_INSEGUROS.webhookToken) {
-    problemas.push('WHATSAPP_WEBHOOK_VERIFY_TOKEN está com valor padrão');
   }
 
   if (problemas.length > 0) {

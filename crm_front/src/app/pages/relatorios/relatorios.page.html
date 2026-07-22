@@ -126,6 +126,58 @@
       </div>
     </section>
 
+    <section>
+      <h2 class="crm-section-label">
+        Funil de cobrança — {{ rotuloPeriodo }}
+      </h2>
+      <p class="text-slate-500 text-sm mb-4">
+        Contatos registrados no período e conversão para pagamento (mensalidade paga após o contato).
+      </p>
+
+      <app-empty-state
+        *ngIf="etapasFunilEfetividade.length === 0"
+        title="Sem contatos no funil"
+        message="Nenhum contato WhatsApp registrado neste período com etapa do funil identificável."
+        iconName="chatbubbles-outline"
+      ></app-empty-state>
+
+      <div *ngIf="etapasFunilEfetividade.length > 0" class="crm-table-shell">
+        <table class="crm-table min-w-[640px]">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800">
+              <th class="text-left py-3 px-2">Etapa</th>
+              <th class="text-left py-3 px-2">Tipo</th>
+              <th class="text-right py-3 px-2">Contatos</th>
+              <th class="text-right py-3 px-2">Pagos após contato</th>
+              <th class="text-right py-3 px-2">Conversão</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let etapa of etapasFunilEfetividade"
+              class="border-b border-slate-800/50"
+            >
+              <td class="py-3 px-2 text-slate-200">{{ etapa.rotulo }}</td>
+              <td class="py-3 px-2">
+                <span
+                  class="px-2 py-0.5 rounded text-xs font-medium"
+                  [ngClass]="classeBadgeFunil(etapa.tipo)"
+                >
+                  {{ etapa.tipo === 'COBRANCA' ? 'Cobrança' : 'Lembrete' }}
+                </span>
+              </td>
+              <td class="py-3 px-2 text-right text-slate-300">{{ etapa.contatos }}</td>
+              <td class="py-3 px-2 text-right text-emerald-300">{{ etapa.pagosAposContato }}</td>
+              <td class="py-3 px-2 text-right text-violet-300">{{ etapa.taxaConversao }}%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-slate-500 text-xs mt-3">
+          Total de contatos no funil: {{ totalContatosFunil }}
+        </p>
+      </div>
+    </section>
+
     <section class="crm-card">
       <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div>
