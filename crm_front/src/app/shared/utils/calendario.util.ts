@@ -1,6 +1,10 @@
 import { Cliente, Mensalidade } from '../../core/models';
 import { calcularDias } from './formatters';
-import { clienteEhCortesia } from './cobranca-diaria';
+import {
+  clienteApareceEmVencimentos,
+  clienteEhCortesia,
+  clienteParticipaCobrancas,
+} from './cobranca-diaria';
 
 export type TipoEventoCalendario = 'EXPIRACAO' | 'MENSALIDADE';
 export type FiltroTipoCalendario = 'TODOS' | 'EXPIRACAO' | 'MENSALIDADE';
@@ -76,7 +80,10 @@ export function urgenciaPorData(iso: string): UrgenciaEventoCalendario {
 
 export function montarEventosExpiracao(clientes: Cliente[]): EventoCalendario[] {
   return clientes
-    .filter((cliente) => !!cliente.expiraEm)
+    .filter(
+      (cliente) =>
+        !!cliente.expiraEm && clienteApareceEmVencimentos(cliente)
+    )
     .map((cliente) => {
       const data = cliente.expiraEm!;
       return {
@@ -97,7 +104,10 @@ export function montarEventosExpiracao(clientes: Cliente[]): EventoCalendario[] 
 
 export function montarEventosMensalidade(mensalidades: Mensalidade[]): EventoCalendario[] {
   return mensalidades
-    .filter((m) => m.status === 'PENDENTE')
+    .filter(
+      (m) =>
+        m.status === 'PENDENTE' && clienteParticipaCobrancas(m.cliente)
+    )
     .map((m) => {
       const data = m.vencimento;
       return {

@@ -308,6 +308,8 @@ O token JWT expira conforme `JWT_EXPIRES_IN` no `.env` (padrão: `7d`).
 2. Telefone não pode duplicar outro cliente (mesmos dígitos, com ou sem DDD).
 3. Se `expiraEm` for informado, cria automaticamente a primeira mensalidade `PENDENTE` com referência `MM/YYYY`.
 4. Campo `incluirCobrancas` (padrão `true`): quando `false`, o cliente fica fora da Cobrança Diária, de “Precisam de atenção” e dos alertas de vencimento/cobrança no dashboard.
+5. **Arquivamento automático (+7 dias):** na sincronização de cobranças (`POST /sistema/sincronizar-cobrancas` ou login), clientes com **mais de 7 dias** de atraso passam a `ativo=false`, `somenteContato=true`, `incluirCobrancas=false` e perdem mensalidades `PENDENTE`. O funil de cobrança manual cobre até o 7º dia (`COBRANCA_D7`).
+6. **Pagamento reativa:** ao registrar pagamento, o cliente arquivado volta a `ativo=true`, `somenteContato=false`, `incluirCobrancas=true` com novo vencimento.
 
 ### Sincronização entre telas (frontend)
 
@@ -808,7 +810,7 @@ Use este roteiro após mudanças relevantes (cadastro, financeiro, sync ou layou
 | 1 | Login | Entrar com admin do seed | Dashboard carrega sem 401 |
 | 2 | Novo cliente | Cadastrar com plano e app | Mensalidade criada; onboarding opcional |
 | 3 | Cadastro incompleto | Dashboard → alerta → filtro | Lista só clientes com pendência |
-| 4 | Pagamento | Financeiro ou Detalhe → Pagar | Checklist “Renovou no painel?”; renovação e recibo WhatsApp opcionais |
+| 4 | Pagamento | Financeiro ou Detalhe → Pagar | Checklist “Renovou no painel?”; WhatsApp de renovação opcional; cliente arquivado reativado |
 | 4b | Cobrança em Clientes | Clientes → Atrasados → Cobrar selecionados | Fila WhatsApp abre um chat por vez |
 | 5 | Sem cobrança | Cliente com `incluirCobrancas` off | Badge “Sem cobrança”; fora da cobrança diária |
 | 6 | CSV | Importar modelo + exportar | Contagem bate; duplicados rejeitados |

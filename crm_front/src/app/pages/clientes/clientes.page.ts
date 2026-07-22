@@ -364,7 +364,8 @@ export class ClientesPage implements OnInit, OnDestroy {
       const temParamsNavegacao =
         params.has('status') ||
         params.has('cadastro') ||
-        params.has('incompleto');
+        params.has('incompleto') ||
+        params.has('cobranca');
 
       if (temParamsNavegacao) {
         if (params.has('status')) {
@@ -372,6 +373,16 @@ export class ClientesPage implements OnInit, OnDestroy {
           this.filtroStatus =
             status === 'ATIVO' || status === 'ATRASADO' || status === 'INATIVO'
               ? status
+              : 'TODOS';
+        }
+
+        if (params.has('cobranca')) {
+          const cobranca = params.get('cobranca');
+          this.filtroCobranca =
+            cobranca === 'COM_COBRANCA' ||
+            cobranca === 'SEM_COBRANCA' ||
+            cobranca === 'SOMENTE_CONTATO'
+              ? cobranca
               : 'TODOS';
         }
 

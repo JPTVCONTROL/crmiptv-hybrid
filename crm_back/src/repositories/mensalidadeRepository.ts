@@ -83,6 +83,9 @@ export class MensalidadeRepository {
         data: {
           expiraEm: novoVencimento,
           vencimento: novoVencimento.getDate(),
+          ativo: true,
+          somenteContato: false,
+          incluirCobrancas: true,
         },
       }),
       prisma.mensalidade.create({

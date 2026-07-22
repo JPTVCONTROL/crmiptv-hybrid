@@ -172,4 +172,17 @@ describe('clienteApareceEmVencimentos', () => {
     assert.equal(clienteApareceEmVencimentos({ incluirCobrancas: false }), false);
     assert.equal(clienteApareceEmVencimentos({ ativo: false }), false);
   });
+
+  it('exclui clientes com mais de 7 dias de atraso', () => {
+    const hoje = new Date();
+    const expirado = new Date(hoje);
+    expirado.setDate(hoje.getDate() - 10);
+
+    assert.equal(
+      clienteApareceEmVencimentos({
+        expiraEm: expirado.toISOString().slice(0, 10),
+      }),
+      false
+    );
+  });
 });

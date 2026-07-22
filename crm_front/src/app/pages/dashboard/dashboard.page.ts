@@ -226,10 +226,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     return this.clientesAtencao.filter((c) => c.status === 'ATRASADO').length;
   }
 
-  get qtdAtencaoInativos(): number {
-    return this.clientesAtencao.filter((c) => c.status === 'INATIVO').length;
-  }
-
   ngOnInit(): void {
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();

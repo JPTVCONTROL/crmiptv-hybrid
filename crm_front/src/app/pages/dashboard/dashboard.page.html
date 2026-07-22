@@ -388,7 +388,7 @@
       <div class="min-w-0">
         <h2 class="crm-section-label !mb-0">Precisam de atenção</h2>
         <p class="crm-card-subtitle mt-1">
-          Expiração do plano · {{ qtdAtencaoAtrasados }} atrasado(s) · {{ qtdAtencaoInativos }} inativo(s)
+          Cobrança ativa · {{ qtdAtencaoAtrasados }} atrasado(s) (até 7 dias)
         </p>
       </div>
       <div class="flex flex-wrap gap-2 shrink-0">
@@ -401,10 +401,10 @@
         </a>
         <a
           routerLink="/clientes"
-          [queryParams]="{ status: 'INATIVO' }"
+          [queryParams]="{ cobranca: 'SOMENTE_CONTATO' }"
           class="crm-btn-ghost crm-btn-sm no-underline"
         >
-          Ver inativos
+          Somente contato
         </a>
       </div>
     </div>
@@ -468,7 +468,7 @@
 
     <app-empty-state
       *ngIf="clientesAtencao.length === 0"
-      message="Nenhum cliente atrasado ou inativo nas cobranças."
+      message="Nenhum cliente atrasado na janela de cobrança (1–7 dias)."
     ></app-empty-state>
 
     <div *ngIf="clientesAtencao.length > limiteLista" class="crm-dash-vencimentos-footer">

@@ -103,18 +103,21 @@ export function clienteParticipaCobrancas(
   return cliente?.incluirCobrancas !== false;
 }
 
-/** Vencimentos: exibe cortesia e quem participa de cobranças; exclui somente contato e inativos. */
 export function clienteApareceEmVencimentos(
   cliente?: {
     ativo?: boolean | null;
     incluirCobrancas?: boolean | null;
     somenteContato?: boolean | null;
+    expiraEm?: string | null;
   } | null
 ): boolean {
   if (cliente?.ativo === false) {
     return false;
   }
   if (clienteEhSomenteContato(cliente)) {
+    return false;
+  }
+  if (clienteUltrapassouLimiteCobranca(cliente?.expiraEm)) {
     return false;
   }
   return cliente?.incluirCobrancas !== false;
