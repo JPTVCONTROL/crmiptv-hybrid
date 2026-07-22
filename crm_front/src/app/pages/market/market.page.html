@@ -1,6 +1,5 @@
 <app-page-header
   [title]="emModoLista ? 'Market' : tituloModoCampanha"
-  [subtitle]="emModoLista ? 'Campanhas WhatsApp manuais · fila assistida · registro de envios' : subtituloModoCampanha"
   [exibirVoltar]="emModoLista ? 'auto' : false"
 >
   <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -22,12 +21,6 @@
 
 <!-- Lista de campanhas -->
 <div *ngIf="!loading && emModoLista" class="space-y-6">
-  <div class="crm-info-banner">
-    <p>
-      Campanhas WhatsApp manuais com fila assistida. Clique em uma campanha para enviar ou acompanhar os registros de envio.
-    </p>
-  </div>
-
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card title="Campanhas" [value]="campanhas.length.toString()" variant="primary"></app-stat-card>
     <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#64748B"></app-stat-card>
@@ -151,9 +144,6 @@
   <div *ngIf="campanhaId" class="crm-hero-card !p-4 md:!p-5">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="min-w-0">
-        <p class="crm-kicker mb-1.5">
-          Progresso da campanha
-        </p>
         <h2 class="text-white text-lg md:text-xl font-bold">
           {{
             campanhaConcluida
@@ -199,13 +189,6 @@
     </div>
   </div>
 
-  <div class="crm-info-banner">
-    <p>
-      O link <code class="crm-code">wa.me</code> envia só texto. Na fila, use
-      <strong class="text-slate-300">Marcar enviado</strong> para registrar cada cliente.
-    </p>
-  </div>
-
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card title="Enviados" [value]="totalEnviados.toString()" variant="success"></app-stat-card>
     <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" variant="warning"></app-stat-card>
@@ -237,9 +220,7 @@
         </div>
 
         <div class="rounded-xl crm-accent-panel p-3 space-y-2">
-          <p class="crm-kicker">
-            Prévia com nome
-          </p>
+          <p class="text-slate-500 text-xs font-medium uppercase tracking-wide">Prévia</p>
           <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-32 overflow-y-auto">{{ previewMensagemCampanha }}</pre>
         </div>
 

@@ -1,7 +1,7 @@
 <ion-header class="ion-no-border crm-modal-header">
   <app-crm-modal-toolbar
     [titulo]="titulo"
-    [subtitulo]="'Fila assistida · ' + progresso + ' cliente(s)'"
+    [subtitulo]="progresso + ' cliente(s)'"
     (voltar)="encerrar()"
   ></app-crm-modal-toolbar>
 </ion-header>
@@ -25,18 +25,6 @@
         <p class="text-white font-medium">{{ atual.nome }}</p>
         <p class="text-slate-400 text-sm">{{ atual.telefone }}</p>
       </div>
-
-      <p class="text-slate-500 text-xs leading-relaxed">
-        <ng-container *ngIf="!modoManual">
-          Clique em <strong class="text-slate-300">{{ rotuloAbrir }}</strong> para abrir o chat
-          (o navegador não bloqueia quando o clique é seu). Envie a mensagem no WhatsApp e volte
-          aqui para o próximo cliente.
-        </ng-container>
-        <ng-container *ngIf="modoManual">
-          Abra o WhatsApp, envie a mensagem (pode colar imagem manualmente no app) e clique em
-          <strong class="text-slate-300">{{ rotuloMarcar }}</strong> para registrar e avançar.
-        </ng-container>
-      </p>
 
       <button
         type="button"

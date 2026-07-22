@@ -1,4 +1,4 @@
-<app-page-header title="Dashboard" [subtitle]="subtituloPagina">
+<app-page-header title="Dashboard">
   <button
     type="button"
     class="crm-btn-ghost !py-2"
@@ -22,9 +22,6 @@
   <section class="crm-hero-card">
     <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
       <div class="flex-1 min-w-0">
-        <p class="crm-kicker mb-2">
-          Painel do dia
-        </p>
         <h2 class="text-white text-xl md:text-2xl font-bold tracking-tight">
           {{
             cobrancaRotinaFeita
@@ -32,9 +29,6 @@
               : cobrancaNaoContactados + ' cliente(s) aguardando contato hoje'
           }}
         </h2>
-        <p class="text-slate-400 text-sm mt-2">
-          Operação de hoje · cobrança WhatsApp, vencimentos e pendências imediatas
-        </p>
       </div>
 
       <div class="flex flex-wrap gap-2 shrink-0">
@@ -78,7 +72,6 @@
       <a routerLink="/financeiro" class="crm-dash-kpi crm-dash-kpi-link no-underline">
         <span class="crm-dash-kpi-label">Recebido hoje</span>
         <span class="crm-dash-kpi-value text-emerald-300">{{ recebidoHoje }}</span>
-        <span class="crm-dash-kpi-sub">pagamentos registrados hoje</span>
       </a>
       <a
         routerLink="/cobranca-diaria"
@@ -87,14 +80,13 @@
       >
         <span class="crm-dash-kpi-label">Aguardando contato</span>
         <span class="crm-dash-kpi-value text-amber-300">{{ cobrancaNaoContactados }}</span>
-        <span class="crm-dash-kpi-sub">cliente(s) na fila de hoje</span>
       </a>
       <a routerLink="/cobranca-diaria" class="crm-dash-kpi crm-dash-kpi-link no-underline">
         <span class="crm-dash-kpi-label">Contactados hoje</span>
         <span class="crm-dash-kpi-value text-emerald-300">
           {{ cobrancaContactadosHoje }}/{{ cobrancaTotalElegiveis }}
         </span>
-        <span class="crm-dash-kpi-sub">rotina WhatsApp · {{ rotinaPercentual }}%</span>
+        <span class="crm-dash-kpi-sub">{{ rotinaPercentual }}%</span>
       </a>
       <a
         routerLink="/vencimentos"
@@ -103,9 +95,6 @@
       >
         <span class="crm-dash-kpi-label">Vencem hoje</span>
         <span class="crm-dash-kpi-value text-orange-300">{{ vencemHoje }}</span>
-        <span class="crm-dash-kpi-sub">
-          {{ vencemHoje === 1 ? 'cobrança' : 'cobrança(s)' }} com vencimento hoje
-        </span>
       </a>
       <a
         routerLink="/cobranca-diaria"
@@ -114,13 +103,13 @@
       >
         <span class="crm-dash-kpi-label">Cobrança atrasada</span>
         <span class="crm-dash-kpi-value text-red-300">{{ cobrancaAtrasadaQtd }}</span>
-        <span class="crm-dash-kpi-sub">{{ cobrancaAtrasadaValor }} em aberto</span>
+        <span class="crm-dash-kpi-sub">{{ cobrancaAtrasadaValor }}</span>
       </a>
     </div>
 
     <div class="mt-5">
       <div class="flex justify-between text-xs text-slate-400 mb-1.5">
-        <span>Rotina WhatsApp (contactados hoje)</span>
+        <span>Rotina</span>
         <span class="text-slate-300">{{ rotinaPercentual }}%</span>
       </div>
       <div class="crm-progress-track">
@@ -132,14 +121,9 @@
   <section class="crm-dash-meta-panel" aria-labelledby="dash-meta-titulo">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-5">
       <div>
-        <p class="crm-kicker mb-1">Captação</p>
         <h2 id="dash-meta-titulo" class="text-white text-lg md:text-xl font-bold tracking-tight">
           Meta de clientes
         </h2>
-        <p class="text-slate-400 text-sm mt-1">
-          Conta sua base comercial atual até o prazo — exclui cortesia e clientes marcados como somente cadastro/contato.
-        </p>
-        <p class="text-slate-500 text-xs mt-1">{{ metaClientesBaseRotulo }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 shrink-0">
         <span class="crm-dash-meta-chip" [ngClass]="classeStatusMeta">
@@ -177,7 +161,6 @@
           [style.width.%]="metaNovosClientesPercentual"
         ></div>
       </div>
-      <p class="text-slate-500 text-xs mt-2">{{ metaNovosClientesSubtitulo }}</p>
     </div>
   </section>
 
@@ -218,7 +201,7 @@
           title="Clientes ativos"
           [value]="qtdAtivos.toString()"
           variant="success"
-          [subtitle]="percentualAtivos + ' da base · retenção ' + retencaoPercentual"
+          [subtitle]="percentualAtivos + ' · retenção ' + retencaoPercentual"
         ></app-stat-card>
       </a>
       <a routerLink="/clientes" [queryParams]="{ status: 'ATRASADO' }" class="crm-stat-card-link">
@@ -226,7 +209,6 @@
           title="Planos atrasados"
           [value]="qtdAtrasados.toString()"
           variant="warning"
-          subtitle="expiração vencida · precisam renovar"
         ></app-stat-card>
       </a>
       <a routerLink="/clientes" [queryParams]="{ status: 'INATIVO' }" class="crm-stat-card-link">
@@ -249,16 +231,13 @@
     </div>
 
     <div class="crm-indicators-tier crm-indicators-tier--operacao space-y-3">
-      <p class="text-emerald-300/90 text-[10px] font-semibold uppercase tracking-[0.14em]">
-        Operação · mês atual
-      </p>
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <a routerLink="/financeiro" class="crm-stat-card-link">
           <app-stat-card
             title="Recebido no mês"
             [value]="recebidoMes"
             variant="success"
-            [subtitle]="'Meta ' + metaMesPercentual + '% do previsto'"
+            [subtitle]="metaMesPercentual + '%'"
           ></app-stat-card>
         </a>
         <a routerLink="/financeiro" class="crm-stat-card-link">
@@ -266,7 +245,7 @@
             title="A receber no mês"
             [value]="aReceberEsteMes"
             variant="warning"
-            [subtitle]="qtdEsteMes + ' cobrança(s) pendente(s)'"
+            [subtitle]="qtdEsteMes.toString()"
           ></app-stat-card>
         </a>
         <a routerLink="/vencimentos" class="crm-stat-card-link">
@@ -274,7 +253,7 @@
             [title]="'Vencendo · ' + diasAntecedencia + 'd'"
             [value]="vencendoQtd.toString()"
             variant="orange"
-            [subtitle]="vencendoValor + ' em risco'"
+            [subtitle]="vencendoValor"
           ></app-stat-card>
         </a>
         <app-stat-card
@@ -287,9 +266,6 @@
     </div>
 
     <div class="crm-indicators-tier crm-indicators-tier--negocio space-y-3">
-      <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-[0.14em]">
-        Negócio · projeções
-      </p>
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <app-stat-card
           title="MRR estimado"
@@ -314,7 +290,6 @@
           title="Cortesia"
           [value]="qtdCortesia.toString()"
           variant="primary"
-          subtitle="sem cobrança automática"
         ></app-stat-card>
         <a
           *ngIf="cadastrosIncompletos > 0"
@@ -326,7 +301,6 @@
             title="Cadastro incompleto"
             [value]="cadastrosIncompletos.toString()"
             variant="warning"
-            subtitle="corrigir dados faltantes"
           ></app-stat-card>
         </a>
       </div>

@@ -1,7 +1,4 @@
-<app-page-header
-  title="Vencimentos"
-  subtitle="Consulta de mensalidades pendentes por data — somente leitura."
->
+<app-page-header title="Vencimentos">
   <button
     type="button"
     class="crm-btn-ghost"
@@ -15,19 +12,6 @@
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
 <div *ngIf="!loading" class="space-y-6">
-  <div class="crm-info-banner">
-    <p>
-      Tela de <span class="text-white font-medium">consulta</span>. Para enviar lembretes e cobranças em lote,
-      use a
-      <a routerLink="/cobranca-diaria" class="crm-link font-medium">Cobrança Diária</a>.
-      Pagamentos em lote ficam no
-      <a routerLink="/financeiro" class="crm-link font-medium">Financeiro</a>.
-    </p>
-    <p class="crm-info-banner-hint">
-      Filtro “Próximos” considera até {{ diasAntecedencia }} dias (configurável em Configurações).
-    </p>
-  </div>
-
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <app-stat-card title="Total Pendente" [value]="totalPendente" variant="warning"></app-stat-card>
     <app-stat-card title="Vencem Hoje" [value]="vencemHoje.toString()" variant="danger"></app-stat-card>

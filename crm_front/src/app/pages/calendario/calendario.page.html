@@ -1,48 +1,28 @@
-<app-page-header
-  title="Calendário"
-  subtitle="Veja em qual dia cada cliente precisa de atenção — renovação ou cobrança."
-></app-page-header>
+<app-page-header title="Calendário"></app-page-header>
 
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
 <div *ngIf="!loading" class="space-y-6">
-  <div class="crm-info-banner">
-    <p>
-      Cada <strong class="text-slate-300">ponto no calendário</strong> é um cliente com algo importante
-      naquele dia. Quando assinatura e mensalidade caem juntas, aparecem
-      <strong class="text-slate-300">uma vez só</strong> — é o dia da renovação.
-    </p>
-    <p class="crm-info-banner-hint">
-      Para listar e renovar cobranças: <a routerLink="/vencimentos" class="crm-link font-medium">Vencimentos</a>
-      · <a routerLink="/financeiro" class="crm-link font-medium">Financeiro</a>.
-      Para enviar WhatsApp em lote: <a routerLink="/cobranca-diaria" class="crm-link font-medium">Cobrança Diária</a>.
-    </p>
-  </div>
-
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card
       title="Clientes no mês"
       [value]="resumoMes.clientes.toString()"
       variant="primary"
-      subtitle="Com renovação ou cobrança"
     ></app-stat-card>
     <app-stat-card
       title="No dia selecionado"
       [value]="clientesDiaSelecionado.length.toString()"
       color="#64748B"
-      [subtitle]="clientesDiaSelecionado.length === 1 ? 'cliente' : 'clientes'"
     ></app-stat-card>
     <app-stat-card
       title="Só expiração"
       [value]="resumoMes.expiracoes.toString()"
       variant="warning"
-      subtitle="Datas de fim de assinatura"
     ></app-stat-card>
     <app-stat-card
       title="Só mensalidade"
       [value]="resumoMes.mensalidades.toString()"
       variant="success"
-      subtitle="Cobranças pendentes"
     ></app-stat-card>
   </div>
 

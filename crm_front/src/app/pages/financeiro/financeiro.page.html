@@ -1,19 +1,4 @@
-<app-page-header title="Financeiro" subtitle="Quitação de cobranças pendentes e pagamentos em lote."></app-page-header>
-
-<div *ngIf="!loading" class="crm-info-banner mb-6">
-  <p>
-    Cobrança WhatsApp (individual ou em lote):
-    <a routerLink="/cobranca-diaria" class="crm-link font-medium">Cobrança Diária</a>.
-    Consulta por data:
-    <a routerLink="/vencimentos" class="crm-link font-medium">Vencimentos</a>.
-  </p>
-  <p class="crm-info-banner-hint">
-    Status da cobrança pendente:
-    <strong class="text-slate-400">Vencendo</strong> (próximos {{ diasAntecedencia }} dias),
-    <strong class="text-slate-400">Longe do vencimento</strong> (além disso),
-    <strong class="text-slate-400">Atrasado</strong> (data passou). Use <strong class="text-slate-400">Renovar</strong> para registrar pagamento e estender a assinatura.
-  </p>
-</div>
+<app-page-header title="Financeiro"></app-page-header>
 
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
@@ -23,19 +8,19 @@
       title="Vencendo ({{ diasAntecedencia }} dias)"
       [value]="resumo('PENDENTE').valor"
       variant="warning"
-      [subtitle]="resumo('PENDENTE').qtd + ' cobrança(s) · vence em até ' + diasAntecedencia + ' dias'"
+      [subtitle]="resumo('PENDENTE').qtd.toString()"
     ></app-stat-card>
     <app-stat-card
       title="Longe do vencimento"
       [value]="resumo('REGULAR').valor"
       variant="success"
-      [subtitle]="resumo('REGULAR').qtd + ' cobrança(s) · vence após ' + diasAntecedencia + ' dias'"
+      [subtitle]="resumo('REGULAR').qtd.toString()"
     ></app-stat-card>
     <app-stat-card
       title="Atrasado"
       [value]="resumo('ATRASADO').valor"
       variant="danger"
-      [subtitle]="resumo('ATRASADO').qtd + ' cobrança(s) · data já passou'"
+      [subtitle]="resumo('ATRASADO').qtd.toString()"
     ></app-stat-card>
   </div>
 
@@ -117,9 +102,6 @@
         Total: <span class="crm-text-highlight font-medium">{{ valorTotalSelecionados }}</span>
       </p>
     </div>
-    <p class="text-slate-500 text-xs sm:max-w-xs sm:text-right">
-      Após registrar, confirme a renovação no painel IPTV e envie renovação/recibo no WhatsApp.
-    </p>
   </div>
 
   <div class="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">

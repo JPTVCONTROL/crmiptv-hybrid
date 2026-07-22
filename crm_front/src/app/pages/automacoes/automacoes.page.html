@@ -1,7 +1,6 @@
 <app-page-header
   *ngIf="!automacaoMetaHabilitada"
   title="Automações"
-  subtitle="Envio automático via Meta pausado — use Cobrança Diária e os botões WhatsApp Web."
 ></app-page-header>
 
 <div *ngIf="!automacaoMetaHabilitada" class="max-w-3xl">
@@ -10,15 +9,6 @@
       <ion-icon name="pause-circle-outline" class="text-2xl text-slate-400 shrink-0"></ion-icon>
       <div class="space-y-2">
         <p class="text-white font-medium">API Meta desativada no CRM</p>
-        <p class="text-slate-400 text-sm leading-relaxed">
-          Lembretes e cobranças seguem pelo envio <strong class="text-slate-300">manual</strong>
-          (WhatsApp Web) em Cobrança Diária, Financeiro, Vencimentos e ficha do cliente.
-        </p>
-        <p class="text-slate-500 text-xs">
-          Quando tiver MEI/CNPJ e quiser retomar a API, altere
-          <code class="crm-code">AUTOMACAO_META_HABILITADA</code> em
-          <code class="crm-code">automacao-meta.ts</code>.
-        </p>
       </div>
     </div>
     <a routerLink="/cobranca-diaria" class="crm-btn-primary inline-block no-underline w-fit">
@@ -30,7 +20,6 @@
 <ng-container *ngIf="automacaoMetaHabilitada">
 <app-page-header
   title="Automações"
-  subtitle="Lembretes e cobranças automáticas via WhatsApp Cloud API (Meta)."
 >
   <button
     type="button"
@@ -62,12 +51,6 @@
         <ion-icon name="time-outline" class="text-xl text-amber-400 shrink-0 mt-0.5"></ion-icon>
         <div class="space-y-1">
           <p class="text-amber-200 text-sm font-medium">Aguardando confirmação dos modelos Meta</p>
-          <p class="text-slate-400 text-sm">
-            Quando <code class="crm-code">crm_lembrete</code> e
-            <code class="crm-code">crm_cobranca</code> estiverem
-            <strong class="text-slate-300">Ativos</strong> no Gerenciador do WhatsApp, clique no botão ao lado
-            para liberar o envio automático no CRM.
-          </p>
         </div>
       </div>
       <button
@@ -89,12 +72,6 @@
       <ion-icon name="checkmark-circle-outline" class="text-xl text-green-400 shrink-0 mt-0.5"></ion-icon>
       <div class="space-y-1">
         <p class="text-green-200 text-sm font-medium">Modelos Meta prontos para uso</p>
-        <p class="text-slate-400 text-sm">
-          <code class="crm-code">crm_lembrete</code> e
-          <code class="crm-code">crm_cobranca</code>
-          {{ templatesAprovadosNaMeta ? 'confirmados como aprovados' : 'já enviaram com sucesso' }}.
-          Ative os toggles abaixo ou use <strong class="text-slate-300">Executar agora</strong> para testar.
-        </p>
       </div>
     </div>
   </div>
@@ -124,36 +101,7 @@
         <div>
           <h2 class="text-white font-semibold">Mensalidades elegíveis</h2>
           <p class="text-slate-400 text-sm mt-1">{{ simulacaoLeitura }}</p>
-          <p class="text-slate-500 text-xs mt-2">
-            Contagem no gatilho de hoje (independente dos toggles). Cada ponto dispara
-            <strong class="text-slate-400">uma vez por mensalidade</strong>.
-            Envio automático entre {{ janelaManhaTexto }} (horário local), com minutos alternados por cliente.
-            Fila de hoje: {{ filaHojeResumo }}.
-            Última execução: {{ fmtDataHora(form.ultimaExecucaoEm) }}
-            <span *ngIf="form.ultimoHorarioExecutado"> às {{ form.ultimoHorarioExecutado }}</span>.
-          </p>
         </div>
-
-        <p class="text-slate-400 text-sm" *ngIf="!whatsappConfigurado">
-          Defina
-          <code class="crm-code">WHATSAPP_PHONE_NUMBER_ID</code> e
-          <code class="crm-code">WHATSAPP_ACCESS_TOKEN</code> em
-          <code class="crm-code">crm_back/.env</code> e reinicie a API.
-        </p>
-
-        <p class="text-slate-500 text-xs" *ngIf="whatsappConfigurado && whatsappPerfil">
-          <span *ngIf="whatsappTokenOk" class="text-green-400/90">
-            Meta conectada: {{ whatsappResumoLinha }} (API {{ whatsappPerfil.apiVersion }}).
-          </span>
-          <span *ngIf="!whatsappTokenOk" class="text-amber-400/90">
-            Credenciais no .env, mas a Meta respondeu erro: {{ whatsappPerfil.erro || 'token inválido' }}.
-            Gere um novo token em API Setup.
-          </span>
-        </p>
-
-        <p class="text-slate-500 text-xs" *ngIf="whatsappConfigurado && !whatsappPerfil">
-          Token temporário da Meta expira em ~24 h. Gere outro em API Setup se o envio falhar com erro de autenticação.
-        </p>
       </div>
 
       <div class="grid grid-cols-2 gap-3 shrink-0 w-full lg:w-auto">
@@ -260,26 +208,9 @@
         ></ion-icon>
         <div>
           <p class="text-slate-200 text-sm font-medium">{{ passo.titulo }}</p>
-          <p class="text-slate-500 text-xs mt-0.5">{{ passo.descricao }}</p>
         </div>
       </li>
     </ul>
-
-    <p
-      *ngIf="whatsappConfigurado && simulacaoTotal === 0"
-      class="text-amber-300/90 text-xs border border-amber-500/20 bg-amber-500/5 rounded-xl px-3 py-2"
-    >
-      Nenhuma mensalidade elegível no momento. Confira vencimentos, status PENDENTE, telefone do cliente e
-      se ele participa de cobranças.
-    </p>
-
-    <p
-      *ngIf="whatsappConfigurado && simulacaoTotal > 0 && aguardandoTemplatesMeta"
-      class="text-slate-400 text-xs border border-slate-800 rounded-xl px-3 py-2"
-    >
-      Quando os templates forem aprovados, use <strong class="text-slate-300">Executar agora</strong>
-      (não precisa ligar os toggles antes do teste).
-    </p>
   </section>
 
   <section
@@ -403,11 +334,6 @@
   <section class="crm-card space-y-4" *ngIf="!templatesProntos">
     <div>
       <h2 class="text-white font-semibold text-lg">Referência dos modelos Meta</h2>
-      <p class="text-slate-400 text-sm leading-relaxed mt-1">
-        Você já enviou os templates para análise. Use esta referência se precisar recriar ou conferir.
-        Categoria <strong class="text-slate-300">Utilidade</strong>, idioma
-        <strong class="text-slate-300">Portuguese (BR)</strong>.
-      </p>
     </div>
 
     <article
@@ -426,14 +352,6 @@
       </div>
       <pre class="text-slate-400 text-xs whitespace-pre-wrap font-mono leading-relaxed">{{ modelo.corpo }}</pre>
     </article>
-
-    <p class="text-slate-500 text-xs">
-      Variáveis não podem ficar no início ou fim do template — mantenha texto fixo após a 5ª variável.
-      Webhook (opcional):
-      <code class="crm-code">/api/webhook/whatsapp</code>
-      · verify token:
-      <code class="crm-code">WHATSAPP_WEBHOOK_VERIFY_TOKEN</code>.
-    </p>
   </section>
 
   <section class="space-y-3">
@@ -441,7 +359,6 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <article *ngFor="let fluxo of fluxosAtuais" class="crm-card space-y-3 !p-4">
         <h3 class="text-white font-medium">{{ fluxo.titulo }}</h3>
-        <p class="text-slate-400 text-sm">{{ fluxo.descricao }}</p>
         <a [routerLink]="fluxo.rota" class="crm-btn-ghost crm-btn-sm inline-block no-underline">
           {{ fluxo.rotuloLink }}
         </a>

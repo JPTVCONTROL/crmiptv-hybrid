@@ -1,6 +1,5 @@
 <app-page-header
   title="Cobrança Diária"
-  [subtitle]="subtitulo"
 ></app-page-header>
 
 <app-loading *ngIf="loading" variant="table"></app-loading>
@@ -15,12 +14,6 @@
         <ion-icon name="time-outline" class="text-xl text-amber-400 shrink-0 mt-0.5"></ion-icon>
         <div class="space-y-1">
           <p class="text-amber-200 text-sm font-medium">Confirme os modelos na Meta</p>
-          <p class="text-slate-400 text-sm">
-            Se <code class="crm-code">crm_lembrete</code> e
-            <code class="crm-code">crm_cobranca</code> já estão
-            <strong class="text-slate-300">Ativos</strong>, confirme em Automações para liberar o envio automático.
-            O envio manual abaixo continua disponível.
-          </p>
         </div>
       </div>
       <a routerLink="/automacoes" class="crm-btn-primary crm-btn-md no-underline shrink-0 text-center">
@@ -35,10 +28,7 @@
   >
     <div class="flex items-start gap-3">
       <ion-icon name="checkmark-circle-outline" class="text-xl text-green-400 shrink-0 mt-0.5"></ion-icon>
-      <p class="text-slate-400 text-sm">
-        Modelos Meta <code class="crm-code">crm_lembrete</code> e
-        <code class="crm-code">crm_cobranca</code> prontos — você pode ligar a cobrança automática abaixo.
-      </p>
+      <p class="text-green-200 text-sm font-medium">Modelos Meta prontos</p>
     </div>
   </div>
 
@@ -66,19 +56,7 @@
         <span *ngIf="salvandoAutomacao" class="text-slate-500 text-xs">Salvando...</span>
       </div>
       <p class="text-slate-400 text-sm mt-1">
-        Envia lembretes e cobranças via WhatsApp API entre
-        <span class="text-slate-300">{{ horariosAutomacao }}</span> (horários alternados por cliente).
-        O envio manual abaixo continua disponível.
-      </p>
-      <p *ngIf="aguardandoTemplatesMeta" class="text-amber-400 text-xs mt-2">
-        Automático indisponível até a Meta aprovar os modelos — envio manual liberado abaixo.
-      </p>
-      <p *ngIf="!whatsappApiConfigurado" class="text-amber-400 text-xs mt-2">
-        WhatsApp API não configurada —
-        <a routerLink="/automacoes" class="underline">veja o checklist em Automações</a>.
-      </p>
-      <p *ngIf="automacaoAtiva" class="text-green-400/90 text-xs mt-2">
-        Agendador ligado · lembretes (3/1/0 dias) e cobranças (1º, 5º e 7º dia de atraso).
+        {{ horariosAutomacao }}
       </p>
     </div>
     <div class="flex items-center gap-3 shrink-0 self-start sm:self-center">
@@ -95,9 +73,6 @@
   <div class="crm-hero-card !p-4 md:!p-5">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="min-w-0">
-        <p class="crm-kicker mb-1.5">
-          Rotina do dia
-        </p>
         <h2 class="text-white text-lg md:text-xl font-bold">
           {{
             rotinaFeitaHoje
@@ -171,7 +146,6 @@
       title="Atrasados"
       [value]="qtdAtrasados.toString()"
       color="#DC2626"
-      subtitle="Mensagem de cobrança"
     ></app-stat-card>
     <app-stat-card
       title="A vencer"

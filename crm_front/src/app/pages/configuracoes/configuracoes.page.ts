@@ -160,15 +160,6 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       : this.subAbasMensagens.filter((s) => s.id === 'manual');
   }
 
-  get subtituloAba(): string {
-    if (this.abaAtiva === 'mensagens') {
-      const sub = this.subAbasMensagensVisiveis.find((s) => s.id === this.subAbaMensagens);
-      return sub?.descricao ?? 'Templates do WhatsApp.';
-    }
-
-    return this.abas.find((aba) => aba.id === this.abaAtiva)?.subtitulo ?? 'Configurações do CRM.';
-  }
-
   get metaPreviewRotulo(): string {
     return rotuloJanelaMetaNovosClientes(
       this.form.metaNovosClientesInicioEm,

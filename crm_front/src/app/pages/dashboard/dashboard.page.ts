@@ -20,7 +20,6 @@ import {
   META_NOVOS_CLIENTES_QTD_PADRAO,
   resolverDatasMetaNovosClientes,
   rotuloJanelaMetaNovosClientes,
-  rotuloPrazoMetaNovosClientes,
 } from '../../shared/utils/meta-novos-clientes.util';
 import { rotuloUltimoContato } from '../../shared/utils/contato';
 import { montarMensagemBloqueioMensalidade } from '../../shared/utils/cobranca-lote';
@@ -93,8 +92,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   ganhosProximoAno = '';
   ganhosProximoAnoRotulo = '';
 
-  subtituloPagina = '';
-
   iconeAlerta = iconeAlertaOperacional;
   classesAlerta = classesAlertaOperacional;
 
@@ -134,51 +131,11 @@ export class DashboardPage implements OnInit, OnDestroy {
     return `${Math.round((this.qtdAtivos / this.totalClientes) * 100)}%`;
   }
 
-  get metaClientesBaseRotulo(): string {
-    const excluidos = this.qtdCortesia + this.qtdSomenteContato;
-    if (excluidos <= 0) {
-      return `${this.totalClientes} cadastrados`;
-    }
-
-    const partes: string[] = [];
-    if (this.qtdCortesia > 0) {
-      partes.push(
-        this.qtdCortesia === 1 ? '1 cortesia' : `${this.qtdCortesia} cortesias`
-      );
-    }
-    if (this.qtdSomenteContato > 0) {
-      partes.push(
-        this.qtdSomenteContato === 1
-          ? '1 somente cadastro'
-          : `${this.qtdSomenteContato} somente cadastro`
-      );
-    }
-
-    return `${this.totalClientes} cadastrados · fora da meta: ${partes.join(' e ')}`;
-  }
-
   get metaNovosClientesRotulo(): string {
-    return `${this.metaClientesAtual} de ${this.metaNovosClientesQtd} · ${rotuloJanelaMetaNovosClientes(this.metaNovosClientesInicioEm, this.metaNovosClientesFimEm)}`;
-  }
-
-  get metaNovosClientesSubtitulo(): string {
-    const prazo = rotuloPrazoMetaNovosClientes(
-      this.metaNovosClientesFimEm,
-      this.metaNovosClientesEncerrada,
-      this.metaNovosClientesDiasRestantes
+    return rotuloJanelaMetaNovosClientes(
+      this.metaNovosClientesInicioEm,
+      this.metaNovosClientesFimEm
     );
-
-    if (this.metaNovosClientesAtingida) {
-      return `Meta atingida · ${prazo} · ${this.metaClientesBaseRotulo}`;
-    }
-
-    const faltam = Math.max(0, this.metaNovosClientesQtd - this.metaClientesAtual);
-    const progresso =
-      faltam === 1
-        ? 'Falta 1 cliente comercial'
-        : `Faltam ${faltam} clientes comerciais`;
-
-    return `${progresso} · ${prazo} · ${this.metaClientesBaseRotulo}`;
   }
 
   get metaNovosClientesStatusRotulo(): string {
@@ -246,7 +203,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.subtituloPagina = this.montarSubtitulo();
     if (!this.configuracaoService.getSnapshot()) {
       this.configuracaoService.carregar().subscribe();
     }
@@ -444,16 +400,6 @@ export class DashboardPage implements OnInit, OnDestroy {
       status: 'PENDENTE',
       bloqueioEnviadoEm: cliente.bloqueioEnviadoEm ?? null,
     };
-  }
-
-  private montarSubtitulo(): string {
-    const hoje = new Date().toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-    return `Resumo de ${hoje}`;
   }
 
   rotuloExpiracao(expiraEm?: string | null): string {

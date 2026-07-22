@@ -1,6 +1,5 @@
 <app-page-header
   title="Configurações"
-  [subtitle]="subtituloAba"
 ></app-page-header>
 
 <app-loading *ngIf="loading" variant="page"></app-loading>
@@ -25,8 +24,7 @@
     <!-- Conta -->
     <ng-container *ngIf="abaAtiva === 'conta'">
       <div>
-        <h2 class="text-white font-semibold text-lg mb-2">Conta</h2>
-        <p class="text-slate-500 text-sm mb-4">Altere a senha de acesso ao CRM.</p>
+        <h2 class="text-white font-semibold text-lg mb-4">Conta</h2>
 
         <button
           *ngIf="!mostrarFormSenha"
@@ -125,11 +123,7 @@
     <ng-container *ngIf="abaAtiva === 'metas'">
       <div class="crm-config-meta-panel">
         <div>
-          <p class="crm-kicker mb-1">Captação</p>
           <h2 class="text-white font-semibold text-lg">Meta de clientes</h2>
-          <p class="text-slate-400 text-sm mt-1">
-            Quantidade alvo da sua base comercial até a data final. Exclui cortesia e clientes marcados como somente cadastro/contato.
-          </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -163,13 +157,9 @@
         </div>
 
         <div class="crm-config-meta-preview">
-          <p class="text-violet-300 text-[10px] font-semibold uppercase tracking-wide mb-2">
-            Prévia no Dashboard
-          </p>
           <p class="text-white font-semibold">
             {{ form.metaNovosClientesQtd }} clientes · {{ metaPreviewRotulo }}
           </p>
-          <p class="text-slate-500 text-xs mt-1">{{ metaPreviewPrazo }}</p>
         </div>
 
         <button
@@ -203,9 +193,6 @@
       <div>
         <h2 class="text-white font-semibold text-lg mb-2">Lembretes</h2>
         <label class="block text-slate-300 mb-2 text-sm">Dias de antecedência do lembrete</label>
-        <p class="text-slate-500 text-xs mb-2">
-          Usado na Cobrança Diária, Financeiro, Vencimentos e envio automático (padrão: 5).
-        </p>
         <input
           class="crm-input max-w-[8rem]"
           type="number"
@@ -217,14 +204,6 @@
 
       <!-- Manual -->
       <ng-container *ngIf="subAbaMensagens === 'manual'">
-        <div class="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4">
-          <p class="text-slate-300 text-sm font-medium">Envio manual pelo operador</p>
-          <p class="text-slate-500 text-xs mt-1 leading-relaxed">
-            Estas mensagens abrem o WhatsApp Web (<code class="crm-code">wa.me</code>) ao clicar nos botões do CRM.
-            Não passam pela API oficial da Meta.
-          </p>
-        </div>
-
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <h2 class="text-white font-semibold text-lg">Mensagem de Conta ativada</h2>
@@ -236,9 +215,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">
-            Botão Conta ativada no perfil do cliente ou ao cadastrar um novo cliente.
-          </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisContaAtivada.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBoasVindas"></textarea>
         </div>
@@ -254,10 +230,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">
-            Botão <strong class="text-slate-400">Cobrar</strong> para vencimentos em dia ou a vencer (não atrasados).
-            Também usada no envio automático — edite a versão API na outra aba se preferir contexto separado.
-          </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
         </div>
@@ -273,9 +245,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">
-            Botão <strong class="text-slate-400">Cobrar</strong> para clientes atrasados.
-          </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>
         </div>
@@ -291,7 +260,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">Oferecida após registrar pagamento / renovar plano.</p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRenovacao.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRenovacao"></textarea>
         </div>
@@ -307,7 +275,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">Confirmação de pagamento recebido (uso opcional).</p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRecibo.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRecibo"></textarea>
         </div>
@@ -323,9 +290,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">
-            Botão <strong class="text-slate-400">Avisar bloqueio</strong> para mensalidades vencidas.
-          </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisBloqueio.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemBloqueio"></textarea>
         </div>
@@ -333,40 +297,6 @@
 
       <!-- Automático (API Meta) -->
       <ng-container *ngIf="automacaoMetaHabilitada && subAbaMensagens === 'automatico'">
-        <div class="crm-accent-panel-sm p-4 space-y-2">
-          <p class="crm-text-highlight text-sm font-medium">WhatsApp Cloud API (Meta)</p>
-          <p class="text-slate-400 text-xs leading-relaxed">
-            Estes textos alimentam os templates <code class="crm-code">crm_lembrete</code> e
-            <code class="crm-code">crm_cobranca</code> na execução automática (Automações).
-            O corpo aprovado na Meta deve corresponder ao texto aqui — a API envia 5 variáveis:
-            nome, referência, valor, vencimento e PIX.
-          </p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-400 pt-1">
-            <div>
-              <p class="text-slate-500 mb-1 font-medium">Lembretes automáticos</p>
-              <ul class="list-disc pl-4 space-y-0.5">
-                <li>3 dias antes do vencimento</li>
-                <li>1 dia antes do vencimento</li>
-                <li>No dia do vencimento</li>
-              </ul>
-            </div>
-            <div>
-              <p class="text-slate-500 mb-1 font-medium">Cobranças automáticas</p>
-              <ul class="list-disc pl-4 space-y-0.5">
-                <li>1º dia de atraso</li>
-                <li>5 dias de atraso</li>
-                <li>7 dias de atraso</li>
-              </ul>
-            </div>
-          </div>
-          <p class="text-slate-500 text-xs">
-            Cada ponto dispara uma única vez por mensalidade. Aviso de bloqueio de acesso é envio manual (botão no CRM).
-          </p>
-          <a routerLink="/automacoes" class="crm-btn-ghost crm-btn-sm inline-block no-underline mt-1">
-            Abrir Automações (horários e execução)
-          </a>
-        </div>
-
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <h2 class="text-white font-semibold text-lg">Lembrete automático</h2>
@@ -378,9 +308,6 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">
-            Template Meta: <code class="crm-code">crm_lembrete</code> · clientes a vencer na janela de antecedência.
-          </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
         </div>
@@ -396,20 +323,8 @@
               Restaurar padrão
             </button>
           </div>
-          <p class="text-slate-500 text-xs mb-1">
-            Template Meta: <code class="crm-code">crm_cobranca</code> · clientes com mensalidade atrasada.
-          </p>
           <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
           <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>
-        </div>
-
-        <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-2">
-          <p class="text-slate-300 text-sm font-medium">Checklist Meta</p>
-          <ul class="text-slate-500 text-xs space-y-1 list-disc pl-4">
-            <li>Categoria <strong class="text-slate-400">Utilidade</strong>, idioma <strong class="text-slate-400">Portuguese (BR)</strong>.</li>
-            <li>Não termine o corpo do template com variável — mantenha texto fixo após a 5ª variável (PIX).</li>
-            <li>Conta ativada, renovação, bloqueio e recibo <strong class="text-slate-400">não</strong> têm envio automático pela API neste CRM.</li>
-          </ul>
         </div>
       </ng-container>
 
@@ -425,9 +340,6 @@
         <div class="space-y-4">
           <div>
             <label class="block text-slate-300 mb-2 text-sm">Cor principal do sistema</label>
-            <p class="text-slate-500 text-xs mb-3">
-              Usada nos botões, menu e destaques do CRM.
-            </p>
             <div class="flex flex-wrap items-center gap-3">
               <input
                 type="color"
@@ -469,9 +381,6 @@
 
       <div>
         <h2 class="text-white font-semibold text-lg mb-2">Backup</h2>
-        <p class="text-slate-500 text-sm mb-4">
-          Baixe uma cópia do banco de dados com todos os clientes, mensalidades e configurações.
-        </p>
         <button
           type="button"
           class="crm-btn-ghost"
@@ -484,9 +393,6 @@
 
       <div>
         <h2 class="text-white font-semibold text-lg mb-2">Sincronização de cobranças</h2>
-        <p class="text-slate-500 text-sm mb-4">
-          Alinha mensalidades pendentes com as datas de vencimento dos clientes. Executado automaticamente no login.
-        </p>
         <p *ngIf="ultimaSincronizacao" class="text-slate-400 text-sm mb-3">{{ ultimaSincronizacao }}</p>
         <button
           type="button"

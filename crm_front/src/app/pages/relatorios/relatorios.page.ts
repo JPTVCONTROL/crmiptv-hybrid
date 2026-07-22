@@ -208,14 +208,6 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     return data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   }
 
-  get subtituloPagina(): string {
-    if (this.modo === 'ANUAL') {
-      return `Consolidado de ${this.ano} e projeção para ${this.projecaoAno}.`;
-    }
-
-    return `Análise de ${this.rotuloPeriodo} e projeção para ${this.projecaoAno}.`;
-  }
-
   get rotuloComparativo(): string {
     return this.modo === 'ANUAL' ? 'Vs. ano anterior' : 'Vs. mês anterior';
   }
