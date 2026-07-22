@@ -1,40 +1,94 @@
-<div
-  class="crm-bar-chart"
-  [style.min-height.px]="height"
-  role="img"
-  [attr.aria-label]="'Gráfico de faturamento com ' + data.length + ' meses'"
->
-  <div *ngIf="barras.length === 0" class="crm-bar-chart-empty">
-    Nenhum dado para exibir.
+<div class="crm-bar-chart-wrap">
+  <div *ngIf="exibirLucro" class="crm-bar-chart-legend" aria-hidden="true">
+    <span class="crm-bar-chart-legend-item crm-bar-chart-legend-item--bruto">
+      Faturamento bruto
+    </span>
+    <span class="crm-bar-chart-legend-item crm-bar-chart-legend-item--lucro">
+      Lucro
+    </span>
   </div>
 
   <div
-    *ngFor="let item of barras"
-    class="crm-bar-chart-col"
-    [class.crm-bar-chart-col--active]="indiceAtivo === item.indice"
-    [class.crm-bar-chart-col--destaque]="item.destaque"
-    (mouseenter)="destacar(item.indice)"
-    (mouseleave)="destacar(null)"
-    (focusin)="destacar(item.indice)"
-    (focusout)="destacar(null)"
-    tabindex="0"
+    class="crm-bar-chart"
+    [style.min-height.px]="height"
+    role="img"
+    [attr.aria-label]="
+      'Gráfico de faturamento com ' + data.length + ' meses' +
+      (exibirLucro ? ', bruto e lucro' : '')
+    "
   >
+    <div *ngIf="barras.length === 0" class="crm-bar-chart-empty">
+      Nenhum dado para exibir.
+    </div>
+
     <div
-      *ngIf="indiceAtivo === item.indice"
-      class="crm-bar-chart-tooltip"
-      role="tooltip"
+      *ngFor="let item of barras"
+      class="crm-bar-chart-col"
+      [class.crm-bar-chart-col--active]="indiceAtivo === item.indice"
+      [class.crm-bar-chart-col--destaque]="item.destaque"
+      (mouseenter)="destacar(item.indice)"
+      (mouseleave)="destacar(null)"
+      (focusin)="destacar(item.indice)"
+      (focusout)="destacar(null)"
+      tabindex="0"
     >
-      <span class="crm-bar-chart-tooltip-mes">{{ item.mes }}</span>
-      <strong>{{ formatarValor(item.total) }}</strong>
-    </div>
-    <span class="crm-bar-chart-value">{{ formatarValor(item.total) }}</span>
-    <div class="crm-bar-chart-track">
       <div
-        class="crm-bar-chart-bar"
-        [style.height.%]="item.altura"
-        [class.crm-bar-chart-bar--destaque]="item.destaque"
-      ></div>
+        *ngIf="indiceAtivo === item.indice"
+        class="crm-bar-chart-tooltip"
+        role="tooltip"
+      >
+        <span class="crm-bar-chart-tooltip-mes">{{ item.mes }}</span>
+        <span class="crm-bar-chart-tooltip-row">
+          <span class="crm-bar-chart-tooltip-label crm-bar-chart-tooltip-label--bruto"
+            >Bruto</span
+          >
+          <strong>{{ formatarValor(item.total) }}</strong>
+        </span>
+        <span
+          *ngIf="item.liquido !== undefined"
+          class="crm-bar-chart-tooltip-row"
+        >
+          <span class="crm-bar-chart-tooltip-label crm-bar-chart-tooltip-label--lucro"
+            >Lucro</span
+          >
+          <strong
+            [class.crm-bar-chart-tooltip-lucro-neg]="item.lucroNegativo"
+            >{{ formatarValor(item.liquido) }}</strong
+          >
+        </span>
+      </div>
+
+      <span class="crm-bar-chart-value" *ngIf="!exibirLucro">{{
+        formatarValor(item.total)
+      }}</span>
+      <span class="crm-bar-chart-value crm-bar-chart-value--dual" *ngIf="exibirLucro">
+        <span>{{ formatarValor(item.total) }}</span>
+        <span
+          *ngIf="item.liquido !== undefined"
+          [class.text-emerald-400]="!item.lucroNegativo"
+          [class.text-red-400]="item.lucroNegativo"
+          >{{ formatarValor(item.liquido) }}</span
+        >
+      </span>
+
+      <div
+        class="crm-bar-chart-track"
+        [class.crm-bar-chart-track--dual]="exibirLucro"
+      >
+        <div
+          class="crm-bar-chart-bar crm-bar-chart-bar--bruto"
+          [style.height.%]="item.alturaBruto"
+          [class.crm-bar-chart-bar--destaque]="item.destaque && !exibirLucro"
+        ></div>
+        <div
+          *ngIf="exibirLucro && item.liquido !== undefined"
+          class="crm-bar-chart-bar crm-bar-chart-bar--lucro"
+          [style.height.%]="item.alturaLucro"
+          [class.crm-bar-chart-bar--lucro-neg]="item.lucroNegativo"
+          [class.crm-bar-chart-bar--destaque]="item.destaque"
+        ></div>
+      </div>
+      <span class="crm-bar-chart-label">{{ item.mes }}</span>
     </div>
-    <span class="crm-bar-chart-label">{{ item.mes }}</span>
   </div>
 </div>

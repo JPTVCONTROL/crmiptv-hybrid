@@ -54,6 +54,7 @@ export interface CreateClienteDto {
   cortesia?: boolean;
   somenteContato?: boolean;
   observacao?: string | null;
+  custoCredito?: number;
 }
 
 export interface UpdateClienteDto extends Partial<CreateClienteDto> {}
@@ -159,3 +160,20 @@ export interface CreateTarefaDto {
 export type UpdateTarefaDto = Partial<CreateTarefaDto> & {
   concluida?: boolean;
 };
+
+export type CategoriaDespesa =
+  | 'PAINEL'
+  | 'SERVIDOR'
+  | 'INTERNET'
+  | 'MARKETING'
+  | 'OUTRO';
+
+export interface CreateDespesaDto {
+  nome: string;
+  valor: number;
+  categoria?: CategoriaDespesa | string;
+  ativo?: boolean;
+  observacao?: string | null;
+}
+
+export type UpdateDespesaDto = Partial<CreateDespesaDto>;

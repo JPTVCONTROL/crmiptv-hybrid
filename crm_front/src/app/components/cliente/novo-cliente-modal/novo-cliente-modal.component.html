@@ -7,228 +7,256 @@
 
 <ion-content class="crm-modal-content">
   <app-crm-modal-shell>
-  <div class="space-y-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Nome *</label>
-        <input class="crm-input" [(ngModel)]="form.nome" />
+    <div class="crm-form-stack max-w-4xl">
+      <div class="crm-form-grid">
+        <div class="crm-field">
+          <label class="crm-label">Nome *</label>
+          <input class="crm-input" [(ngModel)]="form.nome" />
+        </div>
+        <div class="crm-field">
+          <label class="crm-label">Telefone *</label>
+          <input
+            class="crm-input"
+            type="tel"
+            autocomplete="tel"
+            [ngModel]="form.telefone"
+            (ngModelChange)="onTelefoneInput($event)"
+            (blur)="telefoneTocado = true"
+            placeholder="(62) 99999-9999 ou +351 912 345 678"
+            [class.border-red-500]="telefoneInvalido"
+          />
+          <p *ngIf="telefoneInvalido" class="crm-hint text-red-400">
+            Informe um telefone válido para WhatsApp (Brasil ou internacional com +).
+          </p>
+          <p *ngIf="!telefoneInvalido" class="crm-hint">
+            {{ rotuloAjudaTelefone(form.telefone) }}
+          </p>
+        </div>
       </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Telefone *</label>
-        <input
-          class="crm-input"
-          type="tel"
-          autocomplete="tel"
-          [ngModel]="form.telefone"
-          (ngModelChange)="onTelefoneInput($event)"
-          (blur)="telefoneTocado = true"
-          placeholder="(62) 99999-9999 ou +351 912 345 678"
-          [class.border-red-500]="telefoneInvalido"
-        />
-        <p *ngIf="telefoneInvalido" class="text-red-400 text-xs mt-1">
-          Informe um telefone válido para WhatsApp (Brasil ou internacional com +).
-        </p>
-        <p *ngIf="!telefoneInvalido" class="text-slate-500 text-xs mt-1">
-          {{ rotuloAjudaTelefone(form.telefone) }}
-        </p>
-      </div>
-    </div>
 
-    <div class="crm-card !p-4 border border-slate-800">
-      <label class="flex items-start gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900"
-          [(ngModel)]="form.somenteContato"
-          (ngModelChange)="onSomenteContatoChange()"
-        />
-        <span>
-          <span class="block text-slate-200 text-sm font-medium">Somente cadastro (sem plano/vencimento)</span>
-          <span class="block text-slate-500 text-xs mt-1">
-            Salva nome, telefone e dados opcionais sem plano, valor ou cobrança.
+      <div class="crm-toggle-card">
+        <label class="crm-toggle-card__label">
+          <input
+            type="checkbox"
+            class="crm-checkbox mt-0.5"
+            [(ngModel)]="form.somenteContato"
+            (ngModelChange)="onSomenteContatoChange()"
+          />
+          <span>
+            <span class="crm-toggle-card__title">Somente cadastro (sem plano/vencimento)</span>
+            <span class="crm-toggle-card__desc">
+              Salva nome, telefone e dados opcionais sem plano, valor ou cobrança.
+            </span>
           </span>
-        </span>
-      </label>
-    </div>
-
-    <div *ngIf="!form.somenteContato" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">Plano</label>
-        <select class="crm-input" [(ngModel)]="form.planoId" (ngModelChange)="onPlanoChange()">
-          <option [ngValue]="null">Selecione...</option>
-          <optgroup *ngFor="let grupo of gruposPlanos" [label]="grupo.titulo">
-            <option *ngFor="let plano of grupo.planos" [ngValue]="plano.id">
-              {{ fmtRotuloPlano(plano) }}
-            </option>
-          </optgroup>
-        </select>
-      </div>
-      <div>
-        <label class="block text-slate-300 mb-2 text-sm">
-          Valor Mensal<span *ngIf="!form.cortesia"> *</span>
         </label>
-        <input
-          class="crm-input"
-          type="number"
-          step="0.01"
-          [(ngModel)]="form.valorMensal"
-          [disabled]="form.cortesia"
-        />
       </div>
-    </div>
 
-    <div>
-      <h3 class="text-white font-semibold mb-3">Credenciais IPTV</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Servidor</label>
-          <input class="crm-input" [(ngModel)]="form.servidor" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Usuário</label>
-          <input class="crm-input" [(ngModel)]="form.usuario" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Senha</label>
-          <input class="crm-input" [(ngModel)]="form.senha" />
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-        <h3 class="text-white font-semibold">Dispositivos</h3>
-        <div class="flex items-center gap-3">
-          <label class="text-slate-300 text-sm whitespace-nowrap">Quantidade de telas</label>
-          <select
-            class="crm-input w-24 shrink-0"
-            [(ngModel)]="qtdTelas"
-            (ngModelChange)="onQtdTelasChange()"
-          >
-            <option *ngFor="let n of opcoesTelas" [ngValue]="n">{{ n }}</option>
+      <div *ngIf="!form.somenteContato" class="crm-form-grid">
+        <div class="crm-field">
+          <label class="crm-label">Plano</label>
+          <select class="crm-input" [(ngModel)]="form.planoId" (ngModelChange)="onPlanoChange()">
+            <option [ngValue]="null">Selecione...</option>
+            <optgroup *ngFor="let grupo of gruposPlanos" [label]="grupo.titulo">
+              <option *ngFor="let plano of grupo.planos" [ngValue]="plano.id">
+                {{ fmtRotuloPlano(plano) }}
+              </option>
+            </optgroup>
           </select>
         </div>
-      </div>
-
-      <div
-        *ngFor="let disp of dispositivosVisiveis; let i = index"
-        class="rounded-lg border border-slate-800/80 bg-slate-900/40 p-4 mb-3 last:mb-0"
-      >
-        <p *ngIf="qtdTelas > 1" class="crm-text-accent text-sm font-medium mb-3">
-          Tela {{ i + 1 }}
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-slate-300 mb-2 text-sm">Dispositivo</label>
-            <select
-              class="crm-input"
-              [(ngModel)]="disp.dispositivoId"
-              (ngModelChange)="onDispositivoChange(disp)"
-            >
-              <option [ngValue]="null">Selecione...</option>
-              <option *ngFor="let d of dispositivosOpcoes" [ngValue]="d.id">
-                {{ fmtRotuloDispositivo(d) }}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-2 text-sm">Aplicativo</label>
-            <select
-              class="crm-input"
-              [(ngModel)]="disp.aplicativoId"
-              [disabled]="!disp.dispositivoId"
-            >
-              <option [ngValue]="null">
-                {{ disp.dispositivoId ? 'Selecione...' : 'Escolha o dispositivo primeiro' }}
-              </option>
-              <option
-                *ngFor="let app of aplicativosDoDispositivo(disp.dispositivoId)"
-                [ngValue]="app.id"
-              >
-                {{ app.nome }}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-2 text-sm">MAC Address</label>
-            <input class="crm-input" [(ngModel)]="disp.macAddress" placeholder="00:1A:2B:3C:4D:5E" />
-          </div>
+        <div class="crm-field">
+          <label class="crm-label">
+            Valor Mensal<span *ngIf="!form.cortesia"> *</span>
+          </label>
+          <input
+            class="crm-input"
+            type="number"
+            step="0.01"
+            [(ngModel)]="form.valorMensal"
+            [disabled]="form.cortesia"
+          />
         </div>
       </div>
 
-      <button
-        *ngIf="podeAdicionarDispositivo"
-        type="button"
-        class="crm-btn-ghost text-sm"
-        (click)="adicionarDispositivo()"
-      >
-        + Adicionar dispositivo
+      <section class="crm-modal-section">
+        <h3 class="crm-modal-section-title">Credenciais IPTV</h3>
+        <div class="crm-form-grid crm-form-grid--3">
+          <div class="crm-field">
+            <label class="crm-label">Servidor / Painel</label>
+            <select
+              class="crm-input"
+              [(ngModel)]="form.servidor"
+              (ngModelChange)="onServidorChange()"
+            >
+              <option value="">Selecione...</option>
+              <option *ngFor="let item of servidoresPainel" [ngValue]="item.valor">
+                {{ item.rotulo }}
+              </option>
+            </select>
+            <p class="crm-hint">
+              Consome 1 crédito ao ativar ou renovar. Valores em Configurações → Servidores.
+            </p>
+            <div *ngIf="form.servidor" class="mt-3">
+              <label class="crm-label">Custo crédito/painel</label>
+              <input
+                class="crm-input"
+                type="number"
+                step="0.01"
+                min="0"
+                [(ngModel)]="form.custoCredito"
+                placeholder="0,00"
+              />
+              <p class="crm-hint">
+                Preenchido automaticamente conforme o servidor. Ajuste se necessário.
+              </p>
+            </div>
+          </div>
+          <div class="crm-field">
+            <label class="crm-label">Usuário</label>
+            <input class="crm-input" [(ngModel)]="form.usuario" autocomplete="username" />
+          </div>
+          <div class="crm-field">
+            <label class="crm-label">Senha</label>
+            <input class="crm-input" [(ngModel)]="form.senha" autocomplete="new-password" />
+          </div>
+        </div>
+      </section>
+
+      <section class="crm-modal-section">
+        <div class="crm-modal-section-head">
+          <h3 class="crm-modal-section-title">Dispositivos</h3>
+          <div class="flex items-center gap-3">
+            <label class="crm-label !mb-0 whitespace-nowrap">Quantidade de telas</label>
+            <select
+              class="crm-input w-24 shrink-0"
+              [(ngModel)]="qtdTelas"
+              (ngModelChange)="onQtdTelasChange()"
+            >
+              <option *ngFor="let n of opcoesTelas" [ngValue]="n">{{ n }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          *ngFor="let disp of dispositivosVisiveis; let i = index"
+          class="crm-card-nested mb-3 last:mb-0"
+        >
+          <p *ngIf="qtdTelas > 1" class="crm-text-accent text-sm font-medium mb-3">
+            Tela {{ i + 1 }}
+          </p>
+          <div class="crm-form-grid crm-form-grid--3">
+            <div class="crm-field">
+              <label class="crm-label">Dispositivo</label>
+              <select
+                class="crm-input"
+                [(ngModel)]="disp.dispositivoId"
+                (ngModelChange)="onDispositivoChange(disp)"
+              >
+                <option [ngValue]="null">Selecione...</option>
+                <option *ngFor="let d of dispositivosOpcoes" [ngValue]="d.id">
+                  {{ fmtRotuloDispositivo(d) }}
+                </option>
+              </select>
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">Aplicativo</label>
+              <select
+                class="crm-input"
+                [(ngModel)]="disp.aplicativoId"
+                [disabled]="!disp.dispositivoId"
+              >
+                <option [ngValue]="null">
+                  {{ disp.dispositivoId ? 'Selecione...' : 'Escolha o dispositivo primeiro' }}
+                </option>
+                <option
+                  *ngFor="let app of aplicativosDoDispositivo(disp.dispositivoId)"
+                  [ngValue]="app.id"
+                >
+                  {{ app.nome }}
+                </option>
+              </select>
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">MAC Address</label>
+              <input class="crm-input" [(ngModel)]="disp.macAddress" placeholder="00:1A:2B:3C:4D:5E" />
+            </div>
+          </div>
+        </div>
+
+        <button
+          *ngIf="podeAdicionarDispositivo"
+          type="button"
+          class="crm-btn-ghost text-sm"
+          (click)="adicionarDispositivo()"
+        >
+          + Adicionar dispositivo
+        </button>
+      </section>
+
+      <section *ngIf="!form.somenteContato" class="crm-modal-section">
+        <h3 class="crm-modal-section-title mb-3">Datas</h3>
+        <div class="crm-form-grid crm-form-grid--3">
+          <div class="crm-field">
+            <label class="crm-label">Ativado em</label>
+            <input class="crm-input" type="date" [(ngModel)]="form.ativadoEm" />
+          </div>
+          <div class="crm-field">
+            <label class="crm-label">Expira em</label>
+            <input class="crm-input" type="date" [(ngModel)]="form.expiraEm" (change)="onExpiraEmChange()" />
+          </div>
+          <div class="crm-field">
+            <label class="crm-label">Dia do vencimento</label>
+            <input class="crm-input" type="number" min="1" max="31" [(ngModel)]="form.vencimento" />
+          </div>
+        </div>
+      </section>
+
+      <div class="crm-field">
+        <label class="crm-label">Observação</label>
+        <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.observacao"></textarea>
+      </div>
+
+      <div *ngIf="!form.somenteContato" class="crm-toggle-card">
+        <label class="crm-toggle-card__label">
+          <input
+            type="checkbox"
+            class="crm-checkbox mt-0.5"
+            [(ngModel)]="form.cortesia"
+            (ngModelChange)="onCortesiaChange()"
+          />
+          <span>
+            <span class="crm-toggle-card__title">Cliente cortesia</span>
+            <span class="crm-toggle-card__desc">
+              Aparece em Vencimentos, mas sem cobrança, lembretes ou pagamento.
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div *ngIf="!form.somenteContato" class="crm-toggle-card">
+        <label class="crm-toggle-card__label">
+          <input
+            type="checkbox"
+            class="crm-checkbox mt-0.5"
+            [(ngModel)]="form.incluirCobrancas"
+            [disabled]="form.cortesia"
+          />
+          <span>
+            <span class="crm-toggle-card__title">Incluir nas cobranças</span>
+            <span class="crm-toggle-card__desc">
+              Desmarque para não aparecer na Cobrança Diária e rotinas automáticas de WhatsApp.
+            </span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div modalActions class="crm-modal-actions">
+      <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">
+        Cancelar
+      </button>
+      <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : 'Salvar cliente' }}
       </button>
     </div>
-
-    <div *ngIf="!form.somenteContato">
-      <h3 class="text-white font-semibold mb-3">Datas</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Ativado em</label>
-          <input class="crm-input" type="date" [(ngModel)]="form.ativadoEm" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Expira em</label>
-          <input class="crm-input" type="date" [(ngModel)]="form.expiraEm" (change)="onExpiraEmChange()" />
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-2 text-sm">Dia do vencimento</label>
-          <input class="crm-input" type="number" min="1" max="31" [(ngModel)]="form.vencimento" />
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <label class="block text-slate-300 mb-2 text-sm">Observação</label>
-      <textarea class="crm-input min-h-[80px]" [(ngModel)]="form.observacao"></textarea>
-    </div>
-
-    <div *ngIf="!form.somenteContato" class="crm-card !p-4 border border-slate-800">
-      <label class="flex items-start gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900"
-          [(ngModel)]="form.cortesia"
-          (ngModelChange)="onCortesiaChange()"
-        />
-        <span>
-          <span class="block text-slate-200 text-sm font-medium">Cliente cortesia</span>
-          <span class="block text-slate-500 text-xs mt-1">
-            Aparece em Vencimentos, mas sem cobrança, lembretes ou pagamento.
-          </span>
-        </span>
-      </label>
-    </div>
-
-    <div *ngIf="!form.somenteContato" class="crm-card !p-4 border border-slate-800">
-      <label class="flex items-start gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900"
-          [(ngModel)]="form.incluirCobrancas"
-          [disabled]="form.cortesia"
-        />
-        <span>
-          <span class="block text-slate-200 text-sm font-medium">Incluir nas cobranças</span>
-          <span class="block text-slate-500 text-xs mt-1">
-            Desmarque para não aparecer na Cobrança Diária e rotinas automáticas de WhatsApp.
-          </span>
-        </span>
-      </label>
-    </div>
-  </div>
-
-  <div modalActions class="crm-modal-actions">
-    <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">Cancelar</button>
-    <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
-      {{ salvando ? 'Salvando...' : 'Salvar cliente' }}
-    </button>
-  </div>
   </app-crm-modal-shell>
 </ion-content>

@@ -46,6 +46,8 @@ export class ClienteRepository {
         expiraEm: data.expiraEm ? parseExpiraEm(data.expiraEm) : null,
         vencimento: Number(data.vencimento),
         valorMensal: Number(data.valorMensal),
+        custoCredito:
+          data.custoCredito !== undefined ? Number(data.custoCredito) : 0,
         incluirCobrancas:
           data.incluirCobrancas !== undefined
             ? Boolean(data.incluirCobrancas)
@@ -99,6 +101,8 @@ export class ClienteRepository {
             : undefined,
         vencimento: data.vencimento !== undefined ? Number(data.vencimento) : undefined,
         valorMensal: data.valorMensal !== undefined ? Number(data.valorMensal) : undefined,
+        custoCredito:
+          data.custoCredito !== undefined ? Number(data.custoCredito) : undefined,
         incluirCobrancas:
           data.incluirCobrancas !== undefined
             ? Boolean(data.incluirCobrancas)

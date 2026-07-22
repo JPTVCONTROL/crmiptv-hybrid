@@ -7,6 +7,7 @@ import { PlanoService } from '../../core/services/plano.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { RelatorioService, RelatorioResumoApi } from '../../core/services/relatorio.service';
+import { PainelCreditoService } from '../../core/services/painel-credito.service';
 import { Cliente, Mensalidade } from '../../core/models';
 import {
   calcularDias,
@@ -28,15 +29,22 @@ import {
   calcularProjecaoProximoAno,
   calcularResumoAnual,
   calcularResumoMensal,
+  calcularProjecoesEsperadas,
+  formatarQtdCreditos,
+  ProjecoesEsperadasRelatorio,
   faturamentoPorMesNoAno,
   formatarVariacaoPercentual,
   mensalidadeEhCobravel,
+  mesComControleCustos,
 } from '../../shared/utils/relatorio-financeiro.util';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import {
   vincularSincronizacaoPagina,
   DOMINIOS_SYNC_RELATORIOS,
 } from '../../shared/utils/page-sync.util';
+import {
+  mapaTarifasPaineis,
+} from '../../shared/utils/custo-credito.util';
 import { DadoFaturamento } from '../../components/dashboard/faturamento-chart.component';
 import {
   EtapaFunilEfetividade,
@@ -68,13 +76,16 @@ interface CobrancaAtrasadaRelatorio {
 @Component({
   selector: 'app-relatorios',
   templateUrl: './relatorios.page.html',
+  styleUrls: ['./relatorios.page.scss'],
 })
 export class RelatoriosPage implements OnInit, OnDestroy {
   loading = true;
+  menuExportarAberto = false;
   private readonly destroy$ = new Subject<void>();
   clientes: Cliente[] = [];
   mensalidades: Mensalidade[] = [];
   private resumoApi: RelatorioResumoApi | null = null;
+  private tarifasPaineis: Record<string, number> = {};
 
   modo: ModoRelatorio = 'MENSAL';
   periodo = this.periodoAtual();
@@ -111,6 +122,23 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   projecaoTotal = '';
   projecaoClientesPagantes = 0;
 
+  custosTotalMensal = '';
+  custosCreditoClientes = '';
+  custosDespesasFixas = '';
+  custosMargemEstimada = '';
+  custosMargemPercentual = '';
+  custosMrr = '';
+
+  faturamentoBruto = '';
+  faturamentoLiquido = '';
+  lucroPercentual = '';
+  custosCreditoPeriodo = '';
+  custosTotaisPeriodo = '';
+  controleCustosAtivo = true;
+  controleCustosRotulo = '';
+
+  projecoesEsperadas: ProjecoesEsperadasRelatorio | null = null;
+
   ultimosPagamentos: PagamentoRelatorio[] = [];
   todasCobrancasAtrasadas: CobrancaAtrasadaRelatorio[] = [];
   distribuicaoPlanos: DadoCatalogoDistribuicao[] = [];
@@ -123,6 +151,7 @@ export class RelatoriosPage implements OnInit, OnDestroy {
 
   fmtData = formatarData;
   fmtValor = formatarValor;
+  fmtCreditos = formatarQtdCreditos;
 
   constructor(
     private clienteService: ClienteService,
@@ -132,7 +161,8 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     private dispositivoService: DispositivoService,
     private toast: ToastService,
     private sync: DadosSyncService,
-    private relatorioService: RelatorioService
+    private relatorioService: RelatorioService,
+    private painelCreditoService: PainelCreditoService
   ) {}
 
   ngOnInit(): void {
@@ -167,14 +197,24 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       this.aplicativoService.listar(),
       this.planoService.listar(),
       this.dispositivoService.listar(),
+      this.painelCreditoService.listar(),
       this.relatorioService.obterResumo(
         this.modo === 'MENSAL' ? this.periodo : undefined,
         this.modo === 'ANUAL' ? this.ano : Number(this.periodo.split('-')[0])
       ),
     ]).subscribe({
-      next: ([clientes, mensalidades, aplicativos, planos, dispositivos, resumoApi]) => {
+      next: ([
+        clientes,
+        mensalidades,
+        aplicativos,
+        planos,
+        dispositivos,
+        paineis,
+        resumoApi,
+      ]) => {
         this.clientes = clientes;
         this.mensalidades = mensalidades;
+        this.tarifasPaineis = mapaTarifasPaineis(paineis);
         this.resumoApi = resumoApi;
         this.distribuicaoPlanos = montarDistribuicaoPlanos(clientes, planos);
         this.distribuicaoAplicativos = montarDistribuicaoAplicativos(
@@ -197,6 +237,44 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     });
   }
 
+  get rotuloComparativo(): string {
+    return this.modo === 'ANUAL' ? 'Vs. ano anterior' : 'Vs. mês anterior';
+  }
+
+  get tituloGraficoPrincipal(): string {
+    return this.modo === 'ANUAL'
+      ? `Faturamento em ${this.ano}`
+      : 'Últimos 6 meses';
+  }
+
+  get subtituloGraficoPrincipal(): string {
+    if (this.modo === 'ANUAL') {
+      const partes = [`Média ${this.mediaMensalAnual}/mês`];
+      if (this.melhorMesAnual) {
+        partes.push(`Melhor mês: ${this.melhorMesAnual}`);
+      }
+      return partes.join(' · ');
+    }
+
+    return `Média ${this.faturamentoRecenteMedia} · ${this.faturamentoRecenteVariacao}`;
+  }
+
+  get dadosGraficoPrincipal(): DadoFaturamento[] {
+    return this.modo === 'ANUAL' ? this.faturamentoMensal : this.faturamentoRecente;
+  }
+
+  get resumoProjecao(): string {
+    return `${this.projecaoTotal} em ${this.projecaoAno} (MRR ${this.projecaoMrr}, ${this.projecaoClientesPagantes} clientes pagantes)`;
+  }
+
+  get lucroPositivo(): boolean {
+    const financeiro =
+      this.modo === 'ANUAL'
+        ? this.resumoApi?.resumoAnual
+        : this.resumoApi?.resumoMensal;
+    return (financeiro?.faturamentoLiquido ?? 0) >= 0;
+  }
+
   get totalClientesPlanos(): number {
     return totalDistribuicao(this.distribuicaoPlanos);
   }
@@ -209,6 +287,40 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     return totalDistribuicao(this.distribuicaoDispositivos);
   }
 
+  get conversaoFunilResumo(): string {
+    if (this.etapasFunilEfetividade.length === 0) {
+      return 'Sem contatos no período';
+    }
+    const pagos = this.etapasFunilEfetividade.reduce(
+      (total, etapa) => total + etapa.pagosAposContato,
+      0
+    );
+    return `${this.totalContatosFunil} contato(s) · ${pagos} pagamento(s) após contato`;
+  }
+
+  fecharMenuExportar(): void {
+    this.menuExportarAberto = false;
+  }
+
+  alternarMenuExportar(): void {
+    this.menuExportarAberto = !this.menuExportarAberto;
+  }
+
+  exportarPagamentos(): void {
+    this.fecharMenuExportar();
+    this.exportarCsv();
+  }
+
+  exportarFaturamentoAnual(): void {
+    this.fecharMenuExportar();
+    this.exportarCsvAnual();
+  }
+
+  exportarInadimplentes(): void {
+    this.fecharMenuExportar();
+    this.exportarCsvInadimplentes();
+  }
+
   get rotuloPeriodo(): string {
     if (this.modo === 'ANUAL') {
       return String(this.ano);
@@ -217,10 +329,6 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     const [ano, mes] = this.periodo.split('-').map(Number);
     const data = new Date(ano, mes - 1, 1);
     return data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  }
-
-  get rotuloComparativo(): string {
-    return this.modo === 'ANUAL' ? 'Vs. ano anterior' : 'Vs. mês anterior';
   }
 
   get anosDisponiveis(): number[] {
@@ -306,11 +414,21 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       return;
     }
 
+    const temLucro = this.faturamentoMensal.some((item) => item.liquido !== undefined);
+    const cabecalho = temLucro
+      ? ['Mês', 'Faturamento bruto', 'Lucro'].join(';')
+      : ['Mês', 'Faturamento'].join(';');
+
     const linhas = [
-      ['Mês', 'Faturamento'].join(';'),
-      ...this.faturamentoMensal.map((item) =>
-        [item.mes, item.total.toFixed(2).replace('.', ',')].join(';')
-      ),
+      cabecalho,
+      ...this.faturamentoMensal.map((item) => {
+        const bruto = item.total.toFixed(2).replace('.', ',');
+        if (temLucro) {
+          const lucro = (item.liquido ?? 0).toFixed(2).replace('.', ',');
+          return [item.mes, bruto, lucro].join(';');
+        }
+        return [item.mes, bruto].join(';');
+      }),
     ];
 
     this.baixarCsv(linhas, `faturamento-mensal-${this.ano}.csv`);
@@ -410,7 +528,10 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       this.projecaoClientesPagantes = projecao.clientesPagantes;
       this.faturamentoProjecao = projecao.faturamentoMensal;
     } else {
-      const projecao = calcularProjecaoProximoAno(this.clientes);
+      const projecao = calcularProjecaoProximoAno(
+        this.clientes,
+        this.resumoApi?.custos?.totalMensal ?? 0
+      );
       this.projecaoAno = projecao.ano;
       this.projecaoMrr = formatarValor(projecao.mrr);
       this.projecaoTotal = formatarValor(projecao.totalEsperado);
@@ -424,10 +545,95 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       this.calcularModoMensal();
     }
 
+    this.aplicarCustos();
+    this.aplicarExpectativa();
     this.montarFaturamentoRecente();
   }
 
+  private aplicarExpectativa(): void {
+    const anoReferencia = new Date().getFullYear();
+    const recebidoAno =
+      this.resumoApi?.resumoAnual?.recebido ??
+      calcularResumoAnual(this.mensalidades, anoReferencia).recebido;
+    const resumoAnual = this.resumoApi?.resumoAnual;
+    const custosAcumuladosAno =
+      resumoAnual?.totalCustos ??
+      (resumoAnual?.custosCredito ?? 0) + (resumoAnual?.despesasFixas ?? 0);
+    const despesasFixas = this.resumoApi?.custos?.despesasFixas ?? 0;
+
+    this.projecoesEsperadas = calcularProjecoesEsperadas({
+      clientes: this.clientes,
+      despesasFixas,
+      recebidoAno,
+      custosAcumuladosAno,
+      creditosConsumidosAno: resumoAnual?.qtdCreditosConsumidos ?? 0,
+      custosCreditoAcumuladosAno: resumoAnual?.custosCredito ?? 0,
+      tarifasPaineis: this.tarifasPaineis,
+    });
+
+    if (!this.projecoesEsperadas) {
+      this.controleCustosRotulo = '';
+      return;
+    }
+
+    const [anoDesde, mesDesde] =
+      this.projecoesEsperadas.controleCustosDesde.split('-').map(Number);
+    const dataDesde = new Date(anoDesde, mesDesde - 1, 1);
+    this.controleCustosRotulo = dataDesde.toLocaleDateString('pt-BR', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  private aplicarCustos(): void {
+    const custos = this.resumoApi?.custos;
+    const financeiro =
+      this.modo === 'ANUAL'
+        ? this.resumoApi?.resumoAnual
+        : this.resumoApi?.resumoMensal;
+
+    if (!custos) {
+      this.custosTotalMensal = formatarValor(0);
+      this.custosCreditoClientes = formatarValor(0);
+      this.custosDespesasFixas = formatarValor(0);
+      this.custosMargemEstimada = formatarValor(0);
+      this.custosMargemPercentual = '0%';
+      this.custosMrr = formatarValor(0);
+      this.faturamentoBruto = formatarValor(0);
+      this.faturamentoLiquido = formatarValor(0);
+      this.lucroPercentual = '0%';
+      this.custosCreditoPeriodo = formatarValor(0);
+      this.custosTotaisPeriodo = formatarValor(0);
+      return;
+    }
+
+    this.custosTotalMensal = formatarValor(custos.totalMensal);
+    this.custosCreditoClientes = formatarValor(custos.creditoClientes);
+    this.custosDespesasFixas = formatarValor(custos.despesasFixas);
+    this.custosMargemEstimada = formatarValor(custos.margemEstimada);
+    this.custosMargemPercentual = `${custos.margemPercentual}%`;
+    this.custosMrr = formatarValor(custos.mrr);
+
+    if (financeiro) {
+      this.controleCustosAtivo =
+        this.modo === 'ANUAL'
+          ? true
+          : (this.resumoApi?.resumoMensal?.controleCustosAtivo ?? true);
+      this.faturamentoBruto = formatarValor(financeiro.faturamentoBruto ?? financeiro.recebido ?? 0);
+      this.faturamentoLiquido = formatarValor(financeiro.faturamentoLiquido ?? 0);
+      this.lucroPercentual = `${financeiro.margemLucroPercentual ?? 0}%`;
+      this.custosCreditoPeriodo = formatarValor(financeiro.custosCredito ?? 0);
+      this.custosTotaisPeriodo = formatarValor(financeiro.totalCustos ?? 0);
+    }
+  }
+
   private montarFaturamentoRecente(): void {
+    if (this.resumoApi?.faturamentoRecente?.length) {
+      this.faturamentoRecente = this.resumoApi.faturamentoRecente;
+      this.atualizarResumoFaturamentoRecente();
+      return;
+    }
+
     const MESES = [
       'Jan',
       'Fev',
@@ -443,6 +649,7 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       'Dez',
     ];
     const hoje = new Date();
+    const custosMensais = this.resumoApi?.custos?.totalMensal ?? 0;
     const faturamentoRecente: DadoFaturamento[] = [];
 
     for (let i = 5; i >= 0; i--) {
@@ -462,11 +669,22 @@ export class RelatoriosPage implements OnInit, OnDestroy {
         })
         .reduce((acc, mensalidade) => acc + mensalidade.valor, 0);
 
-      faturamentoRecente.push({ mes: rotulo, total });
+      const item: DadoFaturamento = { mes: rotulo, total };
+      const anoRef = referencia.getFullYear();
+      const mesRef = referencia.getMonth() + 1;
+      if (custosMensais > 0 && mesComControleCustos(anoRef, mesRef)) {
+        item.liquido = Math.round((total - custosMensais) * 100) / 100;
+        item.custosEstimados = custosMensais;
+      }
+      faturamentoRecente.push(item);
     }
 
     this.faturamentoRecente = faturamentoRecente;
+    this.atualizarResumoFaturamentoRecente();
+  }
 
+  private atualizarResumoFaturamentoRecente(): void {
+    const faturamentoRecente = this.faturamentoRecente;
     const ultimo = faturamentoRecente[faturamentoRecente.length - 1]?.total ?? 0;
     const anterior = faturamentoRecente[faturamentoRecente.length - 2]?.total ?? 0;
     const soma = faturamentoRecente.reduce((acc, item) => acc + item.total, 0);
@@ -510,7 +728,11 @@ export class RelatoriosPage implements OnInit, OnDestroy {
     this.melhorMesAnual = '';
     this.faturamentoMensal =
       this.resumoApi?.resumoAnual.faturamentoMensal ??
-      faturamentoPorMesNoAno(this.mensalidades, ano);
+      faturamentoPorMesNoAno(
+        this.mensalidades,
+        ano,
+        this.resumoApi?.custos?.totalMensal ?? 0
+      );
 
     const pagosPeriodo = this.mensalidades.filter(
       (m) => m.status === 'PAGO' && this.estaNoPeriodo(m.pagoEm)
@@ -551,7 +773,19 @@ export class RelatoriosPage implements OnInit, OnDestroy {
       this.melhorMesAnual = resumo.melhorMes
         ? `${resumo.melhorMes.mes} · ${formatarValor(resumo.melhorMes.total)}`
         : '—';
-      this.faturamentoMensal = resumo.faturamentoMensal;
+      this.faturamentoMensal = resumo.faturamentoMensal.map((item) => ({
+        ...item,
+        ...(this.resumoApi?.custos?.totalMensal &&
+        mesComControleCustos(this.ano, item.mesNumero)
+          ? {
+              liquido:
+                Math.round(
+                  (item.total - this.resumoApi!.custos!.totalMensal) * 100
+                ) / 100,
+              custosEstimados: this.resumoApi!.custos!.totalMensal,
+            }
+          : {}),
+      }));
     }
 
     const pagosAno = this.mensalidades.filter(

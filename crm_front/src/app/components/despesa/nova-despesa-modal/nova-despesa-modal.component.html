@@ -1,0 +1,72 @@
+<ion-header class="ion-no-border crm-modal-header">
+  <app-crm-modal-toolbar
+    [titulo]="despesa ? 'Editar despesa' : 'Nova despesa'"
+    (voltar)="fechar()"
+  ></app-crm-modal-toolbar>
+</ion-header>
+
+<ion-content class="crm-modal-content">
+  <app-crm-modal-shell>
+    <div class="space-y-5 max-w-2xl">
+      <div>
+        <label class="crm-label">Nome *</label>
+        <input
+          class="crm-input mt-1"
+          [(ngModel)]="form.nome"
+          placeholder="Painel principal, internet..."
+        />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="crm-label">Valor mensal *</label>
+          <input
+            class="crm-input mt-1"
+            type="number"
+            step="0.01"
+            min="0"
+            [(ngModel)]="form.valor"
+          />
+        </div>
+        <div>
+          <label class="crm-label">Categoria</label>
+          <select class="crm-input mt-1" [(ngModel)]="form.categoria">
+            <option *ngFor="let item of categorias" [ngValue]="item.valor">
+              {{ item.rotulo }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="crm-toggle-card">
+        <label class="crm-toggle-card__label">
+          <input type="checkbox" class="crm-checkbox mt-0.5" [(ngModel)]="form.ativo" />
+          <span>
+            <span class="crm-toggle-card__title">Despesa ativa</span>
+            <span class="crm-toggle-card__desc">
+              Despesas inativas não entram no total mensal.
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div>
+        <label class="crm-label">Observações</label>
+        <textarea
+          class="crm-input mt-1 min-h-[90px]"
+          [(ngModel)]="form.observacao"
+          placeholder="Detalhes opcionais..."
+        ></textarea>
+      </div>
+    </div>
+
+    <div modalActions class="crm-modal-actions">
+      <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">
+        Cancelar
+      </button>
+      <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : (despesa ? 'Salvar alterações' : 'Cadastrar despesa') }}
+      </button>
+    </div>
+  </app-crm-modal-shell>
+</ion-content>

@@ -11,12 +11,33 @@ export const DOMINIOS_SYNC_OPERACAO: readonly DominioSync[] = [
   'dashboard',
   'configuracoes',
   'tarefas',
+  'custos',
 ];
 
 /** Relatórios e visões analíticas. */
 export const DOMINIOS_SYNC_RELATORIOS: readonly DominioSync[] = [
   ...DOMINIOS_SYNC_OPERACAO,
   'catalogos',
+  'relatorios',
+];
+
+/** Custos, despesas e saldo de painéis. */
+export const DOMINIOS_SYNC_CUSTOS: readonly DominioSync[] = [
+  'custos',
+  'dashboard',
+  'configuracoes',
+  'clientes',
+  'mensalidades',
+  'relatorios',
+];
+
+/** Configurações (inclui servidores/painéis). */
+export const DOMINIOS_SYNC_CONFIGURACOES: readonly DominioSync[] = [
+  'configuracoes',
+  'custos',
+  'dashboard',
+  'clientes',
+  'relatorios',
 ];
 
 /** Catálogos (planos, apps, dispositivos). */
@@ -24,6 +45,7 @@ export const DOMINIOS_SYNC_CATALOGO: readonly DominioSync[] = [
   'catalogos',
   'clientes',
   'mensalidades',
+  'custos',
 ];
 
 /** Campanhas / Market. */
@@ -46,6 +68,9 @@ export const DOMINIOS_SYNC_CLIENTE_DETALHE: readonly DominioSync[] = [
   ...DOMINIOS_SYNC_CATALOGO,
   'dashboard',
   'tarefas',
+  'configuracoes',
+  'custos',
+  'relatorios',
 ];
 
 export function vincularSincronizacaoPagina(

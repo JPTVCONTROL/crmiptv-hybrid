@@ -36,6 +36,8 @@ model Cliente {
   expiraEm     DateTime?
   vencimento   Int
   valorMensal  Float    @default(0)
+  /// Custo mensal de crédito/painel por cliente.
+  custoCredito Float    @default(0)
   incluirCobrancas Boolean @default(true)
   incluirCampanhas Boolean @default(true)
   cortesia         Boolean @default(false)
@@ -178,5 +180,49 @@ model Tarefa {
 
   @@index([concluida])
   @@index([vencimentoEm])
+  @@index([clienteId])
+}
+
+model DespesaMensal {
+  id         Int      @id @default(autoincrement())
+  nome       String
+  valor      Float
+  categoria  String   @default("OUTRO")
+  ativo      Boolean  @default(true)
+  observacao String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model PainelCredito {
+  id            Int      @id @default(autoincrement())
+  codigo        String   @unique
+  nome          String
+  saldo         Int      @default(0)
+  custoUnitario Float    @default(0)
+  urlPainel     String?
+  loginPainel   String?
+  senhaPainel   String?
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  movimentos    MovimentoCreditoPainel[]
+}
+
+model MovimentoCreditoPainel {
+  id            Int           @id @default(autoincrement())
+  painelId      Int
+  painel        PainelCredito @relation(fields: [painelId], references: [id], onDelete: Cascade)
+  tipo          String
+  quantidade    Int           @default(1)
+  valorUnitario Float
+  valorTotal    Float
+  clienteId     Int?
+  mensalidadeId Int?
+  observacao    String?
+  createdAt     DateTime      @default(now())
+
+  @@index([painelId])
+  @@index([createdAt])
   @@index([clienteId])
 }

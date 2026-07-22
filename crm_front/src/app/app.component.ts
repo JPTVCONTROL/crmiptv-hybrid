@@ -62,7 +62,10 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       titulo: 'Análise',
-      itens: [{ nome: 'Relatórios', rota: '/relatorios', icon: 'bar-chart-outline' }],
+      itens: [
+        { nome: 'Relatórios', rota: '/relatorios', icon: 'bar-chart-outline' },
+        { nome: 'Custos', rota: '/custos', icon: 'calculator-outline' },
+      ],
     },
     {
       titulo: 'Sistema',

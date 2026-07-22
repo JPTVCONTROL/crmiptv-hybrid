@@ -342,6 +342,14 @@
           variant="primary"
           [subtitle]="conexoes + ' conexões · ticket ' + ticketMedio"
         ></app-stat-card>
+        <a routerLink="/custos" class="crm-stat-card-link">
+          <app-stat-card
+            title="Margem estimada"
+            [value]="margemEstimada"
+            variant="success"
+            [subtitle]="'Custos ' + totalCustosMensal + ' · ' + margemPercentual"
+          ></app-stat-card>
+        </a>
         <app-stat-card
           title="ARR até fim do ano"
           [value]="arr"

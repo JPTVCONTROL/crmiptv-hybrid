@@ -4,6 +4,7 @@ import {
   ClienteNotFoundError,
   ValidationError,
 } from '../services/clienteService.js';
+import { SaldoInsuficienteError } from '../services/painelCreditoService.js';
 import { sendSuccess, sendError } from '../utils/helpers/response.js';
 import type { CreateClienteDto, UpdateClienteDto } from '../models/index.js';
 
@@ -40,6 +41,10 @@ export class ClienteController {
         sendError(res, error.message, 400);
         return;
       }
+      if (error instanceof SaldoInsuficienteError) {
+        sendError(res, error.message, 400);
+        return;
+      }
       sendError(res, 'Erro ao cadastrar cliente');
     }
   }
@@ -55,6 +60,10 @@ export class ClienteController {
         return;
       }
       if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      if (error instanceof SaldoInsuficienteError) {
         sendError(res, error.message, 400);
         return;
       }

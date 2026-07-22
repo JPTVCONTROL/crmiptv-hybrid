@@ -8,7 +8,9 @@ export type DominioSync =
   | 'catalogos'
   | 'configuracoes'
   | 'campanhas'
-  | 'tarefas';
+  | 'tarefas'
+  | 'custos'
+  | 'relatorios';
 
 export interface MudancaSync {
   dominios: DominioSync[];
@@ -22,23 +24,30 @@ export class DadosSyncService {
   readonly mudancas$ = this.mudancasSubject.asObservable();
 
   notificarClientes(): void {
-    this.emit(['clientes', 'mensalidades', 'dashboard', 'catalogos']);
+    this.emit([
+      'clientes',
+      'mensalidades',
+      'dashboard',
+      'catalogos',
+      'custos',
+      'relatorios',
+    ]);
   }
 
   notificarMensalidades(): void {
-    this.emit(['mensalidades', 'clientes', 'dashboard']);
+    this.emit(['mensalidades', 'clientes', 'dashboard', 'custos', 'relatorios']);
   }
 
   notificarContatos(): void {
-    this.emit(['mensalidades', 'clientes', 'dashboard']);
+    this.emit(['mensalidades', 'clientes', 'dashboard', 'relatorios']);
   }
 
   notificarConfiguracao(): void {
-    this.emit(['dashboard', 'configuracoes']);
+    this.emit(['dashboard', 'configuracoes', 'custos', 'relatorios']);
   }
 
   notificarCatalogos(): void {
-    this.emit(['catalogos']);
+    this.emit(['catalogos', 'custos', 'relatorios']);
   }
 
   notificarCampanhas(): void {
@@ -47,6 +56,23 @@ export class DadosSyncService {
 
   notificarTarefas(): void {
     this.emit(['tarefas', 'dashboard']);
+  }
+
+  notificarCustos(): void {
+    this.notificarPaineisCredito();
+  }
+
+  /** Painéis (saldo/tarifa): propaga para custos, relatórios, clientes e demais telas. */
+  notificarPaineisCredito(): void {
+    this.emit([
+      'custos',
+      'dashboard',
+      'configuracoes',
+      'clientes',
+      'mensalidades',
+      'relatorios',
+      'catalogos',
+    ]);
   }
 
   notificarTudo(): void {
@@ -58,6 +84,8 @@ export class DadosSyncService {
       'configuracoes',
       'campanhas',
       'tarefas',
+      'custos',
+      'relatorios',
     ]);
   }
 

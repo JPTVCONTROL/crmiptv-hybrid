@@ -7,6 +7,8 @@ import { PlanoClientesModalComponent } from '../components/plano/plano-clientes-
 import { NovoPlanoModalComponent } from '../components/plano/novo-plano-modal/novo-plano-modal.component';
 import { NovoDispositivoModalComponent } from '../components/dispositivo/novo-dispositivo-modal/novo-dispositivo-modal.component';
 import { DispositivoClientesModalComponent } from '../components/dispositivo/dispositivo-clientes-modal/dispositivo-clientes-modal.component';
+import { NovoServidorModalComponent } from '../components/servidor/novo-servidor-modal/novo-servidor-modal.component';
+import { EditarServidorConfigModalComponent } from '../components/servidor/editar-servidor-config-modal/editar-servidor-config-modal.component';
 import { WhatsappCobrancaBtnComponent } from '../components/cobranca/whatsapp-cobranca-btn.component';
 import { WhatsappBloqueioBtnComponent } from '../components/cobranca/whatsapp-bloqueio-btn.component';
 import { WhatsappContatoBtnComponent } from '../components/cobranca/whatsapp-contato-btn.component';
@@ -14,6 +16,7 @@ import { MarcarCobradoBtnComponent } from '../components/cobranca/marcar-cobrado
 import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-lote-fila-modal.component';
 import { CampanhaFormModalComponent } from '../components/campanha/campanha-form-modal.component';
 import { NovaTarefaModalComponent } from '../components/tarefa/nova-tarefa-modal/nova-tarefa-modal.component';
+import { NovaDespesaModalComponent } from '../components/despesa/nova-despesa-modal/nova-despesa-modal.component';
 import { CrmModalShellComponent } from '../components/modal/crm-modal-shell.component';
 import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.component';
 
@@ -26,6 +29,8 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     PlanoClientesModalComponent,
     NovoDispositivoModalComponent,
     DispositivoClientesModalComponent,
+    NovoServidorModalComponent,
+    EditarServidorConfigModalComponent,
     WhatsappCobrancaBtnComponent,
     WhatsappBloqueioBtnComponent,
     WhatsappContatoBtnComponent,
@@ -33,6 +38,7 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     CobrancaLoteFilaModalComponent,
     CampanhaFormModalComponent,
     NovaTarefaModalComponent,
+    NovaDespesaModalComponent,
     CrmModalShellComponent,
     CrmModalToolbarComponent,
   ],
@@ -45,6 +51,8 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     PlanoClientesModalComponent,
     NovoDispositivoModalComponent,
     DispositivoClientesModalComponent,
+    NovoServidorModalComponent,
+    EditarServidorConfigModalComponent,
     WhatsappCobrancaBtnComponent,
     WhatsappBloqueioBtnComponent,
     WhatsappContatoBtnComponent,
@@ -52,6 +60,7 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     CobrancaLoteFilaModalComponent,
     CampanhaFormModalComponent,
     NovaTarefaModalComponent,
+    NovaDespesaModalComponent,
     CrmModalShellComponent,
     CrmModalToolbarComponent,
   ],

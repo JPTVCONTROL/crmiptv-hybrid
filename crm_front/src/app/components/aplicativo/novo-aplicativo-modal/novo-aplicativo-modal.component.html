@@ -20,9 +20,9 @@
           <textarea class="crm-input mt-1 min-h-[90px]" [(ngModel)]="form.descricao"></textarea>
         </div>
 
-        <div>
-          <h3 class="text-white font-semibold mb-2 text-sm">Itens no cadastro do cliente</h3>
-          <div class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+        <div class="crm-modal-section">
+          <h3 class="crm-modal-section-title mb-2">Itens no cadastro do cliente</h3>
+          <div class="crm-card-nested space-y-2">
             <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
               <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.requerMac" />
               MAC Address
@@ -95,31 +95,31 @@
           </div>
         </div>
 
-        <div>
-          <h3 class="text-white font-semibold mb-2 text-sm">Links de download</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-slate-400 mb-1.5 text-xs">Android</label>
+        <div class="crm-modal-section">
+          <h3 class="crm-modal-section-title mb-3">Links de download</h3>
+          <div class="crm-form-grid">
+            <div class="crm-field">
+              <label class="crm-label-sm">Android</label>
               <input class="crm-input" [(ngModel)]="form.android" placeholder="Play Store ou APK" />
             </div>
-            <div>
-              <label class="block text-slate-400 mb-1.5 text-xs">Android TV</label>
+            <div class="crm-field">
+              <label class="crm-label-sm">Android TV</label>
               <input class="crm-input" [(ngModel)]="form.androidTv" placeholder="Link Android TV" />
             </div>
-            <div>
-              <label class="block text-slate-400 mb-1.5 text-xs">iOS / iPhone</label>
+            <div class="crm-field">
+              <label class="crm-label-sm">iOS / iPhone</label>
               <input class="crm-input" [(ngModel)]="form.ios" placeholder="App Store" />
             </div>
-            <div>
-              <label class="block text-slate-400 mb-1.5 text-xs">Windows</label>
+            <div class="crm-field">
+              <label class="crm-label-sm">Windows</label>
               <input class="crm-input" [(ngModel)]="form.windows" placeholder="Instalador ou Microsoft Store" />
             </div>
-            <div>
-              <label class="block text-slate-400 mb-1.5 text-xs">macOS</label>
+            <div class="crm-field">
+              <label class="crm-label-sm">macOS</label>
               <input class="crm-input" [(ngModel)]="form.mac" placeholder="Mac App Store ou DMG" />
             </div>
-            <div>
-              <label class="block text-slate-400 mb-1.5 text-xs">Tutorial</label>
+            <div class="crm-field">
+              <label class="crm-label-sm">Tutorial</label>
               <input class="crm-input" [(ngModel)]="form.tutorial" placeholder="Vídeo ou guia" />
             </div>
           </div>

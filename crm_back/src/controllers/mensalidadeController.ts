@@ -4,6 +4,7 @@ import {
   MensalidadeNotFoundError,
   ValidationError,
 } from '../services/mensalidadeService.js';
+import { SaldoInsuficienteError } from '../services/painelCreditoService.js';
 import {
   sendSuccess,
   sendError,
@@ -41,6 +42,10 @@ export class MensalidadeController {
         sendError(res, error.message, 400);
         return;
       }
+      if (error instanceof SaldoInsuficienteError) {
+        sendError(res, error.message, 400);
+        return;
+      }
       sendError(res, 'Erro ao registrar pagamento');
     }
   }
@@ -60,6 +65,10 @@ export class MensalidadeController {
         return;
       }
       if (error instanceof ValidationError) {
+        sendError(res, error.message, 400);
+        return;
+      }
+      if (error instanceof SaldoInsuficienteError) {
         sendError(res, error.message, 400);
         return;
       }

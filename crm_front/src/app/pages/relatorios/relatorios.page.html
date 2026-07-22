@@ -1,7 +1,5 @@
 <div class="crm-page-shell">
-  <app-page-header
-    title="Relatórios"
-  >
+  <app-page-header title="Relatórios">
     <div class="crm-segment">
       <button
         type="button"
@@ -40,115 +38,265 @@
       </option>
     </select>
 
-    <button
-      type="button"
-      class="crm-btn-ghost"
-      [disabled]="todasCobrancasAtrasadas.length === 0"
-      (click)="exportarCsvInadimplentes()"
-    >
-      Exportar inadimplentes
-    </button>
-    <button
-      type="button"
-      class="crm-btn-ghost"
-      [disabled]="ultimosPagamentos.length === 0"
-      (click)="exportarCsv()"
-    >
-      Exportar pagamentos
-    </button>
-    <button
-      *ngIf="modo === 'ANUAL'"
-      type="button"
-      class="crm-btn-ghost"
-      [disabled]="faturamentoMensal.length === 0"
-      (click)="exportarCsvAnual()"
-    >
-      Exportar faturamento
-    </button>
-    <a routerLink="/dashboard" class="crm-btn-ghost no-underline">Dashboard</a>
+    <div class="rel-toolbar-export">
+      <button
+        type="button"
+        class="crm-btn-ghost"
+        (click)="alternarMenuExportar()"
+      >
+        Exportar
+      </button>
+      <div *ngIf="menuExportarAberto" class="rel-export-menu">
+        <button
+          type="button"
+          class="rel-export-item"
+          [disabled]="ultimosPagamentos.length === 0"
+          (click)="exportarPagamentos()"
+        >
+          Pagamentos do período
+        </button>
+        <button
+          *ngIf="modo === 'ANUAL'"
+          type="button"
+          class="rel-export-item"
+          [disabled]="faturamentoMensal.length === 0"
+          (click)="exportarFaturamentoAnual()"
+        >
+          Faturamento mensal (CSV)
+        </button>
+        <button
+          type="button"
+          class="rel-export-item"
+          [disabled]="todasCobrancasAtrasadas.length === 0"
+          (click)="exportarInadimplentes()"
+        >
+          Inadimplentes
+        </button>
+      </div>
+    </div>
+
+    <a routerLink="/custos" class="crm-btn-ghost no-underline">Custos</a>
   </app-page-header>
 
   <app-loading *ngIf="loading" variant="page"></app-loading>
 
-  <div *ngIf="!loading" class="space-y-8">
-    <section>
-      <h2 class="crm-section-label">
-        Financeiro — {{ rotuloPeriodo }}
-      </h2>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <app-stat-card
-          [title]="modo === 'ANUAL' ? 'Recebido no ano' : 'Recebido no período'"
-          [value]="recebidoPeriodo"
-          variant="success"
-          [subtitle]="qtdPagamentosPeriodo + ' pagamento(s)'"
-        ></app-stat-card>
-        <app-stat-card
-          [title]="rotuloComparativo"
-          [value]="variacaoRecebido"
-          [variant]="variacaoRecebidoPositiva ? 'success' : 'danger'"
-          [subtitle]="recebidoComparativo"
-        ></app-stat-card>
-        <app-stat-card
-          *ngIf="modo === 'ANUAL'"
-          title="Média mensal"
-          [value]="mediaMensalAnual"
-          variant="info"
-          [subtitle]="melhorMesAnual ? 'Melhor: ' + melhorMesAnual : 'Sem receita no ano'"
-        ></app-stat-card>
-        <app-stat-card
-          *ngIf="modo === 'MENSAL'"
-          title="A receber (atual)"
-          [value]="totalPendente"
-          variant="warning"
-          [subtitle]="qtdPendentes + ' cobrança(s)'"
-        ></app-stat-card>
-        <app-stat-card
-          *ngIf="modo === 'MENSAL'"
-          title="Ticket médio pendente"
-          [value]="ticketMedio"
-          variant="primary"
-          [subtitle]="'Inadimplência ' + taxaInadimplencia"
-        ></app-stat-card>
-        <app-stat-card
-          *ngIf="modo === 'ANUAL'"
-          title="A receber (atual)"
-          [value]="totalPendente"
-          variant="warning"
-          [subtitle]="qtdPendentes + ' cobrança(s)'"
-        ></app-stat-card>
-        <app-stat-card
-          *ngIf="modo === 'ANUAL'"
-          title="Inadimplência"
-          [value]="taxaInadimplencia"
-          variant="danger"
-          [subtitle]="totalAtrasado + ' atrasado(s)'"
-        ></app-stat-card>
+  <div *ngIf="!loading" class="space-y-6">
+    <section class="rel-resumo">
+      <article class="rel-resumo-card rel-resumo-card--receita">
+        <p class="rel-resumo-label">Recebido · {{ rotuloPeriodo }}</p>
+        <p class="rel-resumo-valor">{{ recebidoPeriodo }}</p>
+        <p
+          class="rel-resumo-meta"
+          [class.rel-resumo-meta--pos]="variacaoRecebidoPositiva"
+          [class.rel-resumo-meta--neg]="!variacaoRecebidoPositiva"
+        >
+          {{ qtdPagamentosPeriodo }} pagamento(s) · {{ variacaoRecebido }}
+          {{ rotuloComparativo.toLowerCase() }}
+          <span class="text-slate-500">({{ recebidoComparativo }})</span>
+        </p>
+      </article>
+
+      <article class="rel-resumo-card rel-resumo-card--lucro">
+        <p class="rel-resumo-label">Lucro · {{ rotuloPeriodo }}</p>
+        <p
+          class="rel-resumo-valor"
+          [class.text-emerald-300]="lucroPositivo"
+          [class.text-red-300]="!lucroPositivo"
+        >
+          {{ faturamentoLiquido }}
+        </p>
+        <p class="rel-resumo-meta">
+          Margem {{ lucroPercentual }} sobre {{ faturamentoBruto }} de receita
+          <span *ngIf="!controleCustosAtivo && modo === 'MENSAL'" class="block text-slate-500 mt-1">
+            Período anterior a {{ controleCustosRotulo }} — lucro sem desconto de custos
+          </span>
+        </p>
+      </article>
+
+      <article class="rel-resumo-card rel-resumo-card--custos">
+        <p class="rel-resumo-label">Custos · {{ rotuloPeriodo }}</p>
+        <p class="rel-resumo-valor">{{ custosTotaisPeriodo }}</p>
+        <p class="rel-resumo-meta">
+          Créditos {{ custosCreditoPeriodo }} · Fixas {{ custosDespesasFixas }}
+          <span *ngIf="controleCustosRotulo" class="block text-slate-500 mt-1">
+            Controle desde {{ controleCustosRotulo }}
+          </span>
+          <a routerLink="/custos" class="crm-link crm-link-sm ml-1">detalhes</a>
+        </p>
+      </article>
+    </section>
+
+    <section class="crm-card rel-expectativa">
+      <div class="mb-4">
+        <h2 class="rel-grafico-titulo">Esperado (MRR e custos atuais)</h2>
+        <p class="rel-grafico-sub">
+          Faturamento dos pagantes; créditos e custos incluem cortesia (consome painel)
+        </p>
+      </div>
+      <div class="rel-exp-legenda" *ngIf="projecoesEsperadas">
+        <span class="rel-exp-legenda-item rel-exp-legenda-item--entrada">Entrada</span>
+        <span class="rel-exp-legenda-item rel-exp-legenda-item--creditos">Créditos</span>
+        <span class="rel-exp-legenda-item rel-exp-legenda-item--custo-var">Custo variável</span>
+        <span class="rel-exp-legenda-item rel-exp-legenda-item--custo-fixo">Custo fixo</span>
+        <span class="rel-exp-legenda-item rel-exp-legenda-item--resultado">Lucro</span>
+      </div>
+      <div class="rel-expectativa-grid" *ngIf="projecoesEsperadas as projecoes; else esperadoVazio">
+        <ng-template #blocoProjecao let-titulo="titulo" let-periodo="periodo">
+          <article class="rel-expectativa-bloco">
+            <h3>{{ titulo }} · {{ periodo.rotulo }}</h3>
+
+            <div class="rel-exp-grupo rel-exp-grupo--entrada">
+              <p class="rel-exp-grupo-titulo">Entrada</p>
+              <div class="rel-situacao-linha rel-exp-linha">
+                <span class="rel-exp-label">Faturamento</span>
+                <span class="rel-exp-valor rel-exp-valor--entrada">{{ fmtValor(periodo.faturamento) }}</span>
+              </div>
+            </div>
+
+            <div class="rel-exp-grupo rel-exp-grupo--creditos">
+              <p class="rel-exp-grupo-titulo">Painéis</p>
+              <div class="rel-situacao-linha rel-exp-linha">
+                <span class="rel-exp-label">Créditos esperados</span>
+                <span class="rel-exp-valor rel-exp-valor--creditos">{{ fmtCreditos(periodo.creditosEsperados) }}</span>
+              </div>
+              <div class="rel-situacao-linha rel-exp-linha">
+                <span class="rel-exp-label">Custo créditos</span>
+                <span class="rel-exp-valor rel-exp-valor--custo-var">{{ fmtValor(periodo.custoCreditos) }}</span>
+              </div>
+            </div>
+
+            <div class="rel-exp-grupo rel-exp-grupo--custos">
+              <p class="rel-exp-grupo-titulo">Custos</p>
+              <div class="rel-situacao-linha rel-exp-linha" *ngIf="periodo.despesasFixas > 0">
+                <span class="rel-exp-label">Despesas fixas</span>
+                <span class="rel-exp-valor rel-exp-valor--custo-fixo">{{ fmtValor(periodo.despesasFixas) }}</span>
+              </div>
+              <div class="rel-situacao-linha rel-exp-linha rel-exp-linha--total">
+                <span class="rel-exp-label">Total de custos</span>
+                <span class="rel-exp-valor rel-exp-valor--custo-total">{{ fmtValor(periodo.custos) }}</span>
+              </div>
+            </div>
+
+            <div class="rel-exp-grupo rel-exp-grupo--resultado">
+              <p class="rel-exp-grupo-titulo">Resultado</p>
+              <div class="rel-situacao-linha rel-exp-linha rel-exp-linha--lucro">
+                <span class="rel-exp-label">Lucro</span>
+                <span
+                  class="rel-exp-valor rel-exp-valor--lucro"
+                  [class.rel-exp-valor--lucro-neg]="periodo.lucro < 0"
+                >{{ fmtValor(periodo.lucro) }}</span>
+              </div>
+            </div>
+
+            <p class="rel-expectativa-nota">
+              Margem {{ periodo.margemPercentual }}%<span *ngIf="periodo.detalhe"> · {{ periodo.detalhe }}</span>
+            </p>
+          </article>
+        </ng-template>
+
+        <ng-container
+          *ngTemplateOutlet="blocoProjecao; context: { titulo: 'Mês atual', periodo: projecoes.mesAtual }"
+        ></ng-container>
+        <ng-container
+          *ngTemplateOutlet="blocoProjecao; context: { titulo: 'Próximo mês', periodo: projecoes.proximoMes }"
+        ></ng-container>
+        <ng-container
+          *ngTemplateOutlet="blocoProjecao; context: { titulo: 'Ano atual', periodo: projecoes.anoAtual }"
+        ></ng-container>
+        <ng-container
+          *ngTemplateOutlet="blocoProjecao; context: { titulo: 'Próximo ano', periodo: projecoes.proximoAno }"
+        ></ng-container>
+      </div>
+      <ng-template #esperadoVazio>
+        <p class="rel-expectativa-nota">Sem clientes ativos pagantes ou faturamento para projetar.</p>
+      </ng-template>
+    </section>
+
+    <section class="crm-card rel-grafico-card">
+      <div class="rel-grafico-head">
+        <div>
+          <h2 class="rel-grafico-titulo">{{ tituloGraficoPrincipal }}</h2>
+          <p class="rel-grafico-sub">{{ subtituloGraficoPrincipal }}</p>
+        </div>
+      </div>
+
+      <app-faturamento-chart
+        [data]="dadosGraficoPrincipal"
+        [height]="260"
+      ></app-faturamento-chart>
+
+      <p *ngIf="controleCustosRotulo" class="rel-projecao">
+        Lucro e custos no gráfico a partir de <strong>{{ controleCustosRotulo }}</strong>.
+        Meses anteriores exibem só faturamento bruto.
+      </p>
+    </section>
+
+    <section class="crm-card">
+      <h2 class="rel-grafico-titulo mb-4">Situação atual</h2>
+      <div class="rel-situacao-grid">
+        <div class="rel-situacao-bloco">
+          <h3>Cobranças</h3>
+          <div class="rel-situacao-linha">
+            <span class="text-slate-400">A receber</span>
+            <span class="text-amber-300 font-medium">{{ totalPendente }}</span>
+          </div>
+          <div class="rel-situacao-linha">
+            <span class="text-slate-400">Atrasado</span>
+            <span class="text-red-400 font-medium">{{ totalAtrasado }}</span>
+          </div>
+          <div class="rel-situacao-linha">
+            <span class="text-slate-400">Inadimplência</span>
+            <span class="text-slate-200">{{ taxaInadimplencia }}</span>
+          </div>
+          <a
+            routerLink="/financeiro"
+            [queryParams]="{ status: 'ATRASADO' }"
+            class="crm-link crm-link-sm inline-block mt-3"
+          >
+            Ver no Financeiro
+          </a>
+        </div>
+
+        <div class="rel-situacao-bloco">
+          <h3>Clientes</h3>
+          <div class="rel-situacao-linha">
+            <span class="text-slate-400">Ativos</span>
+            <span class="text-emerald-400 font-medium">{{ clientesAtivos }}</span>
+          </div>
+          <div class="rel-situacao-linha">
+            <span class="text-slate-400">Plano atrasado</span>
+            <span class="text-amber-400 font-medium">{{ clientesAtrasados }}</span>
+          </div>
+          <div class="rel-situacao-linha">
+            <span class="text-slate-400">Inativos</span>
+            <span class="text-red-400 font-medium">{{ clientesInativos }}</span>
+          </div>
+          <a routerLink="/clientes" class="crm-link crm-link-sm inline-block mt-3">
+            Ver clientes
+          </a>
+        </div>
       </div>
     </section>
 
-    <section>
-      <h2 class="crm-section-label">
-        Funil de cobrança — {{ rotuloPeriodo }}
-      </h2>
-      <p class="text-slate-500 text-sm mb-4">
-        Contatos registrados no período e conversão para pagamento (mensalidade paga após o contato).
-      </p>
+    <section class="crm-card">
+      <h2 class="rel-grafico-titulo mb-1">Fluxo do CRM · {{ rotuloPeriodo }}</h2>
+      <p class="rel-grafico-sub mb-4">{{ conversaoFunilResumo }}</p>
 
       <app-empty-state
         *ngIf="etapasFunilEfetividade.length === 0"
         title="Sem contatos no funil"
-        message="Nenhum contato WhatsApp registrado neste período com etapa do funil identificável."
+        message="Nenhum contato WhatsApp registrado neste período."
         iconName="chatbubbles-outline"
       ></app-empty-state>
 
-      <div *ngIf="etapasFunilEfetividade.length > 0" class="crm-table-shell">
-        <table class="crm-table min-w-[640px]">
+      <div *ngIf="etapasFunilEfetividade.length > 0" class="crm-table-shell mb-6">
+        <table class="crm-table min-w-[560px]">
           <thead>
             <tr class="text-slate-400 border-b border-slate-800">
               <th class="text-left py-3 px-2">Etapa</th>
               <th class="text-left py-3 px-2">Tipo</th>
               <th class="text-right py-3 px-2">Contatos</th>
-              <th class="text-right py-3 px-2">Pagos após contato</th>
+              <th class="text-right py-3 px-2">Pagos</th>
               <th class="text-right py-3 px-2">Conversão</th>
             </tr>
           </thead>
@@ -166,231 +314,76 @@
                   {{ etapa.tipo === 'COBRANCA' ? 'Cobrança' : 'Lembrete' }}
                 </span>
               </td>
-              <td class="py-3 px-2 text-right text-slate-300">{{ etapa.contatos }}</td>
-              <td class="py-3 px-2 text-right text-emerald-300">{{ etapa.pagosAposContato }}</td>
-              <td class="py-3 px-2 text-right text-violet-300">{{ etapa.taxaConversao }}%</td>
+              <td class="py-3 px-2 text-right text-slate-300">
+                {{ etapa.contatos }}
+              </td>
+              <td class="py-3 px-2 text-right text-emerald-300">
+                {{ etapa.pagosAposContato }}
+              </td>
+              <td class="py-3 px-2 text-right text-violet-300">
+                {{ etapa.taxaConversao }}%
+              </td>
             </tr>
           </tbody>
         </table>
-        <p class="text-slate-500 text-xs mt-3">
-          Total de contatos no funil: {{ totalContatosFunil }}
-        </p>
-      </div>
-    </section>
-
-    <section class="crm-card">
-      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <div>
-          <h2 class="text-white font-semibold">Faturamento · últimos 6 meses</h2>
-        </div>
-        <span
-          class="text-xs font-medium shrink-0"
-          [class.text-emerald-400]="faturamentoRecenteVariacaoPositiva"
-          [class.text-red-400]="!faturamentoRecenteVariacaoPositiva"
-        >
-          {{ faturamentoRecenteVariacao }}
-        </span>
       </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-        <div class="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
-          <p class="text-slate-500 text-[10px] uppercase tracking-wide">Último mês</p>
-          <p class="text-white font-semibold text-sm">{{ faturamentoRecenteUltimoMes }}</p>
+      <div class="pt-4 border-t border-slate-800/60">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="text-slate-300 text-sm font-semibold">Distribuição da base</h3>
+          <a routerLink="/clientes" class="crm-link crm-link-sm">Ver clientes</a>
         </div>
-        <div class="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
-          <p class="text-slate-500 text-[10px] uppercase tracking-wide">Média 6 meses</p>
-          <p class="text-white font-semibold text-sm">{{ faturamentoRecenteMedia }}</p>
-        </div>
-        <div class="crm-accent-panel-sm col-span-2 lg:col-span-1">
-          <p class="text-violet-300 text-[10px] uppercase tracking-wide">Variação mensal</p>
-          <p
-            class="font-semibold text-sm"
-            [class.text-emerald-300]="faturamentoRecenteVariacaoPositiva"
-            [class.text-red-300]="!faturamentoRecenteVariacaoPositiva"
-          >
-            {{ faturamentoRecenteVariacao }}
-          </p>
-        </div>
-      </div>
-
-      <app-faturamento-chart [data]="faturamentoRecente" [height]="260"></app-faturamento-chart>
-    </section>
-
-    <section class="crm-card">
-      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <div>
-          <h2 class="text-white font-semibold">
-            Faturamento {{ modo === 'ANUAL' ? 'anual' : 'do ano' }}
-          </h2>
-        </div>
-      </div>
-      <app-faturamento-chart [data]="faturamentoMensal" [height]="280"></app-faturamento-chart>
-    </section>
-
-    <section class="crm-card crm-accent-panel">
-      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
-        <div>
-          <h2 class="text-white font-semibold">
-            Faturamento esperado — {{ projecaoAno }}
-          </h2>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
-          <div class="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
-            <p class="text-slate-500 text-[10px] uppercase tracking-wide">MRR atual</p>
-            <p class="text-white font-semibold text-sm">{{ projecaoMrr }}</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="rounded-xl border border-slate-800/80 bg-slate-900/30 p-3">
+            <p class="text-slate-400 text-xs mb-2">Planos · {{ totalClientesPlanos }} cliente(s)</p>
+            <app-catalogo-distribuicao-chart
+              [data]="distribuicaoPlanos"
+              [height]="200"
+              unidade="cliente(s)"
+            ></app-catalogo-distribuicao-chart>
           </div>
-          <div class="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
-            <p class="text-slate-500 text-[10px] uppercase tracking-wide">Clientes pagantes</p>
-            <p class="text-white font-semibold text-sm">{{ projecaoClientesPagantes }}</p>
+          <div class="rounded-xl border border-slate-800/80 bg-slate-900/30 p-3">
+            <p class="text-slate-400 text-xs mb-2">Apps · {{ totalClientesAplicativos }} vínculo(s)</p>
+            <app-catalogo-distribuicao-chart
+              [data]="distribuicaoAplicativos"
+              [height]="200"
+              unidade="vínculo(s)"
+            ></app-catalogo-distribuicao-chart>
           </div>
-          <div class="crm-accent-panel-sm col-span-2 sm:col-span-1">
-            <p class="text-violet-300 text-[10px] uppercase tracking-wide">Total esperado</p>
-            <p class="text-violet-200 font-semibold text-sm">{{ projecaoTotal }}</p>
+          <div class="rounded-xl border border-slate-800/80 bg-slate-900/30 p-3">
+            <p class="text-slate-400 text-xs mb-2">Telas · {{ totalTelasDispositivos }} tela(s)</p>
+            <app-catalogo-distribuicao-chart
+              [data]="distribuicaoDispositivos"
+              [height]="200"
+              unidade="tela(s)"
+            ></app-catalogo-distribuicao-chart>
           </div>
-        </div>
-      </div>
-      <app-faturamento-chart [data]="faturamentoProjecao" [height]="220"></app-faturamento-chart>
-    </section>
-
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="crm-card">
-        <h2 class="text-white font-semibold mb-1">Inadimplência</h2>
-        <p class="text-slate-500 text-xs mb-4">Situação atual das cobranças vencidas</p>
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-400">Valor atrasado</span>
-            <span class="text-red-400 font-medium">{{ totalAtrasado }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-400">Cobranças atrasadas</span>
-            <span class="text-slate-200">{{ qtdAtrasadas }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-400">Taxa de inadimplência</span>
-            <span class="text-amber-400">{{ taxaInadimplencia }}</span>
-          </div>
-        </div>
-        <a
-          routerLink="/financeiro"
-          [queryParams]="{ status: 'ATRASADO' }"
-          class="crm-btn-ghost !text-xs no-underline inline-block mt-4"
-        >
-          Renovar no Financeiro
-        </a>
-      </div>
-
-      <div class="crm-card">
-        <h2 class="text-white font-semibold mb-1">Base de clientes</h2>
-        <p class="text-slate-500 text-xs mb-4">Retenção no momento da consulta</p>
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-400">Ativos</span>
-            <span class="text-green-400">{{ clientesAtivos }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-400">Atrasados (plano)</span>
-            <span class="text-amber-400">{{ clientesAtrasados }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-400">Inativos</span>
-            <span class="text-red-400">{{ clientesInativos }}</span>
-          </div>
-        </div>
-        <a routerLink="/clientes" class="crm-btn-ghost !text-xs no-underline inline-block mt-4">
-          Ver clientes
-        </a>
-      </div>
-    </section>
-
-    <section>
-      <h2 class="crm-section-label">
-        Catálogos — distribuição atual
-      </h2>
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
-        <div class="crm-card">
-          <div class="flex items-center justify-between gap-2 mb-3">
-            <div>
-              <h3 class="text-white font-semibold">Planos</h3>
-            </div>
-            <a
-              routerLink="/catalogos/planos"
-              class="crm-link crm-link-sm shrink-0"
-            >
-              Ver catálogo
-            </a>
-          </div>
-          <app-catalogo-distribuicao-chart
-            [data]="distribuicaoPlanos"
-            [height]="280"
-            unidade="cliente(s)"
-          ></app-catalogo-distribuicao-chart>
-          <p class="text-slate-500 text-xs mt-2 text-center">
-            {{ totalClientesPlanos }} cliente(s) mapeado(s)
-          </p>
-        </div>
-
-        <div class="crm-card">
-          <div class="flex items-center justify-between gap-2 mb-3">
-            <div>
-              <h3 class="text-white font-semibold">Aplicativos</h3>
-            </div>
-            <a
-              routerLink="/catalogos/aplicativos"
-              class="crm-link crm-link-sm shrink-0"
-            >
-              Ver catálogo
-            </a>
-          </div>
-          <app-catalogo-distribuicao-chart
-            [data]="distribuicaoAplicativos"
-            [height]="280"
-            unidade="vínculo(s)"
-          ></app-catalogo-distribuicao-chart>
-          <p class="text-slate-500 text-xs mt-2 text-center">
-            {{ totalClientesAplicativos }} vínculo(s) de cliente
-          </p>
-        </div>
-
-        <div class="crm-card">
-          <div class="flex items-center justify-between gap-2 mb-3">
-            <div>
-              <h3 class="text-white font-semibold">Dispositivos</h3>
-            </div>
-            <a
-              routerLink="/catalogos/dispositivos"
-              class="crm-link crm-link-sm shrink-0"
-            >
-              Ver catálogo
-            </a>
-          </div>
-          <app-catalogo-distribuicao-chart
-            [data]="distribuicaoDispositivos"
-            [height]="280"
-            unidade="tela(s)"
-          ></app-catalogo-distribuicao-chart>
-          <p class="text-slate-500 text-xs mt-2 text-center">
-            {{ totalTelasDispositivos }} tela(s) mapeada(s)
-          </p>
         </div>
       </div>
     </section>
 
     <section class="crm-card">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <div>
-          <h2 class="text-white font-semibold">
-            {{ modo === 'ANUAL' ? 'Pagamentos do ano' : 'Pagamentos do período' }}
+          <h2 class="rel-grafico-titulo">
+            {{
+              modo === 'ANUAL'
+                ? 'Pagamentos em ' + ano
+                : 'Pagamentos em ' + rotuloPeriodo
+            }}
           </h2>
-          <p class="text-slate-500 text-xs mt-0.5">
+          <p class="rel-grafico-sub">
             {{ ultimosPagamentos.length }}
             {{ ultimosPagamentos.length === 1 ? 'registro' : 'registros' }}
-            em {{ rotuloPeriodo }}
           </p>
         </div>
       </div>
 
       <div class="md:hidden crm-mobile-list" *ngIf="ultimosPagamentos.length > 0">
-        <article *ngFor="let p of ultimosPagamentos" class="crm-mobile-card crm-mobile-card--atencao">
+        <article
+          *ngFor="let p of ultimosPagamentos"
+          class="crm-mobile-card crm-mobile-card--atencao"
+        >
           <div class="crm-mobile-card-header">
             <div class="min-w-0">
               <a
@@ -401,7 +394,9 @@
               </a>
               <p class="crm-mobile-card-subtitle">{{ p.referencia }}</p>
             </div>
-            <span class="text-green-400 font-semibold text-sm shrink-0">{{ fmtValor(p.valor) }}</span>
+            <span class="text-green-400 font-semibold text-sm shrink-0">{{
+              fmtValor(p.valor)
+            }}</span>
           </div>
           <div class="crm-mobile-card-row">
             <span class="crm-mobile-card-label">Pago em</span>
@@ -410,7 +405,10 @@
         </article>
       </div>
 
-      <div class="overflow-x-auto hidden md:block" *ngIf="ultimosPagamentos.length > 0">
+      <div
+        class="overflow-x-auto hidden md:block"
+        *ngIf="ultimosPagamentos.length > 0"
+      >
         <table class="crm-table min-w-[520px]">
           <thead>
             <tr class="text-slate-400 border-b border-slate-800">
@@ -426,10 +424,7 @@
               class="border-b border-slate-800/50 hover:bg-slate-800/30"
             >
               <td class="py-2 px-2">
-                <a
-                  [routerLink]="['/clientes', p.clienteId]"
-                  class="crm-link"
-                >
+                <a [routerLink]="['/clientes', p.clienteId]" class="crm-link">
                   {{ p.clienteNome }}
                 </a>
               </td>
@@ -445,10 +440,16 @@
 
       <app-empty-state
         *ngIf="ultimosPagamentos.length === 0"
-        [title]="modo === 'ANUAL' ? 'Nenhum pagamento no ano' : 'Nenhum pagamento no período'"
-        [message]="modo === 'ANUAL'
-          ? 'Registre renovações no Financeiro para ver o histórico aqui.'
-          : 'Altere o mês ou registre pagamentos no Financeiro.'"
+        [title]="
+          modo === 'ANUAL'
+            ? 'Nenhum pagamento no ano'
+            : 'Nenhum pagamento no período'
+        "
+        [message]="
+          modo === 'ANUAL'
+            ? 'Registre renovações no Financeiro para ver o histórico aqui.'
+            : 'Altere o mês ou registre pagamentos no Financeiro.'
+        "
         actionLabel="Ir para Financeiro"
         actionRoute="/financeiro"
       ></app-empty-state>

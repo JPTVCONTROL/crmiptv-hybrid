@@ -26,6 +26,7 @@ import {
   whereClienteParticipaCobranca,
   whereMensalidadeCobrancaCliente,
 } from '../utils/helpers/dashboardStatusLimits.js';
+import { montarResumoCustos } from '../utils/helpers/custoHelpers.js';
 import {
   resolverMetaNovosClientes,
   whereClienteContaMeta,
@@ -160,6 +161,11 @@ export interface DashboardResumo {
     inadimplenciaPercentual: number;
     ganhosProximoAno: number;
     ganhosProximoAnoAno: number;
+    creditoClientes: number;
+    despesasFixas: number;
+    totalCustosMensal: number;
+    margemEstimada: number;
+    margemPercentual: number;
   };
 }
 
@@ -289,6 +295,8 @@ export class DashboardService {
       totalPendenteCobrancaAgg,
       cobrancaAtrasadaAgg,
       clientesAtencaoRaw,
+      clientesCustos,
+      despesasMensais,
     ] = await Promise.all([
       prisma.cliente.count(),
       prisma.cliente.count({ where: whereAtivo }),
@@ -410,6 +418,21 @@ export class DashboardService {
         select: { id: true, nome: true, telefone: true, expiraEm: true },
         orderBy: { expiraEm: 'asc' },
         take: 10,
+      }),
+      prisma.cliente.findMany({
+        select: {
+          id: true,
+          nome: true,
+          valorMensal: true,
+          custoCredito: true,
+          cortesia: true,
+          somenteContato: true,
+          ativo: true,
+          expiraEm: true,
+        },
+      }),
+      prisma.despesaMensal.findMany({
+        select: { valor: true, ativo: true },
       }),
     ]);
 
@@ -759,6 +782,8 @@ export class DashboardService {
     const ganhosProximoAnoAno = arrAno + 1;
     const ganhosProximoAno = Math.round(mrr * 12 * 100) / 100;
 
+    const custosResumo = montarResumoCustos(clientesCustos, despesasMensais);
+
     return {
       clientes: clientesResumo,
       financeiro: {
@@ -816,6 +841,11 @@ export class DashboardService {
         inadimplenciaPercentual,
         ganhosProximoAno,
         ganhosProximoAnoAno,
+        creditoClientes: custosResumo.creditoClientes,
+        despesasFixas: custosResumo.despesasFixas,
+        totalCustosMensal: custosResumo.totalMensal,
+        margemEstimada: custosResumo.margemEstimada,
+        margemPercentual: custosResumo.margemPercentual,
       },
     };
   }

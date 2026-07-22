@@ -47,6 +47,7 @@ body {
   background: var(--crm-bg);
   color: var(--crm-text-secondary);
   font-size: var(--crm-font-base);
+  color-scheme: dark;
 }
 
 * {
@@ -331,9 +332,16 @@ ion-modal.crm-modal-cliente {
   --width: min(1040px, 98vw);
   --height: min(92vh, 960px);
   --max-height: 92vh;
-  --border-radius: 1.125rem;
-  --box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
-  --background: #0f172a;
+  --border-radius: 1.25rem;
+  --box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 64px rgba(0, 0, 0, 0.48),
+    0 0 48px rgba(139, 92, 246, 0.1);
+  --background: transparent;
+  --border-color: var(--crm-glass-border, rgba(255, 255, 255, 0.07));
+  --border-width: 1px;
+  --border-style: solid;
+  --backdrop-opacity: 0.72;
 }
 
 ion-modal.crm-modal-cliente::part(content) {
@@ -341,11 +349,13 @@ ion-modal.crm-modal-cliente::part(content) {
 }
 
 ion-modal.crm-modal-cliente ion-content {
-  --overflow: hidden;
+  --overflow: auto;
+  --background: var(--crm-bg);
 }
 
 ion-modal.crm-modal-cliente ion-content::part(scroll) {
   height: 100%;
+  min-height: 100%;
 }
 
 /* Remove margens padrão do Ionic Typography nos títulos das páginas */
@@ -375,7 +385,18 @@ router-outlet + * {
 ion-modal.crm-modal,
 ion-modal.crm-modal-lg,
 ion-modal.crm-modal-cliente {
-  --enter-animation: crm-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: dark;
+}
+
+ion-modal select.crm-input option,
+ion-modal select.crm-input optgroup {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+ion-modal select.crm-input optgroup {
+  color: #c4b5fd;
+  font-weight: 600;
 }
 
 @keyframes crm-modal-in {
@@ -388,6 +409,12 @@ ion-modal.crm-modal-cliente {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+ion-modal.crm-modal,
+ion-modal.crm-modal-lg,
+ion-modal.crm-modal-cliente {
+  --enter-animation: crm-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body.alertas-sino-scroll-lock {

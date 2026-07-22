@@ -149,6 +149,13 @@
               : fmtValor(cliente.valorMensal)
         }}
       </p>
+      <p
+        *ngIf="!ehSomenteContato && (cliente.custoCredito ?? 0) > 0"
+        class="text-slate-300"
+      >
+        <span class="text-slate-500">Custo crédito:</span>
+        {{ fmtValor(cliente.custoCredito ?? 0) }}
+      </p>
       <p *ngIf="cliente.observacao?.trim()" class="text-slate-300 whitespace-pre-wrap">
         <span class="text-slate-500">Observação:</span> {{ cliente.observacao }}
       </p>

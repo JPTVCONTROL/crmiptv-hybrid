@@ -24,6 +24,10 @@ export class CatalogosPage {
       rotulo: 'Dispositivos',
       rota: '/catalogos/dispositivos',
     },
+    {
+      rotulo: 'Servidores',
+      rota: '/catalogos/servidores',
+    },
   ];
 
   constructor(private router: Router) {}

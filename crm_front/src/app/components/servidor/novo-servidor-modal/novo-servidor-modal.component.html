@@ -1,0 +1,65 @@
+<ion-header class="ion-no-border crm-modal-header">
+  <app-crm-modal-toolbar
+    [titulo]="servidor ? 'Editar servidor' : 'Novo servidor'"
+    (voltar)="fechar()"
+  ></app-crm-modal-toolbar>
+</ion-header>
+
+<ion-content class="crm-modal-content">
+  <app-crm-modal-shell>
+    <div class="space-y-5 max-w-2xl">
+      <p class="text-slate-400 text-sm">
+        O servidor criado aqui aparece em Configurações → Servidores, onde você
+        define login, senha, URL e saldo de créditos.
+      </p>
+
+      <div>
+        <label class="crm-label">Nome *</label>
+        <input
+          class="crm-input mt-1"
+          [(ngModel)]="form.nome"
+          (ngModelChange)="onNomeChange()"
+          placeholder="Servidor Alpha, Painel ZEUS..."
+        />
+      </div>
+
+      <div>
+        <label class="crm-label">Código *</label>
+        <input
+          class="crm-input mt-1 uppercase"
+          [(ngModel)]="form.codigo"
+          [readonly]="!!servidor"
+          placeholder="ALPHA"
+        />
+        <p class="text-slate-500 text-xs mt-1">
+          Identificador usado no cadastro de clientes. Não pode ser alterado após criar.
+        </p>
+      </div>
+
+      <div>
+        <label class="crm-label">Custo por crédito (R$) *</label>
+        <input
+          class="crm-input mt-1"
+          type="number"
+          step="0.01"
+          min="0"
+          [(ngModel)]="form.custoUnitario"
+        />
+      </div>
+
+      <label class="flex items-center gap-2 text-slate-300 text-sm">
+        <input type="checkbox" class="crm-checkbox" [(ngModel)]="form.ativo" />
+        Servidor ativo (disponível no cadastro de clientes)
+      </label>
+    </div>
+
+    <div modalActions class="crm-modal-actions">
+      <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">
+        Cancelar
+      </button>
+      <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : 'Salvar servidor' }}
+      </button>
+    </div>
+  </app-crm-modal-shell>
+</ion-content>

@@ -1,5 +1,9 @@
 import { mensalidadeRepository } from '../repositories/mensalidadeRepository.js';
 import {
+  painelCreditoService,
+  SaldoInsuficienteError,
+} from './painelCreditoService.js';
+import {
   calcularNovoVencimento,
   formatReferencia,
   parseDataSomenteDia,
@@ -55,6 +59,8 @@ export class MensalidadeService {
       0,
       renovacaoEm
     );
+
+    await this.consumirCreditoRenovacao(mensalidade, id, 'Renovação cortesia');
 
     return {
       novoVencimento: novoVencimento.toISOString(),
@@ -200,10 +206,29 @@ export class MensalidadeService {
       pagamento
     );
 
+    await this.consumirCreditoRenovacao(mensalidade, id, 'Renovação de plano');
+
     return {
       novoVencimento: novoVencimento.toISOString(),
       valorRenovacao,
     };
+  }
+
+  private async consumirCreditoRenovacao(
+    mensalidade: MensalidadeComCliente,
+    mensalidadeId: number,
+    motivo: string
+  ): Promise<void> {
+    if (mensalidade.cliente.somenteContato) {
+      return;
+    }
+
+    await painelCreditoService.consumirPorServidor({
+      servidor: mensalidade.cliente.servidor,
+      clienteId: mensalidade.clienteId,
+      mensalidadeId,
+      motivo,
+    });
   }
 }
 

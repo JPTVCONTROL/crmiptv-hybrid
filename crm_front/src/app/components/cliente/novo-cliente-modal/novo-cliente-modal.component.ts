@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { ClienteService } from '../../../core/services/cliente.service';
+import { PainelCreditoService } from '../../../core/services/painel-credito.service';
 import { AplicativoService } from '../../../core/services/aplicativo.service';
 import { DispositivoService } from '../../../core/services/dispositivo.service';
 import { PlanoService } from '../../../core/services/plano.service';
@@ -23,6 +24,11 @@ import {
   serializarDispositivos,
   sincronizarCamposLegadoDispositivo,
 } from '../../../shared/utils/dispositivos';
+import {
+  resolverCustoCreditoPorServidor,
+  SERVIDORES_PAINEL_FALLBACK,
+} from '../../../shared/utils/custo-credito.util';
+import { formatarValor } from '../../../shared/utils/formatters';
 import {
   agruparPlanos,
   calcularExpiracaoPorPlano,
@@ -49,6 +55,12 @@ export class NovoClienteModalComponent implements OnInit {
   qtdTelas = 1;
   dispositivos: DispositivoCliente[] = criarListaDispositivos(1);
   readonly opcoesTelas = [1, 2, 3, 4, 5];
+  servidoresPainel: Array<{ valor: string; rotulo: string; custo: number }> =
+    SERVIDORES_PAINEL_FALLBACK.map((item) => ({
+      valor: item.valor,
+      rotulo: item.rotulo,
+      custo: resolverCustoCreditoPorServidor(item.valor),
+    }));
 
   form = {
     nome: '',
@@ -61,6 +73,7 @@ export class NovoClienteModalComponent implements OnInit {
     expiraEm: '',
     vencimento: 10,
     valorMensal: 0,
+    custoCredito: 0,
     incluirCobrancas: true,
     cortesia: false,
     somenteContato: false,
@@ -75,10 +88,24 @@ export class NovoClienteModalComponent implements OnInit {
     private aplicativoService: AplicativoService,
     private dispositivoService: DispositivoService,
     private planoService: PlanoService,
+    private painelCreditoService: PainelCreditoService,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
+    this.painelCreditoService.listar().subscribe({
+      next: (paineis) => {
+        const ativos = paineis.filter((painel) => painel.ativo !== false);
+        if (ativos.length > 0) {
+          this.servidoresPainel = ativos.map((painel) => ({
+            valor: painel.codigo,
+            rotulo: `${painel.nome} (${formatarValor(painel.custoUnitario)}/crédito)`,
+            custo: painel.custoUnitario,
+          }));
+        }
+      },
+    });
+
     this.aplicativoService.listar().subscribe({
       next: (apps) => (this.aplicativos = apps.filter((app) => app.ativo)),
     });
@@ -112,6 +139,7 @@ export class NovoClienteModalComponent implements OnInit {
         expiraEm: dataIsoParaInput(this.cliente.expiraEm),
         vencimento: this.cliente.vencimento,
         valorMensal: this.cliente.valorMensal,
+        custoCredito: this.cliente.custoCredito ?? 0,
         incluirCobrancas: this.cliente.incluirCobrancas !== false,
         cortesia: this.cliente.cortesia === true,
         somenteContato: this.cliente.somenteContato === true,
@@ -124,6 +152,10 @@ export class NovoClienteModalComponent implements OnInit {
         if (!this.form.ativadoEm) {
           this.form.ativadoEm = this.formatarDataInput(new Date());
         }
+      }
+
+      if ((this.cliente.custoCredito ?? 0) <= 0) {
+        this.form.custoCredito = resolverCustoCreditoPorServidor(this.form.servidor);
       }
     } else {
       this.form.ativadoEm = this.formatarDataInput(new Date());
@@ -217,10 +249,28 @@ export class NovoClienteModalComponent implements OnInit {
       this.form.cortesia = false;
       this.form.incluirCobrancas = false;
       this.form.valorMensal = 0;
+      this.form.custoCredito = 0;
       this.form.planoId = null;
       this.form.expiraEm = '';
       this.form.ativadoEm = '';
     }
+  }
+
+  onServidorChange(): void {
+    if (this.form.somenteContato) {
+      return;
+    }
+
+    if (!this.form.servidor?.trim()) {
+      this.form.custoCredito = 0;
+      return;
+    }
+
+    const selecionado = this.servidoresPainel.find(
+      (item) => item.valor === this.form.servidor
+    );
+    this.form.custoCredito =
+      selecionado?.custo ?? resolverCustoCreditoPorServidor(this.form.servidor);
   }
 
   onPlanoChange(): void {
@@ -294,6 +344,7 @@ export class NovoClienteModalComponent implements OnInit {
       ativadoEm: this.form.somenteContato ? null : this.form.ativadoEm || null,
       planoId: this.form.somenteContato ? null : this.form.planoId,
       valorMensal: this.form.somenteContato ? 0 : this.form.valorMensal,
+      custoCredito: this.form.somenteContato ? 0 : Number(this.form.custoCredito) || 0,
       incluirCobrancas: this.form.somenteContato
         ? false
         : this.form.incluirCobrancas,

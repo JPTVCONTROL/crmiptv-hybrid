@@ -88,6 +88,7 @@ export interface Cliente {
   expiraEm?: string | null;
   vencimento: number;
   valorMensal: number;
+  custoCredito?: number;
   incluirCobrancas?: boolean;
   incluirCampanhas?: boolean;
   ativo?: boolean;
@@ -259,6 +260,11 @@ export interface DashboardResumo {
     inadimplenciaPercentual: number;
     ganhosProximoAno: number;
     ganhosProximoAnoAno: number;
+    creditoClientes?: number;
+    despesasFixas?: number;
+    totalCustosMensal?: number;
+    margemEstimada?: number;
+    margemPercentual?: number;
   };
 }
 
@@ -333,3 +339,114 @@ export type FiltroListaTarefa =
   | 'ATRASADAS'
   | 'CONCLUIDAS'
   | 'TODAS';
+
+export type CategoriaDespesa =
+  | 'PAINEL'
+  | 'SERVIDOR'
+  | 'INTERNET'
+  | 'MARKETING'
+  | 'OUTRO';
+
+export interface DespesaMensal {
+  id: number;
+  nome: string;
+  valor: number;
+  categoria: CategoriaDespesa | string;
+  ativo: boolean;
+  observacao?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDespesaDto {
+  nome: string;
+  valor: number;
+  categoria?: CategoriaDespesa | string;
+  ativo?: boolean;
+  observacao?: string | null;
+}
+
+export type UpdateDespesaDto = Partial<CreateDespesaDto>;
+
+export interface ClienteCustoResumo {
+  id: number;
+  nome: string;
+  valorMensal: number;
+  custoCredito: number;
+  margem: number;
+  status: string;
+  cortesia: boolean;
+  somenteContato: boolean;
+}
+
+export interface ResumoCustos {
+  creditoClientes: number;
+  qtdClientesComCredito: number;
+  despesasFixas: number;
+  qtdDespesasAtivas: number;
+  totalMensal: number;
+  mrr: number;
+  margemEstimada: number;
+  margemPercentual: number;
+  receitaClientesComCredito: number;
+  margemCreditos: number;
+  clientes: ClienteCustoResumo[];
+  despesas?: DespesaMensal[];
+}
+
+export interface ResumoCustosRelatorio {
+  creditoClientes: number;
+  despesasFixas: number;
+  totalMensal: number;
+  mrr: number;
+  margemEstimada: number;
+  margemPercentual: number;
+  qtdClientesComCredito: number;
+  qtdDespesasAtivas: number;
+}
+
+export interface FaturamentoLiquidoResumo {
+  faturamentoBruto: number;
+  custosCredito: number;
+  despesasFixas: number;
+  totalCustos: number;
+  faturamentoLiquido: number;
+  margemLucroPercentual: number;
+  qtdCreditosConsumidos?: number;
+}
+
+export interface PainelCredito {
+  id: number;
+  codigo: string;
+  nome: string;
+  saldo: number;
+  custoUnitario: number;
+  urlPainel?: string | null;
+  loginPainel?: string | null;
+  senhaPainel?: string | null;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConsumoCreditoPainel {
+  id: number;
+  createdAt: string;
+  clienteId: number | null;
+  clienteNome: string | null;
+  painelCodigo: string;
+  painelNome: string;
+  quantidade: number;
+  valorUnitario: number;
+  valorTotal: number;
+  observacao: string | null;
+}
+
+export interface ConsumosCreditoResposta {
+  periodo: string;
+  resumo: {
+    total: number;
+    quantidade: number;
+  };
+  itens: ConsumoCreditoPainel[];
+}

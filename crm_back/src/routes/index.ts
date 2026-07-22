@@ -11,6 +11,8 @@ import dashboardRoutes from './dashboardRoutes.js';
 import relatorioRoutes from './relatorioRoutes.js';
 import campanhaRoutes from './campanhaRoutes.js';
 import tarefaRoutes from './tarefaRoutes.js';
+import despesaRoutes from './despesaRoutes.js';
+import painelCreditoRoutes from './painelCreditoRoutes.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -29,6 +31,8 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/relatorios', relatorioRoutes);
 router.use('/campanhas', campanhaRoutes);
 router.use('/tarefas', tarefaRoutes);
+router.use('/despesas', despesaRoutes);
+router.use('/paineis-credito', painelCreditoRoutes);
 router.use('/sistema', sistemaRoutes);
 
 export default router;

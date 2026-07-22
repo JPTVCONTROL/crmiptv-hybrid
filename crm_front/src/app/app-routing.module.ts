@@ -86,9 +86,19 @@ const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'servidores',
+        redirectTo: 'catalogos/servidores',
+        pathMatch: 'full',
+      },
+      {
         path: 'relatorios',
         loadChildren: () =>
           import('./pages/relatorios/relatorios.module').then((m) => m.RelatoriosPageModule),
+      },
+      {
+        path: 'custos',
+        loadChildren: () =>
+          import('./pages/custos/custos.module').then((m) => m.CustosPageModule),
       },
       {
         path: 'configuracoes',

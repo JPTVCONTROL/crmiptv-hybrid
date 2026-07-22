@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ModalController } from '@ionic/angular';
 import { Subject } from 'rxjs';
 import { SistemaService } from '../../core/services/sistema.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
@@ -28,7 +29,7 @@ import {
   rotuloPrazoMetaNovosClientes,
   formatarDataInput,
 } from '../../shared/utils/meta-novos-clientes.util';
-import { vincularSincronizacaoPagina } from '../../shared/utils/page-sync.util';
+import { vincularSincronizacaoPagina, DOMINIOS_SYNC_CONFIGURACOES } from '../../shared/utils/page-sync.util';
 import {
   lerSessionJson,
   salvarSessionJson,
@@ -43,9 +44,12 @@ import {
   type EtapaFunilProgressivo,
 } from '../../shared/utils/mensagens-progressivas';
 import { montarPreviaMensagemFunil, dadosExemploMensagemFunil } from '../../shared/utils/whatsapp';
-import { calcularDias, rotuloPrazoVencimento } from '../../shared/utils/formatters';
+import { calcularDias, formatarValor, rotuloPrazoVencimento } from '../../shared/utils/formatters';
+import { PainelCreditoService } from '../../core/services/painel-credito.service';
+import { PainelCredito } from '../../core/models';
+import { EditarServidorConfigModalComponent } from '../../components/servidor/editar-servidor-config-modal/editar-servidor-config-modal.component';
 
-type AbaConfiguracao = 'conta' | 'empresa' | 'metas' | 'mensagens' | 'sistema';
+type AbaConfiguracao = 'conta' | 'empresa' | 'metas' | 'mensagens' | 'servidores' | 'sistema';
 type SubAbaMensagens = 'manual' | 'funil';
 
 const CHAVE_ABA_CONFIG = 'crm.config.abaAtiva';
@@ -55,6 +59,7 @@ const ABAS_VALIDAS = new Set<AbaConfiguracao>([
   'empresa',
   'metas',
   'mensagens',
+  'servidores',
   'sistema',
 ]);
 const SUB_ABAS_MENSAGENS_VALIDAS = new Set<SubAbaMensagens>([
@@ -104,6 +109,9 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     mensagemBloqueio: MENSAGENS_PADRAO.mensagemBloqueio,
   };
 
+  servidores: PainelCredito[] = [];
+  readonly fmtValor = formatarValor;
+
   mensagensProgressivas: Record<PontoDisparoAutomacao, string> =
     criarMensagensProgressivasPadrao();
 
@@ -148,6 +156,11 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       id: 'mensagens',
       rotulo: 'Mensagens',
       subtitulo: 'Templates do WhatsApp manual (WhatsApp Web).',
+    },
+    {
+      id: 'servidores',
+      rotulo: 'Servidores',
+      subtitulo: 'Créditos, acesso e custo por painel.',
     },
     {
       id: 'sistema',
@@ -271,6 +284,8 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     private tema: TemaService,
     private toast: ToastService,
     private sync: DadosSyncService,
+    private painelCreditoService: PainelCreditoService,
+    private modalCtrl: ModalController,
     private route: ActivatedRoute
   ) {}
 
@@ -284,11 +299,15 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       }
     });
     this.carregarConfig();
+    this.carregarServidores();
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
-      ['configuracoes'],
-      () => this.carregarConfig(true)
+      DOMINIOS_SYNC_CONFIGURACOES,
+      () => {
+        this.carregarConfig(true);
+        this.carregarServidores(true);
+      }
     );
   }
 
@@ -300,7 +319,42 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
   ionViewWillEnter(): void {
     if (!this.loading) {
       this.carregarConfig(true);
+      this.carregarServidores(true);
     }
+  }
+
+  private carregarServidores(silencioso = false): void {
+    this.painelCreditoService.listar().subscribe({
+      next: (paineis) => {
+        this.servidores = paineis.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      },
+      error: (err) => {
+        if (!silencioso) {
+          void this.toast.error(err.message ?? 'Erro ao carregar servidores.');
+        }
+      },
+    });
+  }
+
+  async editarServidor(servidor: PainelCredito): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: EditarServidorConfigModalComponent,
+      componentProps: { servidor },
+      cssClass: 'crm-modal',
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data) {
+      this.carregarServidores(true);
+    }
+  }
+
+  servidorTemAcesso(servidor: PainelCredito): boolean {
+    return Boolean(
+      servidor.urlPainel?.trim() ||
+        servidor.loginPainel?.trim() ||
+        servidor.senhaPainel?.trim()
+    );
   }
 
   private carregarConfig(silencioso = false): void {

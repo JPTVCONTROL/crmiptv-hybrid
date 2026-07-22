@@ -8,6 +8,11 @@ import {
   parseCsvClientes,
 } from '../utils/helpers/clienteImportHelpers.js';
 import { calcularLimitesDashboard } from '../utils/helpers/dashboardStatusLimits.js';
+import {
+  painelCreditoService,
+  SaldoInsuficienteError,
+} from './painelCreditoService.js';
+import { normalizarCodigoPainel } from '../utils/helpers/painelCreditoHelpers.js';
 
 export interface ImportacaoClientesResultado {
   importados: number;
@@ -43,10 +48,20 @@ export class ClienteService {
 
     await this.assertTelefoneUnico(dados.telefone);
 
+    const custoCredito = await this.resolverCustoCreditoCliente(
+      dados.servidor,
+      dados.custoCredito
+    );
+
+    if (this.deveConsumirCredito(somenteContato, dados.expiraEm, dados.servidor)) {
+      await this.validarSaldoPainel(dados.servidor);
+    }
+
     const cliente = await clienteRepository.create({
       ...dados,
       cortesia,
       somenteContato,
+      custoCredito,
       incluirCobrancas: somenteContato
         ? false
         : dados.incluirCobrancas !== undefined
@@ -66,19 +81,55 @@ export class ClienteService {
         vencimento: dataVencimento,
         status: 'PENDENTE',
       });
+
+      await this.consumirCreditoCliente(
+        cliente.id,
+        dados.servidor,
+        'Ativação de novo cliente'
+      );
     }
 
     return aplicarStatusCliente(cliente);
   }
 
   async atualizar(id: number, dados: UpdateClienteDto) {
-    await this.buscarPorId(id);
+    const anterior = await this.buscarPorId(id);
 
     if (dados.telefone !== undefined) {
       await this.assertTelefoneUnico(dados.telefone, id);
     }
 
-    const cliente = await clienteRepository.update(id, dados);
+    const somenteContatoNovo = Boolean(
+      dados.somenteContato ?? anterior.somenteContato
+    );
+    const expiraEmNovo =
+      dados.expiraEm !== undefined ? dados.expiraEm : anterior.expiraEm;
+    const servidorNovo =
+      dados.servidor !== undefined ? dados.servidor : anterior.servidor;
+
+    const ativandoPlano =
+      !somenteContatoNovo &&
+      !!expiraEmNovo &&
+      (anterior.somenteContato || !anterior.expiraEm);
+
+    if (ativandoPlano) {
+      await this.validarSaldoPainel(servidorNovo);
+    }
+
+    const custoCredito =
+      dados.custoCredito !== undefined
+        ? Number(dados.custoCredito)
+        : dados.servidor !== undefined
+          ? await this.resolverCustoCreditoCliente(
+              servidorNovo,
+              anterior.custoCredito
+            )
+          : undefined;
+
+    const cliente = await clienteRepository.update(id, {
+      ...dados,
+      ...(custoCredito !== undefined ? { custoCredito } : {}),
+    });
 
     const somenteContato = Boolean(dados.somenteContato ?? cliente.somenteContato);
 
@@ -92,7 +143,69 @@ export class ClienteService {
       await this.sincronizarValorMensalidadeCortesia(id, Boolean(cliente.cortesia));
     }
 
+    if (ativandoPlano) {
+      await this.consumirCreditoCliente(
+        id,
+        servidorNovo,
+        'Ativação de plano do cliente'
+      );
+    }
+
     return aplicarStatusCliente(cliente);
+  }
+
+  private async resolverCustoCreditoCliente(
+    servidor?: string | null,
+    custoInformado?: number | null
+  ): Promise<number> {
+    if (custoInformado !== undefined && custoInformado !== null && custoInformado > 0) {
+      return Number(custoInformado);
+    }
+
+    const automatico = await painelCreditoService.resolverCustoCredito(servidor);
+    if (automatico > 0) {
+      return automatico;
+    }
+
+    return Number(custoInformado ?? 0);
+  }
+
+  private deveConsumirCredito(
+    somenteContato: boolean,
+    expiraEm?: string | null,
+    servidor?: string | null
+  ): boolean {
+    return !somenteContato && !!expiraEm && !!servidor?.trim();
+  }
+
+  private async validarSaldoPainel(servidor?: string | null): Promise<void> {
+    const codigo = normalizarCodigoPainel(servidor);
+    if (!codigo) {
+      return;
+    }
+
+    const paineis = await painelCreditoService.listar();
+    const painel = paineis.find((item) => item.codigo === codigo);
+
+    if (painel && painel.saldo <= 0) {
+      throw new SaldoInsuficienteError(
+        `Saldo insuficiente no ${painel.nome}. Disponível: ${painel.saldo} crédito(s).`
+      );
+    }
+  }
+
+  private async consumirCreditoCliente(
+    clienteId: number,
+    servidor?: string | null,
+    motivo?: string,
+    mensalidadeId?: number | null
+  ): Promise<void> {
+    await painelCreditoService.consumirPorServidor({
+      servidor,
+      clienteId,
+      mensalidadeId,
+      motivo: motivo ?? 'Consumo de crédito',
+    });
   }
 
   private async sincronizarValorMensalidadeCortesia(

@@ -101,6 +101,9 @@ export class DashboardPage implements OnInit, OnDestroy {
   inadimplenciaPercentual = '';
   ganhosProximoAno = '';
   ganhosProximoAnoRotulo = '';
+  totalCustosMensal = '';
+  margemEstimada = '';
+  margemPercentual = '';
 
   tarefasPendentes = 0;
   tarefasHoje = 0;
@@ -377,6 +380,9 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.inadimplenciaPercentual = `${m.inadimplenciaPercentual ?? 0}%`;
     this.ganhosProximoAno = formatarValor(m.ganhosProximoAno ?? 0);
     this.ganhosProximoAnoRotulo = `jan–dez/${m.ganhosProximoAnoAno ?? new Date().getFullYear() + 1} · MRR × 12`;
+    this.totalCustosMensal = formatarValor(m.totalCustosMensal ?? 0);
+    this.margemEstimada = formatarValor(m.margemEstimada ?? 0);
+    this.margemPercentual = `${m.margemPercentual ?? 0}%`;
   }
 
   async renovarCliente(cliente: ClienteAtencaoResumo): Promise<void> {

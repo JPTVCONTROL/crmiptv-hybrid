@@ -39,16 +39,16 @@
         <div *ngIf="mostrarFormSenha" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-slate-300 mb-2 text-sm">Senha atual</label>
+              <label class="crm-label">Senha atual</label>
               <input type="password" class="crm-input" [(ngModel)]="senhaAtual" autocomplete="current-password" />
             </div>
             <div></div>
             <div>
-              <label class="block text-slate-300 mb-2 text-sm">Nova senha</label>
+              <label class="crm-label">Nova senha</label>
               <input type="password" class="crm-input" [(ngModel)]="novaSenha" autocomplete="new-password" />
             </div>
             <div>
-              <label class="block text-slate-300 mb-2 text-sm">Confirmar nova senha</label>
+              <label class="crm-label">Confirmar nova senha</label>
               <input type="password" class="crm-input" [(ngModel)]="confirmarSenha" autocomplete="new-password" />
             </div>
           </div>
@@ -75,23 +75,23 @@
         <h2 class="crm-section-title">Empresa</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Nome da Empresa</label>
+            <label class="crm-label">Nome da Empresa</label>
             <input class="crm-input" [(ngModel)]="form.nomeEmpresa" />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">WhatsApp</label>
+            <label class="crm-label">WhatsApp</label>
             <input class="crm-input" [(ngModel)]="form.whatsapp" />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">E-mail</label>
+            <label class="crm-label">E-mail</label>
             <input class="crm-input" [(ngModel)]="form.email" />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Site</label>
+            <label class="crm-label">Site</label>
             <input class="crm-input" [(ngModel)]="form.site" />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Instagram</label>
+            <label class="crm-label">Instagram</label>
             <input class="crm-input" [(ngModel)]="form.instagram" />
           </div>
         </div>
@@ -101,15 +101,15 @@
         <h2 class="crm-section-title">PIX</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Chave PIX</label>
+            <label class="crm-label">Chave PIX</label>
             <input class="crm-input" [(ngModel)]="form.chavePix" />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Tipo PIX</label>
+            <label class="crm-label">Tipo PIX</label>
             <input class="crm-input" [(ngModel)]="form.tipoPix" placeholder="CPF, CNPJ, E-mail..." />
           </div>
           <div class="md:col-span-2">
-            <label class="block text-slate-300 mb-2 text-sm">Favorecido</label>
+            <label class="crm-label">Favorecido</label>
             <input class="crm-input" [(ngModel)]="form.favorecidoPix" />
           </div>
         </div>
@@ -129,7 +129,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Meta (quantidade de clientes)</label>
+            <label class="crm-label">Meta (quantidade de clientes)</label>
             <input
               type="number"
               min="1"
@@ -139,7 +139,7 @@
             />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Desde</label>
+            <label class="crm-label">Desde</label>
             <input
               type="date"
               class="crm-input"
@@ -147,7 +147,7 @@
             />
           </div>
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Até</label>
+            <label class="crm-label">Até</label>
             <input
               type="date"
               class="crm-input"
@@ -195,7 +195,7 @@
 
       <div>
         <h2 class="crm-section-title--tight">Lembretes</h2>
-        <label class="block text-slate-300 mb-2 text-sm">Janela “vencendo” no Financeiro e Vencimentos (dias)</label>
+        <label class="crm-label">Janela “vencendo” no Financeiro e Vencimentos (dias)</label>
         <p class="text-slate-500 text-xs mb-2">A Cobrança Diária e as Automações usam funil fixo: 5, 3, 1 e 0 dias antes · 1, 2, 3 e 7 atrasados.</p>
         <input
           class="crm-input max-w-[8rem]"
@@ -353,13 +353,78 @@
       </button>
     </ng-container>
 
+    <!-- Servidores -->
+    <ng-container *ngIf="abaAtiva === 'servidores'">
+      <div>
+        <h2 class="crm-section-title">Servidores e painéis</h2>
+        <p class="text-slate-400 text-sm mb-4">
+          Configure saldo de créditos, custo por ativação/renovação e dados de acesso
+          (URL, login e senha). Novos servidores podem ser criados em Catálogos → Servidores.
+        </p>
+
+        <div class="space-y-3">
+          <article
+            *ngFor="let servidor of servidores"
+            class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 md:p-5"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <p class="text-violet-300 text-xs uppercase tracking-wide">{{ servidor.codigo }}</p>
+                  <span
+                    [class]="servidor.ativo !== false ? 'crm-badge-ativo' : 'crm-badge-inativo'"
+                  >
+                    {{ servidor.ativo !== false ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </div>
+                <h3 class="text-white font-semibold text-lg mt-1">{{ servidor.nome }}</h3>
+                <p class="text-slate-400 text-sm mt-1">
+                  {{ fmtValor(servidor.custoUnitario) }}/crédito
+                  <span *ngIf="servidorTemAcesso(servidor)" class="text-emerald-400">
+                    · Acesso configurado
+                  </span>
+                  <span *ngIf="!servidorTemAcesso(servidor)" class="text-amber-400">
+                    · Sem URL/login
+                  </span>
+                </p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-slate-500 text-xs">Saldo atual</p>
+                <p class="text-2xl font-bold text-violet-200">{{ servidor.saldo }}</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-slate-800">
+              <p class="text-slate-500 text-sm">
+                Usado no campo Servidor/Painel ao cadastrar clientes.
+              </p>
+              <button
+                type="button"
+                class="crm-btn-primary"
+                (click)="editarServidor(servidor)"
+              >
+                Editar
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <app-empty-state
+          *ngIf="servidores.length === 0"
+          title="Nenhum servidor cadastrado"
+          message="Crie servidores em Catálogos → Servidores."
+          iconName="server-outline"
+        ></app-empty-state>
+      </div>
+    </ng-container>
+
     <!-- Sistema -->
     <ng-container *ngIf="abaAtiva === 'sistema'">
       <div>
         <h2 class="crm-section-title">Aparência</h2>
         <div class="space-y-4">
           <div>
-            <label class="block text-slate-300 mb-2 text-sm">Cor principal do sistema</label>
+            <label class="crm-label">Cor principal do sistema</label>
             <div class="flex flex-wrap items-center gap-3">
               <input
                 type="color"
