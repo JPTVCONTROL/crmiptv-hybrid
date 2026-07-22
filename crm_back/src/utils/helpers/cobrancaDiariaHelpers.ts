@@ -6,6 +6,7 @@ import {
   tipoRotinaProgressiva,
   type PontoDisparoAutomacao,
 } from './automacaoDisparoHelpers.js';
+import { clienteUltrapassouLimiteCobranca } from './clienteArquivamentoHelpers.js';
 
 export const ORDEM_PONTOS_FUNIL: PontoDisparoAutomacao[] = [
   'LEMBRETE_D5',
@@ -142,6 +143,7 @@ export function clienteParticipaCobrancas(
     incluirCobrancas?: boolean | null;
     cortesia?: boolean | null;
     somenteContato?: boolean | null;
+    expiraEm?: Date | string | null;
   } | null
 ): boolean {
   if (cliente?.ativo === false) {
@@ -151,6 +153,9 @@ export function clienteParticipaCobrancas(
     return false;
   }
   if (clienteEhCortesia(cliente)) {
+    return false;
+  }
+  if (clienteUltrapassouLimiteCobranca(cliente?.expiraEm)) {
     return false;
   }
   return cliente?.incluirCobrancas !== false;

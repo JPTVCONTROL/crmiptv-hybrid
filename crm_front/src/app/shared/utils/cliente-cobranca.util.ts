@@ -1,6 +1,5 @@
 import { Cliente, Configuracao, Mensalidade } from '../../core/models';
 import {
-  montarMensagemBloqueioMensalidade,
   montarMensagemCobrancaMensalidade,
 } from './cobranca-lote';
 import { clienteParticipaCobrancas } from './cobranca-diaria';
@@ -73,7 +72,7 @@ export function clienteElegivelCobranca(cliente: Cliente): boolean {
   }
 
   const status = statusClienteParaCobranca(cliente);
-  if (status !== 'ATRASADO' && status !== 'INATIVO') {
+  if (status !== 'ATRASADO') {
     return false;
   }
 
@@ -93,22 +92,13 @@ export function montarItemCobrancaCliente(
     return null;
   }
 
-  const status = statusClienteParaCobranca(cliente);
-  const mensagem =
-    status === 'INATIVO'
-      ? montarMensagemBloqueioMensalidade(
-          mensalidade,
-          configuracao,
-          undefined,
-          cliente.nome
-        )
-      : montarMensagemCobrancaMensalidade(
-          mensalidade,
-          configuracao,
-          undefined,
-          true,
-          cliente.nome
-        );
+  const mensagem = montarMensagemCobrancaMensalidade(
+    mensalidade,
+    configuracao,
+    undefined,
+    true,
+    cliente.nome
+  );
 
   const mensalidadeId =
     mensalidade.id > 0 ? mensalidade.id : mensalidadePendenteCliente(cliente)?.id;

@@ -16,7 +16,6 @@ import {
   MENSAGEM_BLOQUEIO_PADRAO,
   MENSAGEM_COBRANCA_LEMBRETE_PADRAO,
   MENSAGEM_COBRANCA_PADRAO,
-  MENSAGEM_RECIBO_PADRAO,
   MENSAGEM_RENOVACAO_PADRAO,
 } from './mensagens-padrao';
 
@@ -238,17 +237,6 @@ export function montarMensagemRenovacao(
   }
 
   return substituirVariaveis(MENSAGEM_RENOVACAO_PADRAO, dados);
-}
-
-export function montarMensagemRecibo(
-  dados: DadosMensagemWhatsApp,
-  template?: string | null
-): string {
-  if (template?.trim()) {
-    return substituirVariaveis(template.trim(), dados);
-  }
-
-  return substituirVariaveis(MENSAGEM_RECIBO_PADRAO, dados);
 }
 
 export function montarMensagemBloqueio(

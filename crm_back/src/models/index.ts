@@ -120,7 +120,6 @@ export const CONFIGURACAO_CAMPOS_PERMITIDOS = [
   'mensagemLembrete',
   'mensagemRenovacao',
   'mensagemBloqueio',
-  'mensagemRecibo',
   'mensagensProgressivas',
 ] as const;
 

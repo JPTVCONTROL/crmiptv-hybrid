@@ -80,4 +80,18 @@ describe('cliente-cobranca.util', () => {
       false
     );
   });
+
+  it('inativo (+7 dias) não é elegível para cobrança em lote', () => {
+    const expirado = new Date();
+    expirado.setDate(expirado.getDate() - 10);
+
+    assert.equal(
+      clienteElegivelCobranca(
+        clienteBase({
+          expiraEm: expirado.toISOString().slice(0, 10),
+        })
+      ),
+      false
+    );
+  });
 });

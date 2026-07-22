@@ -119,6 +119,7 @@ export class MensalidadeRepository {
             { somenteContato: true },
             { cortesia: true },
             { incluirCobrancas: false },
+            { ativo: false },
           ],
         },
       },

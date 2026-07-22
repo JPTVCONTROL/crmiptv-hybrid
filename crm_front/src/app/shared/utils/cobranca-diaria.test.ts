@@ -150,6 +150,19 @@ describe('clienteParticipaCobrancas', () => {
   it('exclui clientes somente contato', () => {
     assert.equal(clienteParticipaCobrancas({ somenteContato: true }), false);
   });
+
+  it('exclui clientes com mais de 7 dias de atraso', () => {
+    const hoje = new Date();
+    const expirado = new Date(hoje);
+    expirado.setDate(hoje.getDate() - 10);
+
+    assert.equal(
+      clienteParticipaCobrancas({
+        expiraEm: expirado.toISOString().slice(0, 10),
+      }),
+      false
+    );
+  });
 });
 
 describe('clienteApareceEmVencimentos', () => {

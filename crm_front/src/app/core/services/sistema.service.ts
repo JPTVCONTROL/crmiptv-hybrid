@@ -18,9 +18,15 @@ export class SistemaService {
     clientes: number;
     mensalidades: number;
     removidas?: number;
+    arquivados?: number;
   }> {
     return this.api
-      .post<{ clientes: number; mensalidades: number; removidas?: number }>(
+      .post<{
+        clientes: number;
+        mensalidades: number;
+        removidas?: number;
+        arquivados?: number;
+      }>(
         '/sistema/sincronizar-cobrancas',
         {}
       )

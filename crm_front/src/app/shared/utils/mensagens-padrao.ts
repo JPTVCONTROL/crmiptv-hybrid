@@ -35,10 +35,6 @@ export const MENSAGEM_RENOVACAO_PADRAO = `Olá {nome}! Recebemos seu pagamento d
 
 — {empresa}`;
 
-export const MENSAGEM_RECIBO_PADRAO = `Olá {nome}! Confirmamos o recebimento de {valor} referente a {referencia}, pago em {pagoEm}.
-
-— {empresa}`;
-
 export const MENSAGEM_BLOQUEIO_PADRAO = `Olá {nome}! Seu acesso foi suspenso por pendência referente a {referencia}, no valor de {valor}, vencida em {vencimento}. Regularize para reativar.
 
 PIX ({tipoPix}): {pix}
@@ -51,7 +47,6 @@ export type CampoMensagemConfig =
   | 'mensagemCobranca'
   | 'mensagemLembrete'
   | 'mensagemRenovacao'
-  | 'mensagemRecibo'
   | 'mensagemBloqueio';
 
 export const MENSAGENS_PADRAO: Record<CampoMensagemConfig, string> = {
@@ -59,7 +54,6 @@ export const MENSAGENS_PADRAO: Record<CampoMensagemConfig, string> = {
   mensagemCobranca: MENSAGEM_COBRANCA_PADRAO,
   mensagemLembrete: MENSAGEM_COBRANCA_LEMBRETE_PADRAO,
   mensagemRenovacao: MENSAGEM_RENOVACAO_PADRAO,
-  mensagemRecibo: MENSAGEM_RECIBO_PADRAO,
   mensagemBloqueio: MENSAGEM_BLOQUEIO_PADRAO,
 };
 

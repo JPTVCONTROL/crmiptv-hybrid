@@ -84,6 +84,7 @@ export function whereClienteParticipaCobranca(): Prisma.ClienteWhereInput {
   return {
     cortesia: false,
     somenteContato: false,
+    ativo: { not: false },
     NOT: { incluirCobrancas: false },
   };
 }

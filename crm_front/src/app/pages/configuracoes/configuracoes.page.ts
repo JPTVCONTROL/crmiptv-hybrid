@@ -101,7 +101,6 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     mensagemCobranca: MENSAGENS_PADRAO.mensagemCobranca,
     mensagemLembrete: MENSAGENS_PADRAO.mensagemLembrete,
     mensagemRenovacao: MENSAGENS_PADRAO.mensagemRenovacao,
-    mensagemRecibo: MENSAGENS_PADRAO.mensagemRecibo,
     mensagemBloqueio: MENSAGENS_PADRAO.mensagemBloqueio,
   };
 
@@ -166,7 +165,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       id: 'manual',
       rotulo: 'Manual (WhatsApp Web)',
       descricao:
-        'Conta ativada, renovação, recibo e bloqueio. Abre o WhatsApp no navegador com a mensagem pronta.',
+        'Conta ativada, renovação e bloqueio. Abre o WhatsApp no navegador com a mensagem pronta.',
     },
     {
       id: 'funil',
@@ -248,14 +247,6 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     '{valor}',
     '{vencimento}',
     '{expiraEm}',
-    '{empresa}',
-  ];
-
-  readonly variaveisRecibo = [
-    '{nome}',
-    '{referencia}',
-    '{valor}',
-    '{pagoEm}',
     '{empresa}',
   ];
 
@@ -356,10 +347,6 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
           mensagemRenovacao: resolverTextoMensagem(
             dados.mensagemRenovacao,
             MENSAGENS_PADRAO.mensagemRenovacao
-          ),
-          mensagemRecibo: resolverTextoMensagem(
-            dados.mensagemRecibo,
-            MENSAGENS_PADRAO.mensagemRecibo
           ),
           mensagemBloqueio: resolverTextoMensagem(
             dados.mensagemBloqueio,
@@ -587,7 +574,11 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       next: (resultado) => {
         this.sincronizandoCobrancas = false;
         const hora = new Date().toLocaleString('pt-BR');
-        this.ultimaSincronizacao = `Última sync: ${hora} — ${resultado.clientes} cliente(s), ${resultado.mensalidades} mensalidade(s) alinhada(s).`;
+        const arquivados =
+          resultado.arquivados && resultado.arquivados > 0
+            ? ` · ${resultado.arquivados} arquivado(s) (+7 dias)`
+            : '';
+        this.ultimaSincronizacao = `Última sync: ${hora} — ${resultado.clientes} cliente(s), ${resultado.mensalidades} mensalidade(s) alinhada(s)${arquivados}.`;
         void this.toast.success('Cobranças sincronizadas com sucesso.');
       },
       error: (err) => {

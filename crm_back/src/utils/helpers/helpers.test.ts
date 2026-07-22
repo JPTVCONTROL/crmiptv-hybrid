@@ -125,6 +125,16 @@ describe('clienteParticipaCobrancas', () => {
   it('exclui clientes somente contato', () => {
     assert.equal(clienteParticipaCobrancas({ somenteContato: true }), false);
   });
+
+  it('exclui clientes com mais de 7 dias de atraso', () => {
+    const referencia = new Date(2026, 6, 22, 12, 0, 0);
+    const expiraEm = new Date(2026, 6, 14, 12, 0, 0);
+
+    assert.equal(
+      clienteParticipaCobrancas({ expiraEm, incluirCobrancas: true }),
+      false
+    );
+  });
 });
 
 describe('calcularDiasVencimento', () => {

@@ -7,6 +7,7 @@ import {
   normalizarTelefoneComparacao,
   parseCsvClientes,
 } from '../utils/helpers/clienteImportHelpers.js';
+import { calcularLimitesDashboard } from '../utils/helpers/dashboardStatusLimits.js';
 
 export interface ImportacaoClientesResultado {
   importados: number;
@@ -272,6 +273,7 @@ export class ClienteService {
   }
 
   async sincronizarCobrancasPendentes() {
+    const arquivados = await this.arquivarClientesAtrasoCritico();
     const limpeza = await mensalidadeRepository.removerPendentesDeClientesSemCobranca();
 
     const clientes = await clienteRepository.findAll();
@@ -316,7 +318,25 @@ export class ClienteService {
       clientes: clientesAlinhados,
       mensalidades: mensalidadesAlinhadas,
       removidas: limpeza.count,
+      arquivados,
     };
+  }
+
+  /** Após 7 dias de atraso: inativo + somente contato, sem cobranças pendentes. */
+  async arquivarClientesAtrasoCritico(): Promise<number> {
+    const limites = calcularLimitesDashboard();
+    const candidatos = await clienteRepository.findIdsParaArquivarPorAtraso(
+      limites.inicioAtrasado
+    );
+
+    let arquivados = 0;
+    for (const { id } of candidatos) {
+      await mensalidadeRepository.removerPendentesDoCliente(id);
+      await clienteRepository.arquivarSomenteContato(id);
+      arquivados += 1;
+    }
+
+    return arquivados;
   }
 }
 

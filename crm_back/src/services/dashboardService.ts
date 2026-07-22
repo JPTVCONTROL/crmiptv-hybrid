@@ -384,7 +384,7 @@ export class DashboardService {
       prisma.cliente.findMany({
         where: {
           ...whereClienteParticipaCobranca(),
-          OR: [whereAtrasado, whereInativo],
+          ...whereAtrasado,
         },
         select: { id: true, nome: true, telefone: true, expiraEm: true },
         orderBy: { expiraEm: 'asc' },

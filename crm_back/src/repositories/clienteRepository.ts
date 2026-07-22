@@ -176,6 +176,28 @@ export class ClienteRepository {
       data: { expiraEm, vencimento },
     });
   }
+
+  findIdsParaArquivarPorAtraso(limiteExpiraEm: Date) {
+    return prisma.cliente.findMany({
+      where: {
+        expiraEm: { lt: limiteExpiraEm },
+        somenteContato: false,
+        cortesia: false,
+      },
+      select: { id: true },
+    });
+  }
+
+  arquivarSomenteContato(id: number) {
+    return prisma.cliente.update({
+      where: { id },
+      data: {
+        ativo: false,
+        somenteContato: true,
+        incluirCobrancas: false,
+      },
+    });
+  }
 }
 
 export const clienteRepository = new ClienteRepository();

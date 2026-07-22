@@ -240,21 +240,6 @@
 
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="crm-section-title">Mensagem de Recibo</h2>
-            <button
-              type="button"
-              class="crm-btn-ghost crm-btn-sm self-start"
-              (click)="restaurarMensagem('mensagemRecibo')"
-            >
-              Restaurar padrão
-            </button>
-          </div>
-          <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisRecibo.join(', ') }}</p>
-          <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemRecibo"></textarea>
-        </div>
-
-        <div>
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <h2 class="crm-section-title">Mensagem de Bloqueio</h2>
             <button
               type="button"

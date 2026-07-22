@@ -10,7 +10,6 @@ import { RenovacaoUiService } from './renovacao-ui.service';
 import { confirmarUsuario } from '../../shared/utils/confirm-notifier';
 import {
   confirmarRenovacaoNoPainel,
-  oferecerMensagemRecibo,
 } from '../../shared/utils/post-pagamento.util';
 import { oferecerMensagemRenovacao } from '../../shared/utils/whatsapp';
 
@@ -71,14 +70,6 @@ export class RenovacaoMensalidadeService {
         referencia: dados.referencia,
         valor: resultado.valorRenovacao ?? dados.valorFallback,
         novoVencimento: resultado.novoVencimento,
-      });
-
-      await this.oferecerWhatsAppRecibo({
-        telefone: dados.telefone,
-        nome: dados.nome,
-        referencia: dados.referencia,
-        valor: resultado.valorRenovacao ?? dados.valorFallback,
-        pagoEm,
       });
 
       return true;
@@ -215,28 +206,6 @@ export class RenovacaoMensalidadeService {
       templateRenovacao:
         this.configuracaoService.getSnapshot()?.mensagemRenovacao,
       cortesia: params.cortesia,
-    });
-  }
-
-  private async oferecerWhatsAppRecibo(params: {
-    telefone: string;
-    nome: string;
-    referencia: string;
-    valor: number;
-    pagoEm: string;
-  }): Promise<void> {
-    if (params.valor <= 0) {
-      return;
-    }
-
-    await oferecerMensagemRecibo({
-      telefone: params.telefone,
-      nome: params.nome,
-      referencia: params.referencia,
-      valor: params.valor,
-      pagoEm: params.pagoEm,
-      empresa: this.configuracaoService.getSnapshot()?.nomeEmpresa ?? 'JPTV',
-      templateRecibo: this.configuracaoService.getSnapshot()?.mensagemRecibo,
     });
   }
 }
