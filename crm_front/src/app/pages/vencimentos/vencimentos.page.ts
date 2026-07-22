@@ -20,6 +20,7 @@ import {
 } from '../../shared/utils/cobranca-lote';
 import {
   resolverDiasAntecedencia,
+  JANELA_PROXIMOS_VENCIMENTOS_DIAS,
   rotuloDiasCobrancaDiaria,
   clienteEhCortesia,
   clienteApareceEmVencimentos,
@@ -81,6 +82,11 @@ export class VencimentosPage implements OnInit, OnDestroy {
 
   get diasAntecedencia(): number {
     return resolverDiasAntecedencia(this.configuracao);
+  }
+
+  /** Alinhado ao funil / dashboard (D5). */
+  get diasProximosVencimentos(): number {
+    return JANELA_PROXIMOS_VENCIMENTOS_DIAS;
   }
 
   ngOnInit(): void {
@@ -165,7 +171,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
       if (this.filtro === 'ATRASADO') return matchBusca && dias < 0;
       if (this.filtro === 'HOJE') return matchBusca && dias === 0;
       if (this.filtro === 'PROXIMO') {
-        return matchBusca && dias > 0 && dias <= this.diasAntecedencia;
+        return matchBusca && dias > 0 && dias <= this.diasProximosVencimentos;
       }
 
       return matchBusca;
@@ -208,7 +214,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
     if (dias === 0) {
       return { 'crm-badge-pendente': true };
     }
-    if (dias <= this.diasAntecedencia) {
+    if (dias <= this.diasProximosVencimentos) {
       return { 'crm-badge-pendente': true };
     }
     return { 'crm-badge-neutral': true };
@@ -228,7 +234,9 @@ export class VencimentosPage implements OnInit, OnDestroy {
       const dias = calcularDias(m.vencimento);
       if (valor === 'ATRASADO') return dias < 0;
       if (valor === 'HOJE') return dias === 0;
-      if (valor === 'PROXIMO') return dias > 0 && dias <= this.diasAntecedencia;
+      if (valor === 'PROXIMO') {
+        return dias > 0 && dias <= this.diasProximosVencimentos;
+      }
       return false;
     }).length;
   }

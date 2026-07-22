@@ -80,7 +80,7 @@ export function calcularMrrClientes(clientes: Cliente[]): number {
   return clientes
     .filter(
       (cliente) =>
-        cliente.cortesia !== true && clienteEstaAtivo(cliente.expiraEm)
+        cliente.cortesia !== true && clienteEstaAtivo(cliente)
     )
     .reduce(
       (total, cliente) =>
@@ -93,7 +93,7 @@ export function contarClientesPagantes(clientes: Cliente[]): number {
   return clientes.filter(
     (cliente) =>
       cliente.cortesia !== true &&
-      clienteEstaAtivo(cliente.expiraEm) &&
+      clienteEstaAtivo(cliente) &&
       cliente.valorMensal > 0
   ).length;
 }

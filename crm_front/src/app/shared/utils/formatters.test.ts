@@ -3,8 +3,11 @@ import { describe, it } from 'node:test';
 import {
   aplicarMascaraTelefone,
   calcularDias,
+  clienteEntraNoGrupoStatus,
+  clienteEstaAtivo,
   dataIsoParaDateUtc,
   formatarData,
+  resolverStatusCliente,
   statusCliente,
   statusFinanceiro,
   rotuloStatusFinanceiro,
@@ -65,6 +68,20 @@ describe('statusCliente', () => {
     const atrasado = new Date();
     atrasado.setDate(atrasado.getDate() - 3);
     assert.equal(statusCliente(atrasado.toISOString()), 'ATRASADO');
+  });
+});
+
+describe('resolverStatusCliente', () => {
+  it('não classifica somente contato como ativo', () => {
+    assert.equal(
+      resolverStatusCliente({ somenteContato: true, expiraEm: null }),
+      'INATIVO'
+    );
+    assert.equal(clienteEstaAtivo({ somenteContato: true, expiraEm: null }), false);
+    assert.equal(
+      clienteEntraNoGrupoStatus({ somenteContato: true, expiraEm: null }, 'ATIVO'),
+      false
+    );
   });
 });
 

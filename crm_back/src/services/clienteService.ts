@@ -8,6 +8,7 @@ import {
   parseCsvClientes,
 } from '../utils/helpers/clienteImportHelpers.js';
 import { calcularLimitesDashboard } from '../utils/helpers/dashboardStatusLimits.js';
+import { clienteElegivelMensalidadePendente } from '../utils/helpers/cobrancaDiariaHelpers.js';
 import {
   painelCreditoService,
   SaldoInsuficienteError,
@@ -235,6 +236,11 @@ export class ClienteService {
     dados: UpdateClienteDto,
     cliente: Awaited<ReturnType<typeof clienteRepository.update>>
   ): Promise<void> {
+    if (!clienteElegivelMensalidadePendente(cliente)) {
+      await mensalidadeRepository.removerPendentesDoCliente(clienteId);
+      return;
+    }
+
     const expiraInformado = dados.expiraEm !== undefined && !!dados.expiraEm;
     const valorInformado = dados.valorMensal !== undefined;
 
@@ -262,6 +268,7 @@ export class ClienteService {
         });
       }
 
+      await this.deduplicarMensalidadesPendentes(clienteId);
       return;
     }
 
@@ -285,6 +292,13 @@ export class ClienteService {
       id,
       incluirCobrancas
     );
+
+    if (!incluirCobrancas) {
+      await mensalidadeRepository.removerPendentesDoCliente(id);
+    } else {
+      await this.alinharMensalidadePendenteDoCliente(cliente);
+    }
+
     return aplicarStatusCliente(cliente);
   }
 
@@ -292,6 +306,10 @@ export class ClienteService {
     await this.buscarPorId(id);
     const cliente = await clienteRepository.updateCortesia(id, cortesia);
     await this.sincronizarValorMensalidadeCortesia(id, cortesia);
+    const atualizado = await clienteRepository.findById(id);
+    if (atualizado) {
+      await this.alinharMensalidadePendenteDoCliente(atualizado);
+    }
     return aplicarStatusCliente(cliente);
   }
 
@@ -307,6 +325,13 @@ export class ClienteService {
       incluirCampanhas,
       incluirCobrancas,
     });
+
+    if (!ativo || !incluirCobrancas) {
+      await mensalidadeRepository.removerPendentesDoCliente(id);
+    } else {
+      await this.alinharMensalidadePendenteDoCliente(cliente);
+    }
+
     return aplicarStatusCliente(cliente);
   }
 
@@ -392,30 +417,49 @@ export class ClienteService {
     const clientes = await clienteRepository.findAll();
     let clientesAlinhados = 0;
     let mensalidadesAlinhadas = 0;
+    let removidasInelegiveis = 0;
 
     for (const cliente of clientes) {
-      if (
-        cliente.somenteContato ||
-        cliente.cortesia ||
-        !cliente.expiraEm ||
-        cliente.valorMensal <= 0
-      ) {
+      if (!clienteElegivelMensalidadePendente(cliente)) {
+        const removidas = await mensalidadeRepository.removerPendentesDoCliente(
+          cliente.id
+        );
+        removidasInelegiveis += removidas.count;
         continue;
       }
 
-      const vencimento = parseExpiraEm(cliente.expiraEm);
-      const valor = Number(cliente.valorMensal);
-      const resultado = await mensalidadeRepository.sincronizarPendentesDoCliente(
-        cliente.id,
-        { vencimento, valor }
-      );
-
-      if (resultado.count > 0) {
+      const alinhamento = await this.alinharMensalidadePendenteDoCliente(cliente);
+      if (alinhamento.alinhada) {
         clientesAlinhados += 1;
-        mensalidadesAlinhadas += resultado.count;
-        continue;
+        mensalidadesAlinhadas += alinhamento.mensalidades;
       }
+    }
 
+    return {
+      clientes: clientesAlinhados,
+      mensalidades: mensalidadesAlinhadas,
+      removidas: limpeza.count + removidasInelegiveis,
+      arquivados,
+    };
+  }
+
+  private async alinharMensalidadePendenteDoCliente(
+    cliente: Awaited<ReturnType<typeof clienteRepository.findById>>
+  ): Promise<{ alinhada: boolean; mensalidades: number }> {
+    if (!cliente || !clienteElegivelMensalidadePendente(cliente)) {
+      return { alinhada: false, mensalidades: 0 };
+    }
+
+    const vencimento = parseExpiraEm(cliente.expiraEm!);
+    const valor = cliente.cortesia ? 0 : Number(cliente.valorMensal);
+    const resultado = await mensalidadeRepository.sincronizarPendentesDoCliente(
+      cliente.id,
+      { vencimento, valor }
+    );
+
+    let mensalidades = resultado.count;
+
+    if (resultado.count === 0) {
       await mensalidadeRepository.create({
         clienteId: cliente.id,
         referencia: formatReferencia(vencimento),
@@ -423,16 +467,24 @@ export class ClienteService {
         vencimento,
         status: 'PENDENTE',
       });
-      clientesAlinhados += 1;
-      mensalidadesAlinhadas += 1;
+      mensalidades = 1;
     }
 
-    return {
-      clientes: clientesAlinhados,
-      mensalidades: mensalidadesAlinhadas,
-      removidas: limpeza.count,
-      arquivados,
-    };
+    await this.deduplicarMensalidadesPendentes(cliente.id);
+
+    return { alinhada: true, mensalidades };
+  }
+
+  private async deduplicarMensalidadesPendentes(clienteId: number): Promise<void> {
+    const pendentes = await mensalidadeRepository.findPendentesByClienteId(clienteId);
+    if (pendentes.length <= 1) {
+      return;
+    }
+
+    const [, ...extras] = pendentes;
+    for (const mensalidade of extras) {
+      await mensalidadeRepository.deleteById(mensalidade.id);
+    }
   }
 
   /** Após 7 dias de atraso: inativo + somente contato, sem cobranças pendentes. */

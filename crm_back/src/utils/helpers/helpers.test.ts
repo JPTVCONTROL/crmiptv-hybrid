@@ -4,6 +4,7 @@ import {
   agruparResumoEtapasFunil,
   calcularDiasVencimento,
   calcularDiasVencimentoNaData,
+  clienteElegivelMensalidadePendente,
   clienteParticipaCobrancas,
   rotuloPrazoVencimento,
 } from './cobrancaDiariaHelpers.js';
@@ -133,6 +134,51 @@ describe('clienteParticipaCobrancas', () => {
     assert.equal(
       clienteParticipaCobrancas({ expiraEm, incluirCobrancas: true }),
       false
+    );
+  });
+});
+
+describe('clienteElegivelMensalidadePendente', () => {
+  it('exige expiraEm, valor e elegibilidade de cobrança', () => {
+    assert.equal(
+      clienteElegivelMensalidadePendente({
+        expiraEm: '2026-08-01',
+        valorMensal: 35,
+      }),
+      true
+    );
+    assert.equal(
+      clienteElegivelMensalidadePendente({
+        expiraEm: null,
+        valorMensal: 35,
+      }),
+      false
+    );
+    assert.equal(
+      clienteElegivelMensalidadePendente({
+        expiraEm: '2026-08-01',
+        valorMensal: 0,
+      }),
+      false
+    );
+    assert.equal(
+      clienteElegivelMensalidadePendente({
+        expiraEm: '2026-08-01',
+        valorMensal: 35,
+        incluirCobrancas: false,
+      }),
+      false
+    );
+  });
+
+  it('mantém mensalidade pendente para cortesia com expiraEm', () => {
+    assert.equal(
+      clienteElegivelMensalidadePendente({
+        expiraEm: '2026-08-01',
+        valorMensal: 0,
+        cortesia: true,
+      }),
+      true
     );
   });
 });

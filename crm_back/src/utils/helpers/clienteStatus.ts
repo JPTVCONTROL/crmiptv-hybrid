@@ -26,8 +26,19 @@ export function calcularStatusCliente(
 }
 
 export function aplicarStatusCliente<
-  T extends { expiraEm: Date | null; ativo?: boolean | null },
+  T extends {
+    expiraEm: Date | null;
+    ativo?: boolean | null;
+    somenteContato?: boolean | null;
+  },
 >(cliente: T): T & { status: StatusCliente } {
+  if (cliente.somenteContato === true) {
+    return {
+      ...cliente,
+      status: 'INATIVO',
+    };
+  }
+
   if (cliente.ativo === false) {
     return {
       ...cliente,

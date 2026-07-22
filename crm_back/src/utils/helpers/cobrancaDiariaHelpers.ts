@@ -160,3 +160,35 @@ export function clienteParticipaCobrancas(
   }
   return cliente?.incluirCobrancas !== false;
 }
+
+/** Cliente que deve manter mensalidade PENDENTE alinhada ao plano (inclui cortesia). */
+export function clienteElegivelMensalidadePendente(
+  cliente?: {
+    ativo?: boolean | null;
+    incluirCobrancas?: boolean | null;
+    cortesia?: boolean | null;
+    somenteContato?: boolean | null;
+    expiraEm?: Date | string | null;
+    valorMensal?: number | null;
+  } | null
+): boolean {
+  if (!cliente?.expiraEm) {
+    return false;
+  }
+  if (cliente.ativo === false) {
+    return false;
+  }
+  if (cliente.somenteContato === true) {
+    return false;
+  }
+  if (cliente.incluirCobrancas === false) {
+    return false;
+  }
+  if (clienteUltrapassouLimiteCobranca(cliente.expiraEm)) {
+    return false;
+  }
+  if (cliente.cortesia) {
+    return true;
+  }
+  return (cliente.valorMensal ?? 0) > 0;
+}

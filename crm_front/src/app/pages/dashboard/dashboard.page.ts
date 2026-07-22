@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, forkJoin } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { MensalidadeService } from '../../core/services/mensalidade.service';
 import { ConfiguracaoService } from '../../core/services/configuracao.service';
 import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { RenovacaoMensalidadeService } from '../../core/services/renovacao-mensalidade.service';
@@ -15,7 +16,11 @@ import {
   formatarData,
   formatarValor,
 } from '../../shared/utils/formatters';
-import { resolverDiasAntecedencia } from '../../shared/utils/cobranca-diaria';
+import {
+  resolverDiasAntecedencia,
+  JANELA_PROXIMOS_VENCIMENTOS_DIAS,
+  sincronizarResumoDashboardRotina,
+} from '../../shared/utils/cobranca-diaria';
 import {
   META_NOVOS_CLIENTES_QTD_PADRAO,
   resolverDatasMetaNovosClientes,
@@ -116,6 +121,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   constructor(
     private dashboardService: DashboardService,
+    private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
     private renovacao: RenovacaoMensalidadeService,
     private sync: DadosSyncService,
@@ -131,6 +137,10 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   get diasAntecedencia(): number {
     return resolverDiasAntecedencia(this.configuracao);
+  }
+
+  get diasProximosVencimentos(): number {
+    return JANELA_PROXIMOS_VENCIMENTOS_DIAS;
   }
 
   get metaMesPercentual(): number {
@@ -280,10 +290,14 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.erroCarregamento = '';
     this.apiHealth.verificar();
 
-    this.dashboardService.obterResumo().subscribe({
-      next: (resumo) => {
-        this.resumo = resumo;
-        this.aplicarResumo(resumo);
+    forkJoin({
+      resumo: this.dashboardService.obterResumo(),
+      mensalidades: this.mensalidadeService.listar(),
+    }).subscribe({
+      next: ({ resumo, mensalidades }) => {
+        const sincronizado = sincronizarResumoDashboardRotina(resumo, mensalidades);
+        this.resumo = sincronizado;
+        this.aplicarResumo(sincronizado);
         this.loading = false;
         this.atualizando = false;
         aoConcluir?.();

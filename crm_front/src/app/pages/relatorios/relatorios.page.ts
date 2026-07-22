@@ -17,6 +17,7 @@ import {
   formatarValor,
   statusCliente,
 } from '../../shared/utils/formatters';
+import { clienteEhSomenteContato } from '../../shared/utils/cobranca-diaria';
 import {
   DadoCatalogoDistribuicao,
   montarDistribuicaoAplicativos,
@@ -474,14 +475,14 @@ export class RelatoriosPage implements OnInit, OnDestroy {
   }
 
   private calcular(): void {
-    this.clientesAtivos = this.clientes.filter((c) =>
-      clienteEstaAtivo(c.expiraEm)
-    ).length;
+    this.clientesAtivos = this.clientes.filter((c) => clienteEstaAtivo(c)).length;
     this.clientesAtrasados = this.clientes.filter(
-      (c) => statusCliente(c.expiraEm) === 'ATRASADO'
+      (c) =>
+        !clienteEhSomenteContato(c) && statusCliente(c.expiraEm) === 'ATRASADO'
     ).length;
     this.clientesInativos = this.clientes.filter(
-      (c) => statusCliente(c.expiraEm) === 'INATIVO'
+      (c) =>
+        !clienteEhSomenteContato(c) && statusCliente(c.expiraEm) === 'INATIVO'
     ).length;
 
     const pendentes = this.mensalidades.filter(

@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, forkJoin, of } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { AlertaOperacional, DashboardResumo } from '../models';
 import { DashboardService } from './dashboard.service';
+import { MensalidadeService } from './mensalidade.service';
 import { DadosSyncService } from './dados-sync.service';
+import { sincronizarResumoDashboardRotina } from '../../shared/utils/cobranca-diaria';
 
 export interface EstadoAlertasOperacionais {
   alertas: AlertaOperacional[];
@@ -31,6 +33,7 @@ export class AlertasOperacionaisService {
 
   constructor(
     private dashboardService: DashboardService,
+    private mensalidadeService: MensalidadeService,
     private sync: DadosSyncService
   ) {
     this.sync.mudancas$
@@ -67,8 +70,13 @@ export class AlertasOperacionaisService {
       carregando: true,
     });
 
-    return this.dashboardService.obterResumo().pipe(
-      map((resumo) => this.mapearResumo(resumo)),
+    return forkJoin({
+      resumo: this.dashboardService.obterResumo(),
+      mensalidades: this.mensalidadeService.listar(),
+    }).pipe(
+      map(({ resumo, mensalidades }) =>
+        this.mapearResumo(sincronizarResumoDashboardRotina(resumo, mensalidades))
+      ),
       tap((estado) => this.estadoSubject.next(estado)),
       catchError(() => {
         this.estadoSubject.next({

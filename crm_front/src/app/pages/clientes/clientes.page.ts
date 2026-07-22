@@ -10,7 +10,7 @@ import { ConfirmacaoService } from '../../core/services/confirmacao.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Cliente, Aplicativo, ImportacaoClientesResultado, Configuracao } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
-import { resolverStatusCliente, StatusCliente, formatarData } from '../../shared/utils/formatters';
+import { resolverStatusCliente, StatusCliente, formatarData, clienteEntraNoGrupoStatus } from '../../shared/utils/formatters';
 import { oferecerOnboardingCompleto } from '../../shared/utils/onboarding';
 import {
   clienteCadastroIncompleto,
@@ -209,7 +209,7 @@ export class ClientesPage implements OnInit, OnDestroy {
       return this.clientes.length;
     }
 
-    return this.clientes.filter((c) => this.status(c) === filtro).length;
+    return this.clientes.filter((c) => clienteEntraNoGrupoStatus(c, filtro)).length;
   }
 
   get temFiltrosAtivos(): boolean {
@@ -442,8 +442,7 @@ export class ClientesPage implements OnInit, OnDestroy {
         c.nome.toLowerCase().includes(termo) ||
         c.telefone.includes(termo);
 
-      const matchStatus =
-        this.filtroStatus === 'TODOS' || this.status(c) === this.filtroStatus;
+      const matchStatus = clienteEntraNoGrupoStatus(c, this.filtroStatus);
 
       const matchAplicativo =
         this.filtroAplicativoId === null ||
@@ -820,6 +819,9 @@ export class ClientesPage implements OnInit, OnDestroy {
   }
 
   tipoBadge(cliente: Cliente): StatusBadgeTipo {
+    if (clienteEhSomenteContato(cliente)) {
+      return 'SOMENTE_CONTATO';
+    }
     return this.status(cliente);
   }
 

@@ -319,7 +319,7 @@
         </a>
         <a routerLink="/vencimentos" class="crm-stat-card-link">
           <app-stat-card
-            [title]="'Vencendo · ' + diasAntecedencia + 'd'"
+            [title]="'Vencendo · ' + diasProximosVencimentos + 'd'"
             [value]="vencendoQtd.toString()"
             variant="orange"
             [subtitle]="vencendoValor"
@@ -391,10 +391,10 @@
           <p class="crm-card-subtitle mt-1">
             <ng-container *ngIf="proximosVencimentos.length > 0">
               {{ vencendoQtd }} cobrança{{ vencendoQtd === 1 ? '' : 's' }} · {{ vencendoValor }}
-              <span class="text-slate-600"> · próximos {{ diasAntecedencia }} dias</span>
+              <span class="text-slate-600"> · próximos {{ diasProximosVencimentos }} dias</span>
             </ng-container>
             <ng-container *ngIf="proximosVencimentos.length === 0">
-              Nenhum vencimento nos próximos {{ diasAntecedencia }} dias
+              Nenhum vencimento nos próximos {{ diasProximosVencimentos }} dias
             </ng-container>
           </p>
         </div>
@@ -427,7 +427,7 @@
 
       <app-empty-state
         *ngIf="proximosVencimentos.length === 0"
-        message="Nenhum vencimento na janela configurada."
+        message="Nenhum vencimento nos próximos 5 dias."
       ></app-empty-state>
 
       <div *ngIf="proximosVencimentos.length > limiteLista" class="crm-dash-vencimentos-footer">

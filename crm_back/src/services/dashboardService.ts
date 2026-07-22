@@ -4,7 +4,8 @@ import { calcularStatusCliente } from '../utils/helpers/clienteStatus.js';
 import {
   agruparResumoEtapasFunil,
   calcularDiasVencimento,
-  elegivelCobrancaDiaria,
+  clienteParticipaCobrancas,
+  DIAS_ANTECEDENCIA_LEMBRETE_PADRAO,
   elegivelRotinaCobrancaDiaria,
   resolverDiasAntecedencia,
 } from '../utils/helpers/cobrancaDiariaHelpers.js';
@@ -258,21 +259,10 @@ export class DashboardService {
     const whereGerenciado = whereClienteGerenciado(limites.inicioAtrasado);
     const whereAtivoComercial = {
       cortesia: false,
+      somenteContato: false,
       ...whereAtivo,
     };
     const whereMensalidadeCobranca = whereMensalidadeCobrancaCliente();
-    const whereMensalidadeCobrancaJanela = {
-      ...whereMensalidadeCobranca,
-      OR: [
-        { vencimento: { lt: limites.inicioHoje } },
-        {
-          vencimento: {
-            gte: limites.inicioHoje,
-            lte: limites.fimAntecedencia,
-          },
-        },
-      ],
-    };
 
     const [
       totalClientes,
@@ -290,7 +280,7 @@ export class DashboardService {
       pendentesEsteMesAgg,
       pendentesProximosMesesAgg,
       pagosUltimos6Meses,
-      pendentesCobrancaJanela,
+      pendentesCobranca,
       pendentesCobrancaAtrasados,
       totalPendenteCobrancaAgg,
       cobrancaAtrasadaAgg,
@@ -372,7 +362,7 @@ export class DashboardService {
         select: { valor: true, pagoEm: true },
       }),
       prisma.mensalidade.findMany({
-        where: whereMensalidadeCobrancaJanela,
+        where: whereMensalidadeCobranca,
         select: {
           id: true,
           clienteId: true,
@@ -384,6 +374,7 @@ export class DashboardService {
             select: {
               nome: true,
               telefone: true,
+              expiraEm: true,
             },
           },
         },
@@ -395,6 +386,7 @@ export class DashboardService {
           vencimento: { lt: limites.inicioHoje },
         },
         select: {
+          vencimento: true,
           ultimoContatoEm: true,
           cliente: { select: { telefone: true } },
         },
@@ -463,9 +455,13 @@ export class DashboardService {
 
     const faturamentoMensal = montarFaturamentoMensal(pagosUltimos6Meses, hoje);
 
-    const vencendoLista = pendentesCobrancaJanela.filter((m) => {
+    const vencendoLista = pendentesCobranca.filter((m) => {
       const dias = calcularDiasVencimento(m.vencimento);
-      return dias >= 0 && dias <= diasAntecedencia;
+      return (
+        dias >= 0 &&
+        dias <= DIAS_ANTECEDENCIA_LEMBRETE_PADRAO &&
+        clienteParticipaCobrancas(m.cliente)
+      );
     });
     const vencemHoje = vencendoLista.filter(
       (m) => calcularDiasVencimento(m.vencimento) === 0
@@ -520,8 +516,10 @@ export class DashboardService {
       };
     });
 
-    const elegiveis = pendentesCobrancaJanela.filter((m) =>
-      elegivelRotinaCobrancaDiaria(m.vencimento)
+    const elegiveis = pendentesCobranca.filter(
+      (m) =>
+        elegivelRotinaCobrancaDiaria(m.vencimento) &&
+        clienteParticipaCobrancas(m.cliente)
     );
     const contactaveis = elegiveis.filter((m) =>
       telefoneValidoParaWhatsApp(m.cliente.telefone)
@@ -642,7 +640,12 @@ export class DashboardService {
     }
 
     const atrasadosSemContato = pendentesCobrancaAtrasados.filter((m) => {
-      if (!telefoneValidoParaWhatsApp(m.cliente.telefone)) return false;
+      if (elegivelRotinaCobrancaDiaria(m.vencimento)) {
+        return false;
+      }
+      if (!telefoneValidoParaWhatsApp(m.cliente.telefone)) {
+        return false;
+      }
       return !contatoRegistradoHoje(m.ultimoContatoEm);
     }).length;
 

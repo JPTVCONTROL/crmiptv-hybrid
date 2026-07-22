@@ -404,6 +404,13 @@
       </div>
       <app-status-badge
         class="shrink-0"
+        *ngIf="ehSomenteContato(c)"
+        tipo="SOMENTE_CONTATO"
+        label="Somente contato"
+      ></app-status-badge>
+      <app-status-badge
+        class="shrink-0"
+        *ngIf="!ehSomenteContato(c)"
         [tipo]="tipoBadge(c)"
         [label]="status(c)"
         [dot]="true"
@@ -593,7 +600,17 @@
           {{ c.expiraEm ? fmtData(c.expiraEm) : '—' }}
         </td>
         <td class="py-3 px-2">
-          <app-status-badge [tipo]="tipoBadge(c)" [label]="status(c)" [dot]="true"></app-status-badge>
+          <app-status-badge
+            *ngIf="ehSomenteContato(c)"
+            tipo="SOMENTE_CONTATO"
+            label="Somente contato"
+          ></app-status-badge>
+          <app-status-badge
+            *ngIf="!ehSomenteContato(c)"
+            [tipo]="tipoBadge(c)"
+            [label]="status(c)"
+            [dot]="true"
+          ></app-status-badge>
         </td>
         <td class="py-3 px-2 align-top">
           <div *ngIf="pendenciasCliente(c).length > 0" class="flex flex-wrap gap-1.5 max-w-[320px]">

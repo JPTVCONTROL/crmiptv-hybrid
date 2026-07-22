@@ -131,6 +131,10 @@ function clienteExigeMac(
 }
 
 export function clienteGerenciado(cliente: Cliente): boolean {
+  if (cliente.somenteContato) {
+    return false;
+  }
+
   const status = statusCliente(cliente.expiraEm);
   return status === 'ATIVO' || status === 'ATRASADO';
 }

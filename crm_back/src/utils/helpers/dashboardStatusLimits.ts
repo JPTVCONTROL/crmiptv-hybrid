@@ -51,6 +51,7 @@ export function whereClienteAtivo(
   inicioHoje: Date
 ): Prisma.ClienteWhereInput {
   return {
+    somenteContato: false,
     OR: [{ expiraEm: null }, { expiraEm: { gte: inicioHoje } }],
   };
 }
@@ -60,6 +61,7 @@ export function whereClienteAtrasado(
   inicioAtrasado: Date
 ): Prisma.ClienteWhereInput {
   return {
+    somenteContato: false,
     expiraEm: { gte: inicioAtrasado, lt: inicioHoje },
   };
 }
@@ -68,6 +70,7 @@ export function whereClienteInativo(
   inicioAtrasado: Date
 ): Prisma.ClienteWhereInput {
   return {
+    somenteContato: false,
     expiraEm: { lt: inicioAtrasado },
   };
 }
@@ -80,12 +83,17 @@ export function whereClienteGerenciado(
   };
 }
 
-export function whereClienteParticipaCobranca(): Prisma.ClienteWhereInput {
+export function whereClienteParticipaCobranca(
+  referencia = new Date()
+): Prisma.ClienteWhereInput {
+  const { inicioAtrasado } = calcularLimitesDashboard(referencia);
+
   return {
     cortesia: false,
     somenteContato: false,
     ativo: { not: false },
     NOT: { incluirCobrancas: false },
+    expiraEm: { not: null, gte: inicioAtrasado },
   };
 }
 

@@ -98,15 +98,52 @@ export function statusCliente(expiraEm?: string | null): StatusCliente {
 export function resolverStatusCliente(cliente?: {
   expiraEm?: string | null;
   ativo?: boolean | null;
+  somenteContato?: boolean | null;
 } | null): StatusCliente {
+  if (cliente?.somenteContato === true) {
+    return 'INATIVO';
+  }
   if (cliente?.ativo === false) {
     return 'INATIVO';
   }
   return statusCliente(cliente?.expiraEm);
 }
 
-export function clienteEstaAtivo(expiraEm?: string | null): boolean {
-  return statusCliente(expiraEm) !== 'INATIVO';
+export function clienteEstaAtivo(
+  cliente?:
+    | {
+        expiraEm?: string | null;
+        ativo?: boolean | null;
+        somenteContato?: boolean | null;
+      }
+    | string
+    | null
+): boolean {
+  if (cliente != null && typeof cliente === 'object') {
+    if (cliente.somenteContato === true || cliente.ativo === false) {
+      return false;
+    }
+    return statusCliente(cliente.expiraEm) !== 'INATIVO';
+  }
+
+  return statusCliente(typeof cliente === 'string' ? cliente : undefined) !== 'INATIVO';
+}
+
+export function clienteEntraNoGrupoStatus(
+  cliente: {
+    expiraEm?: string | null;
+    ativo?: boolean | null;
+    somenteContato?: boolean | null;
+  },
+  filtro: 'TODOS' | StatusCliente
+): boolean {
+  if (filtro === 'TODOS') {
+    return true;
+  }
+  if (cliente.somenteContato === true) {
+    return false;
+  }
+  return resolverStatusCliente(cliente) === filtro;
 }
 
 export function statusFinanceiro(

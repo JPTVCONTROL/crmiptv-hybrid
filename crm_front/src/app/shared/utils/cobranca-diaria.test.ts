@@ -6,6 +6,7 @@ import {
   elegivelCobrancaDiaria,
   elegivelRotinaCobrancaDiaria,
   mensalidadeElegivelCobrancaDiaria,
+  montarResumoRotinaCobrancaDiaria,
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
   tipoCobrancaDiaria,
@@ -183,6 +184,51 @@ describe('clienteApareceEmVencimentos', () => {
         expiraEm: expirado.toISOString().slice(0, 10),
       }),
       false
+    );
+  });
+});
+
+describe('montarResumoRotinaCobrancaDiaria', () => {
+  it('conta contactados e etapas do funil como na Cobrança Diária', () => {
+    const hoje = new Date();
+    const iso = (offset: number) =>
+      new Date(
+        Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + offset)
+      )
+        .toISOString()
+        .slice(0, 10);
+
+    const resumo = montarResumoRotinaCobrancaDiaria([
+      {
+        id: 1,
+        status: 'PENDENTE',
+        vencimento: iso(5),
+        cliente: { telefone: '11999998888' },
+      } as never,
+      {
+        id: 2,
+        status: 'PENDENTE',
+        vencimento: iso(1),
+        ultimoContatoEm: new Date().toISOString(),
+        cliente: { telefone: '11999997777' },
+      } as never,
+      {
+        id: 3,
+        status: 'PENDENTE',
+        vencimento: iso(0),
+        ultimoContatoEm: new Date().toISOString(),
+        cliente: { telefone: '11999996666' },
+      } as never,
+    ]);
+
+    assert.equal(resumo.totalElegiveis, 3);
+    assert.equal(resumo.contactadosHoje, 2);
+    assert.equal(resumo.naoContactados, 1);
+    assert.equal(resumo.rotinaFeita, false);
+    assert.equal(resumo.etapasFunil.length, 3);
+    assert.equal(
+      resumo.etapasFunil.find((etapa) => etapa.ponto === 'LEMBRETE_D5')?.total,
+      1
     );
   });
 });

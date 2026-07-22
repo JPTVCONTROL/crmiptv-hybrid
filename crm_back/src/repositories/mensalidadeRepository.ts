@@ -107,6 +107,10 @@ export class MensalidadeRepository {
     });
   }
 
+  deleteById(id: number) {
+    return prisma.mensalidade.delete({ where: { id } });
+  }
+
   removerPendentesDoCliente(clienteId: number) {
     return prisma.mensalidade.deleteMany({
       where: { clienteId, status: 'PENDENTE' },
@@ -120,7 +124,6 @@ export class MensalidadeRepository {
         cliente: {
           OR: [
             { somenteContato: true },
-            { cortesia: true },
             { incluirCobrancas: false },
             { ativo: false },
           ],

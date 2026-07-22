@@ -74,7 +74,7 @@ export function clientePassouFiltroPublico(
     case 'TODOS':
       return true;
     case 'ATIVOS':
-      return status === 'ATIVO';
+      return status === 'ATIVO' && cliente.somenteContato !== true;
     case 'VENCENDO':
       return (
         status === 'ATIVO' &&
@@ -83,7 +83,7 @@ export function clientePassouFiltroPublico(
     case 'ATRASADOS':
       return status === 'ATRASADO';
     case 'INATIVOS':
-      return status === 'INATIVO';
+      return status === 'INATIVO' && cliente.somenteContato !== true;
     case 'SOMENTE_CONTATO':
       return cliente.somenteContato === true;
     default:
