@@ -154,12 +154,20 @@ export class NovoClienteModalComponent implements OnInit {
         }
       }
 
-      if ((this.cliente.custoCredito ?? 0) <= 0) {
+      if ((this.cliente.custoCredito ?? 0) <= 0 && this.form.servidor?.trim()) {
         this.form.custoCredito = resolverCustoCreditoPorServidor(this.form.servidor);
+      }
+
+      if (!this.form.servidor?.trim()) {
+        this.form.custoCredito = 0;
       }
     } else {
       this.form.ativadoEm = this.formatarDataInput(new Date());
     }
+  }
+
+  get mostrarCustoCredito(): boolean {
+    return !!this.form.servidor?.trim();
   }
 
   get dispositivosVisiveis(): DispositivoCliente[] {
@@ -344,7 +352,10 @@ export class NovoClienteModalComponent implements OnInit {
       ativadoEm: this.form.somenteContato ? null : this.form.ativadoEm || null,
       planoId: this.form.somenteContato ? null : this.form.planoId,
       valorMensal: this.form.somenteContato ? 0 : this.form.valorMensal,
-      custoCredito: this.form.somenteContato ? 0 : Number(this.form.custoCredito) || 0,
+      custoCredito:
+        this.form.somenteContato || !this.form.servidor?.trim()
+          ? 0
+          : Number(this.form.custoCredito) || 0,
       incluirCobrancas: this.form.somenteContato
         ? false
         : this.form.incluirCobrancas,

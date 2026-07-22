@@ -328,6 +328,7 @@ export class DashboardService {
       }),
       prisma.cliente.count({
         where: {
+          ...whereClienteParticipaCobranca(),
           expiraEm: { not: null },
           OR: [whereAtrasado, whereInativo],
           mensalidades: { none: { status: 'PENDENTE' } },
