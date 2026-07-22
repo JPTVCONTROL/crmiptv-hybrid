@@ -257,7 +257,13 @@
   }
 
   .crm-card-selectable {
-    @apply crm-card-interactive text-left;
+    @apply crm-card crm-card-interactive text-left;
+  }
+
+  button.crm-card-selectable {
+    @apply block w-full;
+    font: inherit;
+    color: inherit;
   }
 
   .crm-card-selectable:hover,
