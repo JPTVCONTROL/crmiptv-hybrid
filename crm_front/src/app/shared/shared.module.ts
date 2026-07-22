@@ -9,6 +9,8 @@ import { LoadingComponent } from '../components/loading/loading.component';
 import { EmptyStateComponent } from '../components/empty-state/empty-state.component';
 import { ErrorBannerComponent } from '../components/error-banner/error-banner.component';
 import { StatusBadgeComponent } from '../components/status-badge/status-badge.component';
+import { WhatsappPreviewComponent } from '../components/whatsapp-preview/whatsapp-preview.component';
+import { WhatsappPreviewPipe } from '../pipes/whatsapp-preview.pipe';
 import { AlertasSinoModule } from '../components/alertas-sino/alertas-sino.module';
 
 @NgModule({
@@ -19,6 +21,8 @@ import { AlertasSinoModule } from '../components/alertas-sino/alertas-sino.modul
     EmptyStateComponent,
     ErrorBannerComponent,
     StatusBadgeComponent,
+    WhatsappPreviewComponent,
+    WhatsappPreviewPipe,
   ],
   imports: [
     CommonModule,
@@ -40,6 +44,8 @@ import { AlertasSinoModule } from '../components/alertas-sino/alertas-sino.modul
     EmptyStateComponent,
     ErrorBannerComponent,
     StatusBadgeComponent,
+    WhatsappPreviewComponent,
+    WhatsappPreviewPipe,
     AlertasSinoModule,
   ],
 })

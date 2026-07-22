@@ -203,6 +203,8 @@ model Configuracao {
   mensagemRenovacao  String?
   mensagemBloqueio   String?
   mensagemRecibo     String?
+  /** JSON: Record<PontoDisparoAutomacao, string> — mensagens do funil progressivo. */
+  mensagensProgressivas String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }

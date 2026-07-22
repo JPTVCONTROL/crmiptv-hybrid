@@ -29,6 +29,24 @@ export function elegivelCobrancaDiaria(
   return dias < 0 || (dias >= 0 && dias <= diasAntecedencia);
 }
 
+/** Rotina diária / automação: apenas dias fixos do funil progressivo. */
+export function elegivelRotinaCobrancaDiaria(vencimento: Date | string): boolean {
+  return elegivelRotinaProgressiva(calcularDiasVencimento(vencimento));
+}
+
+export { elegivelRotinaProgressiva } from './automacaoDisparoHelpers.js';
+
+/** Texto relativo ao vencimento para lembretes: "Vence hoje", "Vence em 3 dias", etc. */
+export function rotuloPrazoVencimento(diasAteVencer: number): string {
+  if (diasAteVencer < 0) {
+    const atraso = Math.abs(diasAteVencer);
+    return atraso === 1 ? '1 dia atrasado' : `${atraso} dias atrasados`;
+  }
+  if (diasAteVencer === 0) return 'Vence hoje';
+  if (diasAteVencer === 1) return 'Vence amanhã';
+  return `Vence em ${diasAteVencer} dias`;
+}
+
 export function clienteEhCortesia(
   cliente?: { cortesia?: boolean | null } | null
 ): boolean {

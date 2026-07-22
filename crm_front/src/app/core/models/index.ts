@@ -126,6 +126,8 @@ export interface Configuracao {
   mensagemRenovacao?: string | null;
   mensagemBloqueio?: string | null;
   mensagemRecibo?: string | null;
+  /** JSON serializado — overrides do funil progressivo por etapa. */
+  mensagensProgressivas?: string | null;
 }
 
 export interface AutomacaoConfig {

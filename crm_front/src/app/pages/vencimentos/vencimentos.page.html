@@ -11,15 +11,15 @@
 
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
-<div *ngIf="!loading" class="space-y-6">
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div *ngIf="!loading" class="crm-page-shell">
+  <div class="crm-kpi-grid--3">
     <app-stat-card title="Total Pendente" [value]="totalPendente" variant="warning"></app-stat-card>
     <app-stat-card title="Vencem Hoje" [value]="vencemHoje.toString()" variant="danger"></app-stat-card>
-    <app-stat-card title="Atrasados" [value]="atrasados.toString()" color="#DC2626"></app-stat-card>
+    <app-stat-card title="Atrasados" [value]="atrasados.toString()" variant="danger"></app-stat-card>
   </div>
 
   <div class="crm-sticky-toolbar">
-    <div class="crm-card !p-4 md:!p-5 space-y-4">
+    <div class="crm-filter-toolbar-card">
     <div class="relative">
       <ion-icon
         name="search-outline"
@@ -175,7 +175,7 @@
     ></app-empty-state>
   </div>
 
-  <div class="crm-card hidden md:block overflow-x-auto">
+  <div class="crm-table-shell">
     <table class="min-w-[640px]" [ngClass]="classesTabela">
       <thead>
         <tr class="text-slate-400 border-b border-slate-800">

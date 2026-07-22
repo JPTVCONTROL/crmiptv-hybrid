@@ -2,7 +2,7 @@
 
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
-<div *ngIf="!loading" class="space-y-6">
+<div *ngIf="!loading" class="crm-page-shell">
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card
       title="Clientes no mês"
@@ -12,7 +12,7 @@
     <app-stat-card
       title="No dia selecionado"
       [value]="clientesDiaSelecionado.length.toString()"
-      color="#64748B"
+      variant="neutral"
     ></app-stat-card>
     <app-stat-card
       title="Só expiração"
@@ -33,7 +33,7 @@
         <button type="button" class="crm-btn-ghost !px-2.5" (click)="mesAnterior()" aria-label="Mês anterior">
           <ion-icon name="chevron-back-outline"></ion-icon>
         </button>
-        <h2 class="text-white font-semibold text-lg min-w-[12rem] text-center">{{ tituloMes }}</h2>
+        <h2 class="crm-section-title crm-section-title--flush min-w-[12rem] text-center">{{ tituloMes }}</h2>
         <button type="button" class="crm-btn-ghost !px-2.5" (click)="mesProximo()" aria-label="Próximo mês">
           <ion-icon name="chevron-forward-outline"></ion-icon>
         </button>
@@ -117,7 +117,7 @@
       <div *ngIf="clientesDiaSelecionado.length > 0" class="space-y-3">
         <article
           *ngFor="let cliente of clientesDiaSelecionado; trackBy: trackByClienteDia"
-          class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2"
+          class="crm-card-nested p-3 space-y-2"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">

@@ -121,6 +121,7 @@ export const CONFIGURACAO_CAMPOS_PERMITIDOS = [
   'mensagemRenovacao',
   'mensagemBloqueio',
   'mensagemRecibo',
+  'mensagensProgressivas',
 ] as const;
 
 export interface UpdateAutomacaoConfigDto {

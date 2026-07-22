@@ -1,4 +1,10 @@
-import { formatarData, resolverTelefoneCliente } from './formatters';
+import { formatarData, resolverTelefoneCliente, calcularDias, rotuloPrazoVencimento } from './formatters';
+import { PontoDisparoAutomacao, resolverPontoDisparo } from './automacao-disparo';
+import {
+  parsearMensagensProgressivas,
+  resolverTemplateProgressivo,
+  type MensagensProgressivasMap,
+} from './mensagens-progressivas';
 import { notificar } from './toast-notifier';
 import { confirmarUsuario } from './confirm-notifier';
 import { Mensalidade } from '../../core/models';
@@ -69,6 +75,7 @@ function substituirVariaveis(
     '{referencia}': dados.referencia,
     '{valor}': formatarValorMsg(dados.valor),
     '{vencimento}': formatarDataMsg(dados.vencimento),
+    '{prazo}': rotuloPrazoVencimento(calcularDias(dados.vencimento)),
     '{proximoVencimento}': formatarDataMsg(dados.vencimento),
     '{expiraEm}': expiraEm,
     '{pagoEm}': pagoEm,
@@ -113,20 +120,113 @@ function garantirPixNaMensagem(
 export function montarMensagemCobranca(
   dados: DadosMensagemCobranca,
   templateAtrasado?: string | null,
-  templateLembrete?: string | null
+  templateLembrete?: string | null,
+  pontoDisparo?: PontoDisparoAutomacao | null,
+  overridesProgressivos?: MensagensProgressivasMap | null
 ): string {
-  if (dados.atrasado) {
-    const template = templateAtrasado?.trim()
-      ? templateAtrasado.trim()
-      : MENSAGEM_COBRANCA_PADRAO;
-    return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
-  }
-
-  const template = templateLembrete?.trim()
+  const fallbackCobranca = templateAtrasado?.trim()
+    ? templateAtrasado.trim()
+    : MENSAGEM_COBRANCA_PADRAO;
+  const fallbackLembrete = templateLembrete?.trim()
     ? templateLembrete.trim()
     : MENSAGEM_COBRANCA_LEMBRETE_PADRAO;
 
-  return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
+  const template = resolverTemplateProgressivo(
+    pontoDisparo,
+    overridesProgressivos,
+    fallbackLembrete,
+    fallbackCobranca
+  );
+
+  return montarPreviaMensagemTemplate(template, dados);
+}
+
+const DIAS_POR_PONTO_FUNIL: Record<PontoDisparoAutomacao, number> = {
+  LEMBRETE_D5: 5,
+  LEMBRETE_D3: 3,
+  LEMBRETE_D1: 1,
+  LEMBRETE_D0: 0,
+  COBRANCA_D1: -1,
+  COBRANCA_D2: -2,
+  COBRANCA_D3: -3,
+  COBRANCA_D7: -7,
+};
+
+export interface ConfigPreviewMensagemFunil {
+  nomeEmpresa?: string | null;
+  chavePix?: string | null;
+  tipoPix?: string | null;
+  favorecidoPix?: string | null;
+}
+
+export function montarPreviaMensagemTemplate(
+  template: string,
+  dados: DadosMensagemWhatsApp
+): string {
+  const texto = template.trim();
+  if (!texto) return '';
+  return garantirPixNaMensagem(substituirVariaveis(texto, dados), dados);
+}
+
+export function dadosExemploMensagemFunil(
+  ponto: PontoDisparoAutomacao,
+  config?: ConfigPreviewMensagemFunil | null
+): DadosMensagemCobranca {
+  const dias = DIAS_POR_PONTO_FUNIL[ponto];
+  const vencimento = new Date();
+  vencimento.setHours(12, 0, 0, 0);
+  vencimento.setDate(vencimento.getDate() + dias);
+
+  const meses = [
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Set',
+    'Out',
+    'Nov',
+    'Dez',
+  ];
+  const referencia = `${meses[vencimento.getMonth()]}/${vencimento.getFullYear()}`;
+  const vencimentoIso = [
+    vencimento.getFullYear(),
+    String(vencimento.getMonth() + 1).padStart(2, '0'),
+    String(vencimento.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  return {
+    nome: 'João Silva',
+    referencia,
+    valor: 39.9,
+    vencimento: vencimentoIso,
+    empresa: config?.nomeEmpresa?.trim() || 'JPTV',
+    pix: config?.chavePix?.trim() || 'contato@empresa.com.br',
+    tipoPix: config?.tipoPix?.trim() || 'E-mail',
+    favorecido: config?.favorecidoPix?.trim() || 'JPTV Ltda',
+    atrasado: dias < 0,
+  };
+}
+
+export function montarPreviaMensagemFunil(
+  ponto: PontoDisparoAutomacao,
+  template: string,
+  config?: ConfigPreviewMensagemFunil | null
+): string {
+  const preview = montarPreviaMensagemTemplate(
+    template,
+    dadosExemploMensagemFunil(ponto, config)
+  );
+  return preview || '(mensagem vazia)';
+}
+
+export function resolverOverridesMensagensProgressivas(
+  configuracao?: { mensagensProgressivas?: unknown } | null
+): MensagensProgressivasMap {
+  return parsearMensagensProgressivas(configuracao?.mensagensProgressivas);
 }
 
 export function montarMensagemRenovacao(

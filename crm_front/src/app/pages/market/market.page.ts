@@ -619,9 +619,9 @@ export class MarketPage implements OnInit, OnDestroy {
     this.alternarSelecao(linha.id);
   }
 
-  alternarSelecionarTodosFiltrados(event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
+  alternarSelecionarTodosFiltrados(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
 
     const elegiveis = this.linhasFiltradas.filter((l) => this.podeSelecionar(l));
     if (elegiveis.length === 0) return;

@@ -119,6 +119,17 @@ export function statusFinanceiro(
   return 'REGULAR';
 }
 
+/** Texto relativo ao vencimento: "Vence hoje", "Vence amanhã", "Vence em 3 dias", etc. */
+export function rotuloPrazoVencimento(diasAteVencer: number): string {
+  if (diasAteVencer < 0) {
+    const atraso = Math.abs(diasAteVencer);
+    return atraso === 1 ? '1 dia atrasado' : `${atraso} dias atrasados`;
+  }
+  if (diasAteVencer === 0) return 'Vence hoje';
+  if (diasAteVencer === 1) return 'Vence amanhã';
+  return `Vence em ${diasAteVencer} dias`;
+}
+
 /** Rótulo amigável do status de cobrança no Financeiro (não confundir com pagamento quitado). */
 export function rotuloStatusFinanceiro(
   status: 'ATRASADO' | 'PENDENTE' | 'REGULAR' | 'TODOS'

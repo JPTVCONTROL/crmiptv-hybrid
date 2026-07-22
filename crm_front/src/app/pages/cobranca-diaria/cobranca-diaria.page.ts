@@ -21,6 +21,7 @@ import {
   rotuloTipoCobrancaDiaria,
   TipoCobrancaDiaria,
   trackByItemCobrancaDiaria,
+  rotuloPontoDisparo,
 } from '../../shared/utils/cobranca-diaria';
 import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
 import { CobrancaLoteFilaService } from '../../core/services/cobranca-lote-fila.service';
@@ -35,6 +36,11 @@ import {
   vincularSincronizacaoPagina,
   DOMINIOS_SYNC_OPERACAO,
 } from '../../shared/utils/page-sync.util';
+import {
+  classesFilterChip,
+  classesFilterChipContagem,
+  VarianteFilterChip,
+} from '../../shared/utils/filter-chip.util';
 
 export type FiltroGrupoCobranca = 'TODOS' | TipoCobrancaDiaria;
 
@@ -99,7 +105,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
       day: 'numeric',
       month: 'long',
     });
-    return `Rotina de ${hoje} · atrasados e vencimentos em até ${this.diasAntecedencia} dias`;
+    return `Rotina de ${hoje} · funil progressivo (5, 3, 1, 0 dias antes · 1, 2, 3 e 7 atrasados)`;
   }
 
   get itensElegiveis(): ItemCobrancaDiaria[] {
@@ -363,6 +369,42 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
 
   definirFiltroGrupo(filtro: FiltroGrupoCobranca): void {
     this.filtroGrupo = filtro;
+  }
+
+  contagemGrupo(filtro: FiltroGrupoCobranca): number {
+    if (filtro === 'TODOS') {
+      return this.itens.length;
+    }
+
+    return this.itens.filter((item) => item.tipo === filtro).length;
+  }
+
+  classesChipGrupo(filtro: FiltroGrupoCobranca): string {
+    const ativo = this.filtroGrupo === filtro;
+    const variantes: Record<FiltroGrupoCobranca, VarianteFilterChip> = {
+      TODOS: 'violet',
+      ATRASADO: 'red',
+      A_VENCER: 'amber',
+    };
+    return classesFilterChip(ativo, variantes[filtro]);
+  }
+
+  classesChipGrupoContagem(filtro: FiltroGrupoCobranca): string {
+    const ativo = this.filtroGrupo === filtro;
+    const variantes: Record<FiltroGrupoCobranca, VarianteFilterChip> = {
+      TODOS: 'violet',
+      ATRASADO: 'red',
+      A_VENCER: 'amber',
+    };
+    return classesFilterChipContagem(ativo, variantes[filtro]);
+  }
+
+  classesChipPendentes(): string {
+    return classesFilterChip(this.filtroSomentePendentes, 'emerald');
+  }
+
+  classesChipPendentesContagem(): string {
+    return classesFilterChipContagem(this.filtroSomentePendentes, 'emerald');
   }
 
   alternarFiltroSomentePendentes(): void {
@@ -662,6 +704,7 @@ export class CobrancaDiariaPage implements OnInit, OnDestroy {
   }
 
   rotuloDias = rotuloDiasCobrancaDiaria;
+  rotuloPonto = rotuloPontoDisparo;
   rotuloTipo = rotuloTipoCobrancaDiaria;
   fmtData = formatarData;
   fmtValor = formatarValor;

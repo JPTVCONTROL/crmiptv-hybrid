@@ -1,6 +1,18 @@
 import type { Configuracao } from '@prisma/client';
 import { parseDataSomenteDia } from './dateHelpers.js';
 import {
+  calcularDiasVencimento,
+  elegivelRotinaProgressiva,
+  rotuloPrazoVencimento,
+} from './cobrancaDiariaHelpers.js';
+import {
+  mesclarMensagensProgressivas,
+  parsearMensagensProgressivas,
+  resolverTemplateProgressivo,
+  type MensagensProgressivasMap,
+} from './mensagensProgressivas.js';
+import type { PontoDisparoAutomacao } from './automacaoDisparoHelpers.js';
+import {
   MENSAGEM_COBRANCA_LEMBRETE_PADRAO,
   MENSAGEM_COBRANCA_PADRAO,
   resolverTextoMensagem,
@@ -55,11 +67,13 @@ function montarLinhaPix(dados: DadosMensagemCobranca): string {
 }
 
 function substituirVariaveis(template: string, dados: DadosMensagemCobranca): string {
+  const diasAteVencer = calcularDiasVencimento(dados.vencimento);
   const mapa: Record<string, string> = {
     '{nome}': dados.nome,
     '{referencia}': dados.referencia,
     '{valor}': formatarValor(dados.valor),
     '{vencimento}': formatarData(dados.vencimento),
+    '{prazo}': rotuloPrazoVencimento(diasAteVencer),
     '{empresa}': dados.empresa,
     '{pix}': dados.pix?.trim() ?? '',
     '{tipoPix}': dados.tipoPix?.trim() ?? '',
@@ -100,22 +114,43 @@ function garantirPixNaMensagem(
 
 export function montarMensagemCobrancaAutomacao(
   dados: DadosMensagemCobranca,
-  configuracao: Configuracao | null
+  configuracao: Configuracao | null,
+  pontoDisparo?: PontoDisparoAutomacao | null
 ): string {
-  if (dados.atrasado) {
-    const template = resolverTextoMensagem(
-      configuracao?.mensagemCobranca,
-      MENSAGEM_COBRANCA_PADRAO
-    );
-    return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
-  }
-
-  const template = resolverTextoMensagem(
+  const overrides = parsearMensagensProgressivas(
+    configuracao?.mensagensProgressivas
+  );
+  const fallbackCobranca = resolverTextoMensagem(
+    configuracao?.mensagemCobranca,
+    MENSAGEM_COBRANCA_PADRAO
+  );
+  const fallbackLembrete = resolverTextoMensagem(
     configuracao?.mensagemLembrete,
     MENSAGEM_COBRANCA_LEMBRETE_PADRAO
   );
 
+  const template = resolverTemplateProgressivo(
+    pontoDisparo,
+    overrides,
+    fallbackLembrete,
+    fallbackCobranca
+  );
+
   return garantirPixNaMensagem(substituirVariaveis(template, dados), dados);
+}
+
+export function resolverOverridesMensagensProgressivas(
+  configuracao?: Configuracao | null
+): MensagensProgressivasMap {
+  return parsearMensagensProgressivas(configuracao?.mensagensProgressivas);
+}
+
+export function mensagensProgressivasCompletas(
+  configuracao?: Configuracao | null
+): Record<PontoDisparoAutomacao, string> {
+  return mesclarMensagensProgressivas(
+    parsearMensagensProgressivas(configuracao?.mensagensProgressivas)
+  );
 }
 
 /** Parâmetros na ordem esperada pelos templates Utility aprovados na Meta. */
@@ -128,11 +163,16 @@ export function parametrosTemplateWhatsApp(
       }`
     : 'Entre em contato para pagamento.';
 
+  const diasAteVencer = calcularDiasVencimento(dados.vencimento);
+  const quartoParametro = dados.atrasado
+    ? formatarData(dados.vencimento)
+    : rotuloPrazoVencimento(diasAteVencer);
+
   return [
     dados.nome,
     dados.referencia,
     formatarValor(dados.valor),
-    formatarData(dados.vencimento),
+    quartoParametro,
     pix,
   ];
 }

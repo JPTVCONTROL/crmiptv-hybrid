@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  clienteApareceEmVencimentos,
   clienteParticipaCobrancas,
   elegivelCobrancaDiaria,
+  elegivelRotinaCobrancaDiaria,
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
   tipoCobrancaDiaria,
 } from './cobranca-diaria.ts';
+import { elegivelRotinaProgressiva } from './automacao-disparo.ts';
 
 describe('resolverDiasAntecedencia', () => {
   it('usa valor da configuração quando válido', () => {
@@ -48,9 +51,34 @@ describe('elegivelCobrancaDiaria', () => {
   });
 });
 
+describe('elegivelRotinaCobrancaDiaria', () => {
+  it('aceita somente dias do funil progressivo', () => {
+    const hoje = new Date();
+    const daqui3 = new Date(
+      Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 3)
+    );
+    const daqui2 = new Date(
+      Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 2)
+    );
+
+    assert.equal(
+      elegivelRotinaCobrancaDiaria(daqui3.toISOString().slice(0, 10)),
+      true
+    );
+    assert.equal(
+      elegivelRotinaCobrancaDiaria(daqui2.toISOString().slice(0, 10)),
+      false
+    );
+    assert.equal(elegivelRotinaProgressiva(5), true);
+    assert.equal(elegivelRotinaProgressiva(4), false);
+  });
+});
+
 describe('rotuloDiasCobrancaDiaria', () => {
   it('rotula vencimento e atraso', () => {
     assert.equal(rotuloDiasCobrancaDiaria(0), 'Vence hoje');
+    assert.equal(rotuloDiasCobrancaDiaria(1), 'Vence amanhã');
+    assert.equal(rotuloDiasCobrancaDiaria(3), 'Vence em 3 dias');
     assert.equal(rotuloDiasCobrancaDiaria(-2), '2 dias atrasados');
   });
 });
@@ -68,5 +96,14 @@ describe('clienteParticipaCobrancas', () => {
 
   it('exclui clientes somente contato', () => {
     assert.equal(clienteParticipaCobrancas({ somenteContato: true }), false);
+  });
+});
+
+describe('clienteApareceEmVencimentos', () => {
+  it('inclui cortesia mas exclui somente contato', () => {
+    assert.equal(clienteApareceEmVencimentos({ cortesia: true }), true);
+    assert.equal(clienteApareceEmVencimentos({ somenteContato: true }), false);
+    assert.equal(clienteApareceEmVencimentos({ incluirCobrancas: false }), false);
+    assert.equal(clienteApareceEmVencimentos({ ativo: false }), false);
   });
 });

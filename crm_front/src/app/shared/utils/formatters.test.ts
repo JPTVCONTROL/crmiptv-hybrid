@@ -8,6 +8,7 @@ import {
   statusCliente,
   statusFinanceiro,
   rotuloStatusFinanceiro,
+  rotuloPrazoVencimento,
 } from './formatters.ts';
 
 describe('aplicarMascaraTelefone', () => {
@@ -41,6 +42,15 @@ describe('calcularDias', () => {
     );
     const iso = alvo.toISOString().slice(0, 10);
     assert.equal(calcularDias(iso), 3);
+  });
+});
+
+describe('rotuloPrazoVencimento', () => {
+  it('rotula prazos relativos ao vencimento', () => {
+    assert.equal(rotuloPrazoVencimento(0), 'Vence hoje');
+    assert.equal(rotuloPrazoVencimento(1), 'Vence amanhã');
+    assert.equal(rotuloPrazoVencimento(3), 'Vence em 3 dias');
+    assert.equal(rotuloPrazoVencimento(-1), '1 dia atrasado');
   });
 });
 

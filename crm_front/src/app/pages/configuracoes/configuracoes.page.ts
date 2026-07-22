@@ -34,9 +34,20 @@ import {
   salvarSessionJson,
 } from '../../shared/utils/session-persist.util';
 import { AUTOMACAO_META_HABILITADA } from '../../shared/utils/automacao-meta';
+import { PontoDisparoAutomacao } from '../../shared/utils/automacao-disparo';
+import {
+  ETAPAS_FUNIL_PROGRESSIVO,
+  criarMensagensProgressivasPadrao,
+  mesclarMensagensProgressivas,
+  parsearMensagensProgressivas,
+  serializarMensagensProgressivas,
+  type EtapaFunilProgressivo,
+} from '../../shared/utils/mensagens-progressivas';
+import { montarPreviaMensagemFunil, dadosExemploMensagemFunil } from '../../shared/utils/whatsapp';
+import { calcularDias, rotuloPrazoVencimento } from '../../shared/utils/formatters';
 
 type AbaConfiguracao = 'conta' | 'empresa' | 'metas' | 'mensagens' | 'sistema';
-type SubAbaMensagens = 'manual' | 'automatico';
+type SubAbaMensagens = 'manual' | 'funil' | 'automatico';
 
 const CHAVE_ABA_CONFIG = 'crm.config.abaAtiva';
 const CHAVE_SUB_ABA_MENSAGENS = 'crm.config.subAbaMensagens';
@@ -49,6 +60,7 @@ const ABAS_VALIDAS = new Set<AbaConfiguracao>([
 ]);
 const SUB_ABAS_MENSAGENS_VALIDAS = new Set<SubAbaMensagens>([
   'manual',
+  'funil',
   'automatico',
 ]);
 
@@ -95,6 +107,21 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     mensagemRecibo: MENSAGENS_PADRAO.mensagemRecibo,
     mensagemBloqueio: MENSAGENS_PADRAO.mensagemBloqueio,
   };
+
+  mensagensProgressivas: Record<PontoDisparoAutomacao, string> =
+    criarMensagensProgressivasPadrao();
+
+  previaFunilAberta: PontoDisparoAutomacao | null = null;
+
+  readonly etapasFunilProgressivo = ETAPAS_FUNIL_PROGRESSIVO;
+
+  get etapasFunilLembretes() {
+    return this.etapasFunilProgressivo.filter((e) => e.grupo === 'lembrete');
+  }
+
+  get etapasFunilCobrancas() {
+    return this.etapasFunilProgressivo.filter((e) => e.grupo === 'cobranca');
+  }
 
   readonly coresSugeridas = [
     '#7C3AED',
@@ -144,20 +171,34 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
       id: 'manual',
       rotulo: 'Manual (WhatsApp Web)',
       descricao:
-        'Textos abertos ao clicar em Cobrar, Conta ativada, Renovar, Bloqueio etc. Abre o WhatsApp no navegador com a mensagem pronta.',
+        'Conta ativada, renovação, recibo e bloqueio. Abre o WhatsApp no navegador com a mensagem pronta.',
+    },
+    {
+      id: 'funil',
+      rotulo: 'Funil progressivo',
+      descricao:
+        'Mensagens da Cobrança Diária e Automações — uma por etapa (5, 3, 1, 0 dias antes · 1, 2, 3 e 7 atrasados).',
     },
     {
       id: 'automatico',
       rotulo: 'Automático (API Meta)',
       descricao:
-        'Textos usados pelo envio automático (Automações). Devem estar alinhados com os modelos aprovados crm_lembrete e crm_cobranca na Meta.',
+        'Fallback legado para modelos Meta genéricos. O preview usa preferencialmente o Funil progressivo.',
     },
   ];
 
+  get subAbaMensagensDescricao(): string {
+    return (
+      this.subAbasMensagensVisiveis.find((s) => s.id === this.subAbaMensagens)
+        ?.descricao ?? ''
+    );
+  }
+
   get subAbasMensagensVisiveis(): typeof this.subAbasMensagens {
-    return AUTOMACAO_META_HABILITADA
-      ? this.subAbasMensagens
-      : this.subAbasMensagens.filter((s) => s.id === 'manual');
+    if (AUTOMACAO_META_HABILITADA) {
+      return this.subAbasMensagens;
+    }
+    return this.subAbasMensagens.filter((s) => s.id !== 'automatico');
   }
 
   get metaPreviewRotulo(): string {
@@ -198,6 +239,7 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     '{nome}',
     '{referencia}',
     '{valor}',
+    '{prazo}',
     '{vencimento}',
     '{empresa}',
     '{pix}',
@@ -342,6 +384,9 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
             MENSAGENS_PADRAO.mensagemBloqueio
           ),
         };
+        this.mensagensProgressivas = mesclarMensagensProgressivas(
+          parsearMensagensProgressivas(dados.mensagensProgressivas)
+        );
         this.corSalva = this.form.corPrincipal ?? COR_TEMA_PADRAO;
         this.loading = false;
       },
@@ -374,13 +419,12 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
   }
 
   private restaurarSubAbaMensagens(): void {
-    if (!AUTOMACAO_META_HABILITADA) {
-      this.subAbaMensagens = 'manual';
-      return;
-    }
-
     const salva = lerSessionJson<string>(CHAVE_SUB_ABA_MENSAGENS);
     if (salva && SUB_ABAS_MENSAGENS_VALIDAS.has(salva as SubAbaMensagens)) {
+      if (salva === 'automatico' && !AUTOMACAO_META_HABILITADA) {
+        this.subAbaMensagens = 'funil';
+        return;
+      }
       this.subAbaMensagens = salva as SubAbaMensagens;
     }
   }
@@ -413,6 +457,51 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     void this.toast.info('Mensagem padrão restaurada. Salve para manter.');
   }
 
+  restaurarMensagemFunil(ponto: PontoDisparoAutomacao): void {
+    this.mensagensProgressivas[ponto] =
+      criarMensagensProgressivasPadrao()[ponto];
+    void this.toast.info('Etapa restaurada ao padrão. Salve para manter.');
+  }
+
+  restaurarTodasMensagensFunil(): void {
+    this.mensagensProgressivas = criarMensagensProgressivasPadrao();
+    void this.toast.info('Funil restaurado ao padrão. Salve para manter.');
+  }
+
+  alternarPreviaFunil(ponto: PontoDisparoAutomacao): void {
+    this.previaFunilAberta = this.previaFunilAberta === ponto ? null : ponto;
+  }
+
+  previaFunilVisivel(ponto: PontoDisparoAutomacao): boolean {
+    return this.previaFunilAberta === ponto;
+  }
+
+  montarPreviaFunil(ponto: PontoDisparoAutomacao): string {
+    return montarPreviaMensagemFunil(
+      ponto,
+      this.mensagensProgressivas[ponto] ?? '',
+      this.form
+    );
+  }
+
+  detalhesPreviaFunil(ponto: PontoDisparoAutomacao): string {
+    const dados = dadosExemploMensagemFunil(ponto, this.form);
+    const valor = dados.valor.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+    const prazo = rotuloPrazoVencimento(calcularDias(dados.vencimento));
+    return `${dados.referencia} · ${valor} · ${prazo}`;
+  }
+
+  mensagemEtapaFunil(etapa: EtapaFunilProgressivo): string {
+    return this.mensagensProgressivas[etapa.ponto];
+  }
+
+  definirMensagemEtapaFunil(etapa: EtapaFunilProgressivo, texto: string): void {
+    this.mensagensProgressivas[etapa.ponto] = texto;
+  }
+
   ionViewWillLeave(): void {
     if ((this.form.corPrincipal ?? COR_TEMA_PADRAO) !== this.corSalva) {
       this.tema.aplicar(this.corSalva);
@@ -426,7 +515,13 @@ export class ConfiguracoesPage implements OnInit, OnDestroy {
     }
 
     this.salvando = true;
-    this.configuracaoService.salvar(this.form).subscribe({
+    const payload: Configuracao = {
+      ...this.form,
+      mensagensProgressivas: serializarMensagensProgressivas(
+        this.mensagensProgressivas
+      ),
+    };
+    this.configuracaoService.salvar(payload).subscribe({
       next: () => {
         this.salvando = false;
         this.corSalva = normalizarCorHex(this.form.corPrincipal);

@@ -369,7 +369,8 @@ export class AutomacaoService {
         tipoPix: configuracao.tipoPix,
         favorecido: configuracao.favorecidoPix,
       },
-      configuracao
+      configuracao,
+      pontoDisparo
     );
 
     try {

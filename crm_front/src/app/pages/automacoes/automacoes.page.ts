@@ -68,7 +68,7 @@ export class AutomacoesPage implements OnInit, OnDestroy {
     return [
       {
         nome: 'crm_lembrete',
-        corpo: `Olá {{1}}! Passando para lembrar da mensalidade {{2}}, no valor de {{3}}, com vencimento em {{4}}.
+        corpo: `Olá {{1}}! Passando para lembrar da mensalidade {{2}}, no valor de {{3}}. {{4}}.
 
 {{5}}
 

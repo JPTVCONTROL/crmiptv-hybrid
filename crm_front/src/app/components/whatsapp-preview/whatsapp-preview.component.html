@@ -1,0 +1,30 @@
+<div class="crm-wa-preview">
+  <div class="crm-wa-preview__toolbar">
+    <div>
+      <p class="crm-wa-preview__toolbar-title">{{ rotulo }}</p>
+      <p *ngIf="detalhes" class="crm-wa-preview__toolbar-meta">{{ detalhes }}</p>
+    </div>
+    <span class="crm-wa-preview__badge">Exemplo</span>
+  </div>
+
+  <div class="crm-wa-preview__phone">
+    <div class="crm-wa-preview__header">
+      <div class="crm-wa-preview__header-back" aria-hidden="true">‹</div>
+      <div class="crm-wa-preview__avatar">{{ inicialContato }}</div>
+      <div class="crm-wa-preview__header-info">
+        <p class="crm-wa-preview__nome">{{ contato }}</p>
+        <p class="crm-wa-preview__status">online</p>
+      </div>
+    </div>
+
+    <div class="crm-wa-preview__chat">
+      <div class="crm-wa-preview__bubble">
+        <div
+          class="crm-wa-preview__text"
+          [innerHTML]="mensagem | whatsappPreview"
+        ></div>
+        <span class="crm-wa-preview__time">{{ hora }}</span>
+      </div>
+    </div>
+  </div>
+</div>

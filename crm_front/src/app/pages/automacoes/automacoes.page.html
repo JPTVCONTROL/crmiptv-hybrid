@@ -41,7 +41,7 @@
 
 <app-loading *ngIf="loading" variant="page"></app-loading>
 
-<div *ngIf="!loading" class="space-y-6 max-w-5xl">
+<div *ngIf="!loading" class="crm-page-shell max-w-5xl">
   <div
     *ngIf="aguardandoTemplatesMeta"
     class="crm-card border border-amber-500/30 bg-amber-500/5"
@@ -117,7 +117,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
-      <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+      <div class="crm-card-nested p-3 space-y-2">
         <p class="text-slate-300 text-xs font-medium uppercase tracking-wide">Lembretes automáticos</p>
         <ul class="space-y-1">
           <li
@@ -129,7 +129,7 @@
           </li>
         </ul>
       </div>
-      <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+      <div class="crm-card-nested p-3 space-y-2">
         <p class="text-slate-300 text-xs font-medium uppercase tracking-wide">Cobranças automáticas</p>
         <ul class="space-y-1">
           <li
@@ -145,7 +145,7 @@
   </section>
 
   <section class="crm-card space-y-3" *ngIf="whatsappConfigurado && whatsappPerfil">
-    <h2 class="text-white font-semibold text-lg">Conexão Meta (WhatsApp Cloud API)</h2>
+    <h2 class="crm-section-title">Conexão Meta (WhatsApp Cloud API)</h2>
     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
       <div class="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
         <dt class="text-slate-500 text-xs">Número remetente</dt>
@@ -175,7 +175,7 @@
   <section class="crm-card space-y-4">
     <div class="flex items-start justify-between gap-3 flex-wrap">
       <div>
-        <h2 class="text-white font-semibold text-lg">Checklist Meta + CRM</h2>
+        <h2 class="crm-section-title">Checklist Meta + CRM</h2>
         <p class="text-slate-500 text-sm mt-1">
           {{ passosConcluidos }} de {{ passosChecklist.length }} passos detectados como concluídos.
         </p>
@@ -217,7 +217,7 @@
     *ngIf="ultimoResultado"
     class="crm-card space-y-3 border border-slate-700/80"
   >
-    <h2 class="text-white font-semibold text-lg">Última execução manual</h2>
+    <h2 class="crm-section-title">Última execução manual</h2>
     <p class="text-slate-400 text-sm">
       {{ ultimoResultado.enviados }} enviado(s) · {{ ultimoResultado.falhas }} falha(s) ·
       {{ ultimoResultado.ignorados }} ignorado(s) · horário {{ ultimoResultado.horario }}
@@ -239,14 +239,14 @@
 
   <section class="crm-card space-y-5 max-w-3xl">
     <div>
-      <h2 class="text-white font-semibold text-lg">Regras de envio</h2>
+      <h2 class="crm-section-title">Regras de envio</h2>
       <p class="text-slate-500 text-sm mt-1">
         Os toggles abaixo controlam o agendador matinal ({{ janelaManhaTexto }}).
         O botão <strong class="text-slate-400">Executar agora</strong> testa na hora, sem esperar a fila.
       </p>
     </div>
 
-    <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-2">
+    <div class="crm-card-nested p-4 space-y-2">
       <p class="text-slate-300 text-sm font-medium">Janela de envio (manhã)</p>
       <p class="text-white text-lg font-semibold tabular-nums">{{ janelaManhaTexto }}</p>
       <p class="text-slate-500 text-xs">
@@ -255,7 +255,7 @@
       <p class="text-slate-400 text-xs">Fila de hoje: {{ filaHojeResumo }}</p>
     </div>
 
-    <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
+    <div class="crm-card-nested p-4 space-y-3">
       <p class="text-slate-300 text-sm font-medium">Cronograma fixo (API Meta)</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
         <div>
@@ -333,12 +333,12 @@
 
   <section class="crm-card space-y-4" *ngIf="!templatesProntos">
     <div>
-      <h2 class="text-white font-semibold text-lg">Referência dos modelos Meta</h2>
+      <h2 class="crm-section-title">Referência dos modelos Meta</h2>
     </div>
 
     <article
       *ngFor="let modelo of modelosMeta"
-      class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3"
+      class="crm-card-nested p-4 space-y-3"
     >
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <code class="crm-code">{{ modelo.nome }}</code>
@@ -355,7 +355,7 @@
   </section>
 
   <section class="space-y-3">
-    <h2 class="text-white font-semibold text-lg">Atalhos manuais</h2>
+    <h2 class="crm-section-title">Atalhos manuais</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <article *ngFor="let fluxo of fluxosAtuais" class="crm-card space-y-3 !p-4">
         <h3 class="text-white font-medium">{{ fluxo.titulo }}</h3>
@@ -367,7 +367,7 @@
   </section>
 
   <section class="crm-card space-y-4">
-    <h2 class="text-white font-semibold text-lg">Histórico de envios</h2>
+    <h2 class="crm-section-title">Histórico de envios</h2>
 
     <app-empty-state
       *ngIf="envios.length === 0"

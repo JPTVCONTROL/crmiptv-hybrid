@@ -104,6 +104,13 @@ ion-toast {
   --border-radius: 0.75rem;
 }
 
+ion-toggle {
+  --track-background: rgba(51, 65, 85, 0.85);
+  --track-background-checked: rgba(34, 197, 94, 0.55);
+  --handle-background: #e2e8f0;
+  --handle-background-checked: #f8fafc;
+}
+
 ion-split-pane {
   --side-max-width: 17rem;
   --side-min-width: 17rem;

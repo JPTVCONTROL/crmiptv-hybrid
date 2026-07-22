@@ -27,7 +27,7 @@ Favorecido: {favorecido}
 
 — {empresa}`;
 
-export const MENSAGEM_COBRANCA_LEMBRETE_PADRAO = `Olá {nome}! Passando para lembrar da mensalidade {referencia}, no valor de {valor}, com vencimento em {vencimento}.{linhaPix}
+export const MENSAGEM_COBRANCA_LEMBRETE_PADRAO = `Olá {nome}! Passando para lembrar da mensalidade {referencia}, no valor de {valor}. {prazo}.{linhaPix}
 
 — {empresa}`;
 

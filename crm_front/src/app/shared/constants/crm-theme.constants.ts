@@ -5,7 +5,8 @@ export type StatCardVariant =
   | 'danger'
   | 'info'
   | 'accent'
-  | 'orange';
+  | 'orange'
+  | 'neutral';
 
 export const CRM_STAT_VARIANT_COLORS: Record<StatCardVariant, string> = {
   primary: '#8b5cf6',
@@ -15,6 +16,7 @@ export const CRM_STAT_VARIANT_COLORS: Record<StatCardVariant, string> = {
   info: '#3b82f6',
   accent: '#d946ef',
   orange: '#fb923c',
+  neutral: '#64748b',
 };
 
 /** Paleta para gráficos e elementos multicoloridos */

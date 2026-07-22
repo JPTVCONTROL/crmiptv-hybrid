@@ -3,7 +3,9 @@ import { describe, it } from 'node:test';
 import {
   calcularDiasVencimento,
   clienteParticipaCobrancas,
+  rotuloPrazoVencimento,
 } from './cobrancaDiariaHelpers.js';
+import { parametrosTemplateWhatsApp } from './mensagemWhatsAppHelpers.js';
 import { parseCsvClientes } from './clienteImportHelpers.js';
 import {
   clienteCadastroIncompleto,
@@ -129,6 +131,43 @@ describe('calcularDiasVencimento', () => {
     const hoje = new Date();
     const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
     assert.equal(calcularDiasVencimento(iso), 0);
+  });
+});
+
+describe('rotuloPrazoVencimento', () => {
+  it('rotula prazos relativos ao vencimento', () => {
+    assert.equal(rotuloPrazoVencimento(0), 'Vence hoje');
+    assert.equal(rotuloPrazoVencimento(1), 'Vence amanhã');
+    assert.equal(rotuloPrazoVencimento(3), 'Vence em 3 dias');
+  });
+});
+
+describe('parametrosTemplateWhatsApp', () => {
+  it('usa prazo relativo no lembrete e data no atraso', () => {
+    const hoje = new Date();
+    const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+    const lembrete = parametrosTemplateWhatsApp({
+      nome: 'João',
+      referencia: 'Jul/2026',
+      valor: 35,
+      vencimento: iso,
+      empresa: 'JPTV',
+      atrasado: false,
+    });
+
+    assert.equal(lembrete[3], 'Vence hoje');
+
+    const atraso = parametrosTemplateWhatsApp({
+      nome: 'João',
+      referencia: 'Jun/2026',
+      valor: 35,
+      vencimento: '2026-06-01',
+      empresa: 'JPTV',
+      atrasado: true,
+    });
+
+    assert.equal(atraso[3], '01/06/2026');
   });
 });
 

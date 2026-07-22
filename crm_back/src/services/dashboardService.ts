@@ -4,6 +4,7 @@ import { calcularStatusCliente } from '../utils/helpers/clienteStatus.js';
 import {
   calcularDiasVencimento,
   elegivelCobrancaDiaria,
+  elegivelRotinaCobrancaDiaria,
   resolverDiasAntecedencia,
 } from '../utils/helpers/cobrancaDiariaHelpers.js';
 import {
@@ -466,7 +467,7 @@ export class DashboardService {
     });
 
     const elegiveis = pendentesCobrancaJanela.filter((m) =>
-      elegivelCobrancaDiaria(m.vencimento, diasAntecedencia)
+      elegivelRotinaCobrancaDiaria(m.vencimento)
     );
     const contactaveis = elegiveis.filter((m) =>
       telefoneValidoParaWhatsApp(m.cliente.telefone)

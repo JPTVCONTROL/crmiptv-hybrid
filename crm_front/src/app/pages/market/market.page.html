@@ -20,10 +20,10 @@
 <app-loading *ngIf="loading" variant="table"></app-loading>
 
 <!-- Lista de campanhas -->
-<div *ngIf="!loading && emModoLista" class="space-y-6">
+<div *ngIf="!loading && emModoLista" class="crm-page-shell">
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <app-stat-card title="Campanhas" [value]="campanhas.length.toString()" variant="primary"></app-stat-card>
-    <app-stat-card title="Clientes" [value]="clientes.length.toString()" color="#64748B"></app-stat-card>
+    <app-stat-card title="Clientes" [value]="clientes.length.toString()" variant="neutral"></app-stat-card>
     <app-stat-card
       title="Total enviados"
       [value]="totalEnviosTodasCampanhas.toString()"
@@ -108,9 +108,9 @@
               Nova
             </span>
           </div>
-          <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+          <div class="crm-progress-track">
             <div
-              class="h-full rounded-full bg-violet-500 transition-all"
+              class="crm-progress-fill crm-progress-fill--meta"
               [style.width.%]="percentualEnviosCampanha(c)"
             ></div>
           </div>
@@ -140,7 +140,7 @@
 </div>
 
 <!-- Detalhe / nova campanha -->
-<div *ngIf="!loading && emModoCampanha" class="space-y-6">
+<div *ngIf="!loading && emModoCampanha" class="crm-page-shell">
   <div *ngIf="campanhaId" class="crm-hero-card !p-4 md:!p-5">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="min-w-0">
@@ -193,7 +193,7 @@
     <app-stat-card title="Enviados" [value]="totalEnviados.toString()" variant="success"></app-stat-card>
     <app-stat-card title="Pendentes" [value]="totalPendentes.toString()" variant="warning"></app-stat-card>
     <app-stat-card title="Selecionados" [value]="qtdSelecionados.toString()" variant="primary"></app-stat-card>
-    <app-stat-card title="Elegíveis" [value]="qtdPublicoElegivel.toString()" color="#64748B"></app-stat-card>
+    <app-stat-card title="Elegíveis" [value]="qtdPublicoElegivel.toString()" variant="neutral"></app-stat-card>
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
@@ -205,7 +205,7 @@
         </div>
 
         <div>
-          <h2 class="text-white font-semibold text-lg leading-snug">{{ formTitulo }}</h2>
+          <h2 class="crm-section-title crm-section-title--flush leading-snug">{{ formTitulo }}</h2>
           <p
             *ngIf="campanhaSelecionada?.createdAt"
             class="text-slate-500 text-xs mt-1"
@@ -214,7 +214,7 @@
           </p>
         </div>
 
-        <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+        <div class="crm-card-nested">
           <p class="text-slate-500 text-xs font-medium uppercase tracking-wide">Mensagem</p>
           <pre class="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-32 overflow-y-auto">{{ formMensagem }}</pre>
         </div>
@@ -401,7 +401,7 @@
                 type="button"
                 class="crm-btn-ghost crm-btn-sm"
                 [disabled]="qtdFiltradosSelecionaveis === 0"
-                (click)="alternarSelecionarTodosFiltrados($event)"
+                (click)="alternarSelecionarTodosFiltrados()"
               >
                 {{ todosFiltradosSelecionados ? 'Desmarcar visíveis' : 'Marcar visíveis' }}
               </button>
@@ -422,15 +422,19 @@
         <table class="w-full" [ngClass]="classesTabela">
           <thead>
             <tr>
-              <th class="w-11 pl-4">
+              <th
+                class="w-11 pl-4"
+                (click)="alternarSelecionarTodosFiltrados($event)"
+                aria-label="Selecionar todos os filtrados"
+              >
                 <input
                   type="checkbox"
-                  class="crm-checkbox"
+                  class="crm-checkbox pointer-events-none"
                   [checked]="todosFiltradosSelecionados"
                   [indeterminate]="algumFiltradoSelecionado && !todosFiltradosSelecionados"
                   [disabled]="qtdFiltradosSelecionaveis === 0"
-                  (click)="alternarSelecionarTodosFiltrados($event)"
-                  aria-label="Selecionar todos os filtrados"
+                  tabindex="-1"
+                  aria-hidden="true"
                 />
               </th>
               <th>Cliente</th>
@@ -447,13 +451,16 @@
               [class.opacity-50]="!linha.telefoneValido"
               (click)="alternarSelecaoLinha(linha)"
             >
-              <td class="pl-4" (click)="$event.stopPropagation()">
+              <td
+                class="pl-4"
+                (click)="alternarSelecaoClick(linha.id, $event)"
+              >
                 <input
                   type="checkbox"
-                  class="crm-checkbox"
+                  class="crm-checkbox pointer-events-none"
                   [checked]="estaSelecionado(linha.id)"
                   [disabled]="!podeSelecionar(linha)"
-                  (click)="alternarSelecaoClick(linha.id, $event)"
+                  tabindex="-1"
                   [attr.aria-label]="'Selecionar ' + linha.nome"
                 />
               </td>
@@ -517,13 +524,17 @@
           (click)="alternarSelecaoLinha(linha)"
         >
           <div class="crm-mobile-card-header">
-            <label class="flex items-start gap-3 min-w-0 flex-1 cursor-pointer" (click)="$event.stopPropagation()">
+            <label
+              class="flex items-start gap-3 min-w-0 flex-1 cursor-pointer"
+              (click)="alternarSelecaoClick(linha.id, $event)"
+            >
               <input
                 type="checkbox"
-                class="crm-checkbox mt-0.5 shrink-0"
+                class="crm-checkbox mt-0.5 shrink-0 pointer-events-none"
                 [checked]="estaSelecionado(linha.id)"
                 [disabled]="!podeSelecionar(linha)"
-                (click)="alternarSelecaoClick(linha.id, $event)"
+                tabindex="-1"
+                [attr.aria-label]="'Selecionar ' + linha.nome"
               />
               <div class="min-w-0">
                 <p class="crm-mobile-card-title">

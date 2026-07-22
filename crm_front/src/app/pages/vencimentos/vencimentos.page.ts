@@ -22,7 +22,7 @@ import {
   resolverDiasAntecedencia,
   rotuloDiasCobrancaDiaria,
   clienteEhCortesia,
-  clienteParticipaCobrancas,
+  clienteApareceEmVencimentos,
 } from '../../shared/utils/cobranca-diaria';
 import {
   vincularSincronizacaoPagina,
@@ -135,7 +135,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
         this.mensalidades = mensalidades
           .filter(
             (m) =>
-              m.status === 'PENDENTE' && clienteParticipaCobrancas(m.cliente)
+              m.status === 'PENDENTE' && clienteApareceEmVencimentos(m.cliente)
           )
           .sort(
             (a, b) =>
@@ -275,7 +275,7 @@ export class VencimentosPage implements OnInit, OnDestroy {
   }
 
   participaCobrancas(m: Mensalidade): boolean {
-    return clienteParticipaCobrancas(m.cliente);
+    return clienteApareceEmVencimentos(m.cliente);
   }
 
   mensalidadeAtrasada(m: Mensalidade): boolean {

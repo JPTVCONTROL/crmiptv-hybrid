@@ -5,7 +5,8 @@
 <app-loading *ngIf="loading" variant="page"></app-loading>
 
 <ng-container *ngIf="!loading">
-  <nav class="flex flex-wrap gap-2 mb-6 max-w-4xl" aria-label="Seções de configurações">
+  <div class="crm-page-shell max-w-4xl">
+  <nav class="flex flex-wrap gap-2 max-w-4xl" aria-label="Seções de configurações">
     <button
       *ngFor="let aba of abas"
       type="button"
@@ -24,7 +25,7 @@
     <!-- Conta -->
     <ng-container *ngIf="abaAtiva === 'conta'">
       <div>
-        <h2 class="text-white font-semibold text-lg mb-4">Conta</h2>
+        <h2 class="crm-section-title">Conta</h2>
 
         <button
           *ngIf="!mostrarFormSenha"
@@ -71,7 +72,7 @@
     <!-- Empresa -->
     <ng-container *ngIf="abaAtiva === 'empresa'">
       <div>
-        <h2 class="text-white font-semibold text-lg mb-4">Empresa</h2>
+        <h2 class="crm-section-title">Empresa</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-slate-300 mb-2 text-sm">Nome da Empresa</label>
@@ -97,7 +98,7 @@
       </div>
 
       <div>
-        <h2 class="text-white font-semibold text-lg mb-4">PIX</h2>
+        <h2 class="crm-section-title">PIX</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-slate-300 mb-2 text-sm">Chave PIX</label>
@@ -123,7 +124,7 @@
     <ng-container *ngIf="abaAtiva === 'metas'">
       <div class="crm-config-meta-panel">
         <div>
-          <h2 class="text-white font-semibold text-lg">Meta de clientes</h2>
+          <h2 class="crm-section-title">Meta de clientes</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -190,9 +191,12 @@
         </button>
       </nav>
 
+      <p class="text-slate-500 text-xs">{{ subAbaMensagensDescricao }}</p>
+
       <div>
-        <h2 class="text-white font-semibold text-lg mb-2">Lembretes</h2>
-        <label class="block text-slate-300 mb-2 text-sm">Dias de antecedência do lembrete</label>
+        <h2 class="crm-section-title--tight">Lembretes</h2>
+        <label class="block text-slate-300 mb-2 text-sm">Janela “vencendo” no Financeiro e Vencimentos (dias)</label>
+        <p class="text-slate-500 text-xs mb-2">A Cobrança Diária e as Automações usam funil fixo: 5, 3, 1 e 0 dias antes · 1, 2, 3 e 7 atrasados.</p>
         <input
           class="crm-input max-w-[8rem]"
           type="number"
@@ -206,7 +210,7 @@
       <ng-container *ngIf="subAbaMensagens === 'manual'">
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Mensagem de Conta ativada</h2>
+            <h2 class="crm-section-title">Mensagem de Conta ativada</h2>
             <button
               type="button"
               class="crm-btn-ghost crm-btn-sm self-start"
@@ -221,37 +225,7 @@
 
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Mensagem de Lembrete</h2>
-            <button
-              type="button"
-              class="crm-btn-ghost crm-btn-sm self-start"
-              (click)="restaurarMensagem('mensagemLembrete')"
-            >
-              Restaurar padrão
-            </button>
-          </div>
-          <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisLembrete.join(', ') }}</p>
-          <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemLembrete"></textarea>
-        </div>
-
-        <div>
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Mensagem de Cobrança</h2>
-            <button
-              type="button"
-              class="crm-btn-ghost crm-btn-sm self-start"
-              (click)="restaurarMensagem('mensagemCobranca')"
-            >
-              Restaurar padrão
-            </button>
-          </div>
-          <p class="text-slate-500 text-xs mb-3">Variáveis: {{ variaveisCobranca.join(', ') }}</p>
-          <textarea class="crm-input min-h-[140px] font-mono text-sm leading-relaxed" [(ngModel)]="form.mensagemCobranca"></textarea>
-        </div>
-
-        <div>
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Mensagem de Renovação</h2>
+            <h2 class="crm-section-title">Mensagem de Renovação</h2>
             <button
               type="button"
               class="crm-btn-ghost crm-btn-sm self-start"
@@ -266,7 +240,7 @@
 
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Mensagem de Recibo</h2>
+            <h2 class="crm-section-title">Mensagem de Recibo</h2>
             <button
               type="button"
               class="crm-btn-ghost crm-btn-sm self-start"
@@ -281,7 +255,7 @@
 
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Mensagem de Bloqueio</h2>
+            <h2 class="crm-section-title">Mensagem de Bloqueio</h2>
             <button
               type="button"
               class="crm-btn-ghost crm-btn-sm self-start"
@@ -295,11 +269,112 @@
         </div>
       </ng-container>
 
+      <!-- Funil progressivo -->
+      <ng-container *ngIf="subAbaMensagens === 'funil'">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="crm-section-title--flush">Funil progressivo</h2>
+            <p class="text-slate-500 text-xs mt-1">
+              Uma mensagem por etapa — Cobrança Diária e Automações. Use linhas em branco e emojis;
+              no WhatsApp, *asteriscos* deixam o título em negrito. Variáveis:
+              {{ variaveisLembrete.join(', ') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="crm-btn-ghost crm-btn-sm shrink-0"
+            (click)="restaurarTodasMensagensFunil()"
+          >
+            Restaurar funil inteiro
+          </button>
+        </div>
+
+        <ng-template #cartaoEtapaFunil let-etapa="etapa">
+          <div class="crm-card-nested space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+              <div>
+                <p class="text-white text-sm font-medium">{{ etapa.rotulo }}</p>
+                <p class="text-slate-500 text-xs mt-0.5">{{ etapa.descricao }}</p>
+              </div>
+              <div class="flex flex-wrap gap-2 shrink-0">
+                <button
+                  type="button"
+                  [class]="previaFunilVisivel(etapa.ponto)
+                    ? 'crm-filter-chip crm-filter-chip--selected-violet crm-btn-xs'
+                    : 'crm-btn-ghost crm-btn-xs'"
+                  (click)="alternarPreviaFunil(etapa.ponto)"
+                >
+                  {{ previaFunilVisivel(etapa.ponto) ? 'Ocultar prévia' : 'Ver prévia' }}
+                </button>
+                <button
+                  type="button"
+                  class="crm-btn-ghost crm-btn-xs"
+                  (click)="restaurarMensagemFunil(etapa.ponto)"
+                >
+                  Restaurar padrão
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="crm-config-funil-editor"
+              [class.crm-config-funil-editor--preview]="previaFunilVisivel(etapa.ponto)"
+            >
+              <textarea
+                class="crm-input min-h-[220px] font-mono text-sm leading-relaxed whitespace-pre-wrap"
+                [ngModel]="mensagemEtapaFunil(etapa)"
+                (ngModelChange)="definirMensagemEtapaFunil(etapa, $event)"
+              ></textarea>
+
+              <app-whatsapp-preview
+                *ngIf="previaFunilVisivel(etapa.ponto)"
+                class="crm-config-funil-preview-enter lg:sticky lg:top-4"
+                [mensagem]="montarPreviaFunil(etapa.ponto)"
+                [rotulo]="etapa.rotulo"
+                [detalhes]="detalhesPreviaFunil(etapa.ponto)"
+                contato="João Silva"
+              ></app-whatsapp-preview>
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="space-y-6">
+          <section>
+            <h3 class="crm-section-label">Lembretes (antes do vencimento)</h3>
+            <div class="space-y-5">
+              <ng-container
+                *ngFor="let etapa of etapasFunilLembretes"
+                [ngTemplateOutlet]="cartaoEtapaFunil"
+                [ngTemplateOutletContext]="{ etapa: etapa }"
+              ></ng-container>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="crm-section-label">Cobranças (após o vencimento)</h3>
+            <div class="space-y-5">
+              <ng-container
+                *ngFor="let etapa of etapasFunilCobrancas"
+                [ngTemplateOutlet]="cartaoEtapaFunil"
+                [ngTemplateOutletContext]="{ etapa: etapa }"
+              ></ng-container>
+            </div>
+          </section>
+        </div>
+      </ng-container>
+
       <!-- Automático (API Meta) -->
       <ng-container *ngIf="automacaoMetaHabilitada && subAbaMensagens === 'automatico'">
+        <p class="text-slate-500 text-sm">
+          O envio automático usa as mensagens do
+          <button type="button" class="crm-link" (click)="definirSubAbaMensagens('funil')">
+            Funil progressivo
+          </button>
+          no preview. Os campos abaixo servem só como fallback se uma etapa não estiver definida.
+        </p>
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Lembrete automático</h2>
+            <h2 class="crm-section-title">Lembrete automático</h2>
             <button
               type="button"
               class="crm-btn-ghost crm-btn-sm self-start"
@@ -314,7 +389,7 @@
 
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <h2 class="text-white font-semibold text-lg">Cobrança automática</h2>
+            <h2 class="crm-section-title">Cobrança automática</h2>
             <button
               type="button"
               class="crm-btn-ghost crm-btn-sm self-start"
@@ -336,7 +411,7 @@
     <!-- Sistema -->
     <ng-container *ngIf="abaAtiva === 'sistema'">
       <div>
-        <h2 class="text-white font-semibold text-lg mb-4">Aparência</h2>
+        <h2 class="crm-section-title">Aparência</h2>
         <div class="space-y-4">
           <div>
             <label class="block text-slate-300 mb-2 text-sm">Cor principal do sistema</label>
@@ -356,7 +431,7 @@
               />
               <button
                 type="button"
-                class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                class="crm-btn-primary !shadow-none"
                 [style.background-color]="form.corPrincipal"
                 (click)="preVisualizarCor()"
               >
@@ -380,7 +455,7 @@
       </div>
 
       <div>
-        <h2 class="text-white font-semibold text-lg mb-2">Backup</h2>
+        <h2 class="crm-section-title--tight">Backup</h2>
         <button
           type="button"
           class="crm-btn-ghost"
@@ -392,7 +467,7 @@
       </div>
 
       <div>
-        <h2 class="text-white font-semibold text-lg mb-2">Sincronização de cobranças</h2>
+        <h2 class="crm-section-title--tight">Sincronização de cobranças</h2>
         <p *ngIf="ultimaSincronizacao" class="text-slate-400 text-sm mb-3">{{ ultimaSincronizacao }}</p>
         <button
           type="button"
@@ -408,5 +483,6 @@
         {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
       </button>
     </ng-container>
+  </div>
   </div>
 </ng-container>

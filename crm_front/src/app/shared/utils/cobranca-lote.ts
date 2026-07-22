@@ -1,16 +1,18 @@
-import { Configuracao, Mensalidade } from '../../core/models';
+import { Configuracao, Mensalidade, StatusFinanceiro } from '../../core/models';
 import {
   CobrancaLoteItem,
   executarCobrancaEmLote,
   montarMensagemBloqueio,
   montarMensagemCobranca,
+  resolverOverridesMensagensProgressivas,
 } from './whatsapp';
 import {
+  calcularDias,
   resolverTelefoneCliente,
   resolverValorMensalidade,
   statusFinanceiro,
 } from './formatters';
-import { StatusFinanceiro } from '../../core/models';
+import { PontoDisparoAutomacao, resolverPontoDisparo } from './automacao-disparo';
 
 export function nomeClienteMensalidade(
   mensalidade: Pick<Mensalidade, 'clienteId' | 'cliente'>,
@@ -32,11 +34,15 @@ export function montarMensagemCobrancaMensalidade(
   configuracao: Configuracao | null,
   nomes?: Map<number, string>,
   atrasado?: boolean,
-  nomeOverride?: string
+  nomeOverride?: string,
+  pontoDisparo?: PontoDisparoAutomacao | null
 ): string {
   const cfg = configuracao;
   const atrasadoFinal =
     atrasado ?? mensalidadeEstaAtrasada(mensalidade.vencimento);
+  const ponto =
+    pontoDisparo ?? resolverPontoDisparo(calcularDias(mensalidade.vencimento));
+  const overrides = resolverOverridesMensagensProgressivas(cfg);
   const nome =
     nomeOverride?.trim() ||
     nomeClienteMensalidade(mensalidade, nomes);
@@ -54,7 +60,9 @@ export function montarMensagemCobrancaMensalidade(
       favorecido: cfg?.favorecidoPix ?? undefined,
     },
     cfg?.mensagemCobranca,
-    cfg?.mensagemLembrete
+    cfg?.mensagemLembrete,
+    ponto,
+    overrides
   );
 }
 

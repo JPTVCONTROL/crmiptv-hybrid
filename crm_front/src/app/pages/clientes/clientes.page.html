@@ -1,4 +1,4 @@
-<div class="space-y-4 mb-6">
+<div class="crm-page-shell">
   <app-page-header title="Clientes">
     <div class="flex flex-wrap items-center gap-2 shrink-0">
       <div class="hidden md:flex flex-wrap gap-2">
@@ -31,7 +31,7 @@
         >
           <input
             type="checkbox"
-            class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+            class="crm-checkbox"
             [(ngModel)]="importarComoSomenteContato"
           />
           Importar como somente contato
@@ -102,6 +102,29 @@
     </div>
   </app-page-header>
 
+  <div *ngIf="!loading" class="crm-kpi-grid">
+    <app-stat-card
+      title="Total"
+      [value]="contagemStatus('TODOS').toString()"
+      variant="primary"
+    ></app-stat-card>
+    <app-stat-card
+      title="Ativos"
+      [value]="contagemStatus('ATIVO').toString()"
+      variant="success"
+    ></app-stat-card>
+    <app-stat-card
+      title="Atrasados"
+      [value]="contagemStatus('ATRASADO').toString()"
+      variant="warning"
+    ></app-stat-card>
+    <app-stat-card
+      title="Inativos"
+      [value]="contagemStatus('INATIVO').toString()"
+      variant="danger"
+    ></app-stat-card>
+  </div>
+
   <div
     *ngIf="filtroCadastro || filtroCadastroIncompleto"
     class="crm-card border border-amber-500/20 bg-amber-500/5 mb-4"
@@ -124,7 +147,7 @@
   </div>
 
   <div class="crm-sticky-toolbar">
-    <div class="crm-card !p-4 md:!p-5 space-y-4">
+    <div class="crm-filter-toolbar-card">
     <div class="relative">
       <ion-icon
         name="search-outline"
@@ -223,7 +246,7 @@
     <label class="md:hidden flex items-center gap-2 text-slate-400 text-xs px-1">
       <input
         type="checkbox"
-        class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+        class="crm-checkbox"
         [(ngModel)]="importarComoSomenteContato"
       />
       Importar CSV como somente contato
@@ -361,7 +384,7 @@
       <input
         *ngIf="exibirBarraCobranca"
         type="checkbox"
-        class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 shrink-0"
+        class="mt-1 crm-checkbox shrink-0"
         [checked]="clienteSelecionado(c)"
         [disabled]="!podeSelecionarCliente(c)"
         (change)="alternarSelecaoCliente(c)"
@@ -449,14 +472,14 @@
   </div>
 </div>
 
-<div *ngIf="!loading" class="crm-card hidden md:block overflow-x-auto">
+<div *ngIf="!loading" class="crm-table-shell">
   <table class="min-w-[920px]" [ngClass]="classesTabela">
     <thead>
       <tr class="text-slate-400 border-b border-slate-800">
         <th *ngIf="exibirBarraCobranca" class="py-3 px-2 w-10">
           <input
             type="checkbox"
-            class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+            class="crm-checkbox"
             [checked]="todosPaginaSelecionados"
             (change)="alternarPagina()"
             aria-label="Selecionar página"
@@ -530,7 +553,7 @@
         <td *ngIf="exibirBarraCobranca" class="py-3 px-2 align-top">
           <input
             type="checkbox"
-            class="h-4 w-4 rounded border-slate-600 bg-slate-900"
+            class="crm-checkbox"
             [checked]="clienteSelecionado(c)"
             [disabled]="!podeSelecionarCliente(c)"
             (change)="alternarSelecaoCliente(c)"

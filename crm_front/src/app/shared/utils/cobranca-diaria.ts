@@ -1,11 +1,11 @@
 import { Configuracao, Mensalidade } from '../../core/models';
-import { calcularDias } from './formatters';
+import { calcularDias, resolverValorMensalidade, rotuloPrazoVencimento } from './formatters';
+import { resolverPontoDisparo, elegivelRotinaProgressiva, rotuloPontoDisparo } from './automacao-disparo';
 import {
-  montarMensagemCobrancaMensalidade,
   montarMensagemBloqueioMensalidade,
+  montarMensagemCobrancaMensalidade,
   nomeClienteMensalidade,
 } from './cobranca-lote';
-import { resolverValorMensalidade } from './formatters';
 import { telefoneValidoParaWhatsApp } from './whatsapp';
 
 /** Valor padrão quando não há configuração salva. */
@@ -32,6 +32,7 @@ export interface ItemCobrancaDiaria {
   vencimento: string;
   dias: number;
   tipo: TipoCobrancaDiaria;
+  pontoDisparo?: string | null;
   telefone: string;
   telefoneValido: boolean;
   ultimoContatoEm?: string | null;
@@ -50,6 +51,11 @@ export function elegivelCobrancaDiaria(
 ): boolean {
   const dias = calcularDias(vencimento);
   return dias < 0 || (dias >= 0 && dias <= diasAntecedencia);
+}
+
+/** Rotina diária: apenas dias fixos do funil progressivo (5, 3, 1, 0, -1, -2, -3, -7). */
+export function elegivelRotinaCobrancaDiaria(vencimento: string): boolean {
+  return elegivelRotinaProgressiva(calcularDias(vencimento));
 }
 
 export function clienteEhCortesia(
@@ -84,15 +90,25 @@ export function clienteParticipaCobrancas(
   return cliente?.incluirCobrancas !== false;
 }
 
-export function rotuloDiasCobrancaDiaria(dias: number): string {
-  if (dias < 0) {
-    const atraso = Math.abs(dias);
-    return atraso === 1 ? '1 dia atrasado' : `${atraso} dias atrasados`;
+/** Vencimentos: exibe cortesia e quem participa de cobranças; exclui somente contato e inativos. */
+export function clienteApareceEmVencimentos(
+  cliente?: {
+    ativo?: boolean | null;
+    incluirCobrancas?: boolean | null;
+    somenteContato?: boolean | null;
+  } | null
+): boolean {
+  if (cliente?.ativo === false) {
+    return false;
   }
+  if (clienteEhSomenteContato(cliente)) {
+    return false;
+  }
+  return cliente?.incluirCobrancas !== false;
+}
 
-  if (dias === 0) return 'Vence hoje';
-  if (dias === 1) return 'Vence amanhã';
-  return `Vence em ${dias} dias`;
+export function rotuloDiasCobrancaDiaria(dias: number): string {
+  return rotuloPrazoVencimento(dias);
 }
 
 export function rotuloTipoCobrancaDiaria(tipo: TipoCobrancaDiaria): string {
@@ -100,14 +116,13 @@ export function rotuloTipoCobrancaDiaria(tipo: TipoCobrancaDiaria): string {
 }
 
 export function filtrarMensalidadesCobrancaDiaria(
-  mensalidades: Mensalidade[],
-  diasAntecedencia = DIAS_ANTECEDENCIA_LEMBRETE_PADRAO
+  mensalidades: Mensalidade[]
 ): Mensalidade[] {
   return mensalidades
     .filter(
       (m) =>
         m.status === 'PENDENTE' &&
-        elegivelCobrancaDiaria(m.vencimento, diasAntecedencia) &&
+        elegivelRotinaCobrancaDiaria(m.vencimento) &&
         clienteParticipaCobrancas(m.cliente)
     )
     .sort(
@@ -122,11 +137,10 @@ export function montarItensCobrancaDiaria(
   configuracao: Configuracao | null,
   nomes?: Map<number, string>
 ): ItemCobrancaDiaria[] {
-  const diasAntecedencia = resolverDiasAntecedencia(configuracao);
-
-  return filtrarMensalidadesCobrancaDiaria(mensalidades, diasAntecedencia).map((m) => {
+  return filtrarMensalidadesCobrancaDiaria(mensalidades).map((m) => {
     const dias = calcularDias(m.vencimento);
     const tipo = tipoCobrancaDiaria(m.vencimento);
+    const pontoDisparo = resolverPontoDisparo(dias);
     const telefone =
       m.cliente?.telefone?.trim() ?? telefones.get(m.clienteId) ?? '';
     const atrasado = tipo === 'ATRASADO';
@@ -140,6 +154,7 @@ export function montarItensCobrancaDiaria(
       vencimento: m.vencimento,
       dias,
       tipo,
+      pontoDisparo,
       telefone,
       telefoneValido: telefoneValidoParaWhatsApp(telefone),
       ultimoContatoEm: m.ultimoContatoEm ?? null,
@@ -148,7 +163,9 @@ export function montarItensCobrancaDiaria(
         m,
         configuracao,
         nomes,
-        atrasado
+        atrasado,
+        undefined,
+        pontoDisparo
       ),
       mensagemBloqueio: atrasado
         ? montarMensagemBloqueioMensalidade(m, configuracao, nomes)
@@ -163,3 +180,5 @@ export function trackByItemCobrancaDiaria(
 ): number {
   return item.mensalidadeId;
 }
+
+export { rotuloPontoDisparo };

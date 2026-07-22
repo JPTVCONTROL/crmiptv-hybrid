@@ -1,6 +1,6 @@
 <app-loading *ngIf="loading" variant="detail"></app-loading>
 
-<div *ngIf="!loading && cliente" class="space-y-6">
+<div *ngIf="!loading && cliente" class="crm-page-shell">
   <section class="crm-cliente-hero">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
       <div class="flex items-start gap-4 min-w-0">
@@ -124,37 +124,6 @@
     [breadcrumbs]="[{ label: 'Clientes', rota: '/clientes' }, { label: cliente.nome }]"
   >
   </app-page-header>
-
-  <div
-    *ngIf="!clienteEstaAtivo && !ehSomenteContato"
-    class="crm-card border border-red-500/25 bg-red-500/5"
-  >
-    <p class="text-red-200 text-sm">
-      Cliente <span class="font-medium">inativo</span>: fora das cobranças automáticas.
-      <span *ngIf="participaCampanhas"> Continua elegível para campanhas do Market.</span>
-      <span *ngIf="!participaCampanhas"> Excluído das campanhas do Market.</span>
-    </p>
-  </div>
-
-  <div
-    *ngIf="ehCortesia && !ehSomenteContato"
-    class="crm-card crm-accent-panel"
-  >
-    <p class="crm-text-highlight text-sm">
-      Cliente <span class="font-medium">cortesia</span>: aparece em Vencimentos, mas sem cobrança,
-      lembretes ou pagamento. Use <span class="font-medium">Renovar cortesia</span> para estender a validade.
-    </p>
-  </div>
-
-  <div
-    *ngIf="!participaCobrancas && !ehCortesia && !ehSomenteContato"
-    class="crm-card border border-amber-500/25 bg-amber-500/5"
-  >
-    <p class="text-amber-200 text-sm">
-      Este cliente está <span class="font-medium">fora das cobranças automáticas</span>
-      (Cobrança Diária e rotinas de WhatsApp).
-    </p>
-  </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <details class="crm-collapse" open>

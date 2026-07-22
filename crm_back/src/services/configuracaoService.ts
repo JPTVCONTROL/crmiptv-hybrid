@@ -46,6 +46,15 @@ export class ConfiguracaoService {
       normalizado.metaNovosClientesFimEm = new Date(`${fimEm}T12:00:00.000Z`);
     }
 
+    if (Object.prototype.hasOwnProperty.call(dados, 'mensagensProgressivas')) {
+      const texto = dados.mensagensProgressivas;
+      if (texto === null || texto === undefined || texto === '') {
+        normalizado.mensagensProgressivas = null;
+      } else if (typeof texto === 'string') {
+        normalizado.mensagensProgressivas = texto;
+      }
+    }
+
     return configuracaoRepository.upsert(normalizado);
   }
 }
