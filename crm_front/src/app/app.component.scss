@@ -38,12 +38,23 @@ ion-menu.crm-menu ion-content.menu-content::part(scroll) {
 }
 
 .menu-nav {
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.menu-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.menu-nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
 }
 
 @media (max-width: 1023px), (max-height: 720px) {
   .menu-nav {
-    overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }

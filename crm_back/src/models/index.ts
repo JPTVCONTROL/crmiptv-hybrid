@@ -148,3 +148,14 @@ export type CampanhaWithEnvios = {
   _count: { envios: number };
   envios?: CampanhaEnvioResumo[];
 };
+
+export interface CreateTarefaDto {
+  titulo: string;
+  descricao?: string | null;
+  clienteId?: number | null;
+  vencimentoEm: string | Date;
+}
+
+export type UpdateTarefaDto = Partial<CreateTarefaDto> & {
+  concluida?: boolean;
+};

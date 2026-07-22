@@ -1,0 +1,149 @@
+<app-page-header title="Tarefas">
+  <button type="button" class="crm-btn-primary shrink-0" (click)="abrirModal()">
+    + Nova tarefa
+  </button>
+</app-page-header>
+
+<app-loading *ngIf="loading" variant="table"></app-loading>
+<p *ngIf="error" class="text-red-400 px-4">{{ error }}</p>
+
+<div *ngIf="!loading" class="crm-page-shell">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <app-stat-card
+      title="Pendentes"
+      [value]="contagem('PENDENTES').toString()"
+      variant="warning"
+    ></app-stat-card>
+    <app-stat-card
+      title="Hoje"
+      [value]="contagem('HOJE').toString()"
+      variant="primary"
+    ></app-stat-card>
+    <app-stat-card
+      title="Atrasadas"
+      [value]="contagem('ATRASADAS').toString()"
+      variant="danger"
+    ></app-stat-card>
+    <app-stat-card
+      title="Concluídas"
+      [value]="contagem('CONCLUIDAS').toString()"
+      variant="success"
+    ></app-stat-card>
+  </div>
+
+  <div class="crm-sticky-toolbar">
+    <div class="crm-card !p-4 md:!p-5 space-y-4">
+      <div class="relative">
+        <ion-icon
+          name="search-outline"
+          class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"
+          aria-hidden="true"
+        ></ion-icon>
+        <input
+          type="search"
+          class="crm-input !pl-11"
+          [(ngModel)]="busca"
+          placeholder="Buscar tarefa ou cliente..."
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          *ngFor="let op of opcoesFiltro"
+          type="button"
+          [class]="classesChip(op.valor)"
+          (click)="definirFiltro(op.valor)"
+        >
+          <span>{{ op.rotulo }}</span>
+          <span [class]="classesChipContagem(op.valor)">{{ contagem(op.valor) }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-empty-state
+    *ngIf="tarefasFiltradas.length === 0"
+    iconName="checkbox-outline"
+    title="Nenhuma tarefa neste filtro"
+    message="Crie lembretes para follow-ups, ligações e retornos de clientes."
+    actionLabel="Nova tarefa"
+    (action)="abrirModal()"
+  ></app-empty-state>
+
+  <div *ngIf="tarefasFiltradas.length > 0" class="space-y-3">
+    <article
+      *ngFor="let tarefa of tarefasFiltradas"
+      class="crm-card !p-4 md:!p-5"
+      [class.opacity-70]="tarefa.concluida"
+    >
+      <div class="flex items-start gap-3">
+        <button
+          type="button"
+          class="crm-task-check shrink-0 mt-0.5"
+          [class.crm-task-check--done]="tarefa.concluida"
+          [disabled]="alternandoId === tarefa.id"
+          [attr.aria-label]="tarefa.concluida ? 'Reabrir tarefa' : 'Concluir tarefa'"
+          (click)="alternarConclusao(tarefa, $event)"
+        >
+          <ion-icon
+            [name]="tarefa.concluida ? 'checkmark-circle' : 'ellipse-outline'"
+          ></ion-icon>
+        </button>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h3
+                class="text-white font-semibold text-base leading-snug"
+                [class.line-through]="tarefa.concluida"
+                [class.text-slate-400]="tarefa.concluida"
+              >
+                {{ tarefa.titulo }}
+              </h3>
+              <p class="text-xs mt-1" [class]="classePrazo(tarefa)">
+                {{ rotuloPrazo(tarefa.vencimentoEm, tarefa.concluida) }}
+                · {{ formatarData(tarefa.vencimentoEm) }}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 shrink-0">
+              <button
+                type="button"
+                class="crm-btn-ghost !py-1.5 !text-xs"
+                (click)="abrirModal(tarefa)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="crm-btn-ghost !py-1.5 !text-xs !text-red-300"
+                (click)="excluir(tarefa, $event)"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+
+          <p
+            *ngIf="tarefa.descricao?.trim()"
+            class="text-slate-400 text-sm mt-2 whitespace-pre-wrap"
+          >
+            {{ tarefa.descricao }}
+          </p>
+
+          <div class="flex flex-wrap items-center gap-2 mt-3">
+            <a
+              *ngIf="tarefa.clienteId"
+              [routerLink]="['/clientes', tarefa.clienteId]"
+              class="crm-filter-chip crm-filter-chip--idle no-underline !py-1 !text-xs"
+            >
+              <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+              {{ tarefa.cliente?.nome || 'Cliente #' + tarefa.clienteId }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</div>

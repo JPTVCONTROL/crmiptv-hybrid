@@ -12,8 +12,10 @@ import { DadosSyncService } from '../../core/services/dados-sync.service';
 import { copiarTexto } from '../../shared/utils/clipboard';
 import { DispositivoService } from '../../core/services/dispositivo.service';
 import { AplicativoService } from '../../core/services/aplicativo.service';
-import { Cliente, Configuracao, Dispositivo, Mensalidade, Aplicativo } from '../../core/models';
+import { TarefaService } from '../../core/services/tarefa.service';
+import { Cliente, Configuracao, Dispositivo, Mensalidade, Aplicativo, Tarefa } from '../../core/models';
 import { NovoClienteModalComponent } from '../../components/cliente/novo-cliente-modal/novo-cliente-modal.component';
+import { NovaTarefaModalComponent } from '../../components/tarefa/nova-tarefa-modal/nova-tarefa-modal.component';
 import { formatarValor, formatarData, resolverStatusCliente, StatusCliente } from '../../shared/utils/formatters';
 import { rotuloValidadePlano } from '../../shared/utils/planos';
 import {
@@ -34,6 +36,11 @@ import {
   DOMINIOS_SYNC_CLIENTE_DETALHE,
 } from '../../shared/utils/page-sync.util';
 import { StatusBadgeTipo } from '../../components/status-badge/status-badge.component';
+import {
+  rotuloPrazoTarefa,
+  formatarDataTarefa,
+  classePrazoTarefa,
+} from '../../shared/utils/tarefa.util';
 
 @Component({
   selector: 'app-cliente-detalhes',
@@ -45,7 +52,10 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   dispositivosCatalogo: Dispositivo[] = [];
   aplicativosCatalogo: Aplicativo[] = [];
+  tarefasCliente: Tarefa[] = [];
   loading = true;
+  carregandoTarefas = false;
+  alternandoTarefaId: number | null = null;
   alternandoCobrancas = false;
   alternandoCortesia = false;
   alternandoAtividade = false;
@@ -57,6 +67,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private dispositivoService: DispositivoService,
     private aplicativoService: AplicativoService,
+    private tarefaService: TarefaService,
     private mensalidadeService: MensalidadeService,
     private configuracaoService: ConfiguracaoService,
     private renovacao: RenovacaoMensalidadeService,
@@ -86,6 +97,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     }
     this.carregarCatalogos();
     this.carregar(this.clienteId);
+    this.carregarTarefas();
     vincularSincronizacaoPagina(
       this.sync,
       this.destroy$,
@@ -94,6 +106,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
         this.carregarCatalogos();
         if (this.clienteId) {
           this.carregar(this.clienteId, true);
+          this.carregarTarefas(true);
         }
       }
     );
@@ -102,6 +115,7 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
   ionViewWillEnter(): void {
     if (this.clienteId && !this.loading) {
       this.carregar(this.clienteId, true);
+      this.carregarTarefas(true);
     }
   }
 
@@ -664,5 +678,72 @@ export class ClienteDetalhesPage implements OnInit, OnDestroy {
     }
 
     return '—';
+  }
+
+  get tarefasPendentesCliente(): Tarefa[] {
+    return this.tarefasCliente.filter((item) => !item.concluida);
+  }
+
+  rotuloPrazoTarefa = rotuloPrazoTarefa;
+  formatarDataTarefa = formatarDataTarefa;
+  classePrazoTarefa = classePrazoTarefa;
+
+  carregarTarefas(silencioso = false): void {
+    if (!this.clienteId) {
+      return;
+    }
+
+    if (!silencioso) {
+      this.carregandoTarefas = true;
+    }
+
+    this.tarefaService.listar({ clienteId: this.clienteId }).subscribe({
+      next: (items) => {
+        this.tarefasCliente = items;
+        this.carregandoTarefas = false;
+      },
+      error: () => {
+        this.carregandoTarefas = false;
+      },
+    });
+  }
+
+  async abrirNovaTarefa(tarefa?: Tarefa): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: NovaTarefaModalComponent,
+      componentProps: {
+        tarefa: tarefa ?? null,
+        clienteId: this.clienteId,
+        clienteNome: this.cliente?.nome ?? '',
+      },
+      cssClass: 'crm-modal',
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data) {
+      this.carregarTarefas(true);
+    }
+  }
+
+  alternarTarefa(tarefa: Tarefa): void {
+    if (this.alternandoTarefaId !== null) {
+      return;
+    }
+
+    this.alternandoTarefaId = tarefa.id;
+    const req = tarefa.concluida
+      ? this.tarefaService.reabrir(tarefa.id)
+      : this.tarefaService.concluir(tarefa.id);
+
+    req.subscribe({
+      next: () => {
+        this.alternandoTarefaId = null;
+        this.carregarTarefas(true);
+      },
+      error: (err) => {
+        this.alternandoTarefaId = null;
+        void this.toast.error(err.message ?? 'Erro ao atualizar tarefa.');
+      },
+    });
   }
 }

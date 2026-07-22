@@ -30,6 +30,10 @@ export function iconeAlertaOperacional(alerta: AlertaOperacional): string {
       return 'alert-circle-outline';
     case 'ROTINA_CONCLUIDA':
       return 'checkmark-circle-outline';
+    case 'TAREFAS_ATRASADAS':
+      return 'alert-circle-outline';
+    case 'TAREFAS_HOJE':
+      return 'checkbox-outline';
     default:
       return 'notifications-outline';
   }
@@ -61,6 +65,14 @@ export function classesAlertaOperacional(
       return {
         'crm-dash-alerta--violet': true,
       };
+    case 'TAREFAS_ATRASADAS':
+      return {
+        'crm-dash-alerta--red': true,
+      };
+    case 'TAREFAS_HOJE':
+      return {
+        'crm-dash-alerta--amber': true,
+      };
     case 'ROTINA_CONCLUIDA':
       return {
         'crm-dash-alerta--green': true,
@@ -75,18 +87,20 @@ export function classesAlertaOperacional(
 export function prioridadeAlerta(alerta: AlertaOperacional): number {
   const ordem: Record<string, number> = {
     NAO_CONTACTADO: 0,
-    VENCE_HOJE: 1,
-    ROTINA_PENDENTE: 2,
-    EXPIRADO_SEM_MENSALIDADE: 3,
-    CADASTRO_SEM_TELEFONE: 4,
-    CADASTRO_SEM_CREDENCIAIS: 5,
-    CADASTRO_INCOMPLETO: 6,
-    CADASTRO_SEM_MAC: 7,
-    CADASTRO_SEM_PLANO: 8,
-    CADASTRO_SEM_VALOR: 9,
-    CADASTRO_SEM_EXPIRACAO: 10,
-    CADASTRO_SEM_APLICATIVO: 11,
-    SEM_TELEFONE: 12,
+    TAREFAS_ATRASADAS: 1,
+    VENCE_HOJE: 2,
+    TAREFAS_HOJE: 3,
+    ROTINA_PENDENTE: 4,
+    EXPIRADO_SEM_MENSALIDADE: 5,
+    CADASTRO_SEM_TELEFONE: 6,
+    CADASTRO_SEM_CREDENCIAIS: 7,
+    CADASTRO_INCOMPLETO: 8,
+    CADASTRO_SEM_MAC: 9,
+    CADASTRO_SEM_PLANO: 10,
+    CADASTRO_SEM_VALOR: 11,
+    CADASTRO_SEM_EXPIRACAO: 12,
+    CADASTRO_SEM_APLICATIVO: 13,
+    SEM_TELEFONE: 14,
     ROTINA_CONCLUIDA: 99,
   };
 

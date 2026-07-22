@@ -30,6 +30,12 @@ import {
   resolverMetaNovosClientes,
   whereClienteContaMeta,
 } from '../utils/helpers/metaNovosClientesHelpers.js';
+import { tarefaRepository } from '../repositories/tarefaRepository.js';
+import {
+  formatarDataIsoUtc,
+  inicioDiaUtc,
+  tarefaEstaAtrasada,
+} from '../utils/helpers/tarefaHelpers.js';
 
 export interface AlertaOperacional {
   tipo:
@@ -46,7 +52,9 @@ export interface AlertaOperacional {
     | 'SEM_TELEFONE'
     | 'EXPIRADO_SEM_MENSALIDADE'
     | 'NAO_CONTACTADO'
-    | 'ROTINA_CONCLUIDA';
+    | 'ROTINA_CONCLUIDA'
+    | 'TAREFAS_ATRASADAS'
+    | 'TAREFAS_HOJE';
   titulo: string;
   descricao: string;
   quantidade: number;
@@ -112,6 +120,19 @@ export interface DashboardResumo {
     }>;
   };
   alertas: AlertaOperacional[];
+  tarefas: {
+    pendentes: number;
+    hoje: number;
+    atrasadas: number;
+    proximas: Array<{
+      id: number;
+      titulo: string;
+      vencimentoEm: string;
+      clienteId: number | null;
+      clienteNome: string | null;
+      atrasada: boolean;
+    }>;
+  };
   metricas: {
     mrr: number;
     arr: number;
@@ -643,6 +664,39 @@ export class DashboardService {
       });
     }
 
+    const referenciaTarefas = inicioDiaUtc(hoje);
+    const [tarefasContagem, tarefasProximasRaw] = await Promise.all([
+      tarefaRepository.contarPendentes(),
+      tarefaRepository.findPendentesResumo(6),
+    ]);
+
+    const tarefasProximas = tarefasProximasRaw.map((tarefa) => ({
+      id: tarefa.id,
+      titulo: tarefa.titulo,
+      vencimentoEm: formatarDataIsoUtc(tarefa.vencimentoEm),
+      clienteId: tarefa.clienteId,
+      clienteNome: tarefa.cliente?.nome ?? null,
+      atrasada: tarefaEstaAtrasada(tarefa.vencimentoEm, referenciaTarefas),
+    }));
+
+    if (tarefasContagem.atrasadas > 0) {
+      alertas.push({
+        tipo: 'TAREFAS_ATRASADAS',
+        titulo: 'Tarefas atrasadas',
+        descricao: `${tarefasContagem.atrasadas} lembrete(s) com data passada.`,
+        quantidade: tarefasContagem.atrasadas,
+        rota: '/tarefas?filtro=ATRASADAS',
+      });
+    } else if (tarefasContagem.hoje > 0) {
+      alertas.push({
+        tipo: 'TAREFAS_HOJE',
+        titulo: 'Tarefas para hoje',
+        descricao: `${tarefasContagem.hoje} lembrete(s) com vencimento hoje.`,
+        quantidade: tarefasContagem.hoje,
+        rota: '/tarefas?filtro=HOJE',
+      });
+    }
+
     if (alertas.length === 0 && rotinaFeita && elegiveis.length > 0) {
       alertas.push({
         tipo: 'ROTINA_CONCLUIDA',
@@ -729,6 +783,12 @@ export class DashboardService {
         etapasFunil,
       },
       alertas,
+      tarefas: {
+        pendentes: tarefasContagem.pendentes,
+        hoje: tarefasContagem.hoje,
+        atrasadas: tarefasContagem.atrasadas,
+        proximas: tarefasProximas,
+      },
       metricas: {
         mrr,
         arr,

@@ -13,6 +13,7 @@ import { WhatsappContatoBtnComponent } from '../components/cobranca/whatsapp-con
 import { MarcarCobradoBtnComponent } from '../components/cobranca/marcar-cobrado-btn.component';
 import { CobrancaLoteFilaModalComponent } from '../components/cobranca/cobranca-lote-fila-modal.component';
 import { CampanhaFormModalComponent } from '../components/campanha/campanha-form-modal.component';
+import { NovaTarefaModalComponent } from '../components/tarefa/nova-tarefa-modal/nova-tarefa-modal.component';
 import { CrmModalShellComponent } from '../components/modal/crm-modal-shell.component';
 import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.component';
 
@@ -31,6 +32,7 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     MarcarCobradoBtnComponent,
     CobrancaLoteFilaModalComponent,
     CampanhaFormModalComponent,
+    NovaTarefaModalComponent,
     CrmModalShellComponent,
     CrmModalToolbarComponent,
   ],
@@ -49,6 +51,7 @@ import { CrmModalToolbarComponent } from '../components/modal/crm-modal-toolbar.
     MarcarCobradoBtnComponent,
     CobrancaLoteFilaModalComponent,
     CampanhaFormModalComponent,
+    NovaTarefaModalComponent,
     CrmModalShellComponent,
     CrmModalToolbarComponent,
   ],

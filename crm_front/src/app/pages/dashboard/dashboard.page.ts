@@ -36,6 +36,10 @@ import {
   classeBadgeTipoFunil,
 } from '../../shared/utils/funil-cobranca.util';
 import { PontoDisparoAutomacao } from '../../shared/utils/automacao-disparo';
+import {
+  rotuloPrazoTarefa,
+  formatarDataTarefa,
+} from '../../shared/utils/tarefa.util';
 
 type ProximoVencimentoResumo = DashboardResumo['proximosVencimentos'][number];
 type ClienteAtencaoResumo = DashboardResumo['clientesAtencao'][number];
@@ -97,6 +101,11 @@ export class DashboardPage implements OnInit, OnDestroy {
   inadimplenciaPercentual = '';
   ganhosProximoAno = '';
   ganhosProximoAnoRotulo = '';
+
+  tarefasPendentes = 0;
+  tarefasHoje = 0;
+  tarefasAtrasadas = 0;
+  tarefasProximas: DashboardResumo['tarefas']['proximas'] = [];
 
   iconeAlerta = iconeAlertaOperacional;
   classesAlerta = classesAlertaOperacional;
@@ -214,6 +223,13 @@ export class DashboardPage implements OnInit, OnDestroy {
     return this.clientesAtencao.slice(0, this.limiteLista);
   }
 
+  get tarefasProximasVisiveis(): DashboardResumo['tarefas']['proximas'] {
+    return this.tarefasProximas.slice(0, this.limiteLista);
+  }
+
+  rotuloPrazoTarefa = rotuloPrazoTarefa;
+  formatarDataTarefa = formatarDataTarefa;
+
   queryParamsCobrancaEtapa(etapa: ResumoEtapaFunil): Record<string, string | number> {
     const params: Record<string, string | number> = { etapa: etapa.ponto };
     if (etapa.pendentes > 0) {
@@ -304,6 +320,10 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.proximosVencimentos = resumo.proximosVencimentos;
     this.clientesAtencao = resumo.clientesAtencao;
     this.alertas = resumo.alertas ?? [];
+    this.tarefasPendentes = resumo.tarefas?.pendentes ?? 0;
+    this.tarefasHoje = resumo.tarefas?.hoje ?? 0;
+    this.tarefasAtrasadas = resumo.tarefas?.atrasadas ?? 0;
+    this.tarefasProximas = resumo.tarefas?.proximas ?? [];
 
     this.cobrancaNaoContactados = resumo.cobrancaDiaria.naoContactados;
     this.cobrancaContactadosHoje = resumo.cobrancaDiaria.contactadosHoje;

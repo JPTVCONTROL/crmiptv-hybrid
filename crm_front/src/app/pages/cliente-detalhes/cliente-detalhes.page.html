@@ -155,6 +155,80 @@
       </div>
     </details>
 
+    <details class="crm-collapse" [open]="tarefasPendentesCliente.length > 0">
+      <summary class="crm-collapse-summary">
+        <div>
+          <h2 class="crm-collapse-title">Tarefas</h2>
+          <p class="crm-collapse-hint">
+            {{ tarefasPendentesCliente.length }} pendente(s)
+          </p>
+        </div>
+        <ion-icon name="chevron-down-outline" class="crm-collapse-chevron" aria-hidden="true"></ion-icon>
+      </summary>
+      <div class="crm-collapse-body space-y-3">
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="crm-btn-primary crm-btn-sm" (click)="abrirNovaTarefa()">
+            + Nova tarefa
+          </button>
+          <a routerLink="/tarefas" class="crm-btn-ghost crm-btn-sm no-underline">
+            Ver todas
+          </a>
+        </div>
+
+        <p *ngIf="carregandoTarefas" class="text-slate-500 text-sm">Carregando tarefas...</p>
+
+        <p
+          *ngIf="!carregandoTarefas && tarefasCliente.length === 0"
+          class="text-slate-500 text-sm"
+        >
+          Nenhuma tarefa vinculada a este cliente.
+        </p>
+
+        <div *ngIf="!carregandoTarefas && tarefasCliente.length > 0" class="space-y-2">
+          <div
+            *ngFor="let tarefa of tarefasCliente"
+            class="crm-card !p-3 flex items-start gap-3"
+            [class.opacity-70]="tarefa.concluida"
+          >
+            <button
+              type="button"
+              class="crm-task-check shrink-0 mt-0.5"
+              [class.crm-task-check--done]="tarefa.concluida"
+              [disabled]="alternandoTarefaId === tarefa.id"
+              (click)="alternarTarefa(tarefa)"
+            >
+              <ion-icon
+                [name]="tarefa.concluida ? 'checkmark-circle' : 'ellipse-outline'"
+              ></ion-icon>
+            </button>
+            <div class="flex-1 min-w-0">
+              <p
+                class="text-white font-medium"
+                [class.line-through]="tarefa.concluida"
+                [class.text-slate-400]="tarefa.concluida"
+              >
+                {{ tarefa.titulo }}
+              </p>
+              <p class="text-xs mt-1" [class]="classePrazoTarefa(tarefa)">
+                {{ rotuloPrazoTarefa(tarefa.vencimentoEm, tarefa.concluida) }}
+                · {{ formatarDataTarefa(tarefa.vencimentoEm) }}
+              </p>
+              <p *ngIf="tarefa.descricao?.trim()" class="text-slate-400 text-sm mt-1">
+                {{ tarefa.descricao }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="crm-btn-ghost !py-1 !px-2 !text-xs shrink-0"
+              (click)="abrirNovaTarefa(tarefa)"
+            >
+              Editar
+            </button>
+          </div>
+        </div>
+      </div>
+    </details>
+
     <details class="crm-collapse" open>
       <summary class="crm-collapse-summary">
         <div>

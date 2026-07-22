@@ -151,7 +151,9 @@ export interface AlertaOperacional {
     | 'SEM_TELEFONE'
     | 'EXPIRADO_SEM_MENSALIDADE'
     | 'NAO_CONTACTADO'
-    | 'ROTINA_CONCLUIDA';
+    | 'ROTINA_CONCLUIDA'
+    | 'TAREFAS_ATRASADAS'
+    | 'TAREFAS_HOJE';
   titulo: string;
   descricao: string;
   quantidade: number;
@@ -217,6 +219,19 @@ export interface DashboardResumo {
     }>;
   };
   alertas: AlertaOperacional[];
+  tarefas: {
+    pendentes: number;
+    hoje: number;
+    atrasadas: number;
+    proximas: Array<{
+      id: number;
+      titulo: string;
+      vencimentoEm: string;
+      clienteId: number | null;
+      clienteNome: string | null;
+      atrasada: boolean;
+    }>;
+  };
   metricas: {
     mrr: number;
     arr: number;
@@ -281,3 +296,40 @@ export interface CreateCampanhaDto {
   tipo: TipoCampanha;
   mensagem: string;
 }
+
+export interface TarefaClienteResumo {
+  id: number;
+  nome: string;
+  telefone: string;
+}
+
+export interface Tarefa {
+  id: number;
+  titulo: string;
+  descricao?: string | null;
+  clienteId?: number | null;
+  cliente?: TarefaClienteResumo | null;
+  vencimentoEm: string;
+  concluida: boolean;
+  concluidaEm?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTarefaDto {
+  titulo: string;
+  descricao?: string | null;
+  clienteId?: number | null;
+  vencimentoEm: string;
+}
+
+export type UpdateTarefaDto = Partial<CreateTarefaDto> & {
+  concluida?: boolean;
+};
+
+export type FiltroListaTarefa =
+  | 'PENDENTES'
+  | 'HOJE'
+  | 'ATRASADAS'
+  | 'CONCLUIDAS'
+  | 'TODAS';

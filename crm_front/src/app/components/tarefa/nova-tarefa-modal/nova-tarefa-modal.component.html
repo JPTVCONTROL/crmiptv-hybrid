@@ -1,0 +1,59 @@
+<ion-header class="ion-no-border crm-modal-header">
+  <app-crm-modal-toolbar
+    [titulo]="tarefa ? 'Editar tarefa' : 'Nova tarefa'"
+    (voltar)="fechar()"
+  ></app-crm-modal-toolbar>
+</ion-header>
+
+<ion-content class="crm-modal-content">
+  <app-crm-modal-shell>
+    <div class="space-y-5 max-w-2xl">
+      <div>
+        <label class="crm-label">Título *</label>
+        <input
+          class="crm-input mt-1"
+          [(ngModel)]="form.titulo"
+          placeholder="Ligar cliente, enviar tutorial..."
+        />
+      </div>
+
+      <div>
+        <label class="crm-label">Data do lembrete *</label>
+        <input class="crm-input mt-1" type="date" [(ngModel)]="form.vencimentoEm" />
+      </div>
+
+      <div *ngIf="clienteFixo">
+        <label class="crm-label">Cliente</label>
+        <p class="crm-input mt-1 !py-2.5 text-slate-200">{{ clienteNome || 'Cliente selecionado' }}</p>
+      </div>
+
+      <div *ngIf="!clienteFixo">
+        <label class="crm-label">Cliente (opcional)</label>
+        <select class="crm-input mt-1" [(ngModel)]="form.clienteId" [disabled]="carregandoClientes">
+          <option [ngValue]="null">Sem cliente vinculado</option>
+          <option *ngFor="let cliente of clientes" [ngValue]="cliente.id">
+            {{ cliente.nome }} · {{ cliente.telefone }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label class="crm-label">Observações</label>
+        <textarea
+          class="crm-input mt-1 min-h-[100px]"
+          [(ngModel)]="form.descricao"
+          placeholder="Detalhes do follow-up..."
+        ></textarea>
+      </div>
+    </div>
+
+    <div modalActions class="crm-modal-actions">
+      <button type="button" class="crm-btn-ghost" [disabled]="salvando" (click)="fechar()">
+        Cancelar
+      </button>
+      <button type="button" class="crm-btn-primary" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : (tarefa ? 'Salvar alterações' : 'Criar tarefa') }}
+      </button>
+    </div>
+  </app-crm-modal-shell>
+</ion-content>

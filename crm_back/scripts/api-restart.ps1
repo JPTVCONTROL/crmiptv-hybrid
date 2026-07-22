@@ -26,6 +26,18 @@ if (Test-CrmApiPortListening -Porta $porta) {
   Start-Sleep -Seconds 2
 }
 
+Push-Location $raizBack
+try {
+  Escrever "Atualizando Prisma Client..."
+  npx prisma generate 2>&1 | ForEach-Object { Escrever $_ }
+  if ($LASTEXITCODE -ne 0) {
+    Escrever "AVISO: prisma generate falhou (codigo $LASTEXITCODE). Verifique se a API esta parada."
+  }
+}
+finally {
+  Pop-Location
+}
+
 if (Test-Path $pidFile) {
   Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
 }

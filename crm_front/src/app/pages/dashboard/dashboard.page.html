@@ -187,6 +187,52 @@
     </div>
   </section>
 
+  <section *ngIf="tarefasPendentes > 0" class="crm-dash-tasks-panel">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-white text-lg md:text-xl font-bold tracking-tight">
+          Tarefas e follow-up
+        </h2>
+        <p class="text-slate-400 text-sm mt-1">
+          {{ tarefasPendentes }} pendente(s)
+          <span *ngIf="tarefasAtrasadas > 0"> · {{ tarefasAtrasadas }} atrasada(s)</span>
+          <span *ngIf="tarefasHoje > 0"> · {{ tarefasHoje }} para hoje</span>
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <a
+          routerLink="/tarefas"
+          [queryParams]="tarefasAtrasadas > 0 ? { filtro: 'ATRASADAS' } : { filtro: 'HOJE' }"
+          class="crm-btn-primary no-underline"
+        >
+          Ver tarefas
+        </a>
+        <a routerLink="/tarefas" class="crm-btn-ghost no-underline">+ Nova tarefa</a>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <a
+        *ngFor="let tarefa of tarefasProximasVisiveis"
+        [routerLink]="['/tarefas']"
+        [queryParams]="tarefa.atrasada ? { filtro: 'ATRASADAS' } : { filtro: 'PENDENTES' }"
+        class="crm-dash-task-item no-underline"
+        [class.crm-dash-task-item--atrasada]="tarefa.atrasada"
+      >
+        <span class="crm-dash-task-check" aria-hidden="true"></span>
+        <span class="flex-1 min-w-0">
+          <span class="block text-white font-medium truncate">{{ tarefa.titulo }}</span>
+          <span class="block text-xs mt-0.5 text-slate-400">
+            {{ rotuloPrazoTarefa(tarefa.vencimentoEm) }}
+            · {{ formatarDataTarefa(tarefa.vencimentoEm) }}
+            <span *ngIf="tarefa.clienteNome"> · {{ tarefa.clienteNome }}</span>
+          </span>
+        </span>
+        <ion-icon name="chevron-forward-outline" class="text-slate-500 shrink-0"></ion-icon>
+      </a>
+    </div>
+  </section>
+
   <section *ngIf="alertasVisiveis.length > 0">
     <div class="flex items-center justify-between gap-3 mb-3">
       <h2 class="crm-section-label !mb-0">Atenção agora</h2>

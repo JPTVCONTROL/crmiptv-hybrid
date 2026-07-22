@@ -8,7 +8,7 @@
     >
       <ion-content class="menu-content" [scrollY]="false">
         <div class="menu-shell">
-          <header class="menu-header shrink-0 px-4 pt-4 pb-3 border-b border-slate-800/80">
+          <header class="menu-header shrink-0 px-4 pt-3 pb-2 border-b border-slate-800/80">
             <div class="flex flex-col items-center gap-2">
               <img
                 src="assets/logo-crm-jptv.png"
@@ -21,7 +21,7 @@
             </div>
           </header>
 
-          <nav class="menu-nav flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-3" aria-label="Menu principal">
+          <nav class="menu-nav flex-1 min-h-0 px-3 py-2 flex flex-col gap-2.5" aria-label="Menu principal">
             <section *ngFor="let secao of menuSecoes" class="flex flex-col gap-1">
               <p class="menu-section-title m-0 px-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-slate-600">
                 {{ secao.titulo }}
@@ -32,10 +32,10 @@
                     [routerLink]="menu.rota"
                     routerLinkActive="menu-link-active"
                     [routerLinkActiveOptions]="{ exact: menu.rota === '/dashboard' }"
-                    class="menu-link flex items-center gap-2.5 w-full min-h-[2.375rem] px-2 py-1 rounded-xl text-slate-300 text-[0.8125rem] font-medium no-underline"
+                    class="menu-link flex items-center gap-2.5 w-full min-h-[2.125rem] px-2 py-0.5 rounded-xl text-slate-300 text-[0.8125rem] font-medium no-underline"
                     (click)="fecharMenu()"
                   >
-                    <span class="menu-link-icon inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-[0.625rem]" aria-hidden="true">
+                    <span class="menu-link-icon inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-[0.625rem]" aria-hidden="true">
                       <ion-icon [name]="menu.icon" class="w-[1.125rem] h-[1.125rem]"></ion-icon>
                     </span>
                     <span class="flex-1 min-w-0 truncate">{{ menu.nome }}</span>
@@ -52,7 +52,7 @@
             </section>
           </nav>
 
-          <footer class="menu-footer shrink-0 flex flex-col gap-1.5 px-3 py-2.5 border-t border-slate-800/80">
+          <footer class="menu-footer shrink-0 flex flex-col gap-1 px-3 py-2 border-t border-slate-800/80">
             <div *ngIf="usuario" class="flex items-center gap-2.5 px-2 py-2 rounded-xl border border-slate-800/80 bg-slate-900/55">
               <span class="menu-user-avatar inline-flex items-center justify-center shrink-0 w-9 h-9 rounded-full text-xs font-bold text-white" aria-hidden="true">
                 {{ iniciaisUsuario }}
@@ -64,7 +64,7 @@
             </div>
 
             <button type="button" class="menu-link menu-link-logout flex items-center gap-2.5 w-full min-h-[2.375rem] px-2 py-1 rounded-xl text-slate-300 text-[0.8125rem] font-medium border-0 bg-transparent cursor-pointer" (click)="sair()">
-              <span class="menu-link-icon menu-link-icon--logout inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-[0.625rem]" aria-hidden="true">
+              <span class="menu-link-icon menu-link-icon--logout inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-[0.625rem]" aria-hidden="true">
                 <ion-icon name="log-out-outline" class="w-[1.125rem] h-[1.125rem]"></ion-icon>
               </span>
               <span class="flex-1 text-left">Sair</span>

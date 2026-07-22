@@ -49,6 +49,7 @@ model Cliente {
   createdAt    DateTime @default(now())
   mensalidades Mensalidade[]
   campanhaEnvios CampanhaEnvio[]
+  tarefas        Tarefa[]
 
   @@index([expiraEm])
   @@index([planoId])
@@ -161,4 +162,21 @@ model Usuario {
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Tarefa {
+  id           Int       @id @default(autoincrement())
+  titulo       String
+  descricao    String?
+  clienteId    Int?
+  cliente      Cliente?  @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  vencimentoEm DateTime
+  concluida    Boolean   @default(false)
+  concluidaEm  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([concluida])
+  @@index([vencimentoEm])
+  @@index([clienteId])
 }

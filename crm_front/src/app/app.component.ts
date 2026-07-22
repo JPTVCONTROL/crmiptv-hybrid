@@ -36,9 +36,12 @@ interface MenuSecao {
 })
 export class AppComponent implements OnInit, OnDestroy {
   readonly menuSecoes: MenuSecao[] = [
-    {
+      {
       titulo: 'Visão geral',
-      itens: [{ nome: 'Dashboard', rota: '/dashboard', icon: 'grid-outline' }],
+      itens: [
+        { nome: 'Dashboard', rota: '/dashboard', icon: 'grid-outline' },
+        { nome: 'Tarefas', rota: '/tarefas', icon: 'checkbox-outline' },
+      ],
     },
     {
       titulo: 'Clientes',

@@ -20,6 +20,11 @@ const routes: Routes = [
           import('./pages/dashboard/dashboard.module').then((m) => m.DashboardPageModule),
       },
       {
+        path: 'tarefas',
+        loadChildren: () =>
+          import('./pages/tarefas/tarefas.module').then((m) => m.TarefasPageModule),
+      },
+      {
         path: 'clientes',
         loadChildren: () =>
           import('./pages/clientes/clientes.module').then((m) => m.ClientesPageModule),

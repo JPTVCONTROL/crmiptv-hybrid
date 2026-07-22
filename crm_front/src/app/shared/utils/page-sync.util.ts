@@ -10,6 +10,7 @@ export const DOMINIOS_SYNC_OPERACAO: readonly DominioSync[] = [
   'mensalidades',
   'dashboard',
   'configuracoes',
+  'tarefas',
 ];
 
 /** Relatórios e visões analíticas. */
@@ -33,10 +34,18 @@ export const DOMINIOS_SYNC_CAMPANHAS: readonly DominioSync[] = [
   'configuracoes',
 ];
 
+/** Tarefas / follow-up. */
+export const DOMINIOS_SYNC_TAREFAS: readonly DominioSync[] = [
+  'tarefas',
+  'dashboard',
+  'clientes',
+];
+
 /** Ficha do cliente. */
 export const DOMINIOS_SYNC_CLIENTE_DETALHE: readonly DominioSync[] = [
   ...DOMINIOS_SYNC_CATALOGO,
   'dashboard',
+  'tarefas',
 ];
 
 export function vincularSincronizacaoPagina(

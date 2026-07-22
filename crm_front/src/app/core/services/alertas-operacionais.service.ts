@@ -37,7 +37,7 @@ export class AlertasOperacionaisService {
       .pipe(
         filter((evento) =>
           evento.dominios.some((dominio) =>
-            ['dashboard', 'clientes', 'mensalidades'].includes(dominio)
+            ['dashboard', 'clientes', 'mensalidades', 'tarefas'].includes(dominio)
           )
         )
       )
