@@ -1,4 +1,5 @@
 import { parseDataSomenteDia } from './dateHelpers.js';
+import { elegivelRotinaProgressiva } from './automacaoDisparoHelpers.js';
 
 export const DIAS_ANTECEDENCIA_LEMBRETE_PADRAO = 5;
 
